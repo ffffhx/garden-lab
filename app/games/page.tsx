@@ -6,7 +6,7 @@ import { getAllGames } from "@/lib/games";
 
 export const metadata: Metadata = {
   title: "游戏入口",
-  description: "暂时存放仓库中的游戏入口。",
+  description: "暂时存放仓库中的游戏入口和游戏原型方案。",
 };
 
 export default function GamesPage() {
@@ -20,7 +20,7 @@ export default function GamesPage() {
           游戏入口
         </h1>
         <p className="mt-4 max-w-3xl text-base leading-8 text-slate-700">
-          暂时存放仓库里的可玩内容，第一个入口是「森森不息」。
+          暂时存放仓库里的可玩内容和游戏原型方案。
         </p>
         <div className="mt-6">
           <Link
@@ -61,7 +61,7 @@ export default function GamesPage() {
                     href={game.href}
                     className="inline-flex items-center gap-2 text-sm font-semibold text-slate-950 transition group-hover:text-amber-700"
                   >
-                    进入游戏
+                    {game.actionLabel ?? "进入游戏"}
                     <span aria-hidden="true">→</span>
                   </Link>
                 </div>

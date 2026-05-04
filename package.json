@@ -4,10 +4,13 @@
   "private": true,
   "packageManager": "pnpm@10.20.0",
   "scripts": {
-    "predev": "node scripts/sync-post-assets.mjs && node scripts/sync-token-usage.mjs",
+    "predev": "pnpm run farm:build && node scripts/sync-post-assets.mjs && node scripts/sync-token-usage.mjs",
     "dev": "next dev",
+    "farm:assets": "node games/farm-life/scripts/generate-assets.mjs",
+    "farm:dev": "pnpm run farm:assets && vite --config games/farm-life/vite.config.ts --host 127.0.0.1",
+    "farm:build": "pnpm run farm:assets && vite build --config games/farm-life/vite.config.ts",
     "forest:server": "tsx scripts/forest-shuffle-room-server.ts",
-    "prebuild": "node scripts/sync-post-assets.mjs && node scripts/sync-token-usage.mjs",
+    "prebuild": "pnpm run farm:build && node scripts/sync-post-assets.mjs && node scripts/sync-token-usage.mjs",
     "build": "next build",
     "sync:tokens": "node scripts/sync-token-usage.mjs",
     "start": "next start",
@@ -24,6 +27,7 @@
     "gray-matter": "^4.0.3",
     "mdast-util-to-string": "^4.0.0",
     "next": "^15.3.0",
+    "phaser": "^4.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "reading-time": "^1.5.0",
@@ -48,6 +52,7 @@
     "tailwindcss": "^4.1.7",
     "tsx": "^4.21.0",
     "typescript": "^5.8.3",
+    "vite": "^8.0.10",
     "vitest": "^3.1.3"
   }
 }

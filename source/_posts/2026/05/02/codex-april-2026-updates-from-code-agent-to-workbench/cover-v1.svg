@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820" role="img" aria-labelledby="title desc">
-  <title id="title">Codex 最近一个月更新了什么</title>
-  <desc id="desc">一张中文封面图，展示 Codex 从代码 Agent 到常驻工作台的变化。</desc>
+  <title id="title">Codex 和 Claude Code 最近一个月更新了什么</title>
+  <desc id="desc">一张中文封面图，展示 Codex 和 Claude Code 从代码 Agent 到工作台与平台的变化。</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#f7f3e8"/>
@@ -13,10 +13,10 @@
   </defs>
   <rect width="1400" height="820" fill="url(#bg)"/>
   <rect x="70" y="70" width="1260" height="680" rx="36" fill="#fffaf1" stroke="#1f2937" stroke-opacity="0.12" filter="url(#shadow)"/>
-  <text x="120" y="150" fill="#0f172a" font-family="Arial, 'PingFang SC', sans-serif" font-size="34" font-weight="700">2026.04.02 - 2026.05.02</text>
-  <text x="120" y="250" fill="#111827" font-family="Arial, 'PingFang SC', sans-serif" font-size="70" font-weight="800">Codex 最近一个月</text>
-  <text x="120" y="335" fill="#111827" font-family="Arial, 'PingFang SC', sans-serif" font-size="70" font-weight="800">更新了什么</text>
-  <text x="122" y="410" fill="#475569" font-family="Arial, 'PingFang SC', sans-serif" font-size="30">从代码 Agent 到常驻工作台</text>
+  <text x="120" y="150" fill="#0f172a" font-family="Arial, 'PingFang SC', sans-serif" font-size="34" font-weight="700">2026.04 - 2026.05</text>
+  <text x="120" y="250" fill="#111827" font-family="Arial, 'PingFang SC', sans-serif" font-size="64" font-weight="800">Codex × Claude Code</text>
+  <text x="120" y="335" fill="#111827" font-family="Arial, 'PingFang SC', sans-serif" font-size="70" font-weight="800">最近一个月更新</text>
+  <text x="122" y="410" fill="#475569" font-family="Arial, 'PingFang SC', sans-serif" font-size="30">从代码 Agent 到常驻工作台与开发平台</text>
   <g transform="translate(120 505)">
     <rect width="210" height="72" rx="18" fill="#2563eb" fill-opacity="0.12" stroke="#2563eb" stroke-opacity="0.28"/>
     <text x="28" y="45" fill="#1e3a8a" font-family="Arial, 'PingFang SC', sans-serif" font-size="25" font-weight="700">GPT-5.5</text>
@@ -31,11 +31,11 @@
   </g>
   <g transform="translate(825 505)">
     <rect width="210" height="72" rx="18" fill="#9333ea" fill-opacity="0.11" stroke="#9333ea" stroke-opacity="0.26"/>
-    <text x="28" y="45" fill="#6b21a8" font-family="Arial, 'PingFang SC', sans-serif" font-size="25" font-weight="700">Codex Pets</text>
+    <text x="28" y="45" fill="#6b21a8" font-family="Arial, 'PingFang SC', sans-serif" font-size="25" font-weight="700">Ultrareview</text>
   </g>
   <g transform="translate(1060 505)">
     <rect width="210" height="72" rx="18" fill="#dc2626" fill-opacity="0.1" stroke="#dc2626" stroke-opacity="0.25"/>
-    <text x="28" y="45" fill="#991b1b" font-family="Arial, 'PingFang SC', sans-serif" font-size="25" font-weight="700">Security</text>
+    <text x="28" y="45" fill="#991b1b" font-family="Arial, 'PingFang SC', sans-serif" font-size="24" font-weight="700">Claude Security</text>
   </g>
   <g transform="translate(930 145)">
     <rect x="0" y="70" width="270" height="190" rx="30" fill="#0f172a"/>

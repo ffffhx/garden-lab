@@ -11,7 +11,7 @@ tags:
   - MCP
   - TypeScript
   - 源码解析
-excerpt: "确认 bb-browser 是一个 MIT 许可证的开源项目之后，从源码拆解它怎样把真实 Chrome、Daemon、CDP、MCP 和 site adapter 组织成一套给 AI Agent 使用的浏览器能力层。"
+excerpt: "确认 bb-browser 是一个 MIT 许可证的开源项目之后，从源码拆解它怎样把真实 Chrome、Daemon、CDP、MCP、Chrome profile 和 site adapter 组织成一套给 AI Agent 使用的浏览器能力层。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
@@ -41,6 +41,7 @@ coverPosition: "below-title"
 
 1. 它为什么强调“你的浏览器就是 API”
 1. 它的 CLI、Daemon、CDP、Chrome 是怎么串起来的
+1. 它到底复用哪个 Chrome profile 和登录态
 1. 它怎样把 DOM 快照变成 Agent 可点击的 `@ref`
 1. site adapter 为什么是这个项目最有想象力的部分
 1. MCP 接入为什么几乎是顺手长出来的
@@ -71,6 +72,12 @@ coverPosition: "below-title"
   - 单个网站能力的 JS 适配器，比如 `zhihu/hot`、`github/repo`、`twitter/search`
 - `真实登录态`
   - 不是复制 Cookie 给爬虫，而是在真实浏览器 tab 里运行代码，天然带上当前浏览器的 Cookie、localStorage、前端运行时状态
+- `user-data-dir`
+  - Chrome 的用户数据根目录，里面保存浏览器级别的状态，也包含一个或多个 profile
+- `profile`
+  - 一个独立的浏览器身份容器，通常对应 `Default`、`Profile 1` 这样的目录，里面保存这个身份登录过的网站、Cookie、历史、扩展和本地存储
+- `remote-debugging-port`
+  - Chrome 启动参数。打开后，Chrome 会在本机监听一个 CDP 调试端口，等待 bb-browser、Puppeteer、Playwright 这类工具连接
 
 所以它的核心不是“自动点网页”这么简单。
 
@@ -235,6 +242,103 @@ bb-browser 默认让 daemon 监听 `127.0.0.1:19824`，并在 `daemon.json` 里�
 - 不要把 daemon 暴露到公网
 - 不要随便执行来历不明的 adapter
 - 涉及真实账号时保持低频和可解释
+
+## 4.1. 登录态复用：user-data-dir、profile 和调试端口到底是什么
+
+{% asset_img figure-07.svg %}
+
+补一个很容易被 README 里的“复用登录态”带偏的问题：
+
+**bb-browser 默认复用的是它自己管理的 Chrome profile，不是你平时那个已经开着的日常 Chrome profile。**
+
+我在 2026-04-30 用本机安装的 `bb-browser@0.11.3` 验证过一次。`bb-browser status --json` 一开始返回 `{"running": false}`，执行 `bb-browser open about:blank` 后，它会启动一个受管 Chrome，并把 CDP 连接交给 daemon。这个受管 Chrome 的用户数据目录不是日常 Chrome 的默认目录，而是：
+
+```text
+~/.bb-browser/browser/user-data # bb-browser 默认创建和复用的 Chrome 用户数据根目录
+```
+
+这里需要把三个概念分开。
+
+第一，`user-data-dir` 是 Chrome 用户数据根目录。
+
+它像一个总仓库，里面放浏览器级别的状态，也放一个或多个 profile。macOS 上日常 Chrome Stable 的默认根目录通常是：
+
+```text
+~/Library/Application Support/Google/Chrome # Chrome Stable 的默认用户数据根目录
+```
+
+第二，profile 是这个根目录里的某个浏览器身份。
+
+比如：
+
+```text
+Default # 第一个或默认 profile
+Profile 1 # 另一个浏览器身份
+Profile 2 # 再另一个浏览器身份
+```
+
+所以更准确的关系是：
+
+```text
+user-data-dir # 整个 Chrome 用户数据根目录
+├── Local State # 多个 profile 共享的一些浏览器状态
+├── Default # 一个具体 profile
+├── Profile 1 # 另一个具体 profile
+└── Profile 2 # 再另一个具体 profile
+```
+
+一个 profile 很接近“一个浏览器本地账号”，但它不等于 Google 账号。它可以不登录 Google 账号，也可以登录某个 Google 账号做同步。对 bb-browser 更关键的是：网站 Cookie、localStorage、IndexedDB、扩展配置和很多本地状态都跟 profile 绑定。你在日常 Chrome 的 `Profile 1` 里登录了网站，并不意味着 bb-browser 的 `~/.bb-browser/browser/user-data/Default` 里也登录了。
+
+第三，`remote-debugging-port` 是让 Chrome 暴露 CDP 控制通道。
+
+概念上可以理解成下面这个讲解版对象：
+
+```ts
+const chromeLaunch = { // 用对象解释一次可被自动化工具连接的 Chrome 启动方式
+  executable: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", // Chrome 可执行文件
+  remoteDebuggingPort: 19825, // Chrome 在本机监听的 CDP 调试端口
+  userDataDir: "$HOME/.chrome-bb-profile", // 这次启动要使用的用户数据根目录
+}; // 启动参数说明结束
+```
+
+Chrome 进程监听端口之后，bb-browser 可以通过下面两种方式接入：
+
+```ts
+const bbBrowserConnect = { // 用对象解释 bb-browser 连接已有 Chrome 的两种入口
+  cliPort: "bb-browser open https://example.com --port 19825", // 命令行显式指定 CDP 端口
+  envUrl: "BB_BROWSER_CDP_URL=http://127.0.0.1:19825 bb-browser open https://example.com", // 环境变量显式指定 CDP 地址
+}; // 连接方式说明结束
+```
+
+但是这里有一个 2025 年之后很重要的 Chrome 安全变化。
+
+Chrome 从 136 开始限制默认用户数据目录上的 `--remote-debugging-port` 和 `--remote-debugging-pipe`。如果你尝试对日常默认目录打开远程调试端口，Chrome 会不再尊重这些开关；官方要求调试场景显式提供一个非默认的 `--user-data-dir`。这样做的原因很直接：CDP 权限太高，如果默认 profile 可以随便被调试端口接管，攻击者就有机会读取 Cookie 和凭证。
+
+这解释了一个看似矛盾的现象：
+
+- bb-browser 说它能复用登录态
+- 但默认情况下，它没有直接复用你平时 Chrome 已经登录好的所有网站
+
+两句话都对。
+
+bb-browser 能复用登录态，指的是复用它当前连接的 Chrome profile 里的登录态。默认受管浏览器第一次启动时，这个 profile 可能是空的，所以需要登录一次。登录完成后，Cookie 存在 `~/.bb-browser/browser/user-data` 里，后续 bb-browser 再启动就能继续用。
+
+如果你希望“人和 Agent 共用一个自动化浏览器身份”，更稳妥的做法不是硬接日常 Chrome 默认 profile，而是建一个专门的共享 profile：
+
+```ts
+const sharedAutomationProfile = { // 用对象描述推荐的共享自动化 profile
+  userDataDir: "$HOME/.chrome-bb-profile", // 独立于日常 Chrome 的用户数据根目录
+  purpose: "给本人和 bb-browser 共用的自动化浏览器身份", // 这个目录的用途
+  firstStep: "手动登录一次需要的网站", // 首次使用时仍然需要登录
+  laterUse: "以后通过同一个 CDP 端口让 bb-browser 连接", // 后续复用同一套 Cookie 和本地状态
+}; // 共享 profile 方案说明结束
+```
+
+这样既避免了重复登录太多次，也不会把日常 Chrome 里所有账号、扩展、历史和敏感数据都暴露给自动化调试通道。
+
+所以这一节可以压成一句实践建议：
+
+**不要把“复用登录态”理解成“直接接管我的日常 Chrome”。更稳的理解是：给 Agent 一个专门的 Chrome profile，让它在这个受控身份里长期复用登录态。**
 
 ## 5. 协议模型：Request / Response 是所有入口的共同语言
 
@@ -604,4 +708,5 @@ CLI、MCP、provider 都不用直接管 Chrome 连接，而是通过本地 HTTP 
 - [epiral/bb-sites GitHub 仓库](https://github.com/epiral/bb-sites)
 - [bb-sites 观察 commit](https://github.com/epiral/bb-sites/tree/fce0d3a0a955137004eb5cd24aedb302d7596004)
 - [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/)
+- [Chrome for Developers：Changes to remote debugging switches to improve security](https://developer.chrome.com/blog/remote-debugging-port)
 - [Model Context Protocol](https://modelcontextprotocol.io/)

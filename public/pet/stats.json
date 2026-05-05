@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "generatedAt": "2026-05-05T09:00:30.349Z",
+  "generatedAt": "2026-05-05T10:48:54.077Z",
   "pet": {
     "level": 8,
     "xp": 1952,
@@ -43,26 +43,30 @@
         "id": "intelligence",
         "label": "智力",
         "value": 69,
-        "ratio": 1
+        "maxValue": 200,
+        "ratio": 0.345
       },
       {
         "id": "stamina",
         "label": "体力",
         "value": 24,
-        "ratio": 0.34782608695652173
+        "maxValue": 200,
+        "ratio": 0.12
       },
       {
         "id": "speed",
         "label": "速度",
         "value": 21,
-        "ratio": 0.30434782608695654
+        "maxValue": 200,
+        "ratio": 0.105
       }
     ],
     "dominantAttribute": {
       "id": "intelligence",
       "label": "智力",
       "value": 69,
-      "ratio": 1
+      "maxValue": 200,
+      "ratio": 0.345
     },
     "latestMeal": {
       "title": "每日新闻：2026-05-05 X 上 AI 与前端热点速览",

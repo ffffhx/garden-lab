@@ -33,6 +33,7 @@ const RECENT_MEAL_XP = 14;
 const STREAK_DAY_XP = 10;
 const DIVERSITY_XP = 20;
 const ATTRIBUTE_GAIN_PER_FOOD = 3;
+const ATTRIBUTE_VALUE_CAP = 200;
 const FIVE_DAY_STREAK_GOAL = 5;
 const TECH_ROUTE_GOAL = 30;
 const LONGFORM_GOAL = 10;
@@ -77,6 +78,7 @@ export type BlogPetAttribute = {
   id: BlogPetAttributeId;
   label: string;
   value: number;
+  maxValue: number;
   ratio: number;
 };
 
@@ -451,6 +453,10 @@ function emptyAttributeValues(): Record<BlogPetAttributeId, number> {
     stamina: 0,
     speed: 0,
   };
+}
+
+function attributeRatio(value: number) {
+  return Math.max(0, Math.min(1, value / ATTRIBUTE_VALUE_CAP));
 }
 
 function activeCategoryCount(categoryCounts: Record<CategoryKey, number>) {
@@ -1206,7 +1212,6 @@ export function buildBlogPetStats(posts: PostSummary[], now = new Date()): BlogP
     activeCategories: activeCategoryCount(categoryCounts),
   });
   const progress = progressForXp(xp);
-  const maxAttributeValue = Math.max(1, ...Object.values(attributeValues));
   const attributes = (Object.keys(attributeValues) as BlogPetAttributeId[]).map((id) => {
     const value = attributeValues[id];
 
@@ -1214,7 +1219,8 @@ export function buildBlogPetStats(posts: PostSummary[], now = new Date()): BlogP
       id,
       label: ATTRIBUTE_LABELS[id],
       value,
-      ratio: value / maxAttributeValue,
+      maxValue: ATTRIBUTE_VALUE_CAP,
+      ratio: attributeRatio(value),
     };
   });
   const latestMeal = sortedPosts[0] ? buildBlogPetMeal(sortedPosts[0]) : null;

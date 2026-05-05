@@ -49,6 +49,7 @@ const HIDDEN_KEY = "blog-pet:hidden";
 const LEGACY_COMPACT_KEY = "blog-pet:compact";
 const DRAG_HINT_KEY = "blog-pet:drag-hint-seen";
 const IDLE_MS = 45_000;
+const COMPACT_LAYOUT_QUERY = "(max-width: 768px)";
 
 const ARTICLE_PROGRESS_DEFAULTS: ArticleProgressMilestones = {
   half: false,
@@ -349,7 +350,7 @@ export function BlogPet() {
   }, [position]);
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 640px)");
+    const media = window.matchMedia(COMPACT_LAYOUT_QUERY);
     const syncViewport = () => setIsNarrow(media.matches);
 
     syncViewport();
@@ -562,7 +563,7 @@ export function BlogPet() {
     }
 
     return stats.attributes
-      .map((attribute) => `${attribute.label} ${attribute.value}`)
+      .map((attribute) => `${attribute.label} ${attribute.value}/${attribute.maxValue}`)
       .join(" / ");
   }, [stats]);
   const activeSpeech = stats ? speech : "";
@@ -1073,7 +1074,9 @@ export function BlogPet() {
               <div key={attribute.id} className="blog-pet__attribute">
                 <div>
                   <span>{attribute.label}</span>
-                  <strong>{attribute.value}</strong>
+                  <strong>
+                    {attribute.value}/{attribute.maxValue}
+                  </strong>
                 </div>
                 <div className="blog-pet__mini-meter" style={meterStyle(attribute.ratio)}>
                   <span />

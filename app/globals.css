@@ -2136,7 +2136,7 @@ a {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .blog-pet {
     right: 0.75rem;
     bottom: 0.75rem;
@@ -2234,6 +2234,12 @@ a {
 .blog-pet__quick-actions:hover {
   opacity: 1;
   transform: translateY(0);
+}
+
+.blog-pet--expanded .blog-pet__bubble,
+.blog-pet--expanded .blog-pet__quick-actions,
+.blog-pet--expanded .blog-pet__status {
+  display: none;
 }
 
 .blog-pet__quick-actions button {
@@ -2620,6 +2626,8 @@ a {
 }
 
 .blog-pet--route-pet:not(.blog-pet--expanded) .blog-pet__quick-actions {
+  right: 0.35rem;
+  bottom: 0.55rem;
   opacity: 0;
 }
 
@@ -2664,7 +2672,7 @@ a {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .blog-pet {
     display: block;
     width: min(7.25rem, calc(100vw - 1.5rem));

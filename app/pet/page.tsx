@@ -312,7 +312,9 @@ export default function PetPage() {
               <div key={attribute.id}>
                 <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
                   <span>{attribute.label}</span>
-                  <span>{attribute.value}</span>
+                  <span>
+                    {attribute.value} / {attribute.maxValue}
+                  </span>
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
                   <span

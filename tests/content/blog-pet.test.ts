@@ -57,7 +57,7 @@ describe("buildBlogPetStats", () => {
       label: "热点糖粒",
     });
     expect(stats.attributes).toContainEqual(
-      expect.objectContaining({ id: "speed", label: "速度", value: 6, ratio: 1 })
+      expect.objectContaining({ id: "speed", label: "速度", value: 6, maxValue: 200, ratio: 0.03 })
     );
     expect(stats.evolution).toMatchObject({ id: "balanced", label: "全能型" });
     expect(stats.achievements).toContainEqual(

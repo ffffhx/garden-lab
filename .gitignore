@@ -5,11 +5,14 @@ Thumbs.db
 node_modules/
 .next/
 out/
+src-tauri/target/
 coverage/
 tmp/
 public/*
 !public/stats/
 !public/stats/token-usage.json
+!public/pet/
+!public/pet/stats.json
 db.json
 .vercel/
 .deploy*/

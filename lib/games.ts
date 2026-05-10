@@ -23,6 +23,13 @@ export const GAME_ENTRIES: GameEntry[] = [
     description: "两人私用的森林生态卡牌桌，支持本地游玩和局域网房间。",
     status: "暂存入口",
   },
+  {
+    slug: "texas-holdem",
+    title: "德州扑克桌游",
+    href: "/texas-holdem",
+    description: "本地多人德州扑克桌面，支持 2-6 人、盲注、下注轮、公共牌、摊牌、全下和底池结算。",
+    status: "可玩桌游",
+  },
 ];
 
 export function getAllGames() {

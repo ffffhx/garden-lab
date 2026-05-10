@@ -27,6 +27,20 @@ function isDesktopPetRoute(pathname: string | null) {
   return normalizedPathname === "/desktop-pet" || normalizedPathname.startsWith("/desktop-pet/");
 }
 
+function isGameTableRoute(pathname: string | null) {
+  const basePath = normalizeBasePath(process.env.NEXT_PUBLIC_BASE_PATH);
+  let normalizedPathname = pathname || "/";
+
+  if (
+    basePath &&
+    (normalizedPathname === basePath || normalizedPathname.startsWith(`${basePath}/`))
+  ) {
+    normalizedPathname = normalizedPathname.slice(basePath.length) || "/";
+  }
+
+  return normalizedPathname === "/texas-holdem" || normalizedPathname.startsWith("/texas-holdem/");
+}
+
 export function RootChrome({ children, posts }: RootChromeProps) {
   const pathname = usePathname();
 
@@ -37,7 +51,7 @@ export function RootChrome({ children, posts }: RootChromeProps) {
   return (
     <>
       <WebMcpTools posts={posts} />
-      <SiteShell>{children}</SiteShell>
+      <SiteShell showPet={!isGameTableRoute(pathname)}>{children}</SiteShell>
     </>
   );
 }

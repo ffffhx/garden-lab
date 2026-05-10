@@ -4,7 +4,13 @@ import { BlogPet } from "@/components/blog-pet";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
-export function SiteShell({ children }: { children: ReactNode }) {
+export function SiteShell({
+  children,
+  showPet = true,
+}: {
+  children: ReactNode;
+  showPet?: boolean;
+}) {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(180,83,9,0.15),transparent_28%),linear-gradient(180deg,#fffaf1_0%,#f3ecdf_100%)]">
       <SiteHeader />
@@ -12,7 +18,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         {children}
       </div>
       <SiteFooter />
-      <BlogPet />
+      {showPet ? <BlogPet /> : null}
     </div>
   );
 }

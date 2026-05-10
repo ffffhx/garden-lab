@@ -627,6 +627,25 @@ export function TexasHoldemGame() {
               ) : null}
             </section>
 
+            <section className="rounded-2xl border border-cyan-200/18 bg-cyan-300/8 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
+                Public Tunnel
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-white">公网同桌原理</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-200">
+                你的电脑先用 cloudflared 主动连到 Cloudflare，Cloudflare 给出一个临时公网链接。
+                朋友访问这个链接时，请求会沿着已建立的隧道回到你的电脑。
+              </p>
+              <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/64 p-3 text-xs font-semibold leading-6 text-cyan-50/85">
+                朋友浏览器 {"->"} Cloudflare {"->"} 你电脑的 8789 代理 {"->"} 页面 3000
+                / 房间 8788
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-300">
+                所以朋友不需要和你在同一个局域网；但你的电脑、代理、房间服务和 cloudflared
+                都要保持运行。
+              </p>
+            </section>
+
             <section className="rounded-2xl border border-white/10 bg-white/6 p-4">
               <h2 className="text-lg font-semibold text-white">牌桌</h2>
               <div className="mt-3 flex flex-wrap gap-2">

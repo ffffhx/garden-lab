@@ -27,7 +27,8 @@ export const GAME_ENTRIES: GameEntry[] = [
     slug: "texas-holdem",
     title: "德州扑克桌游",
     href: "/texas-holdem",
-    description: "本地多人德州扑克桌面，支持 2-6 人、盲注、下注轮、公共牌、摊牌、全下和底池结算。",
+    description:
+      "本地多人德州扑克桌面，支持 2-6 人、盲注、下注轮、公共牌、摊牌、底池结算，并可通过 Cloudflare 隧道让朋友公网同桌。",
     status: "可玩桌游",
   },
 ];

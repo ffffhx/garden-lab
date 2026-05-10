@@ -174,9 +174,10 @@ export function TexasHoldemGame() {
     setGame((current) => applyPlayerAction(current, action));
   }
 
-  function connectToRoom(mode: "create" | "join") {
+  async function connectToRoom(mode: "create" | "join") {
     const token = getClientToken();
     const roomId = roomIdInput.trim().toUpperCase();
+    const normalizedPort = serverPort.trim() || DEFAULT_ROOM_PORT;
 
     if (mode === "join" && !roomId) {
       setConnection((current) => ({
@@ -187,15 +188,29 @@ export function TexasHoldemGame() {
     }
 
     socketRef.current?.close();
-    const socket = new WebSocket(getWebSocketUrl(serverPort));
-    socketRef.current = socket;
-
     setConnection({
       status: "connecting",
       roomId: mode === "join" ? roomId : "",
       viewerSeat: "spectator",
       error: null,
     });
+
+    try {
+      await ensureRoomServer(normalizedPort);
+    } catch (error) {
+      setConnection((current) => ({
+        ...current,
+        status: "offline",
+        error:
+          error instanceof Error
+            ? error.message
+            : "房间服务自动启动失败，请手动执行 pnpm run holdem:server。",
+      }));
+      return;
+    }
+
+    const socket = new WebSocket(getWebSocketUrl(normalizedPort));
+    socketRef.current = socket;
 
     socket.onopen = () => {
       socket.send(
@@ -258,7 +273,7 @@ export function TexasHoldemGame() {
       setConnection((current) => ({
         ...current,
         status: "offline",
-        error: `无法连接德州房间服务，请确认 pnpm holdem:server 已在 ${serverPort} 端口运行。`,
+        error: `无法连接德州房间服务。页面已尝试自动启动，请确认 pnpm run holdem:server 已在 ${normalizedPort} 端口运行。`,
       }));
     };
 
@@ -867,21 +882,75 @@ function getClientToken() {
   return token;
 }
 
+async function ensureRoomServer(port: string) {
+  const bootstrapUrl = getRoomServerBootstrapUrl();
+
+  if (!bootstrapUrl) {
+    return;
+  }
+
+  let response: Response;
+
+  try {
+    response = await fetch(bootstrapUrl, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ port: Number(port) }),
+      cache: "no-store",
+    });
+  } catch {
+    return;
+  }
+
+  if (response.status === 404) {
+    return;
+  }
+
+  const payload = (await response.json().catch(() => null)) as {
+    ok?: boolean;
+    error?: string;
+  } | null;
+
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error ?? "房间服务自动启动失败，请手动执行 pnpm run holdem:server。");
+  }
+}
+
+function getRoomServerBootstrapUrl() {
+  const hostname = window.location.hostname;
+
+  if (hostname.endsWith("github.io")) {
+    return "";
+  }
+
+  if (isPrivateRoomHost(hostname)) {
+    return `${window.location.protocol}//${hostname}:8789/api/texas-holdem/ensure-room-server`;
+  }
+
+  return "/api/texas-holdem/ensure-room-server";
+}
+
 function getWebSocketUrl(port: string) {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const normalizedPort = port.trim() || DEFAULT_ROOM_PORT;
   const hostname = window.location.hostname;
-  const isLocalHost =
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname === "::1" ||
-    /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
 
-  if (!isLocalHost && window.location.protocol === "https:") {
+  if (!isPrivateRoomHost(hostname) && window.location.protocol === "https:") {
     return `${protocol}//${window.location.host}/ws`;
   }
 
   return `${protocol}//${hostname}:${normalizedPort}/ws`;
+}
+
+function isPrivateRoomHost(hostname: string) {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
+  );
 }
 
 function updateRoomUrl(roomId: string, seat: ViewerSeat) {

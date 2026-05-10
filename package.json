@@ -11,6 +11,7 @@
     "farm:build": "pnpm run farm:assets && vite build --config games/farm-life/vite.config.ts",
     "forest:server": "tsx scripts/forest-shuffle-room-server.ts",
     "holdem:server": "tsx scripts/texas-holdem-room-server.ts",
+    "holdem:public-proxy": "tsx scripts/texas-holdem-public-proxy.ts",
     "prebuild": "pnpm run farm:build && node scripts/sync-post-assets.mjs && node scripts/sync-token-usage.mjs && pnpm run sync:pet",
     "build": "next build",
     "sync:tokens": "node scripts/sync-token-usage.mjs",

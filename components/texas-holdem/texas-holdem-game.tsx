@@ -870,7 +870,18 @@ function getClientToken() {
 function getWebSocketUrl(port: string) {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const normalizedPort = port.trim() || DEFAULT_ROOM_PORT;
-  return `${protocol}//${window.location.hostname}:${normalizedPort}/ws`;
+  const hostname = window.location.hostname;
+  const isLocalHost =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
+  if (!isLocalHost && window.location.protocol === "https:") {
+    return `${protocol}//${window.location.host}/ws`;
+  }
+
+  return `${protocol}//${hostname}:${normalizedPort}/ws`;
 }
 
 function updateRoomUrl(roomId: string, seat: ViewerSeat) {

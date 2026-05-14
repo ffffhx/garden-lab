@@ -25,7 +25,7 @@ const TOKEN_KEY = "texas-holdem-client-token-v1";
 const DEFAULT_ROOM_PORT = "8788";
 const PUBLIC_ROOM_WS_URL =
   process.env.NEXT_PUBLIC_HOLDEM_ROOM_WS_URL?.trim() ||
-  "wss://8-218-149-148.nip.io/texas-holdem-room/ws";
+  "wss://8-218-149-148.anyip.dev/texas-holdem-room/ws";
 
 interface ConnectionState {
   status: "offline" | "connecting" | "connected";

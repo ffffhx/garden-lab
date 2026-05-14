@@ -41,6 +41,9 @@ import type {
 const STORAGE_KEY = "forest-shuffle-private-table-v3";
 const TOKEN_KEY = "forest-shuffle-client-token-v1";
 const DEFAULT_ROOM_PORT = "8787";
+const PUBLIC_ROOM_WS_URL =
+  process.env.NEXT_PUBLIC_FOREST_ROOM_WS_URL?.trim() ||
+  "wss://8-218-149-148.nip.io/forest-shuffle-room/ws";
 
 interface ConnectionState {
   status: "offline" | "connecting" | "connected";
@@ -112,6 +115,9 @@ export function ForestShuffleGame() {
     pageOrigin && connection.roomId
       ? `${pageOrigin}/forest-shuffle/?room=${connection.roomId}`
       : "";
+  const usesManagedRoomServer = pageOrigin
+    ? !isPrivateRoomHost(new URL(pageOrigin).hostname)
+    : false;
   const revealedWinter = game.revealedWinter ?? [];
   const discardPile = game.discardPile ?? [];
 
@@ -282,7 +288,7 @@ export function ForestShuffleGame() {
       setConnection((current) => ({
         ...current,
         status: "offline",
-        error: `无法连接房间服务，请确认 pnpm forest:server 已在 ${serverPort} 端口运行。`,
+        error: getRoomConnectionError(serverPort),
       }));
     };
 
@@ -541,7 +547,7 @@ export function ForestShuffleGame() {
       <section className="grid gap-4 rounded-lg border border-slate-900/10 bg-white/80 p-4 shadow-[0_24px_80px_-64px_rgba(15,23,42,0.7)] lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div>
           <p className="text-sm font-medium uppercase tracking-[0.22em] text-emerald-800">
-            LAN Room Table
+            Online Room Table
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
             森森不息
@@ -574,7 +580,7 @@ export function ForestShuffleGame() {
         </div>
       </section>
 
-      <Panel title="局域网房间">
+      <Panel title="线上房间">
         <div className="grid gap-3 lg:grid-cols-[minmax(10rem,0.8fr)_minmax(8rem,0.45fr)_minmax(8rem,0.45fr)_minmax(10rem,0.6fr)_auto] lg:items-end">
           <Field label="名字">
             <input
@@ -600,13 +606,15 @@ export function ForestShuffleGame() {
               ))}
             </div>
           </Field>
-          <Field label="服务端口">
-            <input
-              value={serverPort}
-              onChange={(event) => setServerPort(event.target.value)}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-700 focus:ring-4 focus:ring-emerald-100"
-            />
-          </Field>
+          {!usesManagedRoomServer ? (
+            <Field label="服务端口">
+              <input
+                value={serverPort}
+                onChange={(event) => setServerPort(event.target.value)}
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-700 focus:ring-4 focus:ring-emerald-100"
+              />
+            </Field>
+          ) : null}
           <Field label="房间号">
             <input
               value={roomIdInput}
@@ -618,8 +626,8 @@ export function ForestShuffleGame() {
             <ActionWithTooltip
               tooltip={
                 isConnected
-                  ? "创建新的局域网房间，会断开当前房间连接并让你成为新房间的玩家一。"
-                  : "创建一个局域网房间，当前浏览器会入座为所选座位，朋友可用房间号加入。"
+                  ? "创建新的线上房间，会断开当前房间连接并让你成为新房间的玩家一。"
+                  : "创建一个线上房间，当前浏览器会入座为所选座位，朋友可用房间号加入。"
               }
             >
               <button
@@ -635,7 +643,7 @@ export function ForestShuffleGame() {
               tooltip={
                 isConnected
                   ? "你已经加入当前房间。如需加入其他房间，请先断开或直接创建新房间。"
-                  : "输入房间号后加入局域网房间，加入成功后会固定显示为玩家一或玩家二。"
+                  : "输入房间号后加入线上房间，加入成功后会固定显示为玩家一或玩家二。"
               }
             >
               <button
@@ -664,7 +672,7 @@ export function ForestShuffleGame() {
           <ActionWithTooltip
             tooltip={
               isConnected || isConnecting
-                ? "断开当前浏览器和房间同步服务的连接；房间服务仍在本机运行。"
+                ? "断开当前浏览器和房间同步服务的连接；房间服务仍会继续运行。"
                 : "当前没有连接房间。"
             }
           >
@@ -1807,9 +1815,30 @@ function getClientToken(): string {
 }
 
 function getWebSocketUrl(port: string): string {
+  if (!isPrivateRoomHost(window.location.hostname)) {
+    return PUBLIC_ROOM_WS_URL;
+  }
+
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const normalizedPort = port.trim() || DEFAULT_ROOM_PORT;
   return `${protocol}//${window.location.hostname}:${normalizedPort}/ws`;
+}
+
+function getRoomConnectionError(port: string): string {
+  if (!isPrivateRoomHost(window.location.hostname)) {
+    return "无法连接线上房间服务，请稍后重试。";
+  }
+
+  return `无法连接房间服务，请确认 pnpm forest:server 已在 ${port} 端口运行。`;
+}
+
+function isPrivateRoomHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
+  );
 }
 
 function updateRoomUrl(roomId: string, seat: ViewerSeat) {

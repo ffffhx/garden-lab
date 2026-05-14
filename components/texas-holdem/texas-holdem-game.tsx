@@ -23,6 +23,9 @@ const PLAYER_NAMES = ["你", "左手位", "对门", "右手位", "短筹码", "�
 const PLAYER_COUNTS = [2, 3, 4, 5, 6];
 const TOKEN_KEY = "texas-holdem-client-token-v1";
 const DEFAULT_ROOM_PORT = "8788";
+const PUBLIC_ROOM_WS_URL =
+  process.env.NEXT_PUBLIC_HOLDEM_ROOM_WS_URL?.trim() ||
+  "wss://8-218-149-148.nip.io/texas-holdem-room/ws";
 
 interface ConnectionState {
   status: "offline" | "connecting" | "connected";
@@ -64,6 +67,9 @@ export function TexasHoldemGame() {
     pageOrigin && connection.roomId
       ? `${pageOrigin}/texas-holdem/?room=${connection.roomId}`
       : "";
+  const usesManagedRoomServer = pageOrigin
+    ? !isPrivateRoomHost(new URL(pageOrigin).hostname)
+    : false;
   const clampedWagerTarget = clamp(
     wagerTarget || defaultWagerTarget,
     defaultWagerTarget,
@@ -273,7 +279,7 @@ export function TexasHoldemGame() {
       setConnection((current) => ({
         ...current,
         status: "offline",
-        error: `无法连接德州房间服务。页面已尝试自动启动，请确认 pnpm run holdem:server 已在 ${normalizedPort} 端口运行。`,
+        error: getRoomConnectionError(normalizedPort),
       }));
     };
 
@@ -512,7 +518,7 @@ export function TexasHoldemGame() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
-                    LAN Room
+                    Online Room
                   </p>
                   <h2 className="mt-1 text-lg font-semibold text-white">朋友同桌</h2>
                 </div>
@@ -530,14 +536,16 @@ export function TexasHoldemGame() {
                     className="min-h-10 rounded-xl border border-white/10 bg-slate-950/70 px-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-200"
                   />
                 </label>
-                <label className="grid gap-1 text-sm font-semibold text-slate-200">
-                  服务端口
-                  <input
-                    value={serverPort}
-                    onChange={(event) => setServerPort(event.target.value)}
-                    className="min-h-10 rounded-xl border border-white/10 bg-slate-950/70 px-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-200"
-                  />
-                </label>
+                {!usesManagedRoomServer ? (
+                  <label className="grid gap-1 text-sm font-semibold text-slate-200">
+                    服务端口
+                    <input
+                      value={serverPort}
+                      onChange={(event) => setServerPort(event.target.value)}
+                      className="min-h-10 rounded-xl border border-white/10 bg-slate-950/70 px-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-200"
+                    />
+                  </label>
+                ) : null}
                 <label className="grid gap-1 text-sm font-semibold text-slate-200">
                   房间号
                   <input
@@ -629,20 +637,18 @@ export function TexasHoldemGame() {
 
             <section className="rounded-2xl border border-cyan-200/18 bg-cyan-300/8 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
-                Public Tunnel
+                Public Room Service
               </p>
               <h2 className="mt-1 text-lg font-semibold text-white">公网同桌原理</h2>
               <p className="mt-3 text-sm leading-6 text-slate-200">
-                你的电脑先用 cloudflared 主动连到 Cloudflare，Cloudflare 给出一个临时公网链接。
-                朋友访问这个链接时，请求会沿着已建立的隧道回到你的电脑。
+                线上页面会连接到 ECS 上的房间服务。你创建房间后，把页面链接发给朋友，
+                朋友输入同一个房间号即可加入。
               </p>
               <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/64 p-3 text-xs font-semibold leading-6 text-cyan-50/85">
-                朋友浏览器 {"->"} Cloudflare {"->"} 你电脑的 8789 代理 {"->"} 页面 3000
-                / 房间 8788
+                朋友浏览器 {"->"} GitHub Pages 页面 {"->"} ECS 房间服务
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-300">
-                所以朋友不需要和你在同一个局域网；但你的电脑、代理、房间服务和 cloudflared
-                都要保持运行。
+                你和朋友不需要在同一个局域网；只要 ECS 房间服务在线即可同步牌桌状态。
               </p>
             </section>
 
@@ -940,27 +946,31 @@ async function ensureRoomServer(port: string) {
 function getRoomServerBootstrapUrl() {
   const hostname = window.location.hostname;
 
-  if (hostname.endsWith("github.io")) {
+  if (!isPrivateRoomHost(hostname)) {
     return "";
   }
 
-  if (isPrivateRoomHost(hostname)) {
-    return `${window.location.protocol}//${hostname}:8789/api/texas-holdem/ensure-room-server`;
-  }
-
-  return "/api/texas-holdem/ensure-room-server";
+  return `${window.location.protocol}//${hostname}:8789/api/texas-holdem/ensure-room-server`;
 }
 
 function getWebSocketUrl(port: string) {
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const normalizedPort = port.trim() || DEFAULT_ROOM_PORT;
   const hostname = window.location.hostname;
 
-  if (!isPrivateRoomHost(hostname) && window.location.protocol === "https:") {
-    return `${protocol}//${window.location.host}/ws`;
+  if (!isPrivateRoomHost(hostname)) {
+    return PUBLIC_ROOM_WS_URL;
   }
 
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const normalizedPort = port.trim() || DEFAULT_ROOM_PORT;
   return `${protocol}//${hostname}:${normalizedPort}/ws`;
+}
+
+function getRoomConnectionError(port: string) {
+  if (!isPrivateRoomHost(window.location.hostname)) {
+    return "无法连接线上德州房间服务，请稍后重试。";
+  }
+
+  return `无法连接德州房间服务。页面已尝试自动启动，请确认 pnpm run holdem:server 已在 ${port} 端口运行。`;
 }
 
 function isPrivateRoomHost(hostname: string) {

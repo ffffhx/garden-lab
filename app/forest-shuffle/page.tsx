@@ -4,7 +4,7 @@ import { ForestShuffleGame } from "@/components/forest-shuffle/forest-shuffle-ga
 
 export const metadata: Metadata = {
   title: "森森不息",
-  description: "两人私用的森林生态卡牌桌。",
+  description: "两人私用的森林生态卡牌桌，支持线上房间。",
 };
 
 export default function ForestShufflePage() {

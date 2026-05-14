@@ -20,7 +20,7 @@ export const GAME_ENTRIES: GameEntry[] = [
     slug: "forest-shuffle",
     title: "森森不息",
     href: "/forest-shuffle",
-    description: "两人私用的森林生态卡牌桌，支持本地游玩和局域网房间。",
+    description: "两人私用的森林生态卡牌桌，支持本地游玩和线上房间。",
     status: "暂存入口",
   },
   {
@@ -28,7 +28,7 @@ export const GAME_ENTRIES: GameEntry[] = [
     title: "德州扑克桌游",
     href: "/texas-holdem",
     description:
-      "本地多人德州扑克桌面，支持 2-6 人、盲注、下注轮、公共牌、摊牌、底池结算，并可通过 Cloudflare 隧道让朋友公网同桌。",
+      "多人德州扑克桌面，支持 2-6 人、盲注、下注轮、公共牌、摊牌、底池结算，并可通过 ECS 房间服务让朋友公网同桌。",
     status: "可玩桌游",
   },
 ];

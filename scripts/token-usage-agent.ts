@@ -27,6 +27,7 @@ type AgentState = {
 const DEFAULT_CONFIG_FILE = path.join(os.homedir(), ".token-board-agent.json");
 const DEFAULT_STATE_FILE = path.join(os.homedir(), ".token-board-agent-state.json");
 const AGENT_VERSION = "0.1.0";
+const INGEST_BATCH_SIZE = 1000;
 
 async function main() {
   const command = process.argv[2] || "upload";
@@ -73,7 +74,15 @@ export async function uploadOnce(config: AgentConfig) {
     return { accepted: 0, duplicates: 0, records: 0 };
   }
 
-  const result = await postIngest(config, events);
+  const batches = chunkEvents(events, INGEST_BATCH_SIZE);
+  const result = { accepted: 0, duplicates: 0, records: 0 };
+
+  for (const batch of batches) {
+    const batchResult = await postIngest(config, batch);
+    result.accepted += batchResult.accepted;
+    result.duplicates += batchResult.duplicates;
+    result.records = batchResult.records;
+  }
 
   if (result.accepted > 0 || result.duplicates > 0) {
     await writeState(config.stateFile, {
@@ -83,7 +92,7 @@ export async function uploadOnce(config: AgentConfig) {
   }
 
   console.log(
-    `Uploaded ${events.length} events. accepted=${result.accepted} duplicates=${result.duplicates} records=${result.records}`
+    `Uploaded ${events.length} events in ${batches.length} batches. accepted=${result.accepted} duplicates=${result.duplicates} records=${result.records}`
   );
 
   return result;
@@ -191,6 +200,16 @@ async function postIngest(config: AgentConfig, events: Awaited<ReturnType<typeof
   }
 
   return payload as { accepted: number; duplicates: number; records: number };
+}
+
+function chunkEvents<T>(events: T[], size: number) {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < events.length; index += size) {
+    chunks.push(events.slice(index, index + size));
+  }
+
+  return chunks;
 }
 
 async function loginWithGitHub() {

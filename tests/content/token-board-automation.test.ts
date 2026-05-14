@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { promises as fs } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import {
   findUserByUploadToken,
@@ -6,7 +9,7 @@ import {
   normalizeUploadUsers,
   sanitizeIngestEvents,
 } from "@/lib/token-board-automation";
-import { extractTokenUsageEventsFromJson } from "@/lib/token-usage-collector";
+import { extractTokenUsageEventsFromJson, parseUsageFile } from "@/lib/token-usage-collector";
 
 describe("token board automation", () => {
   it("authenticates upload users by token hash", () => {
@@ -100,5 +103,67 @@ describe("token board automation", () => {
       })
     );
     expect(JSON.stringify(entries)).not.toContain("do not upload me");
+  });
+
+  it("parses Codex session logs from last_token_usage only", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "token-board-codex-"));
+    const file = path.join(dir, "session.jsonl");
+    const lines = [
+      {
+        timestamp: "2026-05-14T08:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          cwd: "/Users/feng/work/token-board",
+          model: "gpt-5.5",
+        },
+      },
+      {
+        timestamp: "2026-05-14T08:01:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 10_000,
+              cached_input_tokens: 4_000,
+              output_tokens: 1_000,
+              reasoning_output_tokens: 500,
+              total_tokens: 11_500,
+            },
+            last_token_usage: {
+              input_tokens: 100,
+              cached_input_tokens: 40,
+              output_tokens: 10,
+              reasoning_output_tokens: 5,
+              total_tokens: 115,
+            },
+          },
+        },
+      },
+    ];
+
+    await fs.writeFile(file, `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`);
+
+    const entries = await parseUsageFile(file, {
+      source: "codex",
+      tool: "Codex CLI",
+      userId: "feng",
+      displayName: "Feng",
+      team: "Friends",
+      filePath: file,
+    });
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toEqual(
+      expect.objectContaining({
+        model: "gpt-5.5",
+        project: "token-board",
+        totalTokens: 115,
+        inputTokens: 100,
+        cachedInputTokens: 40,
+        outputTokens: 10,
+        reasoningOutputTokens: 5,
+      })
+    );
   });
 });

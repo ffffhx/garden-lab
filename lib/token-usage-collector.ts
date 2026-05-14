@@ -117,6 +117,10 @@ export async function parseUsageFile(filePath: string, context: ExtractionContex
     return applyContext(parseTokenUsageImport(text).entries, context);
   }
 
+  if (context.source === "codex" && ext === ".jsonl") {
+    return parseCodexSessionJsonl(text, context);
+  }
+
   if (ext === ".jsonl" || ext === ".log") {
     const objects = text
       .split(/\r?\n/)
@@ -139,6 +143,59 @@ export async function parseUsageFile(filePath: string, context: ExtractionContex
   }
 
   return [];
+}
+
+function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
+  const entries: TokenUsageEvent[] = [];
+  let currentModel = context.model || "unknown";
+  let currentProject = context.project;
+  let sequence = 0;
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+
+    if (!line.includes('"token_count"') && !line.includes('"model"') && !line.includes('"cwd"')) {
+      continue;
+    }
+
+    const parsed = safeJsonParse(line);
+
+    if (!isRecord(parsed)) {
+      continue;
+    }
+
+    const payload = isRecord(parsed.payload) ? parsed.payload : {};
+    const type = typeof parsed.type === "string" ? parsed.type : "";
+
+    if ((type === "turn_context" || type === "session_meta") && typeof payload.model === "string") {
+      currentModel = payload.model;
+    }
+
+    if ((type === "turn_context" || type === "session_meta") && typeof payload.cwd === "string") {
+      currentProject = path.basename(payload.cwd);
+    }
+
+    const info = isRecord(payload.info) ? payload.info : {};
+    const usage = isRecord(info.last_token_usage) ? info.last_token_usage : undefined;
+    const timestamp = typeof parsed.timestamp === "string" ? parsed.timestamp : "";
+
+    if (type !== "event_msg" || payload.type !== "token_count" || !usage || !timestamp) {
+      continue;
+    }
+
+    sequence += 1;
+    entries.push(
+      recordToUsageEvent(usage, {
+        ...context,
+        timestamp,
+        model: currentModel,
+        project: currentProject,
+        sessionId: context.sessionId || textFromFields(payload, ["id"]) || context.filePath,
+      }, sequence)
+    );
+  }
+
+  return dedupeTokenEvents(entries);
 }
 
 export function defaultSourceTargets(): SourceTarget[] {
@@ -392,6 +449,10 @@ function safeJsonParse(text: string): unknown | undefined {
   } catch {
     return undefined;
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function isUsageFile(filePath: string) {

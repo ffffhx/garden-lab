@@ -1,0 +1,448 @@
+import { createHash } from "node:crypto";
+import { promises as fs } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import {
+  dedupeTokenEvents,
+  normalizeTokenUsageEvent,
+  parseTokenUsageImport,
+  type TokenUsageEvent,
+} from "./token-leaderboard";
+
+export type TokenUsageCollectorConfig = {
+  userId?: string;
+  displayName?: string;
+  team?: string;
+  usagePaths?: string[];
+  includeDefaultSources?: boolean;
+  sinceHours?: number;
+  maxFiles?: number;
+  maxFileBytes?: number;
+};
+
+type SourceTarget = {
+  source: string;
+  tool: string;
+  paths: string[];
+};
+
+type ExtractionContext = {
+  source: string;
+  tool: string;
+  filePath?: string;
+  userId?: string;
+  displayName?: string;
+  team?: string;
+  timestamp?: string;
+  model?: string;
+  project?: string;
+  sessionId?: string;
+};
+
+const DEFAULT_SINCE_HOURS = 24 * 30;
+const DEFAULT_MAX_FILES = 800;
+const DEFAULT_MAX_FILE_BYTES = 5 * 1024 * 1024;
+const TOKEN_KEYS = new Set([
+  "cached_input_tokens",
+  "cachedInputTokens",
+  "cache_creation_input_tokens",
+  "cache_read_input_tokens",
+  "completion_tokens",
+  "completionTokens",
+  "input_tokens",
+  "inputTokens",
+  "output_tokens",
+  "outputTokens",
+  "prompt_tokens",
+  "promptTokens",
+  "reasoning_output_tokens",
+  "reasoningOutputTokens",
+  "total_tokens",
+  "totalTokens",
+  "tokens",
+]);
+
+export async function collectLocalTokenUsage(config: TokenUsageCollectorConfig = {}) {
+  const targets = buildSourceTargets(config);
+  const maxFiles = config.maxFiles ?? DEFAULT_MAX_FILES;
+  const maxFileBytes = config.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
+  const sinceMs = Date.now() - (config.sinceHours ?? DEFAULT_SINCE_HOURS) * 60 * 60 * 1000;
+  const entries: TokenUsageEvent[] = [];
+
+  for (const target of targets) {
+    let scannedFiles = 0;
+
+    for (const targetPath of target.paths) {
+      const files = await listUsageFiles(expandHome(targetPath), {
+        maxFiles: Math.max(0, maxFiles - scannedFiles),
+        maxFileBytes,
+        sinceMs,
+      });
+      scannedFiles += files.length;
+
+      for (const filePath of files) {
+        entries.push(
+          ...(await parseUsageFile(filePath, {
+            source: target.source,
+            tool: target.tool,
+            filePath,
+            userId: config.userId,
+            displayName: config.displayName,
+            team: config.team,
+            project: path.basename(path.dirname(filePath)),
+            sessionId: path.basename(filePath),
+          }))
+        );
+      }
+    }
+  }
+
+  return dedupeTokenEvents(entries);
+}
+
+export function extractTokenUsageEventsFromJson(value: unknown, context: ExtractionContext) {
+  const entries: TokenUsageEvent[] = [];
+
+  visitJson(value, context, entries, { sequence: 0 }, 0);
+
+  return dedupeTokenEvents(entries);
+}
+
+export async function parseUsageFile(filePath: string, context: ExtractionContext) {
+  const text = await fs.readFile(filePath, "utf8");
+  const ext = path.extname(filePath).toLowerCase();
+
+  if (ext === ".csv") {
+    return applyContext(parseTokenUsageImport(text).entries, context);
+  }
+
+  if (ext === ".jsonl" || ext === ".log") {
+    const objects = text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .flatMap((line) => parseJsonLine(line));
+
+    return dedupeTokenEvents(objects.flatMap((object) => extractTokenUsageEventsFromJson(object, context)));
+  }
+
+  const parsed = safeJsonParse(text);
+
+  if (parsed !== undefined) {
+    const directImport = parseTokenUsageImport(text);
+    if (directImport.entries.length) {
+      return applyContext(directImport.entries, context);
+    }
+
+    return extractTokenUsageEventsFromJson(parsed, context);
+  }
+
+  return [];
+}
+
+export function defaultSourceTargets(): SourceTarget[] {
+  return [
+    {
+      source: "codex",
+      tool: "Codex CLI",
+      paths: ["~/.codex/sessions", "~/.codex/projects"],
+    },
+    {
+      source: "claude-code",
+      tool: "Claude Code",
+      paths: ["~/.claude/projects"],
+    },
+    {
+      source: "cursor",
+      tool: "Cursor",
+      paths: ["~/Library/Application Support/Cursor/User/globalStorage"],
+    },
+    {
+      source: "gemini-cli",
+      tool: "Gemini CLI",
+      paths: ["~/.gemini"],
+    },
+  ];
+}
+
+function buildSourceTargets(config: TokenUsageCollectorConfig): SourceTarget[] {
+  const targets: SourceTarget[] = [];
+
+  if (config.usagePaths?.length) {
+    targets.push({
+      source: "custom",
+      tool: "Custom Usage",
+      paths: config.usagePaths,
+    });
+  }
+
+  if (config.includeDefaultSources !== false) {
+    targets.push(...defaultSourceTargets());
+  }
+
+  return targets;
+}
+
+async function listUsageFiles(
+  inputPath: string,
+  {
+    maxFiles,
+    maxFileBytes,
+    sinceMs,
+  }: {
+    maxFiles: number;
+    maxFileBytes: number;
+    sinceMs: number;
+  }
+) {
+  const files: string[] = [];
+
+  async function walk(currentPath: string, depth: number) {
+    if (files.length >= maxFiles || depth > 8) {
+      return;
+    }
+
+    let stat;
+    try {
+      stat = await fs.stat(currentPath);
+    } catch {
+      return;
+    }
+
+    if (stat.isDirectory()) {
+      if (shouldSkipDirectory(currentPath)) {
+        return;
+      }
+
+      const children = await fs.readdir(currentPath);
+      for (const child of children) {
+        await walk(path.join(currentPath, child), depth + 1);
+      }
+      return;
+    }
+
+    if (
+      stat.isFile() &&
+      files.length < maxFiles &&
+      stat.size <= maxFileBytes &&
+      stat.mtimeMs >= sinceMs &&
+      isUsageFile(currentPath)
+    ) {
+      files.push(currentPath);
+    }
+  }
+
+  await walk(inputPath, 0);
+  return files;
+}
+
+function visitJson(
+  value: unknown,
+  context: ExtractionContext,
+  entries: TokenUsageEvent[],
+  state: { sequence: number },
+  depth: number
+) {
+  if (depth > 14 || value === null || value === undefined) {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => visitJson(item, context, entries, state, depth + 1));
+    return;
+  }
+
+  if (typeof value !== "object") {
+    return;
+  }
+
+  const record = value as Record<string, unknown>;
+  const nextContext = enrichContext(context, record);
+
+  if (hasUsageShape(record)) {
+    state.sequence += 1;
+    entries.push(recordToUsageEvent(record, nextContext, state.sequence));
+  }
+
+  for (const [key, child] of Object.entries(record)) {
+    if (typeof child === "string" && isSensitiveTextKey(key)) {
+      continue;
+    }
+
+    visitJson(child, nextContext, entries, state, depth + 1);
+  }
+}
+
+function recordToUsageEvent(record: Record<string, unknown>, context: ExtractionContext, sequence: number) {
+  const inputTokens = numberFromFields(record, ["inputTokens", "input_tokens", "promptTokens", "prompt_tokens"]);
+  const cachedInputTokens =
+    numberFromFields(record, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"]) +
+    numberFromFields(record, ["cache_read_input_tokens", "cacheReadInputTokens"]) +
+    numberFromFields(record, ["cache_creation_input_tokens", "cacheCreationInputTokens"]);
+  const outputTokens = numberFromFields(record, ["outputTokens", "output_tokens", "completionTokens", "completion_tokens"]);
+  const reasoningOutputTokens = numberFromFields(record, [
+    "reasoningOutputTokens",
+    "reasoning_output_tokens",
+    "reasoningTokens",
+  ]);
+  const totalTokens = numberFromFields(record, ["totalTokens", "total_tokens", "tokens"]);
+  const timestamp = context.timestamp || new Date().toISOString();
+  const model = context.model || textFromFields(record, ["model", "modelName", "model_name"]) || "unknown";
+  const sessionId = context.sessionId || textFromFields(record, ["sessionId", "session_id", "conversationId", "id"]);
+  const project = context.project || textFromFields(record, ["project", "repo", "workspace", "cwd"]);
+
+  return normalizeTokenUsageEvent({
+    id: stableCollectorId(context, timestamp, model, sessionId, sequence, {
+      inputTokens,
+      cachedInputTokens,
+      outputTokens,
+      reasoningOutputTokens,
+      totalTokens,
+    }),
+    userId: context.userId || "local",
+    displayName: context.displayName || context.userId || "Local User",
+    team: context.team || "Friends",
+    source: context.source,
+    tool: context.tool,
+    model,
+    project,
+    timestamp,
+    inputTokens,
+    cachedInputTokens,
+    outputTokens,
+    reasoningOutputTokens,
+    totalTokens,
+    messages: numberFromFields(record, ["messages", "messageCount", "message_count"]),
+    sessionId,
+  });
+}
+
+function enrichContext(context: ExtractionContext, record: Record<string, unknown>): ExtractionContext {
+  return {
+    ...context,
+    timestamp: context.timestamp || textFromFields(record, ["timestamp", "createdAt", "created_at", "date", "time"]),
+    model: context.model || textFromFields(record, ["model", "modelName", "model_name"]),
+    project: context.project || textFromFields(record, ["project", "repo", "workspace", "cwd", "root", "directory"]),
+    sessionId:
+      context.sessionId ||
+      textFromFields(record, ["sessionId", "session_id", "conversationId", "conversation_id", "requestId", "id"]),
+  };
+}
+
+function applyContext(entries: TokenUsageEvent[], context: ExtractionContext) {
+  return entries.map((entry) =>
+    normalizeTokenUsageEvent({
+      ...entry,
+      userId: entry.userId || context.userId || "local",
+      displayName: entry.displayName || context.displayName || context.userId || "Local User",
+      team: entry.team || context.team || "Friends",
+      source: entry.source === "manual" ? context.source : entry.source,
+      tool: entry.tool === "manual" ? context.tool : entry.tool,
+      project: entry.project || context.project,
+      sessionId: entry.sessionId || context.sessionId,
+    })
+  );
+}
+
+function hasUsageShape(record: Record<string, unknown>) {
+  return Object.keys(record).some((key) => TOKEN_KEYS.has(key)) && sumKnownTokens(record) > 0;
+}
+
+function sumKnownTokens(record: Record<string, unknown>) {
+  return [...TOKEN_KEYS].reduce((sum, key) => sum + toNumber(record[key]), 0);
+}
+
+function numberFromFields(record: Record<string, unknown>, fields: string[]) {
+  return fields.reduce((sum, field) => sum + toNumber(record[field]), 0);
+}
+
+function textFromFields(record: Record<string, unknown>, fields: string[]) {
+  for (const field of fields) {
+    const value = record[field];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function toNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value.replace(/[$,\s]/g, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+}
+
+function parseJsonLine(line: string) {
+  const parsed = safeJsonParse(line);
+  return parsed === undefined ? [] : [parsed];
+}
+
+function safeJsonParse(text: string): unknown | undefined {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+function isUsageFile(filePath: string) {
+  return [".csv", ".json", ".jsonl", ".log"].includes(path.extname(filePath).toLowerCase());
+}
+
+function shouldSkipDirectory(dirPath: string) {
+  const name = path.basename(dirPath);
+  return name === "node_modules" || name === ".git" || name === "Cache" || name === "CachedData";
+}
+
+function isSensitiveTextKey(key: string) {
+  return /^(content|prompt|text|body|transcript)$/i.test(key);
+}
+
+function expandHome(inputPath: string) {
+  return inputPath.startsWith("~/") ? path.join(os.homedir(), inputPath.slice(2)) : inputPath;
+}
+
+function stableCollectorId(
+  context: ExtractionContext,
+  timestamp: string,
+  model: string,
+  sessionId: string,
+  sequence: number,
+  tokens: {
+    inputTokens: number;
+    cachedInputTokens: number;
+    outputTokens: number;
+    reasoningOutputTokens: number;
+    totalTokens: number;
+  }
+) {
+  const hash = createHash("sha256")
+    .update(
+      [
+        context.source,
+        context.filePath || "",
+        timestamp,
+        model,
+        sessionId,
+        sequence,
+        tokens.inputTokens,
+        tokens.cachedInputTokens,
+        tokens.outputTokens,
+        tokens.reasoningOutputTokens,
+        tokens.totalTokens,
+      ].join("\n")
+    )
+    .digest("hex")
+    .slice(0, 32);
+
+  return `local:${hash}`;
+}

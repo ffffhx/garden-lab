@@ -1,0 +1,190 @@
+# Token 排行榜全自动版
+
+这个版本把页面、后端和本地 agent 拆开：
+
+- 静态博客页面：`/token-leaderboard`
+- 后端服务：`POST /api/usage/ingest` 接收上报，`GET /api/usage/stats` 返回聚合榜单
+- 本地 agent：定时扫描本机 Codex / Claude Code / Cursor / Gemini CLI 以及自定义 usage 文件，只上传 token 统计字段
+
+当前阿里云后端地址：
+
+```text
+https://8-218-149-148.anyip.dev/token-board
+```
+
+## 1. GitHub 登录配置
+
+先在 GitHub 创建一个 OAuth App，并开启 Device Flow：
+
+- Homepage URL: `https://8-218-149-148.anyip.dev/token-board`
+- Authorization callback URL: `https://8-218-149-148.anyip.dev/token-board/api/auth/github/callback`
+- Device Flow: enabled
+
+GitHub 官方说明：<https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps>
+
+## 2. 启动后端
+
+最小环境变量：
+
+```bash
+TOKEN_BOARD_HOST=0.0.0.0 \
+TOKEN_BOARD_PORT=8787 \
+TOKEN_BOARD_PUBLIC_URL=https://your-board.example.com \
+TOKEN_BOARD_ALLOWED_ORIGINS=https://your-blog.example.com \
+TOKEN_BOARD_ALLOWED_RETURN_ORIGINS=https://your-blog.example.com \
+TOKEN_BOARD_AUTH_SECRET=replace-with-a-long-random-secret \
+GITHUB_CLIENT_ID=<your-github-client-id> \
+GITHUB_CLIENT_SECRET=<your-client-secret> \
+TOKEN_BOARD_DATA_FILE=.token-board/usage-events.json \
+pnpm token:server
+```
+
+可选：只允许指定 GitHub 用户加入：
+
+```bash
+TOKEN_BOARD_ALLOWED_GITHUB_LOGINS=feng,friend-a,friend-b
+```
+
+后端接口：
+
+```text
+GET  /api/auth/github/start
+GET  /api/auth/github/callback
+GET  /api/auth/me
+GET  /api/auth/logout
+POST /api/auth/device/start
+POST /api/auth/device/poll
+POST /api/usage/ingest
+GET  /api/usage/stats
+```
+
+### 兼容旧上传 token
+
+如果还想保留旧模式，可以继续配置 `.token-board/users.json`：
+
+```json
+{
+  "users": [
+    {
+      "userId": "feng",
+      "displayName": "Feng",
+      "team": "Friends",
+      "uploadTokenHash": "sha256:replace-with-the-hash"
+    }
+  ]
+}
+```
+
+然后启动时加：
+
+```bash
+TOKEN_BOARD_USERS_FILE=.token-board/users.json pnpm token:server
+```
+
+新用户推荐直接用 GitHub 登录，不再手工分配上传 token。
+
+## 3. 让页面读取后端
+
+因为当前博客是 `output: "export"` 静态导出，后端不是 Next API Route，而是独立服务。构建或启动页面时配置：
+
+```bash
+NEXT_PUBLIC_TOKEN_BOARD_API_URL=http://127.0.0.1:8787 pnpm dev
+```
+
+部署时把 `NEXT_PUBLIC_TOKEN_BOARD_API_URL` 换成公网后端地址。页面会读取：
+
+```text
+GET /api/usage/stats?range=7D&metric=tokens
+```
+
+如果后端不可用，页面会自动回退到本地/示例数据。
+
+网页端会显示 GitHub 登录按钮；登录后服务端用 HttpOnly cookie 识别用户。
+
+## 4. 配置每个人电脑上的 agent
+
+在每台电脑上创建本地配置：
+
+```bash
+pnpm token:agent init
+```
+
+编辑 `~/.token-board-agent.json`，填入服务端地址：
+
+```json
+{
+  "apiUrl": "https://your-token-board.example.com",
+  "intervalMs": 300000,
+  "includeDefaultSources": true,
+  "usagePaths": [],
+  "privacy": {
+    "projectMode": "basename",
+    "includeModel": true,
+    "includeSource": true,
+    "hashSessionId": true,
+    "maxEventAgeDays": 120
+  }
+}
+```
+
+第一次登录 GitHub：
+
+```bash
+pnpm token:agent login
+```
+
+CLI 会显示 GitHub device code，让用户去 `https://github.com/login/device` 授权。授权成功后，agent 会把服务端签发的 `agentToken` 保存到 `~/.token-board-agent.json`。
+
+手动上传一次：
+
+```bash
+pnpm token:agent upload
+```
+
+长期运行：
+
+```bash
+pnpm token:agent watch
+```
+
+## 5. 自定义数据源
+
+如果某个工具没有被默认路径覆盖，可以把 JSON / JSONL / CSV 路径加入 `usagePaths`，或用环境变量：
+
+```bash
+TOKEN_BOARD_USAGE_PATHS="$HOME/path/to/usage.jsonl,$HOME/path/to/export.csv" pnpm token:agent upload
+```
+
+CSV 字段兼容：
+
+```text
+user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages,sessionId
+```
+
+JSON / JSONL 支持常见字段名，比如 `input_tokens`、`output_tokens`、`total_tokens`、`cache_read_input_tokens`。
+
+## 6. 隐私边界
+
+agent 和服务端都会做过滤：
+
+- 不上传 prompt、正文、消息内容、transcript。
+- 用户身份由服务端 GitHub session / agent session 决定，客户端传入的 user 字段不会被信任。
+- `sessionId` 默认 hash 后上传。
+- `projectMode` 默认只保留路径 basename；也可以设为 `hash` 或 `none`。
+- 服务端只存聚合所需字段：时间、工具、模型、项目名、token 数、会话 hash、估算费用。
+
+## 7. 部署建议
+
+后端可以放在一台小 VPS、Render、Fly.io、Railway 或公司/朋友自己的机器上。至少配置：
+
+```bash
+TOKEN_BOARD_HOST=0.0.0.0
+TOKEN_BOARD_PORT=8787
+TOKEN_BOARD_PUBLIC_URL=https://your-board.example.com
+TOKEN_BOARD_ALLOWED_ORIGINS=https://your-blog.example.com
+TOKEN_BOARD_ALLOWED_RETURN_ORIGINS=https://your-blog.example.com
+TOKEN_BOARD_AUTH_SECRET=replace-with-long-random-secret
+GITHUB_CLIENT_ID=<your-github-client-id>
+GITHUB_CLIENT_SECRET=<your-client-secret>
+TOKEN_BOARD_DATA_FILE=/data/usage-events.json
+```

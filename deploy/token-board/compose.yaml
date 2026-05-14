@@ -1,0 +1,11 @@
+services:
+  token-board:
+    image: token-board-service:latest
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8789:8789"
+    volumes:
+      - ./data:/data

@@ -42,6 +42,7 @@ jobs:
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_PUBLIC_TOKEN_BOARD_API_URL: https://8-218-149-148.anyip.dev/token-board
         run: pnpm build
 
       - name: Upload Pages artifact

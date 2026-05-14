@@ -16,6 +16,7 @@ const NAV_LINKS = [
     label: CATEGORY_DEFINITIONS.dailyNews.label,
   },
   { href: "/games", label: "游戏入口" },
+  { href: "/token-leaderboard", label: "Token榜" },
   { href: "/pet", label: "桌宠" },
   { href: "/search", label: "搜索" },
   { href: "/about", label: "关于" },

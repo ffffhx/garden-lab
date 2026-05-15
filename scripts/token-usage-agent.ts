@@ -374,13 +374,13 @@ function clientInfo() {
 
 function printHelp() {
   console.log(`Usage:
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent install
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent status
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent uninstall
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent login
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent upload
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent watch
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent install
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent status
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent uninstall
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent login
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent upload
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent watch
 
 Local repo equivalents:
   pnpm token:agent init

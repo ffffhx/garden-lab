@@ -27,10 +27,11 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 
 const SAMPLE_CSV = `user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages
 you,You,Friends,Codex CLI,gpt-5.5,token-board,2026-05-14T10:30:00+08:00,620000,220000,58000,9000,907000,34`;
+const NPX_PACKAGE_URL = "https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0";
 const NPX_INSTALL_COMMAND =
-  "npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent install";
+  `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
 const NPX_STATUS_COMMAND =
-  "npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent status";
+  `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent status`;
 
 export function TokenLeaderboardApp({
   initialEntries,

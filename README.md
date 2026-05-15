@@ -105,6 +105,24 @@ CODEX_HOME=/Users/你的用户名/.codex
 
 工作流会在 token 统计有实际变化时提交 `public/stats/token-usage.json`。因为 GitHub Actions 使用 `GITHUB_TOKEN` 推送的 commit 不会再触发新的 Pages 构建，这个工作流在提交后会继续构建并部署 GitHub Pages，保证线上博客同步更新。
 
+## 朋友 Token 排行榜
+
+排行榜页面：`https://ffffhx.github.io/blog/token-leaderboard/`
+
+朋友不需要 clone 仓库。首次统计时在自己的电脑执行：
+
+```bash
+npx -y github:ffffhx/blog
+```
+
+这条命令会先引导 GitHub Device Login，授权成功后读取本机 AI 编码工具 token 记录并上传到排行榜后端。之后手动同步一次仍然执行同一条命令；如果想持续自动同步，可以保持下面的命令运行：
+
+```bash
+npx -y github:ffffhx/blog watch
+```
+
+默认读取本机 `~/.codex/sessions`、`~/.codex/projects`，并兼容 Claude Code、Cursor、Gemini CLI 的部分本地记录。上传内容只包含 token 数、模型、工具、项目 basename 和匿名 session hash，不上传 prompt 文本。
+
 ## 部署到 GitHub Pages
 
 仓库已经包含 GitHub Pages 的 Actions 工作流：

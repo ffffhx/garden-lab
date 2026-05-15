@@ -32,6 +32,11 @@ const INGEST_BATCH_SIZE = 1000;
 async function main() {
   const command = process.argv[2] || "upload";
 
+  if (command === "help" || command === "--help" || command === "-h") {
+    printHelp();
+    return;
+  }
+
   if (command === "init") {
     await initConfig();
     return;
@@ -39,6 +44,11 @@ async function main() {
 
   if (command === "login") {
     await loginWithGitHub();
+    return;
+  }
+
+  if (command === "sync") {
+    await syncOnce();
     return;
   }
 
@@ -123,7 +133,7 @@ export async function loadAgentConfig(): Promise<AgentConfig> {
   const agentToken = readStringEnv("TOKEN_BOARD_AGENT_TOKEN") || readString(fileConfig.agentToken);
 
   if (!agentToken && !uploadToken) {
-    throw new Error("Run `pnpm token:agent login` first, or set TOKEN_BOARD_UPLOAD_TOKEN for legacy mode.");
+    throw new Error("Run `token-board-agent login` first, or set TOKEN_BOARD_UPLOAD_TOKEN for legacy mode.");
   }
 
   return {
@@ -163,6 +173,30 @@ export async function loadAgentConfig(): Promise<AgentConfig> {
   };
 }
 
+async function syncOnce() {
+  let config: AgentConfig;
+
+  try {
+    config = await loadAgentConfig();
+  } catch (error) {
+    if (!isMissingAgentTokenError(error)) {
+      throw error;
+    }
+
+    console.log("No saved GitHub agent session found. Starting login first.");
+    await loginWithGitHub();
+    config = await loadAgentConfig();
+  }
+
+  await uploadOnce(config);
+
+  const leaderboardUrl = readStringEnv("TOKEN_BOARD_LEADERBOARD_URL");
+
+  if (leaderboardUrl) {
+    console.log(`Open leaderboard: ${leaderboardUrl}`);
+  }
+}
+
 async function watch(config: AgentConfig) {
   console.log(`Token usage agent watching every ${Math.round(config.intervalMs / 1000)}s.`);
 
@@ -181,7 +215,7 @@ async function postIngest(config: AgentConfig, events: Awaited<ReturnType<typeof
   const bearerToken = config.agentToken || config.uploadToken;
 
   if (!bearerToken) {
-    throw new Error("Missing agent token. Run `pnpm token:agent login`.");
+    throw new Error("Missing agent token. Run `token-board-agent login`.");
   }
 
   const response = await fetch(`${config.apiUrl}/api/usage/ingest`, {
@@ -270,7 +304,7 @@ async function loginWithGitHub() {
     }
   }
 
-  throw new Error("GitHub device login expired. Run `pnpm token:agent login` again.");
+  throw new Error("GitHub device login expired. Run `token-board-agent login` again.");
 }
 
 async function initConfig() {
@@ -337,8 +371,16 @@ function clientInfo() {
 
 function printHelp() {
   console.log(`Usage:
+  npx -y github:ffffhx/blog
+  npx -y github:ffffhx/blog sync
+  npx -y github:ffffhx/blog login
+  npx -y github:ffffhx/blog upload
+  npx -y github:ffffhx/blog watch
+
+Local repo equivalents:
   pnpm token:agent init
   pnpm token:agent login
+  pnpm token:agent sync
   pnpm token:agent collect
   pnpm token:agent upload
   pnpm token:agent watch`);
@@ -366,6 +408,10 @@ function readString(value: unknown) {
 
 function readStringEnv(name: string) {
   return readString(process.env[name]);
+}
+
+function isMissingAgentTokenError(error: unknown) {
+  return error instanceof Error && error.message.includes("token-board-agent login");
 }
 
 function readStringArray(value: unknown) {

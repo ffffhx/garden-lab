@@ -27,8 +27,9 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 
 const SAMPLE_CSV = `user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages
 you,You,Friends,Codex CLI,gpt-5.5,token-board,2026-05-14T10:30:00+08:00,620000,220000,58000,9000,907000,34`;
-const NPX_SYNC_COMMAND = "npx --yes --package github:ffffhx/blog#main -- token-board-agent";
-const NPX_WATCH_COMMAND = "npx --yes --package github:ffffhx/blog#main -- token-board-agent watch";
+const NPX_SYNC_COMMAND = "npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent";
+const NPX_WATCH_COMMAND =
+  "npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent watch";
 
 export function TokenLeaderboardApp({
   initialEntries,

@@ -374,11 +374,11 @@ function clientInfo() {
 
 function printHelp() {
   console.log(`Usage:
-  npx --yes --package github:ffffhx/blog#main -- token-board-agent
-  npx --yes --package github:ffffhx/blog#main -- token-board-agent sync
-  npx --yes --package github:ffffhx/blog#main -- token-board-agent login
-  npx --yes --package github:ffffhx/blog#main -- token-board-agent upload
-  npx --yes --package github:ffffhx/blog#main -- token-board-agent watch
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent sync
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent login
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent upload
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent watch
 
 Local repo equivalents:
   pnpm token:agent init

@@ -11,6 +11,8 @@ const agentScript = path.join(rootDir, "scripts", "token-usage-agent.ts");
 const args = process.argv.slice(2);
 const commandArgs = args.length ? args : ["sync"];
 
+console.log(`[token-board-agent] running ${commandArgs.join(" ")}`);
+
 const child = spawn(process.execPath, [tsxCli, agentScript, ...commandArgs], {
   stdio: "inherit",
   env: {

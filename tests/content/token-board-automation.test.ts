@@ -9,9 +9,15 @@ import {
   normalizeUploadUsers,
   sanitizeIngestEvents,
 } from "@/lib/token-board-automation";
-import { extractTokenUsageEventsFromJson, parseUsageFile } from "@/lib/token-usage-collector";
+import { defaultSourceTargets, extractTokenUsageEventsFromJson, parseUsageFile } from "@/lib/token-usage-collector";
 
 describe("token board automation", () => {
+  it("collects from the friend agent default coding tools", () => {
+    const tools = defaultSourceTargets().map((target) => target.tool);
+
+    expect(tools).toEqual(expect.arrayContaining(["Codex CLI", "Claude Code", "Cursor", "Trae"]));
+  });
+
   it("authenticates upload users by token hash", () => {
     const users = normalizeUploadUsers({
       users: [

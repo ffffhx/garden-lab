@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -15,13 +15,112 @@ const SINCE_MS = readPositiveNumber(process.env.TOKEN_BOARD_SINCE_HOURS, 24 * 30
 const MAX_FILES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILES, 800);
 const MAX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILE_BYTES, 5 * 1024 * 1024);
 const BATCH_SIZE = 1000;
-const VERSION = "0.3.0";
+const VERSION = "0.4.0";
+const PACKAGE_URL = `https://ffffhx.github.io/blog/token-board-agent.tgz?v=${VERSION}`;
 const INSTALL_DIR = path.join(os.homedir(), ".token-board-agent");
 const INSTALLED_AGENT_FILE = path.join(INSTALL_DIR, "token-board-agent.mjs");
 const LAUNCH_AGENT_LABEL = "dev.ffffhx.token-board-agent";
 const LAUNCH_AGENT_PLIST = path.join(os.homedir(), "Library", "LaunchAgents", `${LAUNCH_AGENT_LABEL}.plist`);
 const LOG_FILE = path.join(INSTALL_DIR, "agent.log");
 const ERROR_LOG_FILE = path.join(INSTALL_DIR, "agent.err.log");
+const TOKEN_KEYS = new Set([
+  "cached_input_tokens",
+  "cachedInputTokens",
+  "cache_creation_input_tokens",
+  "cacheCreationInputTokens",
+  "cache_read_input_tokens",
+  "cacheReadInputTokens",
+  "cachedTokens",
+  "completion_tokens",
+  "completionTokens",
+  "input_tokens",
+  "inputTokenCount",
+  "inputTokens",
+  "output_tokens",
+  "outputTokenCount",
+  "outputTokens",
+  "prompt_tokens",
+  "promptTokens",
+  "reasoning_output_tokens",
+  "reasoningOutputTokens",
+  "reasoningTokens",
+  "total_tokens",
+  "totalTokenCount",
+  "totalTokens",
+  "tokens",
+]);
+const SQLITE_USAGE_NEEDLES = [
+  "input_tokens",
+  "output_tokens",
+  "total_tokens",
+  "prompt_tokens",
+  "completion_tokens",
+  "cached_input_tokens",
+  "cache_read_input_tokens",
+  "cache_creation_input_tokens",
+  "token_usage",
+  "tokenusage",
+];
+const USAGE_FILE_EXTENSIONS = new Set([".csv", ".json", ".jsonl", ".log", ".vscdb"]);
+const USAGE_FILE_NAMES = new Set(["state.vscdb", "state.vscdb.backup", "storage.json"]);
+const SKIP_DIR_NAMES = new Set([
+  ".git",
+  ".ripgrep",
+  "Cache",
+  "CachedData",
+  "CachedExtensionVSIXs",
+  "Code Cache",
+  "Crashpad",
+  "GPUCache",
+  "IndexedDB",
+  "Local Storage",
+  "node_modules",
+  "extensions",
+  "builtin_skills",
+]);
+const DEFAULT_SOURCE_TARGETS = [
+  {
+    source: "codex",
+    tool: "Codex CLI",
+    paths: [homePath(".codex", "sessions"), homePath(".codex", "projects")],
+  },
+  {
+    source: "claude-code",
+    tool: "Claude Code",
+    paths: [homePath(".claude", "projects"), homePath(".claude", "history.jsonl")],
+  },
+  {
+    source: "cursor",
+    tool: "Cursor",
+    paths: [
+      appSupportPath("Cursor", "User", "globalStorage"),
+      appSupportPath("Cursor", "logs"),
+      configPath("Cursor", "User", "globalStorage"),
+      configPath("Cursor", "logs"),
+      appDataPath("Cursor", "User", "globalStorage"),
+      appDataPath("Cursor", "logs"),
+    ],
+  },
+  {
+    source: "trae",
+    tool: "Trae",
+    paths: [
+      appSupportPath("Trae", "User", "globalStorage"),
+      appSupportPath("Trae CN", "User", "globalStorage"),
+      appSupportPath("Trae", "logs"),
+      appSupportPath("Trae CN", "logs"),
+      appSupportPath("Trae", "ModularData", "ai-agent"),
+      appSupportPath("Trae CN", "ModularData", "ai-agent"),
+      configPath("Trae", "User", "globalStorage"),
+      configPath("Trae CN", "User", "globalStorage"),
+      appDataPath("Trae", "User", "globalStorage"),
+      appDataPath("Trae CN", "User", "globalStorage"),
+      homePath(".trae"),
+      homePath(".trae-cn"),
+      homePath(".trae-aicc-internal"),
+    ],
+  },
+];
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.message : error);
@@ -62,6 +161,13 @@ async function main() {
   if (command === "sync" || command === "upload") {
     await uploadOnce(await loadOrLoginConfig());
     console.log(`Open leaderboard: ${LEADERBOARD_URL}`);
+    return;
+  }
+
+  if (command === "collect") {
+    const config = await readAgentConfig();
+    const events = await collectLocalUsageEvents(config);
+    console.log(JSON.stringify({ schemaVersion: 1, client: clientInfo(), events }, null, 2));
     return;
   }
 
@@ -143,7 +249,7 @@ async function printLaunchAgentStatus() {
 }
 
 async function loadOrLoginConfig() {
-  const config = await readJson(CONFIG_FILE);
+  const config = await readAgentConfig();
 
   if (typeof config.agentToken === "string" && config.agentToken) {
     return config;
@@ -151,7 +257,7 @@ async function loadOrLoginConfig() {
 
   console.log("No saved GitHub agent session found. Starting login first.");
   await login();
-  return readJson(CONFIG_FILE);
+  return readAgentConfig();
 }
 
 async function login() {
@@ -195,11 +301,11 @@ async function login() {
 async function uploadOnce(config) {
   const state = await readJson(STATE_FILE);
   const uploadedIds = new Set(Array.isArray(state.uploadedIds) ? state.uploadedIds : []);
-  const events = (await collectCodexEvents(config)).filter((event) => !uploadedIds.has(event.id));
+  const events = (await collectLocalUsageEvents(config)).filter((event) => !uploadedIds.has(event.id));
 
   if (!events.length) {
     console.log("No new token usage events to upload.");
-    console.log("Checked ~/.codex/sessions and ~/.codex/projects for recent Codex token_count logs.");
+    console.log("Checked Codex, Claude Code, Cursor, Trae, and custom usage paths for recent token logs.");
     return;
   }
 
@@ -222,59 +328,129 @@ async function uploadOnce(config) {
   );
 }
 
-async function collectCodexEvents(config) {
-  const roots = [path.join(os.homedir(), ".codex", "sessions"), path.join(os.homedir(), ".codex", "projects")];
+async function collectLocalUsageEvents(config) {
+  const targets = sourceTargets(config);
   const minMtime = Date.now() - SINCE_MS;
   const files = [];
 
-  for (const root of roots) {
-    await collectFiles(root, files, minMtime);
+  for (const target of targets) {
+    const targetFiles = [];
+    for (const targetPath of target.paths) {
+      await collectFiles(expandHome(targetPath), target, targetFiles, minMtime, 0);
+    }
+    files.push(...targetFiles);
   }
 
   files.sort((a, b) => b.mtimeMs - a.mtimeMs);
 
   const events = [];
-  for (const file of files.slice(0, MAX_FILES)) {
-    events.push(...(await parseCodexJsonl(file.path, config)));
+  for (const file of files.slice(0, MAX_FILES * Math.max(1, targets.length))) {
+    events.push(...(await parseUsageFile(file.path, file.target, config)));
   }
 
   return dedupe(events);
 }
 
-async function collectFiles(dir, files, minMtime) {
+function sourceTargets(config) {
+  const targets = [];
+  const usagePaths = readListEnv("TOKEN_BOARD_USAGE_PATHS") || readStringArray(config.usagePaths) || [];
+  const includeDefaultSources =
+    process.env.TOKEN_BOARD_INCLUDE_DEFAULT_SOURCES === "false" ? false : config.includeDefaultSources !== false;
+
+  if (includeDefaultSources) {
+    targets.push(...DEFAULT_SOURCE_TARGETS);
+  }
+
+  if (usagePaths.length) {
+    targets.push({
+      source: "custom",
+      tool: "Custom Usage",
+      paths: usagePaths,
+    });
+  }
+
+  return targets;
+}
+
+async function collectFiles(inputPath, target, files, minMtime, depth) {
+  if (files.length >= MAX_FILES || depth > 8) {
+    return;
+  }
+
+  const stat = await fs.stat(inputPath).catch(() => undefined);
+  if (!stat) {
+    return;
+  }
+
+  if (stat.isFile()) {
+    if (stat.size <= MAX_FILE_BYTES && stat.mtimeMs >= minMtime && isUsageFile(inputPath)) {
+      files.push({ path: inputPath, mtimeMs: stat.mtimeMs, target });
+    }
+    return;
+  }
+
+  if (!stat.isDirectory() || (depth > 0 && shouldSkipDirectory(inputPath))) {
+    return;
+  }
+
   let entries;
   try {
-    entries = await fs.readdir(dir, { withFileTypes: true });
+    entries = await fs.readdir(inputPath, { withFileTypes: true });
   } catch {
     return;
   }
 
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-
-    if (entry.isDirectory()) {
-      await collectFiles(fullPath, files, minMtime);
-      continue;
+    if (files.length >= MAX_FILES) {
+      return;
     }
-
-    if (!entry.isFile() || !fullPath.endsWith(".jsonl")) {
-      continue;
-    }
-
-    const stat = await fs.stat(fullPath).catch(() => undefined);
-    if (!stat || stat.size > MAX_FILE_BYTES || stat.mtimeMs < minMtime) {
-      continue;
-    }
-
-    files.push({ path: fullPath, mtimeMs: stat.mtimeMs });
+    await collectFiles(path.join(inputPath, entry.name), target, files, minMtime, depth + 1);
   }
 }
 
-async function parseCodexJsonl(filePath, config) {
+async function parseUsageFile(filePath, target, config) {
+  if (target.source === "codex" && path.extname(filePath).toLowerCase() === ".jsonl") {
+    return parseCodexJsonl(filePath, target, config);
+  }
+
+  if (isSqliteUsageFile(filePath)) {
+    return parseSqliteUsageFile(filePath, target, config);
+  }
+
+  const text = await fs.readFile(filePath, "utf8").catch(() => "");
+  if (!text) {
+    return [];
+  }
+
+  const ext = path.extname(filePath).toLowerCase();
+  const context = baseExtractionContext(filePath, target, config);
+
+  if (ext === ".csv") {
+    return parseCsvUsage(text, context);
+  }
+
+  if (ext === ".jsonl" || ext === ".log") {
+    return dedupe(
+      text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .flatMap((line) => {
+          const parsed = safeJson(line);
+          return parsed === undefined ? [] : extractUsageEventsFromJson(parsed, context);
+        })
+    );
+  }
+
+  const parsed = safeJson(text);
+  return parsed === undefined ? [] : extractUsageEventsFromJson(parsed, context);
+}
+
+async function parseCodexJsonl(filePath, target, config) {
   const text = await fs.readFile(filePath, "utf8").catch(() => "");
   const entries = [];
   let model = "unknown";
-  let project = undefined;
+  let project = projectFromFile(filePath, target.source);
   let sequence = 0;
 
   for (const rawLine of text.split(/\r?\n/)) {
@@ -300,11 +476,14 @@ async function parseCodexJsonl(filePath, config) {
     }
 
     sequence += 1;
-    const event = usageToEvent(usage, {
+    const event = usageRecordToEvent(usage, {
       config,
+      source: target.source,
+      tool: target.tool,
       filePath,
       model,
       project,
+      sessionId: filePath,
       sequence,
       timestamp: parsed.timestamp,
     });
@@ -317,19 +496,74 @@ async function parseCodexJsonl(filePath, config) {
   return entries;
 }
 
-function usageToEvent(usage, context) {
-  const inputTokens = numberField(usage, "input_tokens");
-  const cachedInputTokens = numberField(usage, "cached_input_tokens");
-  const outputTokens = numberField(usage, "output_tokens");
-  const reasoningOutputTokens = numberField(usage, "reasoning_output_tokens");
-  const explicitTotal = numberField(usage, "total_tokens");
+function extractUsageEventsFromJson(value, context) {
+  const entries = [];
+  visitJson(value, context, entries, { sequence: 0 }, 0);
+  return dedupe(entries);
+}
+
+function visitJson(value, context, entries, state, depth) {
+  if (depth > 14 || value === null || value === undefined) {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => visitJson(item, context, entries, state, depth + 1));
+    return;
+  }
+
+  if (typeof value !== "object") {
+    return;
+  }
+
+  const record = value;
+  const nextContext = enrichContext(context, record);
+
+  if (hasUsageShape(record)) {
+    state.sequence += 1;
+    const event = usageRecordToEvent(record, { ...nextContext, sequence: state.sequence });
+    if (event.totalTokens > 0) {
+      entries.push(event);
+    }
+    return;
+  }
+
+  for (const [key, child] of Object.entries(record)) {
+    if (isSensitiveTextKey(key) && (typeof child === "string" || Array.isArray(child))) {
+      continue;
+    }
+
+    visitJson(child, nextContext, entries, state, depth + 1);
+  }
+}
+
+function usageRecordToEvent(usage, context) {
+  const inputTokens = numberFromFields(usage, ["inputTokens", "input_tokens", "inputTokenCount", "promptTokens", "prompt_tokens"]);
+  const cachedInputTokens =
+    numberFromFields(usage, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"]) +
+    numberFromFields(usage, ["cache_read_input_tokens", "cacheReadInputTokens"]) +
+    numberFromFields(usage, ["cache_creation_input_tokens", "cacheCreationInputTokens"]);
+  const outputTokens = numberFromFields(usage, ["outputTokens", "output_tokens", "outputTokenCount", "completionTokens", "completion_tokens"]);
+  const reasoningOutputTokens = numberFromFields(usage, [
+    "reasoningOutputTokens",
+    "reasoning_output_tokens",
+    "reasoningTokens",
+  ]);
+  const explicitTotal = numberFromFields(usage, ["totalTokens", "total_tokens", "totalTokenCount", "tokens"]);
   const totalTokens = explicitTotal > 0 ? explicitTotal : inputTokens + cachedInputTokens + outputTokens + reasoningOutputTokens;
-  const sessionId = `session:${sha256(context.filePath).slice(0, 16)}`;
+  const timestamp = normalizeTimestamp(context.timestamp || textFromFields(usage, ["timestamp", "createdAt", "created_at", "date", "time"]));
+  const model = cleanLabel(context.model || textFromFields(usage, ["model", "modelName", "model_name"]), 80) || "unknown";
+  const rawProject = context.project || textFromFields(usage, ["project", "repo", "workspace", "cwd", "root", "directory"]);
+  const project = projectBasename(rawProject);
+  const rawSessionId =
+    context.sessionId || textFromFields(usage, ["sessionId", "session_id", "conversationId", "conversation_id", "requestId", "id"]) || context.filePath;
+  const sessionId = rawSessionId ? `session:${sha256(rawSessionId).slice(0, 16)}` : "";
   const base = [
     context.config.userId,
-    context.timestamp,
-    context.model,
-    context.project || "",
+    timestamp,
+    context.source,
+    model,
+    project || "",
     sessionId,
     context.sequence,
     inputTokens,
@@ -344,18 +578,18 @@ function usageToEvent(usage, context) {
     userId: context.config.userId,
     displayName: context.config.displayName,
     team: context.config.team || "GitHub",
-    source: "codex",
-    tool: "Codex CLI",
-    model: context.model,
-    project: context.project,
+    source: context.source,
+    tool: context.tool,
+    model,
+    project,
     sessionId,
-    timestamp: new Date(context.timestamp).toISOString(),
+    timestamp,
     inputTokens,
     cachedInputTokens,
     outputTokens,
     reasoningOutputTokens,
     totalTokens,
-    messages: 0,
+    messages: numberFromFields(usage, ["messages", "messageCount", "message_count"]),
   };
 }
 
@@ -368,7 +602,7 @@ async function postIngest(config, events) {
     },
     body: JSON.stringify({
       schemaVersion: 1,
-      client: { name: "token-board-agent", version: VERSION, hostId: os.hostname() },
+      client: clientInfo(),
       events,
     }),
   });
@@ -398,15 +632,271 @@ async function postJson(url, body) {
   return payload;
 }
 
+async function parseSqliteUsageFile(filePath, target, config) {
+  const context = baseExtractionContext(filePath, target, config);
+  const entries = [];
+  const valueMatches = SQLITE_USAGE_NEEDLES.map(
+    (needle) => `lower(cast(value as text)) like '%${needle.replace(/'/g, "''")}%'`
+  );
+  const where = [`lower(key) like '%usage%'`, ...valueMatches].join(" or ");
+
+  for (const table of ["ItemTable", "cursorDiskKV"]) {
+    const rows = await querySqliteJson(
+      filePath,
+      `select key, cast(value as text) as value from ${table} where ${where} limit 200;`
+    );
+
+    for (const row of rows) {
+      if (!row || typeof row !== "object") {
+        continue;
+      }
+
+      const value = typeof row.value === "string" ? row.value : "";
+      const parsed = safeJson(value);
+      if (parsed === undefined) {
+        continue;
+      }
+
+      entries.push(
+        ...extractUsageEventsFromJson(parsed, {
+          ...context,
+          sessionId: `${filePath}:${typeof row.key === "string" ? row.key : "sqlite"}`,
+        })
+      );
+    }
+  }
+
+  return dedupe(entries);
+}
+
+function querySqliteJson(filePath, sql) {
+  return new Promise((resolve) => {
+    execFile("sqlite3", ["-readonly", "-json", filePath, sql], { maxBuffer: 2 * 1024 * 1024 }, (error, stdout) => {
+      if (error || !stdout.trim()) {
+        resolve([]);
+        return;
+      }
+
+      const parsed = safeJson(stdout);
+      resolve(Array.isArray(parsed) ? parsed : []);
+    });
+  });
+}
+
+function parseCsvUsage(text, context) {
+  const rows = parseCsvRows(text);
+  const [headers, ...bodyRows] = rows;
+  if (!headers?.length || !bodyRows.length) {
+    return [];
+  }
+
+  const entries = bodyRows.flatMap((row, index) => {
+    const record = Object.fromEntries(headers.map((header, column) => [header.trim(), row[column] ?? ""]));
+    const event = usageRecordToEvent(record, {
+      ...enrichContext(context, record),
+      sessionId: textFromFields(record, ["sessionId", "session", "conversationId"]) || `${context.filePath}:${index}`,
+      sequence: index + 1,
+    });
+    return event.totalTokens > 0 ? [event] : [];
+  });
+
+  return dedupe(entries);
+}
+
+function parseCsvRows(input) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    const next = input[index + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      field += '"';
+      index += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      row.push(field.trim());
+      field = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") {
+        index += 1;
+      }
+      row.push(field.trim());
+      if (row.some(Boolean)) {
+        rows.push(row);
+      }
+      row = [];
+      field = "";
+    } else {
+      field += char;
+    }
+  }
+
+  row.push(field.trim());
+  if (row.some(Boolean)) {
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+function baseExtractionContext(filePath, target, config) {
+  return {
+    config,
+    source: target.source,
+    tool: target.tool,
+    filePath,
+    project: projectFromFile(filePath, target.source),
+    sessionId: filePath,
+  };
+}
+
+function enrichContext(context, record) {
+  return {
+    ...context,
+    timestamp: textFromFields(record, ["timestamp", "createdAt", "created_at", "date", "time"]) || context.timestamp,
+    model: textFromFields(record, ["model", "modelName", "model_name"]) || context.model,
+    project: textFromFields(record, ["project", "repo", "workspace", "cwd", "root", "directory"]) || context.project,
+    sessionId:
+      textFromFields(record, ["sessionId", "session_id", "conversationId", "conversation_id", "requestId", "id"]) ||
+      context.sessionId,
+  };
+}
+
+function hasUsageShape(record) {
+  return Object.keys(record).some((key) => TOKEN_KEYS.has(key)) && sumKnownTokens(record) > 0;
+}
+
+function sumKnownTokens(record) {
+  return [...TOKEN_KEYS].reduce((sum, key) => sum + toNumber(record[key]), 0);
+}
+
+function numberFromFields(record, fields) {
+  return fields.reduce((sum, field) => sum + toNumber(record[field]), 0);
+}
+
+function textFromFields(record, fields) {
+  for (const field of fields) {
+    const value = record[field];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function toNumber(value) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value.replace(/[$,\s]/g, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+}
+
+function normalizeTimestamp(value) {
+  const date = new Date(value || Date.now());
+  return Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString();
+}
+
+function cleanLabel(value, maxLength) {
+  return typeof value === "string"
+    ? value
+        .replace(/[\u0000-\u001f\u007f]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, maxLength)
+    : "";
+}
+
+function projectBasename(value) {
+  const text = cleanLabel(value, 240);
+  return text ? cleanLabel(path.basename(text.replace(/\\/g, "/")), 80) : undefined;
+}
+
+function projectFromFile(filePath, source) {
+  const parts = filePath.split(path.sep);
+  const projectsIndex = parts.lastIndexOf("projects");
+
+  if ((source === "claude-code" || source === "codex") && projectsIndex >= 0 && parts[projectsIndex + 1]) {
+    return parts[projectsIndex + 1];
+  }
+
+  return path.basename(path.dirname(filePath));
+}
+
+function isSensitiveTextKey(key) {
+  return /^(content|prompt|text|body|transcript)$/i.test(key);
+}
+
+function isUsageFile(filePath) {
+  const name = path.basename(filePath).toLowerCase();
+  return USAGE_FILE_EXTENSIONS.has(path.extname(filePath).toLowerCase()) || USAGE_FILE_NAMES.has(name);
+}
+
+function isSqliteUsageFile(filePath) {
+  const name = path.basename(filePath).toLowerCase();
+  return name === "state.vscdb" || name === "state.vscdb.backup" || path.extname(filePath).toLowerCase() === ".vscdb";
+}
+
+function shouldSkipDirectory(dirPath) {
+  return SKIP_DIR_NAMES.has(path.basename(dirPath));
+}
+
+function expandHome(inputPath) {
+  return inputPath.startsWith("~/") ? path.join(os.homedir(), inputPath.slice(2)) : inputPath;
+}
+
+async function readAgentConfig() {
+  const config = await readJson(CONFIG_FILE);
+  const username = os.userInfo().username || "local";
+
+  return {
+    ...config,
+    userId: cleanLabel(config.userId, 80) || username,
+    displayName: cleanLabel(config.displayName, 80) || cleanLabel(config.githubLogin, 80) || username,
+    team: cleanLabel(config.team, 80) || "GitHub",
+    usagePaths: readStringArray(config.usagePaths) || [],
+  };
+}
+
+function readStringArray(value) {
+  return Array.isArray(value) ? value.flatMap((item) => (typeof item === "string" && item.trim() ? [item.trim()] : [])) : undefined;
+}
+
+function readListEnv(name) {
+  const value = process.env[name];
+  return value?.trim()
+    ? value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : undefined;
+}
+
+function clientInfo() {
+  return { name: "token-board-agent", version: VERSION, hostId: os.hostname() };
+}
+
 function printHelp() {
   console.log(`Usage:
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent install
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent status
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent uninstall
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent watch
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent login
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent upload`);
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent install
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent status
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent uninstall
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent watch
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent login
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent collect
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent upload`);
 }
 
 async function readJson(filePath) {
@@ -420,11 +910,6 @@ async function readJson(filePath) {
 async function writeJson(filePath, value) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
-}
-
-function numberField(record, key) {
-  const value = Number(record?.[key]);
-  return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
 function safeJson(text) {
@@ -461,6 +946,22 @@ function sha256(value) {
 function readPositiveNumber(value, fallback) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : fallback;
+}
+
+function homePath(...segments) {
+  return path.join(os.homedir(), ...segments);
+}
+
+function appSupportPath(...segments) {
+  return path.join(os.homedir(), "Library", "Application Support", ...segments);
+}
+
+function configPath(...segments) {
+  return path.join(os.homedir(), ".config", ...segments);
+}
+
+function appDataPath(...segments) {
+  return process.env.APPDATA ? path.join(process.env.APPDATA, ...segments) : path.join(os.homedir(), "AppData", "Roaming", ...segments);
 }
 
 function sleep(ms) {

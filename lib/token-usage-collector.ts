@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
+import { execFile } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 
 import {
   dedupeTokenEvents,
@@ -43,6 +45,7 @@ type ExtractionContext = {
 const DEFAULT_SINCE_HOURS = 24 * 30;
 const DEFAULT_MAX_FILES = 800;
 const DEFAULT_MAX_FILE_BYTES = 5 * 1024 * 1024;
+const execFileAsync = promisify(execFile);
 const TOKEN_KEYS = new Set([
   "cached_input_tokens",
   "cachedInputTokens",
@@ -51,17 +54,32 @@ const TOKEN_KEYS = new Set([
   "completion_tokens",
   "completionTokens",
   "input_tokens",
+  "inputTokenCount",
   "inputTokens",
   "output_tokens",
+  "outputTokenCount",
   "outputTokens",
   "prompt_tokens",
   "promptTokens",
   "reasoning_output_tokens",
   "reasoningOutputTokens",
   "total_tokens",
+  "totalTokenCount",
   "totalTokens",
   "tokens",
 ]);
+const SQLITE_USAGE_NEEDLES = [
+  "input_tokens",
+  "output_tokens",
+  "total_tokens",
+  "prompt_tokens",
+  "completion_tokens",
+  "cached_input_tokens",
+  "cache_read_input_tokens",
+  "cache_creation_input_tokens",
+  "token_usage",
+  "tokenusage",
+];
 
 export async function collectLocalTokenUsage(config: TokenUsageCollectorConfig = {}) {
   const targets = buildSourceTargets(config);
@@ -110,6 +128,10 @@ export function extractTokenUsageEventsFromJson(value: unknown, context: Extract
 }
 
 export async function parseUsageFile(filePath: string, context: ExtractionContext) {
+  if (isSqliteUsageFile(filePath)) {
+    return parseSqliteUsageFile(filePath, context);
+  }
+
   const text = await fs.readFile(filePath, "utf8");
   const ext = path.extname(filePath).toLowerCase();
 
@@ -198,6 +220,53 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
   return dedupeTokenEvents(entries);
 }
 
+async function parseSqliteUsageFile(filePath: string, context: ExtractionContext) {
+  const entries: TokenUsageEvent[] = [];
+  const valueMatches = SQLITE_USAGE_NEEDLES.map(
+    (needle) => `lower(cast(value as text)) like '%${needle.replace(/'/g, "''")}%'`
+  );
+  const where = [`lower(key) like '%usage%'`, ...valueMatches].join(" or ");
+
+  for (const table of ["ItemTable", "cursorDiskKV"]) {
+    const rows = await querySqliteJson(
+      filePath,
+      `select key, cast(value as text) as value from ${table} where ${where} limit 200;`
+    );
+
+    for (const row of rows) {
+      if (!isRecord(row) || typeof row.value !== "string") {
+        continue;
+      }
+
+      const parsed = safeJsonParse(row.value);
+      if (parsed === undefined) {
+        continue;
+      }
+
+      entries.push(
+        ...extractTokenUsageEventsFromJson(parsed, {
+          ...context,
+          sessionId: `${filePath}:${typeof row.key === "string" ? row.key : "sqlite"}`,
+        })
+      );
+    }
+  }
+
+  return dedupeTokenEvents(entries);
+}
+
+async function querySqliteJson(filePath: string, sql: string) {
+  try {
+    const { stdout } = await execFileAsync("sqlite3", ["-readonly", "-json", filePath, sql], {
+      maxBuffer: 2 * 1024 * 1024,
+    });
+    const parsed = safeJsonParse(stdout);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export function defaultSourceTargets(): SourceTarget[] {
   return [
     {
@@ -213,7 +282,29 @@ export function defaultSourceTargets(): SourceTarget[] {
     {
       source: "cursor",
       tool: "Cursor",
-      paths: ["~/Library/Application Support/Cursor/User/globalStorage"],
+      paths: [
+        "~/Library/Application Support/Cursor/User/globalStorage",
+        "~/Library/Application Support/Cursor/logs",
+        "~/.config/Cursor/User/globalStorage",
+        "~/.config/Cursor/logs",
+      ],
+    },
+    {
+      source: "trae",
+      tool: "Trae",
+      paths: [
+        "~/Library/Application Support/Trae/User/globalStorage",
+        "~/Library/Application Support/Trae CN/User/globalStorage",
+        "~/Library/Application Support/Trae/logs",
+        "~/Library/Application Support/Trae CN/logs",
+        "~/Library/Application Support/Trae/ModularData/ai-agent",
+        "~/Library/Application Support/Trae CN/ModularData/ai-agent",
+        "~/.config/Trae/User/globalStorage",
+        "~/.config/Trae CN/User/globalStorage",
+        "~/.trae",
+        "~/.trae-cn",
+        "~/.trae-aicc-internal",
+      ],
     },
     {
       source: "gemini-cli",
@@ -320,6 +411,7 @@ function visitJson(
   if (hasUsageShape(record)) {
     state.sequence += 1;
     entries.push(recordToUsageEvent(record, nextContext, state.sequence));
+    return;
   }
 
   for (const [key, child] of Object.entries(record)) {
@@ -332,18 +424,18 @@ function visitJson(
 }
 
 function recordToUsageEvent(record: Record<string, unknown>, context: ExtractionContext, sequence: number) {
-  const inputTokens = numberFromFields(record, ["inputTokens", "input_tokens", "promptTokens", "prompt_tokens"]);
+  const inputTokens = numberFromFields(record, ["inputTokens", "input_tokens", "inputTokenCount", "promptTokens", "prompt_tokens"]);
   const cachedInputTokens =
     numberFromFields(record, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"]) +
     numberFromFields(record, ["cache_read_input_tokens", "cacheReadInputTokens"]) +
     numberFromFields(record, ["cache_creation_input_tokens", "cacheCreationInputTokens"]);
-  const outputTokens = numberFromFields(record, ["outputTokens", "output_tokens", "completionTokens", "completion_tokens"]);
+  const outputTokens = numberFromFields(record, ["outputTokens", "output_tokens", "outputTokenCount", "completionTokens", "completion_tokens"]);
   const reasoningOutputTokens = numberFromFields(record, [
     "reasoningOutputTokens",
     "reasoning_output_tokens",
     "reasoningTokens",
   ]);
-  const totalTokens = numberFromFields(record, ["totalTokens", "total_tokens", "tokens"]);
+  const totalTokens = numberFromFields(record, ["totalTokens", "total_tokens", "totalTokenCount", "tokens"]);
   const timestamp = context.timestamp || new Date().toISOString();
   const model = context.model || textFromFields(record, ["model", "modelName", "model_name"]) || "unknown";
   const sessionId = context.sessionId || textFromFields(record, ["sessionId", "session_id", "conversationId", "id"]);
@@ -456,12 +548,39 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isUsageFile(filePath: string) {
-  return [".csv", ".json", ".jsonl", ".log"].includes(path.extname(filePath).toLowerCase());
+  const basename = path.basename(filePath).toLowerCase();
+  return (
+    [".csv", ".json", ".jsonl", ".log", ".vscdb"].includes(path.extname(filePath).toLowerCase()) ||
+    basename === "state.vscdb.backup"
+  );
+}
+
+function isSqliteUsageFile(filePath: string) {
+  const basename = path.basename(filePath).toLowerCase();
+  return (
+    basename === "state.vscdb" ||
+    basename === "state.vscdb.backup" ||
+    path.extname(filePath).toLowerCase() === ".vscdb"
+  );
 }
 
 function shouldSkipDirectory(dirPath: string) {
   const name = path.basename(dirPath);
-  return name === "node_modules" || name === ".git" || name === "Cache" || name === "CachedData";
+  return [
+    "node_modules",
+    ".git",
+    ".ripgrep",
+    "Cache",
+    "CachedData",
+    "CachedExtensionVSIXs",
+    "Code Cache",
+    "Crashpad",
+    "GPUCache",
+    "IndexedDB",
+    "Local Storage",
+    "extensions",
+    "builtin_skills",
+  ].includes(name);
 }
 
 function isSensitiveTextKey(key: string) {

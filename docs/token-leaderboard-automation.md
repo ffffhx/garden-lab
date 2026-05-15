@@ -4,7 +4,7 @@
 
 - 静态博客页面：`/token-leaderboard`
 - 后端服务：`POST /api/usage/ingest` 接收上报，`GET /api/usage/stats` 返回聚合榜单
-- 本地 agent：定时扫描本机 Codex / Claude Code / Cursor / Gemini CLI 以及自定义 usage 文件，只上传 token 统计字段
+- 本地 agent：定时扫描本机 Codex / Claude Code / Cursor / Trae / Gemini CLI 以及自定义 usage 文件，只上传 token 统计字段
 
 当前阿里云后端地址：
 

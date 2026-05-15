@@ -112,7 +112,7 @@ CODEX_HOME=/Users/你的用户名/.codex
 朋友不需要 clone 仓库。首次安装后台同步时在自己的 Mac 上执行：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent install
+npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.4.0 -- token-board-agent install
 ```
 
 这条命令会先引导 GitHub Device Login，授权成功后安装一个 macOS LaunchAgent。之后终端关闭也会每 5 分钟读取本机 AI 编码工具 token 记录并上传到排行榜后端。
@@ -120,16 +120,16 @@ npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 
 查看后台同步状态：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent status
+npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.4.0 -- token-board-agent status
 ```
 
 卸载后台同步：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0 -- token-board-agent uninstall
+npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.4.0 -- token-board-agent uninstall
 ```
 
-轻量 npx agent 默认读取本机 `~/.codex/sessions`、`~/.codex/projects`。上传内容只包含 token 数、模型、工具、项目 basename 和匿名 session hash，不上传 prompt 文本。
+轻量 npx agent 默认读取本机 Codex、Claude Code、Cursor、Trae 的本地 token 记录；也可以通过 `TOKEN_BOARD_USAGE_PATHS` 或配置文件里的 `usagePaths` 补充自定义 JSON / JSONL / CSV 路径。上传内容只包含 token 数、模型、工具、项目 basename 和匿名 session hash，不上传 prompt 文本。
 
 ## 部署到 GitHub Pages
 

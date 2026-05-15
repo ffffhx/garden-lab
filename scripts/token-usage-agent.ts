@@ -52,6 +52,12 @@ async function main() {
     return;
   }
 
+  if (command === "watch") {
+    const config = await loadOrLoginConfig();
+    await watch(config);
+    return;
+  }
+
   const config = await loadAgentConfig();
 
   if (command === "collect") {
@@ -62,11 +68,6 @@ async function main() {
 
   if (command === "upload") {
     await uploadOnce(config);
-    return;
-  }
-
-  if (command === "watch") {
-    await watch(config);
     return;
   }
 
@@ -174,19 +175,7 @@ export async function loadAgentConfig(): Promise<AgentConfig> {
 }
 
 async function syncOnce() {
-  let config: AgentConfig;
-
-  try {
-    config = await loadAgentConfig();
-  } catch (error) {
-    if (!isMissingAgentTokenError(error)) {
-      throw error;
-    }
-
-    console.log("No saved GitHub agent session found. Starting login first.");
-    await loginWithGitHub();
-    config = await loadAgentConfig();
-  }
+  const config = await loadOrLoginConfig();
 
   await uploadOnce(config);
 
@@ -194,6 +183,20 @@ async function syncOnce() {
 
   if (leaderboardUrl) {
     console.log(`Open leaderboard: ${leaderboardUrl}`);
+  }
+}
+
+async function loadOrLoginConfig() {
+  try {
+    return await loadAgentConfig();
+  } catch (error) {
+    if (!isMissingAgentTokenError(error)) {
+      throw error;
+    }
+
+    console.log("No saved GitHub agent session found. Starting login first.");
+    await loginWithGitHub();
+    return loadAgentConfig();
   }
 }
 

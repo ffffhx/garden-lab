@@ -1,9 +1,9 @@
 import type { CategoryDefinition, CategoryKey } from "@/lib/content/types";
 
 export const SITE = {
-  title: "个人博客",
-  subtitle: "技术、健身与每日新闻",
-  description: "记录技术学习、工程实践、健身过程和每日新闻观察。",
+  title: "Garden Lab",
+  subtitle: "数字花园、工程实验与每日观察",
+  description: "记录技术学习、工程实践、健身过程、小游戏和每日新闻观察。",
   author: "你的名字",
 };
 

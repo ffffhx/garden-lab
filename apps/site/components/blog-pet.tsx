@@ -176,7 +176,7 @@ function routeLine(routeId: string, stats: BlogPetStats, documentTitle: string) 
   }
 
   if (routeId === "post") {
-    const title = documentTitle.replace(/\s*\|\s*个人博客\s*$/, "").trim();
+    const title = documentTitle.replace(/\s*\|\s*Garden Lab\s*$/, "").trim();
     const shortTitle = title.length > 28 ? `${title.slice(0, 28)}...` : title;
     const prefix =
       stats.evolution.id === "training"

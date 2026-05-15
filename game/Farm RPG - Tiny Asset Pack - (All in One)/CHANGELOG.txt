@@ -1,0 +1,11 @@
+FOLDERS
+
+info: 
+The new update contains more than 100 new food icons! The icons can be found in the folders "Icons" and "Food Icons".
+
+We also added the swimming and broomstick animations as separate PNG files!
+
+Sorry for the delay in the updates!
+
+
+

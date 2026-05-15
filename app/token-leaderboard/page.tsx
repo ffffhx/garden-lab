@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { TokenLeaderboardApp } from "@/components/token-leaderboard-app";
-import { createDemoTokenEntries } from "@/lib/token-leaderboard";
 
 const INITIAL_NOW = "2026-05-14T12:00:00.000Z";
 
@@ -14,7 +13,7 @@ export default function TokenLeaderboardPage() {
   return (
     <TokenLeaderboardApp
       apiBaseUrl={process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL}
-      initialEntries={createDemoTokenEntries(new Date(INITIAL_NOW))}
+      initialEntries={[]}
       initialNow={INITIAL_NOW}
     />
   );

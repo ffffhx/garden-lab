@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   TOKEN_LEADERBOARD_STORAGE_KEY,
   buildTokenLeaderboard,
-  createDemoTokenEntries,
   dedupeTokenEvents,
   parseTokenUsageImport,
   type TokenBoardMetric,
@@ -25,8 +24,8 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
   { key: "messages", label: "消息" },
 ];
 
-const SAMPLE_CSV = `user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages
-you,You,Friends,Codex CLI,gpt-5.5,token-board,2026-05-14T10:30:00+08:00,620000,220000,58000,9000,907000,34`;
+const CSV_PLACEHOLDER =
+  "user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages";
 const NPX_PACKAGE_URL = "https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0";
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
@@ -46,8 +45,9 @@ export function TokenLeaderboardApp({
   const [range, setRange] = useState<TokenBoardRange>("7D");
   const [metric, setMetric] = useState<TokenBoardMetric>("tokens");
   const [draft, setDraft] = useState("");
-  const [status, setStatus] = useState("已加载示例数据");
-  const [loadedSource, setLoadedSource] = useState("demo");
+  const [status, setStatus] = useState("正在加载真实用户数据");
+  const [loadedSource, setLoadedSource] = useState(initialEntries.length ? "initial" : "loading");
+  const [dataLoadState, setDataLoadState] = useState<DataLoadState>(initialEntries.length ? "ready" : "loading");
   const [now, setNow] = useState(() => new Date(initialNow));
   const [remoteSummary, setRemoteSummary] = useState<TokenLeaderboardSummary | null>(null);
   const [remoteRecordCount, setRemoteRecordCount] = useState<number | null>(null);
@@ -59,6 +59,10 @@ export function TokenLeaderboardApp({
   }, []);
 
   useEffect(() => {
+    if (normalizedApiBaseUrl) {
+      return;
+    }
+
     let active = true;
 
     const localValue = window.localStorage.getItem(TOKEN_LEADERBOARD_STORAGE_KEY);
@@ -69,9 +73,13 @@ export function TokenLeaderboardApp({
         setEntries(parsed.entries);
         setLoadedSource("local");
         setStatus(`本地数据 ${parsed.entries.length} 条`);
+        setDataLoadState("ready");
         return;
       }
     }
+
+    setDataLoadState(initialEntries.length ? "ready" : "loading");
+    setStatus(initialEntries.length ? `初始数据 ${initialEntries.length} 条` : "正在加载真实用户数据");
 
     fetch(withBasePath("/stats/token-leaderboard.json"), { cache: "no-store" })
       .then((response) => {
@@ -91,18 +99,22 @@ export function TokenLeaderboardApp({
           setEntries(dedupeTokenEvents([...initialEntries, ...parsed.entries]));
           setLoadedSource("public");
           setStatus(`公开数据 ${parsed.entries.length} 条`);
+          setDataLoadState("ready");
+          return;
         }
+
+        setStatus("正在等待真实用户数据");
       })
       .catch(() => {
         if (active) {
-          setStatus("使用内置示例数据");
+          setStatus("正在等待真实用户数据");
         }
       });
 
     return () => {
       active = false;
     };
-  }, [initialEntries]);
+  }, [initialEntries, normalizedApiBaseUrl]);
 
   useEffect(() => {
     if (!normalizedApiBaseUrl) {
@@ -114,7 +126,11 @@ export function TokenLeaderboardApp({
     let active = true;
     const params = new URLSearchParams({ range, metric });
 
-    setStatus("正在读取后端数据");
+    setRemoteSummary(null);
+    setRemoteRecordCount(null);
+    setLoadedSource("server");
+    setDataLoadState("loading");
+    setStatus("正在加载真实用户数据");
     fetch(`${normalizedApiBaseUrl}/api/usage/stats?${params.toString()}`, {
       cache: "no-store",
       credentials: "include",
@@ -139,6 +155,7 @@ export function TokenLeaderboardApp({
         setRemoteSummary(summary);
         setRemoteRecordCount(typeof payload.records === "number" ? payload.records : null);
         setLoadedSource("server");
+        setDataLoadState("ready");
         setStatus(`后端数据 ${typeof payload.records === "number" ? payload.records : summary.users.length} 条`);
       })
       .catch((error) => {
@@ -148,8 +165,9 @@ export function TokenLeaderboardApp({
 
         setRemoteSummary(null);
         setRemoteRecordCount(null);
-        setLoadedSource("local");
-        setStatus(`后端不可用，使用本地数据：${error instanceof Error ? error.message : "读取失败"}`);
+        setLoadedSource("loading");
+        setDataLoadState("loading");
+        setStatus(`真实用户数据加载中：${error instanceof Error ? error.message : "读取失败"}`);
       });
 
     return () => {
@@ -189,13 +207,17 @@ export function TokenLeaderboardApp({
   );
   const summary = remoteSummary ?? localSummary;
   const recordCount = remoteRecordCount ?? entries.length;
-  const sourceLabel = remoteSummary ? "server" : loadedSource;
-  const statusMessage = remoteSummary ? `后端数据 ${recordCount} 条` : status;
+  const isDataLoading = dataLoadState === "loading" && !remoteSummary && entries.length === 0;
+  const sourceLabel = isDataLoading ? "loading" : remoteSummary ? "server" : loadedSource;
+  const statusMessage = isDataLoading ? status : remoteSummary ? `后端数据 ${recordCount} 条` : status;
 
   const topUsers = summary.users.slice(0, 8);
   const leader = summary.users[0];
   const maxDailyTokens = Math.max(1, ...summary.daily.map((point) => point.tokens));
   const selectedMetricLabel = METRICS.find((item) => item.key === metric)?.label ?? "Tokens";
+  const topModelLabel = isDataLoading ? "Loading" : summary.topModel === "unknown" ? "--" : summary.topModel;
+  const topToolLabel = isDataLoading ? "真实数据加载中" : summary.topTool === "unknown" ? "--" : summary.topTool;
+  const recordCountLabel = isDataLoading ? "..." : formatNumber(recordCount);
 
   function importText(text: string, mode: "replace" | "merge" = "merge") {
     const parsed = parseTokenUsageImport(text);
@@ -207,11 +229,14 @@ export function TokenLeaderboardApp({
 
     const nextEntries = mode === "replace" ? parsed.entries : dedupeTokenEvents([...entries, ...parsed.entries]);
     setEntries(nextEntries);
+    setRemoteSummary(null);
+    setRemoteRecordCount(null);
     window.localStorage.setItem(
       TOKEN_LEADERBOARD_STORAGE_KEY,
       JSON.stringify({ schemaVersion: 1, updatedAt: new Date().toISOString(), entries: nextEntries }, null, 2)
     );
     setLoadedSource("local");
+    setDataLoadState("ready");
     setStatus(`已导入 ${parsed.entries.length} 条，当前 ${nextEntries.length} 条`);
     setDraft("");
   }
@@ -222,14 +247,6 @@ export function TokenLeaderboardApp({
     }
 
     importText(await file.text());
-  }
-
-  function resetToDemo() {
-    const demoEntries = createDemoTokenEntries(new Date());
-    setEntries(demoEntries);
-    window.localStorage.removeItem(TOKEN_LEADERBOARD_STORAGE_KEY);
-    setLoadedSource("demo");
-    setStatus(`已恢复示例数据 ${demoEntries.length} 条`);
   }
 
   function exportJson() {
@@ -281,7 +298,7 @@ export function TokenLeaderboardApp({
                   朋友间的 Token 排行榜
                 </h1>
                 <p className="mt-3 text-sm leading-6 text-white/68">
-                  {formatShortDate(summary.startAt)} - {formatShortDate(summary.endAt)}
+                  {isDataLoading ? "正在加载真实用户数据" : `${formatShortDate(summary.startAt)} - ${formatShortDate(summary.endAt)}`}
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 xl:w-auto xl:items-end">
@@ -304,9 +321,17 @@ export function TokenLeaderboardApp({
             </div>
 
             <div className="grid gap-3 border-t border-white/10 pt-4 sm:grid-cols-3">
-              <HeroSignal label="当前榜首" value={leader?.displayName ?? "--"} meta={leader ? formatTokens(leader.tokens) : "--"} />
-              <HeroSignal label="排序指标" value={selectedMetricLabel} meta={`${formatNumber(summary.totalMessages)} messages`} />
-              <HeroSignal label="高频组合" value={summary.topModel} meta={summary.topTool} />
+              <HeroSignal
+                label="当前榜首"
+                value={isDataLoading ? "Loading" : leader?.displayName ?? "--"}
+                meta={isDataLoading ? "真实数据加载中" : leader ? formatTokens(leader.tokens) : "--"}
+              />
+              <HeroSignal
+                label="排序指标"
+                value={selectedMetricLabel}
+                meta={isDataLoading ? "Loading" : `${formatNumber(summary.totalMessages)} messages`}
+              />
+              <HeroSignal label="高频组合" value={topModelLabel} meta={topToolLabel} />
             </div>
           </div>
         </header>
@@ -314,18 +339,38 @@ export function TokenLeaderboardApp({
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
           <div className="min-w-0 space-y-5">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <StatTile label="总 Tokens" value={formatTokens(summary.totalTokens)} meta="Total spend" tone="ink" />
-              <StatTile label="活跃用户" value={formatNumber(summary.activeUsers)} meta={`${topUsers.length} listed`} tone="mint" />
-              <StatTile label="会话" value={formatNumber(summary.totalSessions)} meta="Sessions" tone="blue" />
-              <StatTile label="估算费用" value={formatUsd(summary.totalCostUsd)} meta="USD estimate" tone="gold" />
+              <StatTile
+                label="总 Tokens"
+                value={isDataLoading ? "Loading" : formatTokens(summary.totalTokens)}
+                meta={isDataLoading ? "真实数据加载中" : "Total spend"}
+                tone="ink"
+              />
+              <StatTile
+                label="活跃用户"
+                value={isDataLoading ? "Loading" : formatNumber(summary.activeUsers)}
+                meta={isDataLoading ? "真实数据加载中" : `${topUsers.length} listed`}
+                tone="mint"
+              />
+              <StatTile
+                label="会话"
+                value={isDataLoading ? "Loading" : formatNumber(summary.totalSessions)}
+                meta={isDataLoading ? "真实数据加载中" : "Sessions"}
+                tone="blue"
+              />
+              <StatTile
+                label="估算费用"
+                value={isDataLoading ? "Loading" : formatUsd(summary.totalCostUsd)}
+                meta={isDataLoading ? "真实数据加载中" : "USD estimate"}
+                tone="gold"
+              />
             </div>
 
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(17rem,0.65fr)]">
               <section className="min-w-0 overflow-hidden rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] shadow-[0_20px_70px_-60px_rgba(28,25,23,0.65)]">
                 <PanelHeader
                   title="排行榜"
-                  meta={`${summary.users.length} users`}
-                  action={`${formatShortDate(summary.startAt)} - ${formatShortDate(summary.endAt)}`}
+                  meta={isDataLoading ? "loading" : `${summary.users.length} users`}
+                  action={isDataLoading ? "Loading" : `${formatShortDate(summary.startAt)} - ${formatShortDate(summary.endAt)}`}
                 />
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[780px] border-collapse text-left text-sm">
@@ -341,9 +386,13 @@ export function TokenLeaderboardApp({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-950/8">
-                      {summary.users.map((user) => (
-                        <LeaderboardRow key={user.userId} user={user} />
-                      ))}
+                      {isDataLoading ? (
+                        <LeaderboardLoadingRow />
+                      ) : summary.users.length ? (
+                        summary.users.map((user) => <LeaderboardRow key={user.userId} user={user} />)
+                      ) : (
+                        <LeaderboardEmptyRow />
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -352,12 +401,12 @@ export function TokenLeaderboardApp({
               <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#f5efe4] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-base font-semibold">份额</h2>
-                  <span className="font-mono text-xs text-stone-500">{topUsers.length} 人</span>
+                  <span className="font-mono text-xs text-stone-500">{isDataLoading ? "Loading" : `${topUsers.length} 人`}</span>
                 </div>
                 <div className="mt-4 space-y-3">
-                  {topUsers.map((user) => (
+                  {isDataLoading ? <ShareLoadingRows /> : topUsers.length ? topUsers.map((user) => (
                     <ShareRow key={user.userId} user={user} />
-                  ))}
+                  )) : <EmptyPanelMessage />}
                 </div>
               </section>
             </div>
@@ -366,13 +415,13 @@ export function TokenLeaderboardApp({
               <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-base font-semibold">Token 趋势</h2>
-                  <p className="font-mono text-xs text-stone-500">峰值 {formatTokens(maxDailyTokens)}</p>
+                  <p className="font-mono text-xs text-stone-500">峰值 {isDataLoading ? "Loading" : formatTokens(maxDailyTokens)}</p>
                 </div>
                 <div
                   className="mt-4 grid h-56 grid-cols-[repeat(auto-fit,minmax(8px,1fr))] items-end gap-1 rounded-xl border border-stone-950/8 bg-[linear-gradient(180deg,rgba(17,19,15,0.04),transparent)] px-3 pb-3 pt-5"
                   aria-label="Token 趋势"
                 >
-                  {summary.daily.map((point, index) => (
+                  {isDataLoading ? <TrendLoadingBars /> : summary.daily.map((point, index) => (
                     <div key={point.date} className="flex h-full items-end">
                       <div
                         className={`w-full rounded-t-[3px] transition duration-200 hover:translate-y-[-2px] ${
@@ -385,19 +434,19 @@ export function TokenLeaderboardApp({
                   ))}
                 </div>
                 <div className="mt-2 flex justify-between font-mono text-xs text-stone-500">
-                  <span>{summary.daily[0]?.date.slice(5) ?? "--"}</span>
-                  <span>{summary.daily.at(-1)?.date.slice(5) ?? "--"}</span>
+                  <span>{isDataLoading ? "--" : summary.daily[0]?.date.slice(5) ?? "--"}</span>
+                  <span>{isDataLoading ? "--" : summary.daily.at(-1)?.date.slice(5) ?? "--"}</span>
                 </div>
               </section>
 
               <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-                <BreakdownPanel title="模型消耗" items={summary.models.map((item) => ({
+                <BreakdownPanel title="模型消耗" loading={isDataLoading} items={summary.models.map((item) => ({
                   name: item.name,
                   value: item.tokens,
                   meta: formatUsd(item.costUsd),
                   share: item.share,
                 }))} />
-                <BreakdownPanel title="工具分布" items={summary.tools.map((item) => ({
+                <BreakdownPanel title="工具分布" loading={isDataLoading} items={summary.tools.map((item) => ({
                   name: item.name,
                   value: item.tokens,
                   meta: `${formatNumber(item.sessions)} 会话`,
@@ -411,7 +460,7 @@ export function TokenLeaderboardApp({
             <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-base font-semibold">数据入口</h2>
-                <span className="rounded-full bg-stone-950 px-2.5 py-1 font-mono text-xs text-white">{recordCount}</span>
+                <span className="rounded-full bg-stone-950 px-2.5 py-1 font-mono text-xs text-white">{recordCountLabel}</span>
               </div>
               <div className="mt-4 space-y-3">
                 {normalizedApiBaseUrl ? (
@@ -442,7 +491,7 @@ export function TokenLeaderboardApp({
                   <textarea
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
-                    placeholder={SAMPLE_CSV}
+                    placeholder={CSV_PLACEHOLDER}
                     className="mt-2 min-h-36 w-full resize-y rounded-xl border border-stone-950/12 bg-[#fbf7ef] p-3 font-mono text-xs leading-5 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#26745e] focus:bg-white focus:ring-4 focus:ring-[#26745e]/12"
                   />
                 </label>
@@ -464,12 +513,9 @@ export function TokenLeaderboardApp({
                     />
                   </label>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <ActionButton icon="refresh" variant="secondary" onClick={resetToDemo}>
-                    示例
-                  </ActionButton>
+                <div className="grid gap-2">
                   <ActionButton icon="download" variant="secondary" onClick={exportJson}>
-                    导出
+                    导出本地
                   </ActionButton>
                 </div>
                 <p className="min-h-5 rounded-lg bg-[#f5efe4] px-3 py-2 text-xs text-stone-600" aria-live="polite">
@@ -639,6 +685,32 @@ function LeaderboardRow({ user }: { user: TokenLeaderboardUser }) {
   );
 }
 
+function LeaderboardLoadingRow() {
+  return (
+    <tr>
+      <td colSpan={7} className="px-4 py-12">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-stone-950/8 bg-[#f8f2e8] p-6 text-center">
+          <span className="size-7 rounded-full border-2 border-stone-950/15 border-t-[#26745e] motion-safe:animate-spin" />
+          <div>
+            <p className="font-semibold text-stone-950">Loading 真实用户数据</p>
+            <p className="mt-1 text-xs text-stone-500">数据没回来前不会展示示例排行榜</p>
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function LeaderboardEmptyRow() {
+  return (
+    <tr>
+      <td colSpan={7} className="px-4 py-10 text-center text-sm text-stone-500">
+        暂无真实用户数据
+      </td>
+    </tr>
+  );
+}
+
 function ShareRow({ user }: { user: TokenLeaderboardUser }) {
   return (
     <div className="grid grid-cols-[2.25rem_minmax(0,1fr)_5rem] items-center gap-3">
@@ -660,21 +732,61 @@ function ShareRow({ user }: { user: TokenLeaderboardUser }) {
   );
 }
 
+function ShareLoadingRows() {
+  return (
+    <>
+      {Array.from({ length: 5 }, (_, index) => (
+        <div key={index} className="grid grid-cols-[2.25rem_minmax(0,1fr)_5rem] items-center gap-3">
+          <span className="size-9 rounded-xl bg-white/80 motion-safe:animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-3 w-2/3 rounded-full bg-white/85 motion-safe:animate-pulse" />
+            <div className="h-2 rounded-full bg-white/75 motion-safe:animate-pulse" />
+          </div>
+          <div className="h-3 rounded-full bg-white/80 motion-safe:animate-pulse" />
+        </div>
+      ))}
+    </>
+  );
+}
+
+function TrendLoadingBars() {
+  const heights = [28, 42, 35, 58, 46, 64, 38, 52, 72, 44, 60, 50, 68, 40, 56, 76, 48, 62, 54, 70, 45, 59, 66, 51];
+
+  return (
+    <>
+      {heights.map((height, index) => (
+        <div key={index} className="flex h-full items-end">
+          <div
+            className="w-full rounded-t-[3px] bg-stone-950/12 motion-safe:animate-pulse"
+            style={{ height: `${height}%` }}
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
+function EmptyPanelMessage() {
+  return <p className="rounded-xl border border-stone-950/8 bg-white/60 px-3 py-4 text-center text-sm text-stone-500">暂无真实数据</p>;
+}
+
 function BreakdownPanel({
   title,
   items,
+  loading = false,
 }: {
   title: string;
   items: Array<{ name: string; value: number; meta: string; share: number }>;
+  loading?: boolean;
 }) {
   return (
     <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold">{title}</h2>
-        <span className="font-mono text-xs text-stone-500">{items.length}</span>
+        <span className="font-mono text-xs text-stone-500">{loading ? "Loading" : items.length}</span>
       </div>
       <div className="mt-4 space-y-3">
-        {items.slice(0, 8).map((item) => (
+        {loading ? <BreakdownLoadingRows /> : items.length ? items.slice(0, 8).map((item) => (
           <div key={item.name}>
             <div className="flex items-center justify-between gap-3 text-sm">
               <p className="truncate font-medium">{item.name}</p>
@@ -687,9 +799,28 @@ function BreakdownPanel({
               <p className="truncate text-right text-xs text-stone-500">{item.meta}</p>
             </div>
           </div>
-        ))}
+        )) : <EmptyPanelMessage />}
       </div>
     </section>
+  );
+}
+
+function BreakdownLoadingRows() {
+  return (
+    <>
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="h-3 w-1/2 rounded-full bg-stone-950/10 motion-safe:animate-pulse" />
+            <div className="h-3 w-14 rounded-full bg-stone-950/10 motion-safe:animate-pulse" />
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-3">
+            <div className="h-2 rounded-full bg-stone-950/10 motion-safe:animate-pulse" />
+            <div className="h-3 rounded-full bg-stone-950/10 motion-safe:animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -889,3 +1020,5 @@ type ViewerState = {
     avatarUrl?: string;
   };
 };
+
+type DataLoadState = "loading" | "ready";

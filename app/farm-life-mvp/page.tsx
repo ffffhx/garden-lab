@@ -139,7 +139,7 @@ export default function FarmLifeMvpPage() {
               <p className="text-sm uppercase tracking-[0.24em] text-emerald-200">Playable MVP</p>
               <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">山居种田</h1>
               <p className="max-w-3xl text-base leading-8 text-slate-200">
-                纯前端单机版原型：Tiled 可滚动大地图、相机跟随、按住方向键连续移动、J 键山居日志、季节日历、每日目标、山居线索任务链、NPC 分时段日程、原创小事件、活动加成、农场、小屋室内、小镇道路、种子商店、三种作物、池塘钓鱼、每日野外采集、NPC 聊天送礼、邮箱信件、电视天气预报、天气、季节、体力、时间、公告板订单、三帧走路动画、原创合成音效、种子目录购买弹窗、底部图标工具栏、作物 logo、HUD 图标、背包菜单、睡觉结算屏、操作漂浮反馈、对话框、售卖箱和本地存档已经接入。
+                纯前端单机版原型：已换用 Farm RPG 像素美术素材包，Tiled 可滚动大地图、相机跟随、按住方向键连续移动、J 键山居日志、季节日历、每日目标、山居线索任务链、NPC 分时段日程、原创小事件、活动加成、农场、小屋室内、小镇道路、种子商店、三种作物、池塘钓鱼、每日野外采集、NPC 聊天送礼、邮箱信件、电视天气预报、天气、季节、体力、时间、公告板订单、三帧走路动画、原创合成音效、种子目录购买弹窗、底部图标工具栏、作物 logo、HUD 图标、背包菜单、睡觉结算屏、操作漂浮反馈、对话框、售卖箱和本地存档已经接入。
               </p>
             </div>
             <div className="flex flex-wrap gap-3 text-sm font-semibold">

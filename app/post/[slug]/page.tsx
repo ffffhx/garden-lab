@@ -44,7 +44,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const showToc = post.headings.length >= TOC_MIN_HEADINGS;
   const coverImage = post.cover ? (
-    <div className="overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-slate-100 shadow-[0_24px_80px_-52px_rgba(15,23,42,0.55)]">
+    <div className="overflow-hidden rounded-lg border border-slate-950/10 bg-slate-100 shadow-[0_24px_80px_-56px_rgba(15,23,42,0.58)]">
       <img
         src={post.cover}
         alt={`${post.title} 封面`}
@@ -57,13 +57,13 @@ export default async function PostPage({ params }: PostPageProps) {
   ) : null;
 
   return (
-    <main className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-      <article className="rounded-[2rem] border border-slate-900/10 bg-white/90 p-7 shadow-[0_32px_120px_-68px_rgba(15,23,42,0.65)] sm:p-10">
+    <main className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
+      <article className="min-w-0 rounded-lg border border-slate-950/10 bg-[#fffdf7]/92 p-6 shadow-[0_32px_120px_-72px_rgba(15,23,42,0.68)] sm:p-10">
         <div className="space-y-5">
           {post.coverPosition === "above-title" ? coverImage : null}
           <div className="space-y-3">
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Post</p>
-            <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+            <p className="text-sm uppercase tracking-[0.32em] text-slate-500">Post</p>
+            <h1 className="max-w-4xl break-words text-balance text-3xl font-semibold leading-[1.08] tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
               {post.title}
             </h1>
           </div>

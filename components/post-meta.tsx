@@ -30,7 +30,7 @@ export function PostMeta({
         {categories.map((category) => (
           <span
             key={category}
-            className="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-900"
+            className="rounded-full border border-[#b45f28]/15 bg-[#fff4cf] px-3 py-1 font-medium text-[#7c3b16]"
           >
             {categoryLabels[category]}
           </span>

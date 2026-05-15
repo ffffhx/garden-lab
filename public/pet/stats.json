@@ -1,14 +1,14 @@
 {
   "schemaVersion": 3,
-  "generatedAt": "2026-05-05T10:48:54.077Z",
+  "generatedAt": "2026-05-15T05:25:24.816Z",
   "pet": {
     "level": 8,
-    "xp": 1952,
+    "xp": 2397,
     "levelStartXp": 1920,
     "nextLevelXp": 2416,
-    "xpIntoLevel": 32,
+    "xpIntoLevel": 477,
     "xpForNextLevel": 496,
-    "progressRatio": 0.06451612903225806,
+    "progressRatio": 0.9616935483870968,
     "maxLevel": 50,
     "stage": {
       "level": 8,
@@ -28,9 +28,9 @@
       "traitLabel": "智力外观强化",
       "voiceLabel": "会用模块、接口和边界来吐槽文章。"
     },
-    "totalMeals": 38,
-    "recentMeals": 38,
-    "streakDays": 3,
+    "totalMeals": 47,
+    "recentMeals": 43,
+    "streakDays": 9,
     "daysSinceLastMeal": 0,
     "hunger": {
       "label": "刚吃饱",
@@ -56,9 +56,9 @@
       {
         "id": "speed",
         "label": "速度",
-        "value": 21,
+        "value": 48,
         "maxValue": 200,
-        "ratio": 0.105
+        "ratio": 0.24
       }
     ],
     "dominantAttribute": {
@@ -69,9 +69,9 @@
       "ratio": 0.345
     },
     "latestMeal": {
-      "title": "每日新闻：2026-05-05 X 上 AI 与前端热点速览",
-      "slug": "2026-05-05-x-ai",
-      "dateText": "2026年5月5日",
+      "title": "每日新闻：2026-05-15 X 上 AI 与前端热点速览",
+      "slug": "2026-05-15-x-ai",
+      "dateText": "2026年5月15日",
       "foods": [
         {
           "category": "dailyNews",
@@ -118,9 +118,9 @@
         "shortLabel": "NEWS",
         "attributeId": "speed",
         "attributeLabel": "速度",
-        "count": 7,
-        "attributeGain": 21,
-        "ratio": 0.30434782608695654
+        "count": 16,
+        "attributeGain": 48,
+        "ratio": 0.6956521739130435
       }
     ],
     "achievements": [
@@ -140,7 +140,7 @@
         "title": "连续三天投喂",
         "description": "最近连续 3 个发布日都有新文章投喂。",
         "unlocked": true,
-        "progress": 3,
+        "progress": 9,
         "goal": 3,
         "progressText": "3/3"
       },
@@ -169,10 +169,10 @@
         "layer": "continuity",
         "title": "连续五天投喂",
         "description": "连续 5 个发布日都有新文章，桌宠会进入更稳定的巡逻节奏。",
-        "unlocked": false,
-        "progress": 3,
+        "unlocked": true,
+        "progress": 9,
         "goal": 5,
-        "progressText": "3/5"
+        "progressText": "5/5"
       },
       {
         "id": "balancedTenPosts",
@@ -180,9 +180,9 @@
         "title": "三味各十餐",
         "description": "技术、健身和热点都达到 10 篇，解锁更稳定的均衡型路线。",
         "unlocked": false,
-        "progress": 7,
+        "progress": 8,
         "goal": 10,
-        "progressText": "7/10"
+        "progressText": "8/10"
       },
       {
         "id": "tenLongPosts",
@@ -190,7 +190,7 @@
         "title": "长文储粮仓",
         "description": "累计 10 篇 8 分钟以上长文，桌宠会把它们收进资料库。",
         "unlocked": true,
-        "progress": 37,
+        "progress": 46,
         "goal": 10,
         "progressText": "10/10"
       },
@@ -200,7 +200,7 @@
         "title": "系列文章成巢",
         "description": "同一标签或同一标题前缀累计 3 篇，桌宠会认出一条长期主线。",
         "unlocked": true,
-        "progress": 19,
+        "progress": 28,
         "goal": 3,
         "progressText": "3/3"
       },
@@ -210,7 +210,7 @@
         "title": "年度三十投",
         "description": "当年累计 30 篇文章，年度回顾路线点亮。",
         "unlocked": true,
-        "progress": 38,
+        "progress": 47,
         "goal": 30,
         "progressText": "30/30"
       },
@@ -228,12 +228,12 @@
     "tasks": [
       {
         "id": "balanceSpeedWithStamina",
-        "title": "再发 1 篇热点，速度追平体力",
-        "description": "当前速度 21，体力 24。补热点糖粒可以让巡逻节奏更轻。",
-        "progress": 21,
-        "goal": 24,
-        "progressText": "21/24",
-        "completed": false,
+        "title": "速度已经追平体力",
+        "description": "热点糖粒储备够用，情报型动作已经跟上体力节奏。",
+        "progress": 48,
+        "goal": 48,
+        "progressText": "48/48",
+        "completed": true,
         "food": {
           "category": "dailyNews",
           "label": "热点糖粒",
@@ -244,12 +244,12 @@
       },
       {
         "id": "fiveDayStreak",
-        "title": "再连续发布 2 天，解锁连续五天投喂",
-        "description": "连续更新会让桌宠进入更稳定的巡逻状态，也会点亮写作连续性成就。",
-        "progress": 3,
+        "title": "连续五天投喂已解锁",
+        "description": "连续性成就已经点亮，桌宠会把这段节奏记进成长时间线。",
+        "progress": 9,
         "goal": 5,
-        "progressText": "3/5",
-        "completed": false
+        "progressText": "5/5",
+        "completed": true
       },
       {
         "id": "techThirtyPosts",
@@ -302,11 +302,11 @@
         "description": "热点文章越多，气泡更活跃，巡逻动作更快。",
         "visualCue": "蓝色光晕、NEWS 贴片、快速巡逻",
         "voiceLine": "我会用快讯、信号和风向回应。",
-        "progress": 7,
+        "progress": 16,
         "goal": 15,
-        "progressText": "7/15",
+        "progressText": "15/15",
         "current": false,
-        "unlocked": false
+        "unlocked": true
       },
       {
         "id": "balanced",
@@ -317,7 +317,7 @@
         "voiceLine": "我会在代码、训练和热点三种语气间切换。",
         "progress": 3,
         "goal": 3,
-        "progressText": "最大差距 16 篇",
+        "progressText": "最大差距 15 篇",
         "current": false,
         "unlocked": false
       }
@@ -458,13 +458,121 @@
     ],
     "growthTimeline": [
       {
+        "title": "每日新闻：2026-05-15 X 上 AI 与前端热点速览",
+        "slug": "2026-05-15-x-ai",
+        "dateText": "2026年5月15日",
+        "mealSummary": "热点糖粒，速度 +3",
+        "previousLevel": 8,
+        "level": 8,
+        "xp": 2397,
+        "xpGained": 59,
+        "stageName": "破壳灵",
+        "unlockedAchievements": []
+      },
+      {
+        "title": "每日新闻：2026-05-14 X 上 AI 与前端热点速览",
+        "slug": "2026-05-14-x-ai",
+        "dateText": "2026年5月14日",
+        "mealSummary": "热点糖粒，速度 +3",
+        "previousLevel": 8,
+        "level": 8,
+        "xp": 2338,
+        "xpGained": 59,
+        "stageName": "破壳灵",
+        "unlockedAchievements": []
+      },
+      {
+        "title": "每日新闻：2026-05-13 X 上 AI 与前端热点速览",
+        "slug": "2026-05-13-x-ai",
+        "dateText": "2026年5月13日",
+        "mealSummary": "热点糖粒，速度 +3",
+        "previousLevel": 8,
+        "level": 8,
+        "xp": 2279,
+        "xpGained": 59,
+        "stageName": "破壳灵",
+        "unlockedAchievements": []
+      },
+      {
+        "title": "每日新闻：2026-05-12 X 上 AI 与前端热点速览",
+        "slug": "2026-05-12-x-ai",
+        "dateText": "2026年5月12日",
+        "mealSummary": "热点糖粒，速度 +3",
+        "previousLevel": 8,
+        "level": 8,
+        "xp": 2220,
+        "xpGained": 59,
+        "stageName": "破壳灵",
+        "unlockedAchievements": []
+      },
+      {
+        "title": "每日新闻：2026-05-11 X 上 AI 与前端热点速览",
+        "slug": "2026-05-11-x-ai",
+        "dateText": "2026年5月11日",
+        "mealSummary": "热点糖粒，速度 +3",
+        "previousLevel": 8,
+        "level": 8,
+        "xp": 2161,
+        "xpGained": 59,
+        "stageName": "破壳灵",
+        "unlockedAchievements": []
+      },
+      {
+        "title": "每日新闻：2026-05-10 X 上 AI 与前端热点速览",
+        "slug": "2026-05-10-x-ai",
+        "dateText": "2026年5月10日",
+        "mealSummary": "热点糖粒，速度 +3",
+        "previousLevel": 8,
+        "level": 8,
+        "xp": 2102,
+        "xpGained": 59,
+        "stageName": "破壳灵",
+        "unlockedAchievements": []
+      },
+      {
+        "title": "每日新闻：2026-05-09 X 上 AI 与前端热点速览",
+        "slug": "2026-05-09-x-ai",
+        "dateText": "2026年5月9日",
+        "mealSummary": "热点糖粒，速度 +3",
+        "previousLevel": 8,
+        "level": 8,
+        "xp": 2043,
+        "xpGained": 59,
+        "stageName": "破壳灵",
+        "unlockedAchievements": []
+      },
+      {
+        "title": "每日新闻：2026-05-07 X 上 AI 与前端热点速览",
+        "slug": "2026-05-07-x-ai",
+        "dateText": "2026年5月8日",
+        "mealSummary": "热点糖粒，速度 +3",
+        "previousLevel": 8,
+        "level": 8,
+        "xp": 1984,
+        "xpGained": 59,
+        "stageName": "破壳灵",
+        "unlockedAchievements": []
+      },
+      {
+        "title": "每日新闻：2026-05-06 X 上 AI 与前端热点速览",
+        "slug": "2026-05-06-x-ai",
+        "dateText": "2026年5月7日",
+        "mealSummary": "热点糖粒，速度 +3",
+        "previousLevel": 7,
+        "level": 8,
+        "xp": 1925,
+        "xpGained": 29,
+        "stageName": "破壳灵",
+        "unlockedAchievements": []
+      },
+      {
         "title": "每日新闻：2026-05-05 X 上 AI 与前端热点速览",
         "slug": "2026-05-05-x-ai",
         "dateText": "2026年5月5日",
         "mealSummary": "热点糖粒，速度 +3",
         "previousLevel": 7,
-        "level": 8,
-        "xp": 1952,
+        "level": 7,
+        "xp": 1896,
         "xpGained": 59,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -476,7 +584,7 @@
         "mealSummary": "热点糖粒，速度 +3",
         "previousLevel": 7,
         "level": 7,
-        "xp": 1893,
+        "xp": 1837,
         "xpGained": 59,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -488,7 +596,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 7,
         "level": 7,
-        "xp": 1834,
+        "xp": 1778,
         "xpGained": 49,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -500,7 +608,7 @@
         "mealSummary": "热点糖粒，速度 +3",
         "previousLevel": 7,
         "level": 7,
-        "xp": 1785,
+        "xp": 1729,
         "xpGained": 49,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -512,7 +620,7 @@
         "mealSummary": "热点糖粒，速度 +3",
         "previousLevel": 7,
         "level": 7,
-        "xp": 1736,
+        "xp": 1680,
         "xpGained": -11,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -524,7 +632,7 @@
         "mealSummary": "热点糖粒，速度 +3",
         "previousLevel": 7,
         "level": 7,
-        "xp": 1747,
+        "xp": 1691,
         "xpGained": 49,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -536,7 +644,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 7,
         "level": 7,
-        "xp": 1698,
+        "xp": 1642,
         "xpGained": 59,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -548,7 +656,7 @@
         "mealSummary": "热点糖粒，速度 +3",
         "previousLevel": 7,
         "level": 7,
-        "xp": 1639,
+        "xp": 1583,
         "xpGained": 59,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -558,9 +666,9 @@
         "slug": "playwright-cli-npx-playwright",
         "dateText": "2026年4月26日",
         "mealSummary": "代码脆片，智力 +3",
-        "previousLevel": 7,
+        "previousLevel": 6,
         "level": 7,
-        "xp": 1580,
+        "xp": 1524,
         "xpGained": 49,
         "stageName": "破壳灵",
         "unlockedAchievements": [
@@ -576,9 +684,9 @@
         "slug": "chrome-devtools-mcp-agent",
         "dateText": "2026年4月26日",
         "mealSummary": "代码脆片，智力 +3",
-        "previousLevel": 7,
-        "level": 7,
-        "xp": 1531,
+        "previousLevel": 6,
+        "level": 6,
+        "xp": 1475,
         "xpGained": 49,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -589,8 +697,8 @@
         "dateText": "2026年4月26日",
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 6,
-        "level": 7,
-        "xp": 1482,
+        "level": 6,
+        "xp": 1426,
         "xpGained": 49,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -602,7 +710,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 6,
         "level": 6,
-        "xp": 1433,
+        "xp": 1377,
         "xpGained": 49,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -614,7 +722,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 6,
         "level": 6,
-        "xp": 1384,
+        "xp": 1328,
         "xpGained": 59,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -626,7 +734,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 6,
         "level": 6,
-        "xp": 1325,
+        "xp": 1269,
         "xpGained": 49,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -638,7 +746,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 6,
         "level": 6,
-        "xp": 1276,
+        "xp": 1220,
         "xpGained": 59,
         "stageName": "破壳灵",
         "unlockedAchievements": []
@@ -648,9 +756,9 @@
         "slug": "2026-04-24-ai",
         "dateText": "2026年4月24日",
         "mealSummary": "热点糖粒，速度 +3",
-        "previousLevel": 6,
+        "previousLevel": 5,
         "level": 6,
-        "xp": 1217,
+        "xp": 1161,
         "xpGained": 79,
         "stageName": "破壳灵",
         "unlockedAchievements": [
@@ -667,10 +775,10 @@
         "dateText": "2026年4月23日",
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 5,
-        "level": 6,
-        "xp": 1138,
+        "level": 5,
+        "xp": 1082,
         "xpGained": 49,
-        "stageName": "破壳灵",
+        "stageName": "灵感蛋",
         "unlockedAchievements": []
       },
       {
@@ -680,7 +788,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 5,
         "level": 5,
-        "xp": 1089,
+        "xp": 1033,
         "xpGained": 59,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -692,7 +800,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 5,
         "level": 5,
-        "xp": 1030,
+        "xp": 974,
         "xpGained": 9,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -704,7 +812,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 5,
         "level": 5,
-        "xp": 1021,
+        "xp": 965,
         "xpGained": 59,
         "stageName": "灵感蛋",
         "unlockedAchievements": [
@@ -722,7 +830,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 5,
         "level": 5,
-        "xp": 962,
+        "xp": 906,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": [
@@ -740,7 +848,7 @@
         "mealSummary": "蛋白饭团，体力 +3",
         "previousLevel": 5,
         "level": 5,
-        "xp": 913,
+        "xp": 857,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -750,9 +858,9 @@
         "slug": "卧推怎么练从握距触胸到腿驱",
         "dateText": "2026年4月17日",
         "mealSummary": "蛋白饭团，体力 +3",
-        "previousLevel": 5,
+        "previousLevel": 4,
         "level": 5,
-        "xp": 864,
+        "xp": 808,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -763,8 +871,8 @@
         "dateText": "2026年4月17日",
         "mealSummary": "蛋白饭团，体力 +3",
         "previousLevel": 4,
-        "level": 5,
-        "xp": 815,
+        "level": 4,
+        "xp": 759,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -776,7 +884,7 @@
         "mealSummary": "蛋白饭团，体力 +3",
         "previousLevel": 4,
         "level": 4,
-        "xp": 766,
+        "xp": 710,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -788,7 +896,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 4,
         "level": 4,
-        "xp": 717,
+        "xp": 661,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -800,7 +908,7 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 4,
         "level": 4,
-        "xp": 668,
+        "xp": 612,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -812,7 +920,7 @@
         "mealSummary": "蛋白饭团，体力 +3",
         "previousLevel": 4,
         "level": 4,
-        "xp": 619,
+        "xp": 563,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": [
@@ -828,9 +936,9 @@
         "slug": "如果你现在很胖平时也不运动减脂该怎么开始",
         "dateText": "2026年4月17日",
         "mealSummary": "蛋白饭团，体力 +3",
-        "previousLevel": 4,
+        "previousLevel": 3,
         "level": 4,
-        "xp": 570,
+        "xp": 514,
         "xpGained": 59,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -841,8 +949,8 @@
         "dateText": "2026年4月16日",
         "mealSummary": "蛋白饭团，体力 +3",
         "previousLevel": 3,
-        "level": 4,
-        "xp": 511,
+        "level": 3,
+        "xp": 455,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -854,7 +962,7 @@
         "mealSummary": "蛋白饭团，体力 +3",
         "previousLevel": 3,
         "level": 3,
-        "xp": 462,
+        "xp": 406,
         "xpGained": 69,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -864,9 +972,9 @@
         "slug": "openai-codex-harness-agent",
         "dateText": "2026年4月16日",
         "mealSummary": "代码脆片，智力 +3",
-        "previousLevel": 3,
+        "previousLevel": 2,
         "level": 3,
-        "xp": 393,
+        "xp": 337,
         "xpGained": 59,
         "stageName": "灵感蛋",
         "unlockedAchievements": [
@@ -882,9 +990,9 @@
         "slug": "openclaw-ai-gateway-agent-loop",
         "dateText": "2026年4月15日",
         "mealSummary": "代码脆片，智力 +3",
-        "previousLevel": 3,
-        "level": 3,
-        "xp": 334,
+        "previousLevel": 2,
+        "level": 2,
+        "xp": 278,
         "xpGained": 49,
         "stageName": "灵感蛋",
         "unlockedAchievements": [
@@ -901,8 +1009,8 @@
         "dateText": "2026年4月15日",
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 2,
-        "level": 3,
-        "xp": 285,
+        "level": 2,
+        "xp": 229,
         "xpGained": 59,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
@@ -914,8 +1022,8 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 2,
         "level": 2,
-        "xp": 226,
-        "xpGained": 49,
+        "xp": 170,
+        "xpGained": 35,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
       },
@@ -924,10 +1032,10 @@
         "slug": "claude-code",
         "dateText": "2026年4月14日",
         "mealSummary": "代码脆片，智力 +3",
-        "previousLevel": 2,
+        "previousLevel": 1,
         "level": 2,
-        "xp": 177,
-        "xpGained": 49,
+        "xp": 135,
+        "xpGained": 35,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
       },
@@ -937,9 +1045,9 @@
         "dateText": "2026年4月14日",
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 1,
-        "level": 2,
-        "xp": 128,
-        "xpGained": 49,
+        "level": 1,
+        "xp": 100,
+        "xpGained": 35,
         "stageName": "灵感蛋",
         "unlockedAchievements": []
       },
@@ -950,8 +1058,8 @@
         "mealSummary": "代码脆片，智力 +3",
         "previousLevel": 1,
         "level": 1,
-        "xp": 79,
-        "xpGained": 79,
+        "xp": 65,
+        "xpGained": 65,
         "stageName": "灵感蛋",
         "unlockedAchievements": [
           {
@@ -964,16 +1072,160 @@
     ],
     "nextFocus": {
       "label": "冲刺下一形态",
-      "detail": "距离下一等级还差 464 XP，优先补热点糖粒能让属性更均衡。",
+      "detail": "距离下一等级还差 19 XP，优先补蛋白饭团能让属性更均衡。",
       "food": {
-        "category": "dailyNews",
-        "label": "热点糖粒",
-        "shortLabel": "NEWS",
-        "attributeId": "speed",
-        "attributeLabel": "速度"
+        "category": "fitness",
+        "label": "蛋白饭团",
+        "shortLabel": "FIT",
+        "attributeId": "stamina",
+        "attributeLabel": "体力"
       }
     },
     "mealLog": [
+      {
+        "title": "每日新闻：2026-05-15 X 上 AI 与前端热点速览",
+        "slug": "2026-05-15-x-ai",
+        "dateText": "2026年5月15日",
+        "foods": [
+          {
+            "category": "dailyNews",
+            "label": "热点糖粒",
+            "shortLabel": "NEWS",
+            "attributeId": "speed",
+            "attributeLabel": "速度"
+          }
+        ],
+        "attributeGain": 3,
+        "summary": "热点糖粒，速度 +3"
+      },
+      {
+        "title": "每日新闻：2026-05-14 X 上 AI 与前端热点速览",
+        "slug": "2026-05-14-x-ai",
+        "dateText": "2026年5月14日",
+        "foods": [
+          {
+            "category": "dailyNews",
+            "label": "热点糖粒",
+            "shortLabel": "NEWS",
+            "attributeId": "speed",
+            "attributeLabel": "速度"
+          }
+        ],
+        "attributeGain": 3,
+        "summary": "热点糖粒，速度 +3"
+      },
+      {
+        "title": "每日新闻：2026-05-13 X 上 AI 与前端热点速览",
+        "slug": "2026-05-13-x-ai",
+        "dateText": "2026年5月13日",
+        "foods": [
+          {
+            "category": "dailyNews",
+            "label": "热点糖粒",
+            "shortLabel": "NEWS",
+            "attributeId": "speed",
+            "attributeLabel": "速度"
+          }
+        ],
+        "attributeGain": 3,
+        "summary": "热点糖粒，速度 +3"
+      },
+      {
+        "title": "每日新闻：2026-05-12 X 上 AI 与前端热点速览",
+        "slug": "2026-05-12-x-ai",
+        "dateText": "2026年5月12日",
+        "foods": [
+          {
+            "category": "dailyNews",
+            "label": "热点糖粒",
+            "shortLabel": "NEWS",
+            "attributeId": "speed",
+            "attributeLabel": "速度"
+          }
+        ],
+        "attributeGain": 3,
+        "summary": "热点糖粒，速度 +3"
+      },
+      {
+        "title": "每日新闻：2026-05-11 X 上 AI 与前端热点速览",
+        "slug": "2026-05-11-x-ai",
+        "dateText": "2026年5月11日",
+        "foods": [
+          {
+            "category": "dailyNews",
+            "label": "热点糖粒",
+            "shortLabel": "NEWS",
+            "attributeId": "speed",
+            "attributeLabel": "速度"
+          }
+        ],
+        "attributeGain": 3,
+        "summary": "热点糖粒，速度 +3"
+      },
+      {
+        "title": "每日新闻：2026-05-10 X 上 AI 与前端热点速览",
+        "slug": "2026-05-10-x-ai",
+        "dateText": "2026年5月10日",
+        "foods": [
+          {
+            "category": "dailyNews",
+            "label": "热点糖粒",
+            "shortLabel": "NEWS",
+            "attributeId": "speed",
+            "attributeLabel": "速度"
+          }
+        ],
+        "attributeGain": 3,
+        "summary": "热点糖粒，速度 +3"
+      },
+      {
+        "title": "每日新闻：2026-05-09 X 上 AI 与前端热点速览",
+        "slug": "2026-05-09-x-ai",
+        "dateText": "2026年5月9日",
+        "foods": [
+          {
+            "category": "dailyNews",
+            "label": "热点糖粒",
+            "shortLabel": "NEWS",
+            "attributeId": "speed",
+            "attributeLabel": "速度"
+          }
+        ],
+        "attributeGain": 3,
+        "summary": "热点糖粒，速度 +3"
+      },
+      {
+        "title": "每日新闻：2026-05-07 X 上 AI 与前端热点速览",
+        "slug": "2026-05-07-x-ai",
+        "dateText": "2026年5月8日",
+        "foods": [
+          {
+            "category": "dailyNews",
+            "label": "热点糖粒",
+            "shortLabel": "NEWS",
+            "attributeId": "speed",
+            "attributeLabel": "速度"
+          }
+        ],
+        "attributeGain": 3,
+        "summary": "热点糖粒，速度 +3"
+      },
+      {
+        "title": "每日新闻：2026-05-06 X 上 AI 与前端热点速览",
+        "slug": "2026-05-06-x-ai",
+        "dateText": "2026年5月7日",
+        "foods": [
+          {
+            "category": "dailyNews",
+            "label": "热点糖粒",
+            "shortLabel": "NEWS",
+            "attributeId": "speed",
+            "attributeLabel": "速度"
+          }
+        ],
+        "attributeGain": 3,
+        "summary": "热点糖粒，速度 +3"
+      },
       {
         "title": "每日新闻：2026-05-05 X 上 AI 与前端热点速览",
         "slug": "2026-05-05-x-ai",

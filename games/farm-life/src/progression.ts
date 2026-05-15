@@ -89,7 +89,7 @@ export type CropGrowthStatus = {
 
 export type SnackCategory = "crop" | "forage" | "fish";
 
-export type TravelTarget = "farm" | "home" | "town" | "shop";
+export type TravelTarget = "farm" | "home" | "town" | "shop" | "deepForest" | "beach" | "cave" | "dungeon" | "temple" | "barn";
 
 export type FishingCatchTier = "miss" | "common" | "good" | "rare";
 
@@ -1061,6 +1061,12 @@ export function npcVisitPlanHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   };
   const location = place === currentPlace ? "身边" : placeLabels[place];
   const action = alreadyGifted ? "今日已送" : giftName?.trim() ? `带${giftName.trim()}${loved ? "❤" : ""}` : "先聊天";
@@ -1091,6 +1097,12 @@ export function npcRouteHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   };
   const action = alreadyGifted ? "今日已送" : giftName?.trim() ? `带${giftName.trim()}${loved ? "❤" : ""}` : "先聊天";
 
@@ -1161,6 +1173,12 @@ export function npcGiftRouteHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   } satisfies Record<TravelTarget, string>;
 
   if (alreadyGifted) {
@@ -1221,6 +1239,12 @@ export function npcApproachCueHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   } satisfies Record<TravelTarget, string>;
 
   if (talkedToday && alreadyGifted) {
@@ -1295,6 +1319,12 @@ export function npcScheduleMapHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   } satisfies Record<TravelTarget, string>;
   const routeAction = (place: TravelTarget, action: "送礼" | "聊天") => {
     if (place === currentPlace) {
@@ -2766,6 +2796,12 @@ export function travelArrivalHint({
     home: "山间小屋",
     town: "小镇街道",
     shop: "种子商店",
+    deepForest: "山林深处",
+    beach: "溪口海滩",
+    cave: "山腹矿洞",
+    dungeon: "旧矿地下城",
+    temple: "林中古寺",
+    barn: "农场谷仓",
   };
   const minutes = normalizeXp(arrivalTimeMinutes) % (24 * 60);
   const hour = Math.floor(minutes / 60);
@@ -3087,6 +3123,12 @@ export function calendarEventRouteHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   } satisfies Record<TravelTarget, string>;
   const targetByEvent: Record<string, TravelTarget> = {
     山风集市: "town",
@@ -3168,6 +3210,12 @@ export function calendarEventUrgencyHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   } satisfies Record<TravelTarget, string>;
   const target = targetByEvent[title] ?? currentPlace;
   const arrival = currentPlace === target ? minutes : minutes + Math.max(0, normalizeXp(travelMinutes));
@@ -3595,6 +3643,12 @@ export function objectiveMapMarkerHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   } satisfies Record<TravelTarget, string>;
   const objective = (objectiveLabel.trim() || "当前目标").slice(0, 12);
 
@@ -3636,6 +3690,12 @@ export function objectiveMapActionHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   } satisfies Record<TravelTarget, string>;
   const objective = (objectiveLabel.trim() || "当前目标").slice(0, 12);
   const detail = objectiveDetail.trim().slice(0, 13);
@@ -3690,6 +3750,12 @@ export function objectiveRouteHint({
     home: "小屋",
     town: "小镇",
     shop: "商店",
+    deepForest: "深林",
+    beach: "海滩",
+    cave: "矿洞",
+    dungeon: "地下城",
+    temple: "古寺",
+    barn: "谷仓",
   };
   const objective = objectiveLabel.trim() || "当前目标";
 

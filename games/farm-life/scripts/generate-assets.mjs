@@ -10,6 +10,9 @@ const root = new URL("..", import.meta.url).pathname;
 const publicDir = join(root, "public");
 const spriteDir = join(publicDir, "assets", "sprites");
 const mapDir = join(publicDir, "assets", "maps");
+const farmRpgAssetDir = join(root, "..", "..", "game", "Farm RPG - Tiny Asset Pack - (All in One)");
+const SOURCE_TILE = 16;
+const CHARACTER_TILE = 32;
 
 const tileFrames = {
   grass: 0,
@@ -49,9 +52,27 @@ const tileFrames = {
   table: 34,
   fireplace: 35,
   tv: 36,
+  deepForestGrass: 37,
+  beachSand: 38,
+  caveFloor: 39,
+  caveWall: 40,
+  templeFloor: 41,
+  templeWall: 42,
+  barnFloor: 43,
+  barnWall: 44,
+  cliff: 45,
+  dock: 46,
+  dungeonFloor: 47,
+  dungeonWall: 48,
+  hay: 49,
+  crate: 50,
+  mineCrystal: 51,
+  templeStatue: 52,
 };
 
-const tileCount = Object.keys(tileFrames).length;
+function tileCount() {
+  return Object.keys(tileFrames).length;
+}
 const tilesetColumns = 8;
 
 const characterFrames = {
@@ -605,6 +626,307 @@ async function makeSheet(file, frames, columns) {
   await base.composite(composites).png().toFile(join(spriteDir, file));
 }
 
+function assetPath(...parts) {
+  return join(farmRpgAssetDir, ...parts);
+}
+
+async function assetFrame(
+  file,
+  {
+    left = 0,
+    top = 0,
+    width = SOURCE_TILE,
+    height = SOURCE_TILE,
+    targetWidth = TILE,
+    targetHeight = TILE,
+    flip = false,
+  } = {},
+) {
+  let source = sharp(file).extract({ left, top, width, height });
+
+  if (flip) {
+    source = source.flop();
+  }
+
+  const input = await source
+    .resize(targetWidth, targetHeight, {
+      fit: "fill",
+      kernel: "nearest",
+    })
+    .png()
+    .toBuffer();
+
+  return sharp({
+    create: {
+      width: TILE,
+      height: TILE,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([
+      {
+        input,
+        left: Math.floor((TILE - targetWidth) / 2),
+        top: Math.floor((TILE - targetHeight) / 2),
+      },
+    ])
+    .png()
+    .toBuffer();
+}
+
+function tileAsset(file, col, row) {
+  return assetFrame(file, {
+    left: col * SOURCE_TILE,
+    top: row * SOURCE_TILE,
+    width: SOURCE_TILE,
+    height: SOURCE_TILE,
+  });
+}
+
+function addTileFrame(frames, name, frame) {
+  tileFrames[name] = frames.length;
+  frames.push(frame);
+}
+
+function addChunkFrames(frames, prefix, file, { col = 0, row = 0, width, height }) {
+  for (let chunkY = 0; chunkY < height; chunkY += 1) {
+    for (let chunkX = 0; chunkX < width; chunkX += 1) {
+      addTileFrame(
+        frames,
+        `${prefix}_${chunkX}_${chunkY}`,
+        assetFrame(file, {
+          left: (col + chunkX) * SOURCE_TILE,
+          top: (row + chunkY) * SOURCE_TILE,
+          width: SOURCE_TILE,
+          height: SOURCE_TILE,
+        }),
+      );
+    }
+  }
+}
+
+function characterAsset(file, col, row, flip = false) {
+  return assetFrame(file, {
+    left: col * CHARACTER_TILE,
+    top: row * CHARACTER_TILE,
+    width: CHARACTER_TILE,
+    height: CHARACTER_TILE,
+    targetWidth: CHARACTER_TILE,
+    targetHeight: CHARACTER_TILE,
+    flip,
+  });
+}
+
+function smallIcon(file, col = 0, row = 0) {
+  return assetFrame(file, {
+    left: col * SOURCE_TILE,
+    top: row * SOURCE_TILE,
+    width: SOURCE_TILE,
+    height: SOURCE_TILE,
+    targetWidth: 28,
+    targetHeight: 28,
+  });
+}
+
+function wideIcon(file, col = 0, row = 0) {
+  return assetFrame(file, {
+    left: col * TILE,
+    top: row * SOURCE_TILE,
+    width: TILE,
+    height: SOURCE_TILE,
+    targetWidth: TILE,
+    targetHeight: SOURCE_TILE,
+  });
+}
+
+function cropStageAsset(file, frame) {
+  return assetFrame(file, {
+    left: frame * SOURCE_TILE,
+    top: 0,
+    width: SOURCE_TILE,
+    height: SOURCE_TILE,
+  });
+}
+
+async function farmRpgTileSprites() {
+  const grass = assetPath("Tileset", "Tileset Grass Spring.png");
+  const tilledSoil = assetPath("Tileset", "Tilled Soil and wet soil.png");
+  const water = assetPath("Tileset", "Water tile.png");
+  const house = assetPath("Tileset", "Tileset House.png");
+  const doors = assetPath("Objects", "Exterior", "Houses", "Door, windows, and chimney.png");
+  const exterior = assetPath("Objects", "Exterior", "Exterior.png");
+  const shippingBox = assetPath("Objects", "Exterior", "shipping box.png");
+  const fence = assetPath("Objects", "Exterior", "Fence and Bridge", "Fence Wood.png");
+  const tree = assetPath("Objects", "Tree", "Common", "No Shadow", "Maple Tree.png");
+  const stones = assetPath("Objects", "Props", "Spring", "Stones.png");
+  const mushrooms = assetPath("Objects", "Tree", "Deep Forest", "Fantasy Mushroom.png");
+  const beds = assetPath("Objects", "Interior", "Beds.png");
+  const tables = assetPath("Objects", "Interior", "Tables and desks.png");
+  const fireplace = assetPath("Objects", "Interior", "Fireplace.png");
+  const interior = assetPath("Objects", "Interior", "Others.png");
+  const deepForest = assetPath("Tileset", "Tileset Grass Deep Forest.png");
+  const beach = assetPath("Tileset", "Beach animations tiles.png");
+  const caves = assetPath("Tileset", "Caves.png");
+  const temple = assetPath("Tileset", "Tileset Temple.png");
+  const barn = assetPath("Tileset", "Barn tileset.png");
+  const cliff = assetPath("Tileset", "Tileset Grass Cliff Tileset Deep Forest.png");
+  const beachBridge = assetPath("Tileset", "Bridge Beach Tileset.png");
+  const dungeon = assetPath("Tileset", "Dungeon tileset.png");
+  const beachExterior = assetPath("Objects", "Exterior", "Beach", "Exterior Beach.png");
+  const templeInterior = assetPath("Objects", "Interior", "Temple.png");
+  const barnBuilding = assetPath("Objects", "Exterior", "Houses", "Farm Buildings", "Barn", "Barn.png");
+  const templeBuilding = assetPath("Objects", "Exterior", "Houses", "NPCS houses", "temple.png");
+
+  const frames = [
+    tileAsset(grass, 6, 2),
+    tileAsset(tilledSoil, 5, 2),
+    tileAsset(grass, 3, 9),
+    tileAsset(tilledSoil, 5, 2),
+    tileAsset(tilledSoil, 5, 6),
+    assetFrame(water),
+    tileAsset(house, 13, 1),
+    tileAsset(house, 1, 6),
+    tileAsset(house, 13, 16),
+    tileAsset(house, 0, 0),
+    tileAsset(house, 1, 4),
+    tileAsset(house, 34, 0),
+    tileAsset(house, 34, 4),
+    tileAsset(house, 5, 0),
+    tileAsset(house, 5, 4),
+    tileAsset(house, 15, 0),
+    tileAsset(house, 15, 4),
+    tileAsset(house, 23, 0),
+    tileAsset(house, 23, 4),
+    assetFrame(doors, { left: 0, top: 0, width: SOURCE_TILE, height: TILE, targetWidth: SOURCE_TILE, targetHeight: TILE }),
+    assetFrame(shippingBox, { left: 0, top: TILE, width: SOURCE_TILE, height: SOURCE_TILE }),
+    assetFrame(exterior, { left: 8 * SOURCE_TILE, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    tileAsset(exterior, 0, 2),
+    tileAsset(house, 20, 0),
+    tileAsset(exterior, 0, 10),
+    assetFrame(exterior, { left: 9 * SOURCE_TILE, top: 2 * SOURCE_TILE, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    tileAsset(fence, 1, 0),
+    tileAsset(exterior, 0, 7),
+    assetFrame(mushrooms, { left: 0, top: 6 * SOURCE_TILE, width: SOURCE_TILE, height: SOURCE_TILE }),
+    assetFrame(tree, { left: 0, top: 3 * SOURCE_TILE, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(tree, { left: 0, top: 5 * SOURCE_TILE, width: TILE, height: SOURCE_TILE }),
+    tileAsset(stones, 0, 0),
+    tileAsset(exterior, 3, 10),
+    assetFrame(beds, { left: 0, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(tables, { left: 0, top: 11 * SOURCE_TILE, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(fireplace, { left: 0, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(interior, { left: 4 * SOURCE_TILE, top: SOURCE_TILE, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    tileAsset(deepForest, 1, 1),
+    tileAsset(beach, 13, 12),
+    tileAsset(caves, 6, 2),
+    tileAsset(caves, 1, 1),
+    tileAsset(house, 14, 16),
+    tileAsset(temple, 1, 1),
+    tileAsset(house, 25, 16),
+    tileAsset(barn, 1, 1),
+    tileAsset(cliff, 1, 1),
+    assetFrame(beachBridge, { left: 0, top: 4 * SOURCE_TILE, width: TILE, height: SOURCE_TILE, targetWidth: TILE, targetHeight: TILE }),
+    tileAsset(dungeon, 6, 8),
+    tileAsset(dungeon, 1, 1),
+    tileAsset(barn, 1, 12),
+    assetFrame(beachExterior, { left: 8 * SOURCE_TILE, top: 4 * SOURCE_TILE, width: SOURCE_TILE, height: SOURCE_TILE }),
+    tileAsset(caves, 12, 2),
+    assetFrame(templeInterior, { left: 2 * SOURCE_TILE, top: 2 * SOURCE_TILE, width: SOURCE_TILE, height: SOURCE_TILE }),
+  ];
+
+  addChunkFrames(frames, "barnFront", barnBuilding, { col: 0, row: 0, width: 5, height: 5 });
+  addChunkFrames(frames, "templeFront", templeBuilding, { col: 0, row: 2, width: 8, height: 11 });
+
+  return Promise.all(frames);
+}
+
+async function farmRpgCharacterSprites() {
+  const player = assetPath("Character", "Character", "Pre-made", "Manu", "Walk.png");
+  const shopkeeper = assetPath("Character", "Character", "Pre-made", "Lyria", "Walk.png");
+  const liang = assetPath("Character", "Character", "Pre-made", "Josh", "Walk.png");
+  const auntChen = assetPath("Character", "Character", "Pre-made", "Tori", "Walk.png");
+  const elder = assetPath("Character", "Character", "Pre-made", "Alex", "Walk.png");
+
+  return Promise.all([
+    characterAsset(player, 0, 2),
+    characterAsset(player, 1, 2),
+    characterAsset(player, 2, 2),
+    characterAsset(player, 0, 1),
+    characterAsset(player, 1, 1),
+    characterAsset(player, 2, 1),
+    characterAsset(player, 0, 0, true),
+    characterAsset(player, 1, 0, true),
+    characterAsset(player, 2, 0, true),
+    characterAsset(player, 0, 0),
+    characterAsset(player, 1, 0),
+    characterAsset(player, 2, 0),
+    characterAsset(shopkeeper, 0, 2),
+    characterAsset(liang, 0, 2),
+    characterAsset(auntChen, 0, 2),
+    characterAsset(elder, 0, 2),
+  ]);
+}
+
+async function farmRpgCropSprites() {
+  const turnip = assetPath("Crops", "Spring", "Parsnip.png");
+  const wheat = assetPath("Crops", "Summer", "Wheat.png");
+  const potato = assetPath("Crops", "Spring", "Potato.png");
+
+  return Promise.all([
+    cropStageAsset(turnip, 1),
+    cropStageAsset(turnip, 3),
+    cropStageAsset(turnip, 5),
+    cropStageAsset(turnip, 7),
+    cropStageAsset(wheat, 1),
+    cropStageAsset(wheat, 3),
+    cropStageAsset(wheat, 5),
+    cropStageAsset(wheat, 8),
+    cropStageAsset(potato, 1),
+    cropStageAsset(potato, 3),
+    cropStageAsset(potato, 5),
+    cropStageAsset(potato, 7),
+  ]);
+}
+
+async function farmRpgIconSprites() {
+  const woodTools = assetPath("Icons", "RPG icons", "Weapons and Armor", "1. Wood");
+  const foodIcons = assetPath("Icons", "Food Icons");
+  const fishIcons = assetPath("Icons", "Fish", "River");
+  const weather = assetPath("UI", "weather icons.png");
+  const bars = assetPath("UI", "Bars.png");
+  const money = assetPath("UI", "Money.png");
+  const bags = assetPath("Icons", "RPG icons", "Extras", "Bags.png");
+  const exterior = assetPath("Objects", "Exterior", "Exterior.png");
+  const mushrooms = assetPath("Objects", "Tree", "Deep Forest", "Fantasy Mushroom.png");
+  const music = assetPath("UI", "UI music.png");
+
+  return Promise.all([
+    smallIcon(join(woodTools, "Hoe.png"), 0, 0),
+    smallIcon(bags, 0, 0),
+    smallIcon(join(woodTools, "Watering can.png"), 0, 0),
+    smallIcon(exterior, 0, 2),
+    wideIcon(join(foodIcons, "Parsnip.png")),
+    wideIcon(join(foodIcons, "Wheat.png")),
+    wideIcon(join(foodIcons, "Potato.png")),
+    smallIcon(money, 0, 0),
+    smallIcon(weather, 0, 0),
+    smallIcon(weather, 2, 0),
+    smallIcon(weather, 1, 1),
+    smallIcon(bars, 0, 4),
+    assetFrame(exterior, { left: 9 * SOURCE_TILE, top: 2 * SOURCE_TILE, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    smallIcon(bars, 0, 0),
+    assetFrame(music, { left: 0, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(music, { left: 2 * TILE, top: TILE, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(exterior, { left: 0, top: 7 * SOURCE_TILE, width: SOURCE_TILE, height: SOURCE_TILE, targetWidth: 28, targetHeight: 28 }),
+    assetFrame(mushrooms, { left: 0, top: 0, width: SOURCE_TILE, height: SOURCE_TILE, targetWidth: 28, targetHeight: 28 }),
+    wideIcon(join(foodIcons, "Sunflower.png")),
+    smallIcon(join(woodTools, "Fishing Rod.png"), 0, 0),
+    wideIcon(join(fishIcons, "Chub.png")),
+    wideIcon(join(fishIcons, "Carp.png")),
+    wideIcon(join(fishIcons, "Perch.png")),
+  ]);
+}
+
 function gid(name) {
   return tileFrames[name] + 1;
 }
@@ -621,6 +943,14 @@ function setRect(data, x, y, width, height, value) {
   for (let row = y; row < y + height; row += 1) {
     for (let col = x; col < x + width; col += 1) {
       setTile(data, col, row, value);
+    }
+  }
+}
+
+function setChunk(data, prefix, x, y, width, height) {
+  for (let row = 0; row < height; row += 1) {
+    for (let col = 0; col < width; col += 1) {
+      setTile(data, x + col, y + row, gid(`${prefix}_${col}_${row}`));
     }
   }
 }
@@ -692,11 +1022,11 @@ function mapShell(layers) {
         name: "farm-tiles",
         image: "../sprites/farm-tiles.png",
         imagewidth: 256,
-        imageheight: Math.ceil(tileCount / tilesetColumns) * TILE,
+        imageheight: Math.ceil(tileCount() / tilesetColumns) * TILE,
         tilewidth: TILE,
         tileheight: TILE,
         columns: tilesetColumns,
-        tilecount: tileCount,
+        tilecount: tileCount(),
       },
     ],
   };
@@ -711,6 +1041,8 @@ function makeFarmMap() {
   setRect(ground, 9, 8, 14, 11, gid("field"));
   setRect(ground, 29, 16, 7, 6, gid("water"));
   setRect(ground, 23, 17, 7, 2, gid("road"));
+  setRect(ground, 30, 8, 2, 12, gid("road"));
+  setRect(ground, 23, 19, 9, 2, gid("road"));
 
   const decor = emptyLayer();
   setRect(decor, 3, 2, 7, 2, gid("roofRed"));
@@ -739,6 +1071,9 @@ function makeFarmMap() {
   setTile(decor, 2, 19, gid("treeTrunk"));
   setTile(decor, 4, 24, gid("treeTop"));
   setTile(decor, 4, 25, gid("treeTrunk"));
+  setChunk(decor, "barnFront", 27, 3, 5, 5);
+  setTile(decor, 33, 8, gid("hay"));
+  setTile(decor, 34, 10, gid("crate"));
 
   return mapShell([
     tileLayer(1, "Ground", ground),
@@ -757,8 +1092,10 @@ function makeFarmMap() {
       object(36, "field-fence-east", "collision", 23, 8, 1, 11),
       object(39, "field-fence-south-left", "collision", 10, 19, 5, 1),
       object(40, "field-fence-south-right", "collision", 18, 19, 5, 1),
+      object(41, "barn-building", "collision", 27, 3, 5, 5),
       object(4, "shipping-bin", "interaction", 9, 5, 1, 1, { action: "ship", label: "售卖箱" }),
       object(5, "home-door", "transition", 5, 6, 1, 1, { targetPlace: "home", targetX: 21, targetY: 25, facing: "down" }),
+      object(42, "barn-door", "transition", 29, 7, 2, 1, { targetPlace: "barn", targetX: 21, targetY: 25, facing: "up" }),
       object(37, "mailbox", "interaction", 10, 5, 1, 1, { action: "mailbox", label: "邮箱" }),
       object(6, "town-road", "transition", 20, 27, 3, 1, { targetPlace: "town", targetX: 21, targetY: 1, facing: "down" }),
       object(7, "aunt-chen", "npc", 12, 22, 1, 1, {
@@ -813,7 +1150,9 @@ function makeHomeMap() {
 function makeTownMap() {
   const ground = emptyLayer(gid("grass"));
   setRect(ground, 20, 0, 3, ROWS, gid("road"));
+  setRect(ground, 0, 14, 4, 3, gid("road"));
   setRect(ground, 4, 14, 34, 3, gid("road"));
+  setRect(ground, 38, 14, 4, 3, gid("road"));
 
   const decor = emptyLayer();
   setRect(decor, 16, 6, 10, 2, gid("roofGreen"));
@@ -821,8 +1160,7 @@ function makeTownMap() {
   setTile(decor, 20, 12, gid("door"));
   setRect(decor, 4, 7, 7, 2, gid("roofGray"));
   setRect(decor, 4, 9, 7, 4, gid("wallGray"));
-  setRect(decor, 31, 7, 7, 2, gid("roofPurple"));
-  setRect(decor, 31, 9, 7, 4, gid("wallPurple"));
+  setChunk(decor, "templeFront", 30, 2, 8, 11);
   setRect(decor, 7, 18, 8, 2, gid("roofOchre"));
   setRect(decor, 7, 20, 8, 4, gid("wallCream"));
   setTile(decor, 21, 0, gid("sign"));
@@ -848,9 +1186,12 @@ function makeTownMap() {
     objectLayer(3, "Objects", [
       object(1, "seed-shop-door", "transition", 20, 12, 1, 1, { targetPlace: "shop", targetX: 21, targetY: 25, facing: "up" }),
       object(2, "farm-road", "transition", 20, 0, 3, 1, { targetPlace: "farm", targetX: 21, targetY: 26, facing: "up" }),
+      object(15, "beach-road", "transition", 0, 14, 1, 3, { targetPlace: "beach", targetX: 21, targetY: 1, facing: "down" }),
+      object(16, "forest-road", "transition", 41, 14, 1, 3, { targetPlace: "deepForest", targetX: 1, targetY: 15, facing: "right" }),
+      object(17, "temple-door", "transition", 33, 12, 2, 1, { targetPlace: "temple", targetX: 21, targetY: 25, facing: "up" }),
       object(3, "seed-shop", "collision", 16, 6, 10, 7),
       object(4, "blacksmith", "closed-building", 4, 7, 7, 6, { message: "铁匠铺还在装修，之后再开放。" }),
-      object(5, "clinic", "closed-building", 31, 7, 7, 6, { message: "医馆还在装修，之后再开放。" }),
+      object(5, "temple-building", "collision", 30, 2, 8, 11),
       object(6, "home", "closed-building", 7, 18, 8, 6, { message: "居民房今天没有人应门。" }),
       object(7, "liang", "npc", 25, 16, 1, 1, {
         npcId: "liang",
@@ -937,85 +1278,292 @@ function makeShopMap() {
   ]);
 }
 
+function makeDeepForestMap() {
+  const ground = emptyLayer(gid("deepForestGrass"));
+  setRect(ground, 0, 14, 10, 3, gid("road"));
+  setRect(ground, 8, 12, 20, 3, gid("road"));
+  setRect(ground, 27, 10, 10, 3, gid("road"));
+  setRect(ground, 18, 16, 3, 8, gid("road"));
+  setRect(ground, 11, 22, 13, 2, gid("road"));
+  setRect(ground, 4, 3, 6, 4, gid("water"));
+
+  const decor = emptyLayer();
+  for (const [x, y] of [
+    [2, 3],
+    [6, 9],
+    [10, 5],
+    [15, 8],
+    [24, 4],
+    [30, 5],
+    [38, 7],
+    [5, 20],
+    [10, 24],
+    [26, 22],
+    [34, 19],
+    [39, 23],
+  ]) {
+    setTile(decor, x, y, gid("treeTop"));
+    setTile(decor, x, y + 1, gid("treeTrunk"));
+  }
+  for (const [x, y] of [
+    [7, 18],
+    [13, 17],
+    [27, 15],
+    [33, 14],
+    [21, 6],
+    [36, 22],
+  ]) {
+    setTile(decor, x, y, gid("flowerBlue"));
+  }
+  for (const [x, y] of [
+    [14, 21],
+    [25, 9],
+    [31, 18],
+    [39, 12],
+  ]) {
+    setTile(decor, x, y, gid("rock"));
+  }
+  setRect(decor, 34, 7, 5, 2, gid("caveWall"));
+  setRect(decor, 34, 9, 5, 4, gid("cliff"));
+  setTile(decor, 36, 12, gid("caveFloor"));
+  setTile(decor, 37, 12, gid("mineCrystal"));
+
+  return mapShell([
+    tileLayer(1, "Ground", ground),
+    tileLayer(2, "Decor", decor),
+    objectLayer(3, "Objects", [
+      object(1, "forest-top", "collision", 0, 0, COLS, 1),
+      object(2, "forest-bottom", "collision", 0, ROWS - 1, COLS, 1),
+      object(3, "forest-left", "collision", 0, 0, 1, ROWS),
+      object(4, "forest-right", "collision", COLS - 1, 0, 1, ROWS),
+      object(5, "forest-pond", "collision", 4, 3, 6, 4),
+      object(6, "cave-mouth", "collision", 34, 7, 5, 6),
+      object(7, "town-path", "transition", 0, 14, 1, 3, { targetPlace: "town", targetX: 40, targetY: 15, facing: "left" }),
+      object(8, "cave-path", "transition", 36, 12, 1, 1, { targetPlace: "cave", targetX: 21, targetY: 25, facing: "up" }),
+      object(9, "forest-tree-1", "collision", 2, 4, 1, 1),
+      object(10, "forest-tree-2", "collision", 6, 10, 1, 1),
+      object(11, "forest-tree-3", "collision", 10, 6, 1, 1),
+      object(12, "forest-tree-4", "collision", 15, 9, 1, 1),
+      object(13, "forest-tree-5", "collision", 24, 5, 1, 1),
+      object(14, "forest-tree-6", "collision", 30, 6, 1, 1),
+      object(15, "forest-tree-7", "collision", 38, 8, 1, 1),
+      object(16, "forest-tree-8", "collision", 5, 21, 1, 1),
+      object(17, "forest-rock-1", "collision", 14, 21, 1, 1),
+      object(18, "forest-rock-2", "collision", 31, 18, 1, 1),
+    ]),
+  ]);
+}
+
+function makeBeachMap() {
+  const ground = emptyLayer(gid("beachSand"));
+  setRect(ground, 19, 0, 5, 19, gid("road"));
+  setRect(ground, 0, 17, COLS, 11, gid("water"));
+  setRect(ground, 32, 6, 10, 11, gid("water"));
+
+  const decor = emptyLayer();
+  for (let y = 9; y < 18; y += 1) {
+    setTile(decor, 21, y, gid("dock"));
+  }
+  setTile(decor, 8, 7, gid("crate"));
+  setTile(decor, 12, 10, gid("flowerRed"));
+  setTile(decor, 27, 8, gid("flowerBlue"));
+  setTile(decor, 29, 13, gid("rock"));
+  setTile(decor, 35, 5, gid("rock"));
+  setTile(decor, 6, 14, gid("sign"));
+
+  return mapShell([
+    tileLayer(1, "Ground", ground),
+    tileLayer(2, "Decor", decor),
+    objectLayer(3, "Objects", [
+      object(1, "beach-top", "collision", 0, 0, COLS, 1),
+      object(2, "beach-left", "collision", 0, 0, 1, ROWS),
+      object(3, "beach-right", "collision", COLS - 1, 0, 1, ROWS),
+      object(4, "surf", "collision", 0, 17, COLS, 11),
+      object(5, "east-surf", "collision", 32, 6, 10, 11),
+      object(6, "north-road", "transition", 19, 0, 5, 1, { targetPlace: "town", targetX: 21, targetY: 17, facing: "down" }),
+      object(7, "beach-crate", "collision", 8, 7, 1, 1),
+      object(8, "beach-rock-1", "collision", 29, 13, 1, 1),
+      object(9, "beach-rock-2", "collision", 35, 5, 1, 1),
+    ]),
+  ]);
+}
+
+function makeCaveMap() {
+  const ground = emptyLayer(gid("caveFloor"));
+  setRect(ground, 0, 0, COLS, 1, gid("caveWall"));
+  setRect(ground, 0, ROWS - 1, COLS, 1, gid("caveWall"));
+  setRect(ground, 0, 0, 1, ROWS, gid("caveWall"));
+  setRect(ground, COLS - 1, 0, 1, ROWS, gid("caveWall"));
+  setRect(ground, 12, 11, 18, 2, gid("caveWall"));
+  setRect(ground, 7, 20, 9, 2, gid("water"));
+
+  const decor = emptyLayer();
+  for (const [x, y] of [
+    [7, 6],
+    [10, 18],
+    [28, 7],
+    [31, 20],
+    [18, 15],
+    [34, 14],
+  ]) {
+    setTile(decor, x, y, gid("mineCrystal"));
+  }
+  setTile(decor, 21, 2, gid("dungeonWall"));
+  setTile(decor, 21, 26, gid("caveFloor"));
+  setTile(decor, 13, 10, gid("rock"));
+  setTile(decor, 29, 12, gid("rock"));
+
+  return mapShell([
+    tileLayer(1, "Ground", ground),
+    tileLayer(2, "Decor", decor),
+    objectLayer(3, "Objects", [
+      object(1, "cave-top", "collision", 0, 0, COLS, 1),
+      object(2, "cave-bottom", "collision", 0, ROWS - 1, COLS, 1),
+      object(3, "cave-left", "collision", 0, 0, 1, ROWS),
+      object(4, "cave-right", "collision", COLS - 1, 0, 1, ROWS),
+      object(5, "cave-ridge", "collision", 12, 11, 18, 2),
+      object(6, "cave-water", "collision", 7, 20, 9, 2),
+      object(7, "forest-exit", "transition", 21, 26, 1, 1, { targetPlace: "deepForest", targetX: 36, targetY: 13, facing: "down" }),
+      object(8, "dungeon-door", "transition", 21, 0, 1, 1, { targetPlace: "dungeon", targetX: 21, targetY: 25, facing: "up" }),
+      object(9, "cave-rock-1", "collision", 13, 10, 1, 1),
+      object(10, "cave-rock-2", "collision", 29, 12, 1, 1),
+    ]),
+  ]);
+}
+
+function makeDungeonMap() {
+  const ground = emptyLayer(gid("dungeonFloor"));
+  setRect(ground, 0, 0, COLS, 1, gid("dungeonWall"));
+  setRect(ground, 0, ROWS - 1, COLS, 1, gid("dungeonWall"));
+  setRect(ground, 0, 0, 1, ROWS, gid("dungeonWall"));
+  setRect(ground, COLS - 1, 0, 1, ROWS, gid("dungeonWall"));
+  setRect(ground, 8, 8, 10, 2, gid("dungeonWall"));
+  setRect(ground, 25, 8, 9, 2, gid("dungeonWall"));
+  setRect(ground, 17, 17, 8, 2, gid("dungeonWall"));
+
+  const decor = emptyLayer();
+  setTile(decor, 21, 26, gid("door"));
+  setTile(decor, 8, 6, gid("lantern"));
+  setTile(decor, 33, 6, gid("lantern"));
+  setTile(decor, 12, 15, gid("crate"));
+  setTile(decor, 29, 15, gid("crate"));
+  setTile(decor, 21, 12, gid("templeStatue"));
+  setTile(decor, 17, 20, gid("mineCrystal"));
+  setTile(decor, 24, 20, gid("mineCrystal"));
+
+  return mapShell([
+    tileLayer(1, "Ground", ground),
+    tileLayer(2, "Decor", decor),
+    objectLayer(3, "Objects", [
+      object(1, "dungeon-top", "collision", 0, 0, COLS, 1),
+      object(2, "dungeon-bottom", "collision", 0, ROWS - 1, COLS, 1),
+      object(3, "dungeon-left", "collision", 0, 0, 1, ROWS),
+      object(4, "dungeon-right", "collision", COLS - 1, 0, 1, ROWS),
+      object(5, "dungeon-north-ridge", "collision", 8, 8, 10, 2),
+      object(6, "dungeon-east-ridge", "collision", 25, 8, 9, 2),
+      object(7, "dungeon-south-ridge", "collision", 17, 17, 8, 2),
+      object(8, "cave-exit", "transition", 21, 26, 1, 1, { targetPlace: "cave", targetX: 21, targetY: 3, facing: "down" }),
+      object(9, "dungeon-crate-1", "collision", 12, 15, 1, 1),
+      object(10, "dungeon-crate-2", "collision", 29, 15, 1, 1),
+      object(11, "dungeon-statue", "collision", 21, 12, 1, 1),
+    ]),
+  ]);
+}
+
+function makeTempleMap() {
+  const ground = emptyLayer(gid("templeFloor"));
+  setRect(ground, 0, 0, COLS, 1, gid("templeWall"));
+  setRect(ground, 0, ROWS - 1, COLS, 1, gid("templeWall"));
+  setRect(ground, 0, 0, 1, ROWS, gid("templeWall"));
+  setRect(ground, COLS - 1, 0, 1, ROWS, gid("templeWall"));
+  setRect(ground, 15, 5, 12, 2, gid("templeWall"));
+  setRect(ground, 15, 18, 12, 2, gid("templeWall"));
+  setRect(ground, 18, 21, 7, 3, gid("rug"));
+
+  const decor = emptyLayer();
+  setTile(decor, 21, 26, gid("door"));
+  setTile(decor, 21, 11, gid("templeStatue"));
+  setTile(decor, 14, 10, gid("lantern"));
+  setTile(decor, 28, 10, gid("lantern"));
+  setTile(decor, 13, 15, gid("flowerBlue"));
+  setTile(decor, 29, 15, gid("flowerRed"));
+  setTile(decor, 18, 8, gid("table"));
+  setTile(decor, 24, 8, gid("table"));
+
+  return mapShell([
+    tileLayer(1, "Ground", ground),
+    tileLayer(2, "Decor", decor),
+    objectLayer(3, "Objects", [
+      object(1, "temple-top", "collision", 0, 0, COLS, 1),
+      object(2, "temple-bottom", "collision", 0, ROWS - 1, COLS, 1),
+      object(3, "temple-left", "collision", 0, 0, 1, ROWS),
+      object(4, "temple-right", "collision", COLS - 1, 0, 1, ROWS),
+      object(5, "temple-altar", "collision", 15, 5, 12, 2),
+      object(6, "temple-screen", "collision", 15, 18, 12, 2),
+      object(7, "temple-statue", "collision", 21, 11, 1, 1),
+      object(8, "temple-table-left", "collision", 18, 8, 1, 1),
+      object(9, "temple-table-right", "collision", 24, 8, 1, 1),
+      object(10, "town-exit", "transition", 21, 26, 1, 1, { targetPlace: "town", targetX: 34, targetY: 13, facing: "down" }),
+    ]),
+  ]);
+}
+
+function makeBarnMap() {
+  const ground = emptyLayer(gid("barnFloor"));
+  setRect(ground, 0, 0, COLS, 1, gid("barnWall"));
+  setRect(ground, 0, ROWS - 1, COLS, 1, gid("barnWall"));
+  setRect(ground, 0, 0, 1, ROWS, gid("barnWall"));
+  setRect(ground, COLS - 1, 0, 1, ROWS, gid("barnWall"));
+  setRect(ground, 6, 7, 9, 4, gid("hay"));
+  setRect(ground, 27, 7, 8, 4, gid("hay"));
+
+  const decor = emptyLayer();
+  setTile(decor, 21, 26, gid("door"));
+  setTile(decor, 10, 14, gid("crate"));
+  setTile(decor, 31, 14, gid("crate"));
+  setTile(decor, 18, 8, gid("lantern"));
+  setTile(decor, 24, 8, gid("lantern"));
+  setTile(decor, 20, 16, gid("table"));
+  setTile(decor, 22, 16, gid("table"));
+
+  return mapShell([
+    tileLayer(1, "Ground", ground),
+    tileLayer(2, "Decor", decor),
+    objectLayer(3, "Objects", [
+      object(1, "barn-top", "collision", 0, 0, COLS, 1),
+      object(2, "barn-bottom", "collision", 0, ROWS - 1, COLS, 1),
+      object(3, "barn-left", "collision", 0, 0, 1, ROWS),
+      object(4, "barn-right", "collision", COLS - 1, 0, 1, ROWS),
+      object(5, "left-hay", "collision", 6, 7, 9, 4),
+      object(6, "right-hay", "collision", 27, 7, 8, 4),
+      object(7, "left-crate", "collision", 10, 14, 1, 1),
+      object(8, "right-crate", "collision", 31, 14, 1, 1),
+      object(9, "barn-table-left", "collision", 20, 16, 1, 1),
+      object(10, "barn-table-right", "collision", 22, 16, 1, 1),
+      object(11, "farm-exit", "transition", 21, 26, 1, 1, { targetPlace: "farm", targetX: 30, targetY: 9, facing: "down" }),
+    ]),
+  ]);
+}
+
 async function main() {
   await mkdir(spriteDir, { recursive: true });
   await mkdir(mapDir, { recursive: true });
 
-  await makeSheet("farm-tiles.png", tileSprites(), 8);
-  await makeSheet(
-    "characters.png",
-    [
-      characterSprite("playerDown"),
-      characterSprite("playerDownStepLeft"),
-      characterSprite("playerDownStepRight"),
-      characterSprite("playerUp"),
-      characterSprite("playerUpStepLeft"),
-      characterSprite("playerUpStepRight"),
-      characterSprite("playerLeft"),
-      characterSprite("playerLeftStepLeft"),
-      characterSprite("playerLeftStepRight"),
-      characterSprite("playerRight"),
-      characterSprite("playerRightStepLeft"),
-      characterSprite("playerRightStepRight"),
-      characterSprite("shopkeeper"),
-      characterSprite("liang"),
-      characterSprite("auntChen"),
-      characterSprite("elder"),
-    ],
-    8,
-  );
-  await makeSheet(
-    "crops.png",
-    [
-      cropSprite("turnip", 0),
-      cropSprite("turnip", 1),
-      cropSprite("turnip", 2),
-      cropSprite("turnip", 3),
-      cropSprite("wheat", 0),
-      cropSprite("wheat", 1),
-      cropSprite("wheat", 2),
-      cropSprite("wheat", 3),
-      cropSprite("potato", 0),
-      cropSprite("potato", 1),
-      cropSprite("potato", 2),
-      cropSprite("potato", 3),
-    ],
-    4,
-  );
-  await makeSheet(
-    "icons.png",
-    [
-      iconSprite("hoe"),
-      iconSprite("seedBag"),
-      iconSprite("wateringCan"),
-      iconSprite("harvestBasket"),
-      iconSprite("turnip"),
-      iconSprite("wheat"),
-      iconSprite("potato"),
-      iconSprite("coin"),
-      iconSprite("sun"),
-      iconSprite("rain"),
-      iconSprite("mist"),
-      iconSprite("energy"),
-      iconSprite("order"),
-      iconSprite("heart"),
-      iconSprite("soundOn"),
-      iconSprite("soundOff"),
-      iconSprite("berry"),
-      iconSprite("mushroom"),
-      iconSprite("wildFlower"),
-      iconSprite("fishingRod"),
-      iconSprite("creekFish"),
-      iconSprite("carp"),
-      iconSprite("silverFish"),
-    ],
-    8,
-  );
+  await makeSheet("farm-tiles.png", await farmRpgTileSprites(), 8);
+  await makeSheet("characters.png", await farmRpgCharacterSprites(), 8);
+  await makeSheet("crops.png", await farmRpgCropSprites(), 4);
+  await makeSheet("icons.png", await farmRpgIconSprites(), 8);
 
   await writeFile(join(mapDir, "farm.json"), `${JSON.stringify(makeFarmMap(), null, 2)}\n`);
   await writeFile(join(mapDir, "home.json"), `${JSON.stringify(makeHomeMap(), null, 2)}\n`);
   await writeFile(join(mapDir, "town.json"), `${JSON.stringify(makeTownMap(), null, 2)}\n`);
   await writeFile(join(mapDir, "shop.json"), `${JSON.stringify(makeShopMap(), null, 2)}\n`);
+  await writeFile(join(mapDir, "deep-forest.json"), `${JSON.stringify(makeDeepForestMap(), null, 2)}\n`);
+  await writeFile(join(mapDir, "beach.json"), `${JSON.stringify(makeBeachMap(), null, 2)}\n`);
+  await writeFile(join(mapDir, "cave.json"), `${JSON.stringify(makeCaveMap(), null, 2)}\n`);
+  await writeFile(join(mapDir, "dungeon.json"), `${JSON.stringify(makeDungeonMap(), null, 2)}\n`);
+  await writeFile(join(mapDir, "temple.json"), `${JSON.stringify(makeTempleMap(), null, 2)}\n`);
+  await writeFile(join(mapDir, "barn.json"), `${JSON.stringify(makeBarnMap(), null, 2)}\n`);
 
   await writeFile(
     join(spriteDir, "asset-frames.json"),

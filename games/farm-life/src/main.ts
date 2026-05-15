@@ -171,6 +171,22 @@ const TILE_FRAMES = {
   table: 34,
   fireplace: 35,
   tv: 36,
+  deepForestGrass: 37,
+  beachSand: 38,
+  caveFloor: 39,
+  caveWall: 40,
+  templeFloor: 41,
+  templeWall: 42,
+  barnFloor: 43,
+  barnWall: 44,
+  cliff: 45,
+  dock: 46,
+  dungeonFloor: 47,
+  dungeonWall: 48,
+  hay: 49,
+  crate: 50,
+  mineCrystal: 51,
+  templeStatue: 52,
 } as const;
 
 const CHARACTER_FRAMES = {
@@ -329,7 +345,7 @@ type WeatherId = keyof typeof WEATHER;
 type SeasonId = keyof typeof SEASONS;
 type ToolId = "hoe" | "seed" | "water" | "harvest" | "fish";
 type HotbarId = ToolId | `seed:${CropId}`;
-type PlaceId = "farm" | "home" | "town" | "shop";
+type PlaceId = "farm" | "home" | "town" | "shop" | "deepForest" | "beach" | "cave" | "dungeon" | "temple" | "barn";
 type Direction = "up" | "down" | "left" | "right";
 type ItemId = `${CropId}_seed` | `${CropId}_crop` | `${ForageId}_forage` | `${FishId}_fish`;
 type NpcId = "shopkeeper" | "liang" | "auntChen" | "elder";
@@ -600,6 +616,25 @@ const placeLabels: Record<PlaceId, string> = {
   home: "山间小屋",
   town: "小镇街道",
   shop: "种子商店",
+  deepForest: "山林深处",
+  beach: "溪口海滩",
+  cave: "山腹矿洞",
+  dungeon: "旧矿地下城",
+  temple: "林中古寺",
+  barn: "农场谷仓",
+};
+
+const placeTravelActions: Record<PlaceId, string> = {
+  farm: "回农场",
+  home: "进屋",
+  town: "去小镇",
+  shop: "进商店",
+  deepForest: "进深林",
+  beach: "去海滩",
+  cave: "进矿洞",
+  dungeon: "下地下城",
+  temple: "进古寺",
+  barn: "进谷仓",
 };
 
 const npcDisplayNames: Record<NpcId, string> = {
@@ -1073,7 +1108,7 @@ function isToolId(value: unknown): value is ToolId {
 }
 
 function isPlaceId(value: unknown): value is PlaceId {
-  return value === "farm" || value === "home" || value === "town" || value === "shop";
+  return typeof value === "string" && value in placeLabels;
 }
 
 function isDirection(value: unknown): value is Direction {
@@ -1381,6 +1416,12 @@ class FarmLifeScene extends Phaser.Scene {
     this.load.json("map-home", "assets/maps/home.json");
     this.load.json("map-town", "assets/maps/town.json");
     this.load.json("map-shop", "assets/maps/shop.json");
+    this.load.json("map-deep-forest", "assets/maps/deep-forest.json");
+    this.load.json("map-beach", "assets/maps/beach.json");
+    this.load.json("map-cave", "assets/maps/cave.json");
+    this.load.json("map-dungeon", "assets/maps/dungeon.json");
+    this.load.json("map-temple", "assets/maps/temple.json");
+    this.load.json("map-barn", "assets/maps/barn.json");
   }
 
   create() {
@@ -1389,6 +1430,12 @@ class FarmLifeScene extends Phaser.Scene {
       home: this.cache.json.get("map-home") as TiledMap,
       town: this.cache.json.get("map-town") as TiledMap,
       shop: this.cache.json.get("map-shop") as TiledMap,
+      deepForest: this.cache.json.get("map-deep-forest") as TiledMap,
+      beach: this.cache.json.get("map-beach") as TiledMap,
+      cave: this.cache.json.get("map-cave") as TiledMap,
+      dungeon: this.cache.json.get("map-dungeon") as TiledMap,
+      temple: this.cache.json.get("map-temple") as TiledMap,
+      barn: this.cache.json.get("map-barn") as TiledMap,
     };
 
     this.loadSave();
@@ -1954,6 +2001,12 @@ class FarmLifeScene extends Phaser.Scene {
       home: { x: 21, y: 25 },
       town: { x: 21, y: 26 },
       shop: { x: 21, y: 25 },
+      deepForest: { x: 1, y: 15 },
+      beach: { x: 21, y: 1 },
+      cave: { x: 21, y: 25 },
+      dungeon: { x: 21, y: 25 },
+      temple: { x: 21, y: 25 },
+      barn: { x: 21, y: 25 },
     };
     this.save.player.x = fallback[this.save.player.place].x;
     this.save.player.y = fallback[this.save.player.place].y;
@@ -2701,20 +2754,8 @@ class FarmLifeScene extends Phaser.Scene {
     if (transition) {
       const targetPlace = objectProp<string>(transition, "targetPlace", "");
 
-      if (targetPlace === "shop") {
-        return `E ${this.transitionTravelPromptFor("shop", "进商店")}`;
-      }
-
-      if (targetPlace === "home") {
-        return `E ${this.transitionTravelPromptFor("home", "进屋")}`;
-      }
-
-      if (targetPlace === "town") {
-        return `E ${this.transitionTravelPromptFor("town", "去小镇")}`;
-      }
-
-      if (targetPlace === "farm") {
-        return `E ${this.transitionTravelPromptFor("farm", "回农场")}`;
+      if (isPlaceId(targetPlace)) {
+        return `E ${this.transitionTravelPromptFor(targetPlace, placeTravelActions[targetPlace])}`;
       }
 
       return "E 前往 15分";
@@ -2931,15 +2972,18 @@ class FarmLifeScene extends Phaser.Scene {
 
     if (place === "farm") {
       this.addMapText("售卖箱", 8.55, 4.2, 12, 0x374151);
+      this.addMapText("谷仓", 29.15, 7.3, 12, 0x7c2d12);
       this.addMapText("小镇", 20.35, 26.2, 12, 0x374151);
       return;
     }
 
     if (place === "town") {
+      this.addMapText("海滩", 1.1, 15.7, 12, 0x0f766e);
       this.addMapText("种子铺", 18.4, 11.5, 13, 0x14532d);
       this.addMapText("铁匠", 6.1, 11.4, 13, 0x334155);
-      this.addMapText("医馆", 33.1, 11.4, 13, 0x6d28d9);
+      this.addMapText("古寺", 33.1, 11.4, 13, 0x6d28d9);
       this.addMapText("公告板", 23.25, 17.95, 12, 0x7c2d12);
+      this.addMapText("深林", 38.7, 15.7, 12, 0x14532d);
       this.addMapText("农场", 20.35, 26.2, 12, 0x374151);
       return;
     }
@@ -2947,6 +2991,42 @@ class FarmLifeScene extends Phaser.Scene {
     if (place === "shop") {
       this.addMapText("山风种子铺", 18.1, 4.2, 16, 0x14532d);
       this.addMapText("柜台", 20.2, 10.75, 12, 0x374151);
+      return;
+    }
+
+    if (place === "deepForest") {
+      this.addMapText("小镇", 1.1, 15.75, 12, 0x374151);
+      this.addMapText("矿洞", 35.15, 12.3, 12, 0x854d0e);
+      return;
+    }
+
+    if (place === "beach") {
+      this.addMapText("回小镇", 19.9, 1.3, 12, 0x374151);
+      this.addMapText("钓鱼码头", 19.2, 16.15, 12, 0x0f766e);
+      return;
+    }
+
+    if (place === "cave") {
+      this.addMapText("地下城", 19.85, 2.35, 12, 0x6d28d9);
+      this.addMapText("回深林", 19.85, 25.2, 12, 0x374151);
+      return;
+    }
+
+    if (place === "dungeon") {
+      this.addMapText("旧矿地下城", 18.2, 4.2, 14, 0x7c2d12);
+      this.addMapText("回矿洞", 20.1, 25.2, 12, 0x374151);
+      return;
+    }
+
+    if (place === "temple") {
+      this.addMapText("古寺正殿", 18.7, 4.2, 14, 0x6d28d9);
+      this.addMapText("回小镇", 20.1, 25.2, 12, 0x374151);
+      return;
+    }
+
+    if (place === "barn") {
+      this.addMapText("草料", 8.7, 6.35, 12, 0x7c2d12);
+      this.addMapText("回农场", 20.1, 25.2, 12, 0x374151);
       return;
     }
 

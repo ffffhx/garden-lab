@@ -193,7 +193,9 @@ export function TokenLeaderboardApp({
   const statusMessage = remoteSummary ? `后端数据 ${recordCount} 条` : status;
 
   const topUsers = summary.users.slice(0, 8);
+  const leader = summary.users[0];
   const maxDailyTokens = Math.max(1, ...summary.daily.map((point) => point.tokens));
+  const selectedMetricLabel = METRICS.find((item) => item.key === metric)?.label ?? "Tokens";
 
   function importText(text: string, mode: "replace" | "merge" = "merge") {
     const parsed = parseTokenUsageImport(text);
@@ -260,68 +262,85 @@ export function TokenLeaderboardApp({
   }
 
   return (
-    <main className="font-sans text-slate-950">
-      <section className="overflow-hidden rounded-3xl border border-slate-900/10 bg-white shadow-[0_30px_100px_-70px_rgba(15,23,42,0.55)]">
-        <div className="border-b border-slate-200 bg-slate-950 px-5 py-5 text-white sm:px-7">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-sm text-emerald-200">Open Token Board</p>
-              <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">朋友间的 Token 排行榜</h1>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <GitHubAuthControl viewer={viewer} onLogin={loginWithGitHub} onLogout={logoutGitHub} />
-              <SegmentedControl
-                items={RANGES.map((item) => ({ key: item, label: item }))}
-                value={range}
-                onChange={(value) => setRange(value as TokenBoardRange)}
-                label="时间范围"
-              />
-              <SegmentedControl
-                items={METRICS.map((item) => ({ key: item.key, label: item.label }))}
-                value={metric}
-                onChange={(value) => setMetric(value as TokenBoardMetric)}
-                label="排序指标"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="space-y-6 p-5 sm:p-7">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <StatTile label="总 Tokens" value={formatTokens(summary.totalTokens)} tone="slate" />
-              <StatTile label="活跃用户" value={formatNumber(summary.activeUsers)} tone="emerald" />
-              <StatTile label="会话" value={formatNumber(summary.totalSessions)} tone="blue" />
-              <StatTile label="估算费用" value={formatUsd(summary.totalCostUsd)} tone="amber" />
-            </div>
-
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)]">
-              <section className="rounded-2xl border border-slate-200 bg-white">
-                <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-                  <div>
-                    <h2 className="text-base font-semibold">排行榜</h2>
-                    <p className="text-xs text-slate-500">
-                      {formatShortDate(summary.startAt)} - {formatShortDate(summary.endAt)}
-                    </p>
-                  </div>
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+    <main className="min-w-0 font-sans text-stone-950">
+      <div className="space-y-5">
+        <header className="relative overflow-hidden rounded-[1.25rem] border border-stone-950/15 bg-[#11130f] px-5 py-5 text-[#f8f1e5] shadow-[0_28px_90px_-62px_rgba(17,19,15,0.85)] sm:px-6 lg:px-7">
+          <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(135deg,rgba(241,196,92,0.16)_0_1px,transparent_1px_24px),linear-gradient(90deg,rgba(255,255,255,0.07),transparent_42%)]" />
+          <div className="relative space-y-5">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="max-w-3xl">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-[#f1c45c]/35 bg-[#f1c45c]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#f1c45c]">
+                    Open Token Board
+                  </span>
+                  <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs font-semibold text-white/78">
                     {sourceLabel}
                   </span>
                 </div>
+                <h1 className="mt-3 text-3xl font-semibold leading-tight text-white sm:text-5xl">
+                  朋友间的 Token 排行榜
+                </h1>
+                <p className="mt-3 text-sm leading-6 text-white/68">
+                  {formatShortDate(summary.startAt)} - {formatShortDate(summary.endAt)}
+                </p>
+              </div>
+              <div className="flex w-full flex-col gap-2 xl:w-auto xl:items-end">
+                <GitHubAuthControl viewer={viewer} onLogin={loginWithGitHub} onLogout={logoutGitHub} />
+                <div className="grid w-full gap-2 sm:grid-cols-2 xl:w-auto">
+                  <SegmentedControl
+                    items={RANGES.map((item) => ({ key: item, label: item }))}
+                    value={range}
+                    onChange={(value) => setRange(value as TokenBoardRange)}
+                    label="时间范围"
+                  />
+                  <SegmentedControl
+                    items={METRICS.map((item) => ({ key: item.key, label: item.label }))}
+                    value={metric}
+                    onChange={(value) => setMetric(value as TokenBoardMetric)}
+                    label="排序指标"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 border-t border-white/10 pt-4 sm:grid-cols-3">
+              <HeroSignal label="当前榜首" value={leader?.displayName ?? "--"} meta={leader ? formatTokens(leader.tokens) : "--"} />
+              <HeroSignal label="排序指标" value={selectedMetricLabel} meta={`${formatNumber(summary.totalMessages)} messages`} />
+              <HeroSignal label="高频组合" value={summary.topModel} meta={summary.topTool} />
+            </div>
+          </div>
+        </header>
+
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
+          <div className="min-w-0 space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <StatTile label="总 Tokens" value={formatTokens(summary.totalTokens)} meta="Total spend" tone="ink" />
+              <StatTile label="活跃用户" value={formatNumber(summary.activeUsers)} meta={`${topUsers.length} listed`} tone="mint" />
+              <StatTile label="会话" value={formatNumber(summary.totalSessions)} meta="Sessions" tone="blue" />
+              <StatTile label="估算费用" value={formatUsd(summary.totalCostUsd)} meta="USD estimate" tone="gold" />
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(17rem,0.65fr)]">
+              <section className="min-w-0 overflow-hidden rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] shadow-[0_20px_70px_-60px_rgba(28,25,23,0.65)]">
+                <PanelHeader
+                  title="排行榜"
+                  meta={`${summary.users.length} users`}
+                  action={`${formatShortDate(summary.startAt)} - ${formatShortDate(summary.endAt)}`}
+                />
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                    <thead className="bg-slate-50 text-xs text-slate-500">
+                  <table className="w-full min-w-[780px] border-collapse text-left text-sm">
+                    <thead className="bg-[#f3ede0] text-xs font-semibold uppercase tracking-[0.08em] text-stone-500">
                       <tr>
-                        <th className="px-4 py-3 font-medium">排名</th>
-                        <th className="px-4 py-3 font-medium">用户</th>
-                        <th className="px-4 py-3 text-right font-medium">Tokens</th>
-                        <th className="px-4 py-3 text-right font-medium">费用</th>
-                        <th className="px-4 py-3 text-right font-medium">会话</th>
-                        <th className="px-4 py-3 text-right font-medium">消息</th>
-                        <th className="px-4 py-3 font-medium">常用模型</th>
+                        <th className="px-4 py-3">排名</th>
+                        <th className="px-4 py-3">用户</th>
+                        <th className="px-4 py-3 text-right">Tokens</th>
+                        <th className="px-4 py-3 text-right">费用</th>
+                        <th className="px-4 py-3 text-right">会话</th>
+                        <th className="px-4 py-3 text-right">消息</th>
+                        <th className="px-4 py-3">常用模型</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-stone-950/8">
                       {summary.users.map((user) => (
                         <LeaderboardRow key={user.userId} user={user} />
                       ))}
@@ -330,52 +349,42 @@ export function TokenLeaderboardApp({
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#f5efe4] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-base font-semibold">Top 使用者</h2>
-                  <span className="text-xs text-slate-500">{topUsers.length} 人</span>
+                  <h2 className="text-base font-semibold">份额</h2>
+                  <span className="font-mono text-xs text-stone-500">{topUsers.length} 人</span>
                 </div>
                 <div className="mt-4 space-y-3">
                   {topUsers.map((user) => (
-                    <div key={user.userId} className="grid grid-cols-[2rem_minmax(0,1fr)_5rem] items-center gap-3">
-                      <Avatar name={user.displayName} index={user.rank} />
-                      <div className="min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-sm font-semibold">{user.displayName}</p>
-                          <p className="text-xs font-medium text-slate-500">{formatPercent(user.share)}</p>
-                        </div>
-                        <div className="mt-1 h-2 overflow-hidden rounded bg-white">
-                          <div
-                            className="h-full rounded bg-emerald-500"
-                            style={{ width: `${Math.max(2, user.share * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                      <p className="text-right font-mono text-sm">{formatTokens(user.tokens)}</p>
-                    </div>
+                    <ShareRow key={user.userId} user={user} />
                   ))}
                 </div>
               </section>
             </div>
 
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-              <section className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.18fr)_minmax(18rem,0.82fr)]">
+              <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-base font-semibold">Token 趋势</h2>
-                  <p className="text-xs text-slate-500">峰值 {formatTokens(maxDailyTokens)}</p>
+                  <p className="font-mono text-xs text-stone-500">峰值 {formatTokens(maxDailyTokens)}</p>
                 </div>
-                <div className="mt-4 grid h-56 grid-cols-[repeat(auto-fit,minmax(8px,1fr))] items-end gap-1 border-b border-slate-200 pt-4">
-                  {summary.daily.map((point) => (
+                <div
+                  className="mt-4 grid h-56 grid-cols-[repeat(auto-fit,minmax(8px,1fr))] items-end gap-1 rounded-xl border border-stone-950/8 bg-[linear-gradient(180deg,rgba(17,19,15,0.04),transparent)] px-3 pb-3 pt-5"
+                  aria-label="Token 趋势"
+                >
+                  {summary.daily.map((point, index) => (
                     <div key={point.date} className="flex h-full items-end">
                       <div
-                        className="w-full rounded-t bg-slate-800 transition hover:bg-emerald-500"
+                        className={`w-full rounded-t-[3px] transition duration-200 hover:translate-y-[-2px] ${
+                          index === summary.daily.length - 1 ? "bg-[#c05c38]" : "bg-[#172018] hover:bg-[#26745e]"
+                        }`}
                         title={`${point.date} ${formatTokens(point.tokens)}`}
                         style={{ height: `${Math.max(3, (point.tokens / maxDailyTokens) * 100)}%` }}
                       />
                     </div>
                   ))}
                 </div>
-                <div className="mt-2 flex justify-between text-xs text-slate-500">
+                <div className="mt-2 flex justify-between font-mono text-xs text-stone-500">
                   <span>{summary.daily[0]?.date.slice(5) ?? "--"}</span>
                   <span>{summary.daily.at(-1)?.date.slice(5) ?? "--"}</span>
                 </div>
@@ -398,100 +407,101 @@ export function TokenLeaderboardApp({
             </div>
           </div>
 
-          <aside className="border-t border-slate-200 bg-slate-50 p-5 sm:p-7 xl:border-l xl:border-t-0">
-            <div className="space-y-5">
-              <section className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-base font-semibold">数据入口</h2>
-                  <span className="text-xs text-slate-500">{recordCount} 条</span>
-                </div>
-                <div className="mt-4 space-y-3">
-              {normalizedApiBaseUrl ? (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950">
-                  <p className="font-semibold">自动上报已启用</p>
-                  <p className="mt-1 break-all font-mono">{normalizedApiBaseUrl}/api/usage/ingest</p>
-                  <p className="mt-2 text-emerald-800">
-                    {viewer?.authenticated
-                      ? `GitHub 已登录：@${viewer.user?.githubLogin || viewer.user?.displayName}`
-                      : "网页端可使用 GitHub 登录；本机统计使用 npx agent。"}
-                  </p>
-                  <div className="mt-3 rounded-lg border border-emerald-200 bg-white/70 p-2">
-                    <p className="text-[11px] font-semibold text-emerald-800">后台同步安装</p>
-                    <code className="mt-1 block break-all font-mono text-[11px] leading-5 text-emerald-950">
-                      {NPX_INSTALL_COMMAND}
-                    </code>
+          <aside className="space-y-5 xl:sticky xl:top-24 xl:self-start">
+            <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold">数据入口</h2>
+                <span className="rounded-full bg-stone-950 px-2.5 py-1 font-mono text-xs text-white">{recordCount}</span>
+              </div>
+              <div className="mt-4 space-y-3">
+                {normalizedApiBaseUrl ? (
+                  <div className="rounded-xl border border-[#26745e]/25 bg-[#eaf5ef] p-3 text-xs text-[#163d33]">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold">自动上报</p>
+                      <span className="rounded-full bg-white/80 px-2 py-0.5 font-mono text-[11px]">live</span>
+                    </div>
+                    <p className="mt-2 break-all font-mono leading-5">{normalizedApiBaseUrl}/api/usage/ingest</p>
+                    <p className="mt-2 text-[#26745e]">
+                      {viewer?.authenticated
+                        ? `@${viewer.user?.githubLogin || viewer.user?.displayName}`
+                        : "GitHub / npx agent"}
+                    </p>
+                    <div className="mt-3 rounded-lg border border-[#26745e]/18 bg-white/70 p-2">
+                      <p className="text-[11px] font-semibold text-[#26745e]">agent install</p>
+                      <code className="mt-1 block break-all font-mono text-[11px] leading-5 text-[#163d33]">
+                        {NPX_INSTALL_COMMAND}
+                      </code>
+                    </div>
+                    <p className="mt-2 break-all text-[11px] text-[#26745e]">
+                      status: <code className="font-mono">{NPX_STATUS_COMMAND}</code>
+                    </p>
                   </div>
-                  <p className="mt-2 break-all text-[11px] text-emerald-800">
-                    查看状态：<code className="font-mono">{NPX_STATUS_COMMAND}</code>
-                  </p>
-                </div>
-              ) : null}
-                  <label className="block">
-                    <span className="text-xs font-medium text-slate-600">CSV / JSON</span>
-                    <textarea
-                      value={draft}
-                      onChange={(event) => setDraft(event.target.value)}
-                      placeholder={SAMPLE_CSV}
-                      className="mt-2 min-h-40 w-full resize-y rounded-xl border border-slate-200 bg-white p-3 font-mono text-xs leading-5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                ) : null}
+                <label className="block">
+                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">CSV / JSON</span>
+                  <textarea
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    placeholder={SAMPLE_CSV}
+                    className="mt-2 min-h-36 w-full resize-y rounded-xl border border-stone-950/12 bg-[#fbf7ef] p-3 font-mono text-xs leading-5 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#26745e] focus:bg-white focus:ring-4 focus:ring-[#26745e]/12"
+                  />
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <ActionButton icon="upload" onClick={() => importText(draft)}>
+                    导入
+                  </ActionButton>
+                  <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-stone-950/15 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:border-[#26745e]/40 hover:bg-[#eef7f2]">
+                    <Icon name="file" />
+                    文件
+                    <input
+                      type="file"
+                      accept=".json,.csv,text/csv,application/json"
+                      className="sr-only"
+                      onChange={(event) => {
+                        void importFile(event.target.files?.[0]);
+                        event.target.value = "";
+                      }}
                     />
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <ActionButton icon="upload" onClick={() => importText(draft)}>
-                      导入
-                    </ActionButton>
-                    <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-                      <Icon name="file" />
-                      文件
-                      <input
-                        type="file"
-                        accept=".json,.csv,text/csv,application/json"
-                        className="sr-only"
-                        onChange={(event) => {
-                          void importFile(event.target.files?.[0]);
-                          event.target.value = "";
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <ActionButton icon="refresh" variant="secondary" onClick={resetToDemo}>
-                      示例
-                    </ActionButton>
-                    <ActionButton icon="download" variant="secondary" onClick={exportJson}>
-                      导出
-                    </ActionButton>
-                  </div>
-                  <p className="min-h-5 text-xs text-slate-500" aria-live="polite">
-                    {statusMessage}
-                  </p>
                 </div>
-              </section>
+                <div className="grid grid-cols-2 gap-2">
+                  <ActionButton icon="refresh" variant="secondary" onClick={resetToDemo}>
+                    示例
+                  </ActionButton>
+                  <ActionButton icon="download" variant="secondary" onClick={exportJson}>
+                    导出
+                  </ActionButton>
+                </div>
+                <p className="min-h-5 rounded-lg bg-[#f5efe4] px-3 py-2 text-xs text-stone-600" aria-live="polite">
+                  {statusMessage}
+                </p>
+              </div>
+            </section>
 
-              <section className="rounded-2xl border border-slate-200 bg-white p-4">
-                <h2 className="text-base font-semibold">上报字段</h2>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
-                  {[
-                    "user",
-                    "timestamp",
-                    "model",
-                    "tool",
-                    "inputTokens",
-                    "outputTokens",
-                    "cachedInputTokens",
-                    "reasoningOutputTokens",
-                    "totalTokens",
-                    "sessionId",
-                  ].map((field) => (
-                    <code key={field} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1">
-                      {field}
-                    </code>
-                  ))}
-                </div>
-              </section>
-            </div>
+            <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
+              <h2 className="text-base font-semibold">上报字段</h2>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-stone-600">
+                {[
+                  "user",
+                  "timestamp",
+                  "model",
+                  "tool",
+                  "inputTokens",
+                  "outputTokens",
+                  "cachedInputTokens",
+                  "reasoningOutputTokens",
+                  "totalTokens",
+                  "sessionId",
+                ].map((field) => (
+                  <code key={field} className="truncate rounded-md border border-stone-950/10 bg-[#f5efe4] px-2 py-1">
+                    {field}
+                  </code>
+                ))}
+              </div>
+            </section>
           </aside>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
@@ -508,15 +518,17 @@ function SegmentedControl({
   label: string;
 }) {
   return (
-    <div className="inline-flex rounded-lg border border-white/15 bg-white/10 p-1" aria-label={label}>
+    <div className="grid w-full grid-cols-4 rounded-xl border border-white/15 bg-white/10 p-1" aria-label={label}>
       {items.map((item) => (
         <button
           key={item.key}
           type="button"
           aria-pressed={value === item.key}
           onClick={() => onChange(item.key)}
-          className={`min-h-9 rounded-md px-3 text-sm font-semibold transition ${
-            value === item.key ? "bg-white text-slate-950" : "text-white/78 hover:bg-white/10 hover:text-white"
+          className={`min-h-9 rounded-lg px-2 text-sm font-semibold transition ${
+            value === item.key
+              ? "bg-[#f8f1e5] text-[#11130f] shadow-[0_10px_24px_-20px_rgba(255,255,255,0.7)]"
+              : "text-white/72 hover:bg-white/10 hover:text-white"
           }`}
         >
           {item.label}
@@ -529,51 +541,94 @@ function SegmentedControl({
 function StatTile({
   label,
   value,
+  meta,
   tone,
 }: {
   label: string;
   value: string;
-  tone: "slate" | "emerald" | "blue" | "amber";
+  meta: string;
+  tone: "ink" | "mint" | "blue" | "gold";
 }) {
   const tones = {
-    slate: "bg-slate-950 text-white",
-    emerald: "bg-emerald-50 text-emerald-950",
-    blue: "bg-sky-50 text-sky-950",
-    amber: "bg-amber-50 text-amber-950",
+    ink: "border-[#11130f] bg-[#11130f] text-white",
+    mint: "border-[#26745e]/20 bg-[#eaf5ef] text-[#163d33]",
+    blue: "border-[#2f6387]/18 bg-[#e9f1f4] text-[#183447]",
+    gold: "border-[#b06a2c]/18 bg-[#fff2d6] text-[#5a3419]",
   };
 
   return (
-    <div className={`rounded-2xl border border-slate-200 p-4 ${tones[tone]}`}>
-      <p className="text-xs font-medium opacity-70">{label}</p>
-      <p className="mt-2 font-mono text-3xl font-semibold">{value}</p>
+    <div className={`min-h-32 rounded-[1.15rem] border p-4 shadow-[0_18px_55px_-50px_rgba(28,25,23,0.7)] ${tones[tone]}`}>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] opacity-65">{label}</p>
+        <span className="mt-0.5 size-2 rounded-full bg-current opacity-55" />
+      </div>
+      <p className="mt-5 font-mono text-3xl font-semibold leading-none sm:text-4xl">{value}</p>
+      <p className="mt-3 truncate text-xs opacity-60">{meta}</p>
+    </div>
+  );
+}
+
+function HeroSignal({ label, value, meta }: { label: string; value: string; meta: string }) {
+  return (
+    <div className="min-w-0 border-l border-white/12 pl-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/42">{label}</p>
+      <p className="mt-2 truncate text-xl font-semibold text-white">{value}</p>
+      <p className="mt-1 truncate font-mono text-xs text-[#f1c45c]">{meta}</p>
+    </div>
+  );
+}
+
+function PanelHeader({ title, meta, action }: { title: string; meta: string; action: string }) {
+  return (
+    <div className="flex flex-col gap-2 border-b border-stone-950/8 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h2 className="text-base font-semibold">{title}</h2>
+        <p className="mt-0.5 font-mono text-xs text-stone-500">{meta}</p>
+      </div>
+      <span className="w-fit rounded-full border border-stone-950/10 bg-[#f5efe4] px-3 py-1 font-mono text-xs text-stone-600">
+        {action}
+      </span>
     </div>
   );
 }
 
 function LeaderboardRow({ user }: { user: TokenLeaderboardUser }) {
+  const rankTone =
+    user.rank === 1
+      ? "border-[#b06a2c]/30 bg-[#fff2d6] text-[#5a3419]"
+      : user.rank === 2
+        ? "border-[#2f6387]/20 bg-[#e9f1f4] text-[#183447]"
+        : user.rank === 3
+          ? "border-[#26745e]/20 bg-[#eaf5ef] text-[#163d33]"
+          : "border-stone-950/10 bg-white text-stone-500";
+
   return (
-    <tr className="transition hover:bg-slate-50">
-      <td className="px-4 py-3 font-mono text-sm text-slate-500">#{user.rank}</td>
+    <tr className="transition hover:bg-[#f8f2e8]">
+      <td className="px-4 py-3">
+        <span className={`inline-flex min-w-10 justify-center rounded-full border px-2 py-1 font-mono text-xs font-semibold ${rankTone}`}>
+          #{user.rank}
+        </span>
+      </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <Avatar name={user.displayName} index={user.rank} />
           <div className="min-w-0">
-            <p className="truncate font-semibold">{user.displayName}</p>
-            <p className="truncate text-xs text-slate-500">{user.team}</p>
+            <p className="truncate font-semibold text-stone-950">{user.displayName}</p>
+            <p className="truncate text-xs text-stone-500">{user.team}</p>
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-right font-mono font-semibold">{formatTokens(user.tokens)}</td>
-      <td className="px-4 py-3 text-right font-mono text-slate-600">{formatUsd(user.costUsd)}</td>
-      <td className="px-4 py-3 text-right font-mono text-slate-600">{formatNumber(user.sessions)}</td>
-      <td className="px-4 py-3 text-right font-mono text-slate-600">{formatNumber(user.messages)}</td>
+      <td className="px-4 py-3 text-right font-mono font-semibold text-stone-950">{formatTokens(user.tokens)}</td>
+      <td className="px-4 py-3 text-right font-mono text-stone-600">{formatUsd(user.costUsd)}</td>
+      <td className="px-4 py-3 text-right font-mono text-stone-600">{formatNumber(user.sessions)}</td>
+      <td className="px-4 py-3 text-right font-mono text-stone-600">{formatNumber(user.messages)}</td>
       <td className="px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+          <span className="rounded-md border border-stone-950/10 bg-[#f5efe4] px-2 py-1 text-xs font-semibold text-stone-700">
             {user.topModel}
           </span>
           {user.deltaTokens !== null ? (
-            <span className={`text-xs font-medium ${user.deltaTokens >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+            <span className={`font-mono text-xs font-semibold ${user.deltaTokens >= 0 ? "text-[#26745e]" : "text-[#c05c38]"}`}>
               {user.deltaTokens >= 0 ? "+" : ""}
               {formatPercent(user.deltaTokens)}
             </span>
@@ -581,6 +636,27 @@ function LeaderboardRow({ user }: { user: TokenLeaderboardUser }) {
         </div>
       </td>
     </tr>
+  );
+}
+
+function ShareRow({ user }: { user: TokenLeaderboardUser }) {
+  return (
+    <div className="grid grid-cols-[2.25rem_minmax(0,1fr)_5rem] items-center gap-3">
+      <Avatar name={user.displayName} index={user.rank} />
+      <div className="min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-sm font-semibold">{user.displayName}</p>
+          <p className="font-mono text-xs font-semibold text-stone-500">{formatPercent(user.share)}</p>
+        </div>
+        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/80 shadow-inner">
+          <div
+            className="h-full rounded-full bg-[#26745e]"
+            style={{ width: `${Math.max(2, user.share * 100)}%` }}
+          />
+        </div>
+      </div>
+      <p className="text-right font-mono text-sm font-semibold">{formatTokens(user.tokens)}</p>
+    </div>
   );
 }
 
@@ -592,20 +668,23 @@ function BreakdownPanel({
   items: Array<{ name: string; value: number; meta: string; share: number }>;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4">
-      <h2 className="text-base font-semibold">{title}</h2>
+    <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold">{title}</h2>
+        <span className="font-mono text-xs text-stone-500">{items.length}</span>
+      </div>
       <div className="mt-4 space-y-3">
         {items.slice(0, 8).map((item) => (
           <div key={item.name}>
             <div className="flex items-center justify-between gap-3 text-sm">
               <p className="truncate font-medium">{item.name}</p>
-              <p className="shrink-0 font-mono text-slate-500">{formatTokens(item.value)}</p>
+              <p className="shrink-0 font-mono text-stone-500">{formatTokens(item.value)}</p>
             </div>
             <div className="mt-1 grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-3">
-              <div className="h-2 overflow-hidden rounded bg-slate-100">
-                <div className="h-full rounded bg-sky-600" style={{ width: `${Math.max(2, item.share * 100)}%` }} />
+              <div className="h-2 overflow-hidden rounded-full bg-[#f0e6d7]">
+                <div className="h-full rounded-full bg-[#2f6387]" style={{ width: `${Math.max(2, item.share * 100)}%` }} />
               </div>
-              <p className="truncate text-right text-xs text-slate-500">{item.meta}</p>
+              <p className="truncate text-right text-xs text-stone-500">{item.meta}</p>
             </div>
           </div>
         ))}
@@ -631,8 +710,8 @@ function ActionButton({
       onClick={onClick}
       className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
         variant === "primary"
-          ? "bg-slate-950 text-white hover:bg-emerald-700"
-          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+          ? "bg-[#11130f] text-white hover:bg-[#26745e]"
+          : "border border-stone-950/15 bg-white text-stone-700 hover:border-[#26745e]/40 hover:bg-[#eef7f2]"
       }`}
     >
       <Icon name={icon} />
@@ -659,7 +738,7 @@ function GitHubAuthControl({
       <button
         type="button"
         onClick={onLogout}
-        className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-semibold text-white transition hover:bg-white/15"
+        className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 text-sm font-semibold text-white transition hover:bg-white/15 xl:w-auto"
       >
         <Icon name="github" />
         @{viewer.user?.githubLogin || viewer.user?.displayName || "GitHub"}
@@ -671,7 +750,7 @@ function GitHubAuthControl({
     <button
       type="button"
       onClick={onLogin}
-      className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-100"
+      className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#f8f1e5] px-3 text-sm font-semibold text-[#11130f] transition hover:bg-[#fff2d6] xl:w-auto"
     >
       <Icon name="github" />
       GitHub 登录
@@ -681,16 +760,16 @@ function GitHubAuthControl({
 
 function Avatar({ name, index }: { name: string; index: number }) {
   const tones = [
-    "bg-emerald-100 text-emerald-900",
-    "bg-sky-100 text-sky-900",
-    "bg-amber-100 text-amber-900",
-    "bg-rose-100 text-rose-900",
-    "bg-violet-100 text-violet-900",
+    "bg-[#eaf5ef] text-[#163d33] ring-[#26745e]/20",
+    "bg-[#e9f1f4] text-[#183447] ring-[#2f6387]/20",
+    "bg-[#fff2d6] text-[#5a3419] ring-[#b06a2c]/20",
+    "bg-[#f7e4dc] text-[#7b2f1d] ring-[#c05c38]/20",
+    "bg-[#ede7d9] text-stone-700 ring-stone-950/10",
   ];
 
   return (
     <span
-      className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${tones[index % tones.length]}`}
+      className={`flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold ring-1 ${tones[index % tones.length]}`}
       aria-hidden="true"
     >
       {name.trim().slice(0, 1).toUpperCase() || "U"}

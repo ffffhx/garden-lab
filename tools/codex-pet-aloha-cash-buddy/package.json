@@ -1,0 +1,23 @@
+{
+  "name": "@byted-fenghongxin/codex-pet-aloha-cash-buddy",
+  "version": "0.1.0",
+  "description": "Install the Aloha Cash Buddy Codex pet.",
+  "type": "module",
+  "bin": {
+    "codex-pet-aloha-cash-buddy": "bin/codex-pet-aloha-cash-buddy.js"
+  },
+  "files": [
+    "bin",
+    "pets"
+  ],
+  "scripts": {
+    "test:smoke": "node bin/codex-pet-aloha-cash-buddy.js --dry-run"
+  },
+  "publishConfig": {
+    "registry": "https://bnpm.byted.org"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "license": "UNLICENSED"
+}

@@ -101,6 +101,18 @@ GET /api/usage/stats?range=7D&metric=tokens
 
 网页端会显示 GitHub 登录按钮；登录后服务端用 HttpOnly cookie 识别用户。
 
+博客里的桌宠、桌宠档案和游戏入口属于私有预览功能，会复用同一个 GitHub 登录态。默认只给 `ffffhx` 可见；如果要换成别的作者账号，在构建博客时配置：
+
+```bash
+NEXT_PUBLIC_PRIVATE_FEATURE_GITHUB_LOGINS=your-github-login
+```
+
+后端仍建议同步收紧 GitHub allowlist，例如：
+
+```bash
+TOKEN_BOARD_ALLOWED_GITHUB_LOGINS=your-github-login
+```
+
 ## 4. 配置每个人电脑上的 agent
 
 在每台电脑上创建本地配置：

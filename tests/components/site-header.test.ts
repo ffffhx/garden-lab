@@ -14,10 +14,13 @@ describe("SiteHeader", () => {
     expect(markup).not.toContain("hover:text-white");
   });
 
-  it("includes the games entry in the primary navigation", () => {
+  it("hides private preview entries before owner auth resolves", () => {
     const markup = renderToStaticMarkup(createElement(SiteHeader));
 
-    expect(markup).toContain('href="/games"');
-    expect(markup).toContain(">游戏入口</a>");
+    expect(markup).not.toContain('href="/games"');
+    expect(markup).not.toContain(">游戏入口</a>");
+    expect(markup).not.toContain('href="/pet"');
+    expect(markup).not.toContain(">桌宠</a>");
+    expect(markup).toContain('href="/token-leaderboard"');
   });
 });

@@ -1,0 +1,46 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" fill="#f4f7f4"/>
+  <rect x="70" y="70" width="1060" height="620" rx="26" fill="#1b2421"/>
+  <path d="M132 242H1068" stroke="#f4f7f4" stroke-opacity="0.14" stroke-width="2"/>
+  <path d="M132 504H1068" stroke="#f4f7f4" stroke-opacity="0.14" stroke-width="2"/>
+  <path d="M430 242V504" stroke="#f4f7f4" stroke-opacity="0.14" stroke-width="2"/>
+  <path d="M770 242V504" stroke="#f4f7f4" stroke-opacity="0.14" stroke-width="2"/>
+
+  <text x="126" y="142" fill="#f4f7f4" font-family="Arial, sans-serif" font-size="38" font-weight="700">X 上 AI 与前端热点速览</text>
+  <text x="126" y="184" fill="#b8c8c0" font-family="Arial, sans-serif" font-size="24">2026-05-06 · 默认模型 / 个人 Agent / 工具供应链</text>
+
+  <rect x="160" y="286" width="210" height="96" rx="20" fill="#ff6b6b"/>
+  <path d="M204 334H326" stroke="#1b2421" stroke-width="14" stroke-linecap="round"/>
+  <path d="M204 358H284" stroke="#1b2421" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="342" cy="310" r="12" fill="#f4f7f4"/>
+  <circle cx="342" cy="360" r="12" fill="#f4f7f4"/>
+  <path d="M342 322V348" stroke="#f4f7f4" stroke-width="6" stroke-linecap="round"/>
+
+  <circle cx="600" cy="334" r="66" fill="#4ecdc4"/>
+  <circle cx="600" cy="334" r="34" fill="#1b2421"/>
+  <path d="M600 256V214" stroke="#4ecdc4" stroke-width="12" stroke-linecap="round"/>
+  <path d="M600 454V412" stroke="#4ecdc4" stroke-width="12" stroke-linecap="round"/>
+  <path d="M678 334H720" stroke="#4ecdc4" stroke-width="12" stroke-linecap="round"/>
+  <path d="M480 334H522" stroke="#4ecdc4" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="600" cy="334" r="13" fill="#f4f7f4"/>
+
+  <path d="M930 274H1038C1056 274 1070 288 1070 306V370C1070 388 1056 402 1038 402H930C912 402 898 388 898 370V306C898 288 912 274 930 274Z" fill="#ffd166"/>
+  <path d="M930 274V242C930 218 950 198 984 198C1018 198 1038 218 1038 242V274" stroke="#ffd166" stroke-width="18" stroke-linecap="round"/>
+  <path d="M952 338H1016" stroke="#1b2421" stroke-width="16" stroke-linecap="round"/>
+  <path d="M984 312V364" stroke="#1b2421" stroke-width="16" stroke-linecap="round"/>
+
+  <text x="150" y="456" fill="#f4f7f4" font-family="Arial, sans-serif" font-size="39" font-weight="700">默认模型</text>
+  <text x="150" y="494" fill="#b8c8c0" font-family="Arial, sans-serif" font-size="23">GPT-5.5 Instant</text>
+
+  <text x="484" y="456" fill="#f4f7f4" font-family="Arial, sans-serif" font-size="39" font-weight="700">个人 Agent</text>
+  <text x="484" y="494" fill="#b8c8c0" font-family="Arial, sans-serif" font-size="23">Gemini / Instagram</text>
+
+  <text x="824" y="456" fill="#f4f7f4" font-family="Arial, sans-serif" font-size="39" font-weight="700">供应链安全</text>
+  <text x="824" y="494" fill="#b8c8c0" font-family="Arial, sans-serif" font-size="23">DAEMON Tools</text>
+
+  <rect x="126" y="554" width="948" height="76" rx="16" fill="#f4f7f4" fill-opacity="0.08"/>
+  <path d="M176 592H344" stroke="#ff6b6b" stroke-width="10" stroke-linecap="round"/>
+  <path d="M452 592H672" stroke="#4ecdc4" stroke-width="10" stroke-linecap="round"/>
+  <path d="M780 592H1018" stroke="#ffd166" stroke-width="10" stroke-linecap="round"/>
+  <text x="126" y="660" fill="#b8c8c0" font-family="Arial, sans-serif" font-size="22">AI 入口开始替用户执行动作，前端也要同时设计权限、记忆、审计与工具链边界。</text>
+</svg>

@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
+import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const API_URL = (process.env.TOKEN_BOARD_API_URL || "https://8-218-149-148.anyip.dev/token-board").replace(/\/+$/, "");
 const LEADERBOARD_URL = process.env.TOKEN_BOARD_LEADERBOARD_URL || "https://ffffhx.github.io/blog/token-leaderboard/";
@@ -13,7 +15,13 @@ const SINCE_MS = readPositiveNumber(process.env.TOKEN_BOARD_SINCE_HOURS, 24 * 30
 const MAX_FILES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILES, 800);
 const MAX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILE_BYTES, 5 * 1024 * 1024);
 const BATCH_SIZE = 1000;
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
+const INSTALL_DIR = path.join(os.homedir(), ".token-board-agent");
+const INSTALLED_AGENT_FILE = path.join(INSTALL_DIR, "token-board-agent.mjs");
+const LAUNCH_AGENT_LABEL = "dev.ffffhx.token-board-agent";
+const LAUNCH_AGENT_PLIST = path.join(os.homedir(), "Library", "LaunchAgents", `${LAUNCH_AGENT_LABEL}.plist`);
+const LOG_FILE = path.join(INSTALL_DIR, "agent.log");
+const ERROR_LOG_FILE = path.join(INSTALL_DIR, "agent.err.log");
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.message : error);
@@ -31,6 +39,23 @@ async function main() {
 
   if (command === "login") {
     await login();
+    return;
+  }
+
+  if (command === "install") {
+    ensureMacosLaunchd();
+    await loadOrLoginConfig();
+    await installLaunchAgent();
+    return;
+  }
+
+  if (command === "uninstall") {
+    await uninstallLaunchAgent();
+    return;
+  }
+
+  if (command === "status") {
+    await printLaunchAgentStatus();
     return;
   }
 
@@ -54,6 +79,67 @@ async function main() {
 
   printHelp();
   process.exitCode = 1;
+}
+
+async function installLaunchAgent() {
+  ensureMacosLaunchd();
+
+  await fs.mkdir(INSTALL_DIR, { recursive: true });
+  await fs.mkdir(path.dirname(LAUNCH_AGENT_PLIST), { recursive: true });
+  await fs.copyFile(fileURLToPath(import.meta.url), INSTALLED_AGENT_FILE);
+  await fs.chmod(INSTALLED_AGENT_FILE, 0o755);
+  await fs.writeFile(LAUNCH_AGENT_PLIST, launchAgentPlist(), { mode: 0o644 });
+
+  if (process.env.TOKEN_BOARD_AGENT_SKIP_LAUNCHCTL === "1") {
+    console.log(`Installed launch agent files without launchctl: ${LAUNCH_AGENT_PLIST}`);
+    return;
+  }
+
+  const domain = launchctlDomain();
+  await runLaunchctl(["bootout", domain, LAUNCH_AGENT_PLIST], { allowFailure: true });
+  await runLaunchctl(["bootstrap", domain, LAUNCH_AGENT_PLIST]);
+  await runLaunchctl(["enable", `${domain}/${LAUNCH_AGENT_LABEL}`], { allowFailure: true });
+  await runLaunchctl(["kickstart", "-k", `${domain}/${LAUNCH_AGENT_LABEL}`]);
+
+  console.log("Token board background sync installed.");
+  console.log(`LaunchAgent: ${LAUNCH_AGENT_PLIST}`);
+  console.log(`Logs: ${LOG_FILE}`);
+}
+
+async function uninstallLaunchAgent() {
+  ensureMacosLaunchd();
+
+  if (process.env.TOKEN_BOARD_AGENT_SKIP_LAUNCHCTL !== "1") {
+    await runLaunchctl(["bootout", launchctlDomain(), LAUNCH_AGENT_PLIST], { allowFailure: true });
+  }
+
+  await fs.rm(LAUNCH_AGENT_PLIST, { force: true });
+  await fs.rm(INSTALLED_AGENT_FILE, { force: true });
+  console.log("Token board background sync uninstalled.");
+  console.log(`Kept auth config: ${CONFIG_FILE}`);
+  console.log(`Kept upload state: ${STATE_FILE}`);
+}
+
+async function printLaunchAgentStatus() {
+  ensureMacosLaunchd();
+  const plistExists = await fileExists(LAUNCH_AGENT_PLIST);
+  const installedScriptExists = await fileExists(INSTALLED_AGENT_FILE);
+
+  console.log(`LaunchAgent plist: ${plistExists ? LAUNCH_AGENT_PLIST : "not installed"}`);
+  console.log(`Installed script: ${installedScriptExists ? INSTALLED_AGENT_FILE : "not installed"}`);
+  console.log(`Logs: ${LOG_FILE}`);
+
+  if (process.env.TOKEN_BOARD_AGENT_SKIP_LAUNCHCTL === "1") {
+    return;
+  }
+
+  const result = await runLaunchctl(["print", `${launchctlDomain()}/${LAUNCH_AGENT_LABEL}`], { allowFailure: true });
+  if (result.code === 0) {
+    console.log("launchd status: loaded");
+    console.log(result.stdout.split("\n").slice(0, 12).join("\n"));
+  } else {
+    console.log("launchd status: not loaded");
+  }
 }
 
 async function loadOrLoginConfig() {
@@ -315,6 +401,9 @@ async function postJson(url, body) {
 function printHelp() {
   console.log(`Usage:
   npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent install
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent status
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent uninstall
   npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent watch
   npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent login
   npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent upload`);
@@ -376,4 +465,100 @@ function readPositiveNumber(value, fallback) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function ensureMacosLaunchd() {
+  if (process.platform !== "darwin") {
+    throw new Error("Background install currently supports macOS LaunchAgent only. Use `watch` on this platform.");
+  }
+}
+
+function launchAgentPlist() {
+  const environment = {
+    TOKEN_BOARD_API_URL: API_URL,
+    TOKEN_BOARD_LEADERBOARD_URL: LEADERBOARD_URL,
+    TOKEN_BOARD_AGENT_CONFIG: CONFIG_FILE,
+    TOKEN_BOARD_AGENT_STATE_FILE: STATE_FILE,
+  };
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>${escapeXml(LAUNCH_AGENT_LABEL)}</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>${escapeXml(process.execPath)}</string>
+    <string>${escapeXml(INSTALLED_AGENT_FILE)}</string>
+    <string>watch</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+${Object.entries(environment)
+  .map(([key, value]) => `    <key>${escapeXml(key)}</key>\n    <string>${escapeXml(value)}</string>`)
+  .join("\n")}
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>${escapeXml(LOG_FILE)}</string>
+  <key>StandardErrorPath</key>
+  <string>${escapeXml(ERROR_LOG_FILE)}</string>
+</dict>
+</plist>
+`;
+}
+
+function launchctlDomain() {
+  return `gui/${process.getuid()}`;
+}
+
+function runLaunchctl(args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn("launchctl", args, { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", (error) => {
+      if (options.allowFailure) {
+        resolve({ code: 1, stdout, stderr: error.message });
+      } else {
+        reject(error);
+      }
+    });
+    child.on("close", (code) => {
+      if (code === 0 || options.allowFailure) {
+        resolve({ code: code || 0, stdout, stderr });
+      } else {
+        reject(new Error(stderr.trim() || `launchctl ${args.join(" ")} failed with exit ${code}`));
+      }
+    });
+  });
+}
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function escapeXml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }

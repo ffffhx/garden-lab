@@ -375,7 +375,9 @@ function clientInfo() {
 function printHelp() {
   console.log(`Usage:
   npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent
-  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent sync
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent install
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent status
+  npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent uninstall
   npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent login
   npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent upload
   npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent watch

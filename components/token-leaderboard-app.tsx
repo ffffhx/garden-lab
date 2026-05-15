@@ -27,9 +27,10 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 
 const SAMPLE_CSV = `user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages
 you,You,Friends,Codex CLI,gpt-5.5,token-board,2026-05-14T10:30:00+08:00,620000,220000,58000,9000,907000,34`;
-const NPX_SYNC_COMMAND = "npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent";
-const NPX_WATCH_COMMAND =
-  "npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent watch";
+const NPX_INSTALL_COMMAND =
+  "npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent install";
+const NPX_STATUS_COMMAND =
+  "npx --yes --package https://ffffhx.github.io/blog/token-board-agent.tgz -- token-board-agent status";
 
 export function TokenLeaderboardApp({
   initialEntries,
@@ -414,13 +415,13 @@ export function TokenLeaderboardApp({
                       : "网页端可使用 GitHub 登录；本机统计使用 npx agent。"}
                   </p>
                   <div className="mt-3 rounded-lg border border-emerald-200 bg-white/70 p-2">
-                    <p className="text-[11px] font-semibold text-emerald-800">首次统计</p>
+                    <p className="text-[11px] font-semibold text-emerald-800">后台同步安装</p>
                     <code className="mt-1 block break-all font-mono text-[11px] leading-5 text-emerald-950">
-                      {NPX_SYNC_COMMAND}
+                      {NPX_INSTALL_COMMAND}
                     </code>
                   </div>
                   <p className="mt-2 break-all text-[11px] text-emerald-800">
-                    持续同步：<code className="font-mono">{NPX_WATCH_COMMAND}</code>
+                    查看状态：<code className="font-mono">{NPX_STATUS_COMMAND}</code>
                   </p>
                 </div>
               ) : null}

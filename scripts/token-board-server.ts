@@ -26,12 +26,14 @@ import {
   type TokenBoardUploadUser,
 } from "../lib/token-board-automation";
 import {
+  buildTokenAccountUsageProfile,
   buildTokenLeaderboard,
   parseTokenUsageImport,
   type TokenBoardMetric,
   type TokenBoardRange,
   type TokenUsageEvent,
 } from "../lib/token-leaderboard";
+import { buildTokenUsageSnapshotFromEvents } from "../lib/content/token-usage";
 
 const PORT = Number(process.env.TOKEN_BOARD_PORT || 8787);
 const HOST = process.env.TOKEN_BOARD_HOST || "127.0.0.1";
@@ -129,6 +131,53 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
       records: events.length,
       generatedAt: new Date().toISOString(),
       summary: buildTokenLeaderboard(events, { range, metric, now }),
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/usage/me") {
+    const identity = readWebIdentity(request);
+
+    if (!identity) {
+      sendJson(request, response, 401, { error: "GitHub login required" });
+      return;
+    }
+
+    const range = parseRange(url.searchParams.get("range"));
+    const now = parseNow(url.searchParams.get("now"));
+    const events = await loadStoredEvents();
+    const profile = buildTokenAccountUsageProfile(events, {
+      userId: identity.userId,
+      range,
+      now,
+    });
+
+    sendJson(request, response, 200, {
+      schemaVersion: 1,
+      source: "server",
+      records: profile.records,
+      totalRecords: events.length,
+      generatedAt: new Date().toISOString(),
+      user: identity,
+      profile,
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/usage/summary") {
+    const now = parseNow(url.searchParams.get("now"));
+    const ownerUserId = normalizeOptionalText(url.searchParams.get("userId")) || normalizeOptionalText(process.env.TOKEN_BOARD_SUMMARY_USER_ID);
+    const events = await loadStoredEvents();
+    const filteredEvents = ownerUserId ? events.filter((event) => event.userId === ownerUserId) : events;
+
+    sendJson(request, response, 200, {
+      ...buildTokenUsageSnapshotFromEvents(filteredEvents, {
+        now,
+        source: ownerUserId ? "token-board-server-user" : "token-board-server",
+      }),
+      records: filteredEvents.length,
+      totalRecords: events.length,
+      userId: ownerUserId || null,
     });
     return;
   }
@@ -466,6 +515,10 @@ function parseNow(value: string | null) {
 
 function parseProjectMode(value: string | undefined) {
   return value === "hash" || value === "none" ? value : "basename";
+}
+
+function normalizeOptionalText(value: string | null | undefined) {
+  return value?.trim() || "";
 }
 
 function allowedGithubLogins() {

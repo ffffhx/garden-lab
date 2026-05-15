@@ -9,6 +9,7 @@ import {
   parseTokenUsageImport,
   type TokenBoardMetric,
   type TokenBoardRange,
+  type TokenAccountUsageProfile,
   type TokenLeaderboardSummary,
   type TokenLeaderboardUser,
   type TokenUsageEvent,
@@ -26,7 +27,7 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 
 const CSV_PLACEHOLDER =
   "user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages";
-const NPX_PACKAGE_URL = "https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.3.0";
+const NPX_PACKAGE_URL = "https://ffffhx.github.io/blog/token-board-agent.tgz?v=0.4.0";
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
 const NPX_STATUS_COMMAND =
@@ -52,6 +53,9 @@ export function TokenLeaderboardApp({
   const [remoteSummary, setRemoteSummary] = useState<TokenLeaderboardSummary | null>(null);
   const [remoteRecordCount, setRemoteRecordCount] = useState<number | null>(null);
   const [viewer, setViewer] = useState<ViewerState | null>(null);
+  const [accountProfile, setAccountProfile] = useState<TokenAccountUsageProfile | null>(null);
+  const [accountLoadState, setAccountLoadState] = useState<AccountLoadState>("idle");
+  const [accountError, setAccountError] = useState("");
   const normalizedApiBaseUrl = normalizeApiBaseUrl(apiBaseUrl);
 
   useEffect(() => {
@@ -201,6 +205,57 @@ export function TokenLeaderboardApp({
     };
   }, [normalizedApiBaseUrl]);
 
+  useEffect(() => {
+    if (!normalizedApiBaseUrl || !viewer?.authenticated) {
+      setAccountProfile(null);
+      setAccountLoadState("idle");
+      setAccountError("");
+      return;
+    }
+
+    let active = true;
+    const params = new URLSearchParams({ range });
+
+    setAccountLoadState("loading");
+    setAccountError("");
+    fetch(`${normalizedApiBaseUrl}/api/usage/me?${params.toString()}`, {
+      cache: "no-store",
+      credentials: "include",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return response.json() as Promise<AccountUsageResponse>;
+      })
+      .then((payload) => {
+        if (!active) {
+          return;
+        }
+
+        if (!isTokenAccountUsageProfile(payload.profile)) {
+          throw new Error("后端返回格式不正确");
+        }
+
+        setAccountProfile(payload.profile);
+        setAccountLoadState("ready");
+      })
+      .catch((error) => {
+        if (!active) {
+          return;
+        }
+
+        setAccountProfile(null);
+        setAccountLoadState("error");
+        setAccountError(error instanceof Error ? error.message : "读取失败");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [normalizedApiBaseUrl, range, viewer?.authenticated, viewer?.user?.userId]);
+
   const localSummary = useMemo(
     () => buildTokenLeaderboard(entries, { range, metric, now }),
     [entries, metric, now, range]
@@ -335,6 +390,16 @@ export function TokenLeaderboardApp({
             </div>
           </div>
         </header>
+
+        <AccountUsagePanel
+          apiEnabled={Boolean(normalizedApiBaseUrl)}
+          error={accountError}
+          loadState={accountLoadState}
+          onLogin={loginWithGitHub}
+          profile={accountProfile}
+          range={range}
+          viewer={viewer}
+        />
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
           <div className="min-w-0 space-y-5">
@@ -549,6 +614,391 @@ export function TokenLeaderboardApp({
         </div>
       </div>
     </main>
+  );
+}
+
+function AccountUsagePanel({
+  apiEnabled,
+  error,
+  loadState,
+  onLogin,
+  profile,
+  range,
+  viewer,
+}: {
+  apiEnabled: boolean;
+  error: string;
+  loadState: AccountLoadState;
+  onLogin: () => void;
+  profile: TokenAccountUsageProfile | null;
+  range: TokenBoardRange;
+  viewer: ViewerState | null;
+}) {
+  const user = profile?.user ?? null;
+  const inputContextTokens = user ? user.inputTokens + user.cachedInputTokens : 0;
+  const cacheHitRate = inputContextTokens > 0 && user ? user.cachedInputTokens / inputContextTokens : 0;
+  const messagesPerSession = user?.sessions ? user.messages / user.sessions : 0;
+  const dashboardProfile = profile && user ? profile : null;
+
+  return (
+    <section className="overflow-hidden rounded-[1.25rem] border border-[#22342b] bg-[#080b09] text-[#f7f4ec] shadow-[0_28px_90px_-68px_rgba(8,11,9,0.95)]">
+      <div className="border-b border-white/10 px-5 py-4 sm:px-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-[#7be3a0]">GitHub Account</p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight">我的 Token 消耗</h2>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 font-mono text-xs text-white/72">
+              {range}
+            </span>
+            {viewer?.authenticated ? (
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#7be3a0]/25 bg-[#123127] px-3 py-1 text-sm font-semibold text-[#bdf5cc]">
+                {viewer.user?.avatarUrl ? (
+                  <img
+                    alt=""
+                    className="size-5 rounded-full"
+                    src={viewer.user.avatarUrl}
+                  />
+                ) : null}
+                @{viewer.user?.githubLogin || viewer.user?.displayName || "GitHub"}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {!apiEnabled ? (
+        <AccountEmptyState
+          title="等待连接 Token Board 服务"
+          description="配置 NEXT_PUBLIC_TOKEN_BOARD_API_URL 后，这里会按当前 GitHub 登录账号展示个人消耗。"
+        />
+      ) : !viewer ? (
+        <AccountLoadingState />
+      ) : !viewer.authenticated ? (
+        <div className="grid gap-4 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-center">
+          <div>
+            <p className="text-lg font-semibold">登录后查看自己的 GitHub 消耗</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/58">
+              这里会只展示当前 GitHub 账号通过 agent 上报的 Token、费用、模型、项目和活跃分布。
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onLogin}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#f7f4ec] px-4 text-sm font-semibold text-[#080b09] transition hover:bg-[#ffe2a8]"
+          >
+            <Icon name="github" />
+            GitHub 登录
+          </button>
+        </div>
+      ) : loadState === "loading" ? (
+        <AccountLoadingState />
+      ) : loadState === "error" ? (
+        <AccountEmptyState title="个人消耗加载失败" description={error || "请稍后刷新再试。"} />
+      ) : !dashboardProfile || !user ? (
+        <AccountEmptyState
+          title="还没有这个 GitHub 账号的上报数据"
+          description="在本机运行 token-board-agent login 并保持 agent 同步后，这里就会出现个人视图。"
+        />
+      ) : (
+        <div className="space-y-5 px-5 py-5 sm:px-6">
+          <div className="grid gap-3 rounded-2xl border border-white/10 bg-white/6 p-4 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center">
+            <div className="flex items-center gap-4">
+              {viewer.user?.avatarUrl ? (
+                <img
+                  alt=""
+                  className="size-12 rounded-2xl border border-white/15"
+                  src={viewer.user.avatarUrl}
+                />
+              ) : (
+                <Avatar name={user.displayName} index={user.rank || 0} />
+              )}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-white/45">我的排名（按 Token，{range}）</p>
+                <p className="mt-1 truncate font-mono text-3xl font-semibold">
+                  #{dashboardProfile.rank ?? "--"}
+                  <span className="ml-2 text-base text-white/42">/ {formatNumber(dashboardProfile.totalUsers)}</span>
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-right">
+              <div>
+                <p className="text-xs text-white/42">超过</p>
+                <p className="mt-1 font-mono text-xl font-semibold text-[#bdf5cc]">
+                  {dashboardProfile.percentile === null ? "--" : formatPercent(dashboardProfile.percentile)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/42">排名变化</p>
+                <p className={`mt-1 font-mono text-xl font-semibold ${rankDeltaTone(dashboardProfile.rankDelta)}`}>
+                  {formatRankDelta(dashboardProfile.rankDelta)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <AccountStatCard label="预估费用" value={formatUsd(user.costUsd)} meta="USD estimate" tone="gold" />
+            <AccountStatCard label="总 Token" value={formatTokens(user.tokens)} meta={`${formatNumber(dashboardProfile.records)} records`} tone="green" />
+            <AccountStatCard label="输入上下文" value={formatTokens(inputContextTokens)} meta={`缓存 ${formatTokens(user.cachedInputTokens)}`} tone="blue" />
+            <AccountStatCard label="输出 Token" value={formatTokens(user.outputTokens)} meta={`推理 ${formatTokens(user.reasoningOutputTokens)}`} tone="rose" />
+            <AccountStatCard label="缓存命中率" value={formatPercent(cacheHitRate)} meta={user.topTool} tone="ink" />
+            <AccountStatCard label="活跃天数" value={`${formatNumber(user.activeDays)}d`} meta={dashboardProfile.topWeekday} tone="green" />
+            <AccountStatCard label="会话数" value={formatNumber(user.sessions)} meta={`${formatDecimal(messagesPerSession)} msg/session`} tone="blue" />
+            <AccountStatCard label="总消息数" value={formatNumber(user.messages)} meta="messages" tone="ink" />
+            <AccountStatCard label="高峰时段" value={dashboardProfile.topHour} meta="Asia/Shanghai" tone="gold" />
+            <AccountStatCard label="常用模型" value={user.topModel} meta={`${dashboardProfile.models.length} models`} tone="rose" />
+          </div>
+
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]">
+            <AccountDailyTrend daily={dashboardProfile.daily} />
+            <AccountHeatmap heatmap={dashboardProfile.heatmap} />
+          </div>
+
+          <div className="grid gap-5 xl:grid-cols-3">
+            <AccountBreakdownPanel
+              title="模型消耗"
+              meta={`${dashboardProfile.models.length} 个模型`}
+              items={dashboardProfile.models.map((item) => ({
+                name: item.name,
+                value: item.tokens,
+                meta: formatUsd(item.costUsd),
+                share: item.share,
+              }))}
+              barColor="#6ea3ff"
+            />
+            <AccountBreakdownPanel
+              title="工具分布"
+              meta={`${dashboardProfile.tools.length} 个工具`}
+              items={dashboardProfile.tools.map((item) => ({
+                name: item.name,
+                value: item.tokens,
+                meta: `${formatNumber(item.sessions)} 会话`,
+                share: item.share,
+              }))}
+              barColor="#f1c45c"
+            />
+            <AccountProjectList projects={dashboardProfile.projects} />
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AccountEmptyState({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="px-5 py-8 text-center sm:px-6">
+      <p className="text-lg font-semibold">{title}</p>
+      <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-white/54">{description}</p>
+    </div>
+  );
+}
+
+function AccountLoadingState() {
+  return (
+    <div className="space-y-5 px-5 py-5 sm:px-6">
+      <div className="h-24 rounded-2xl border border-white/10 bg-white/6 motion-safe:animate-pulse" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 10 }, (_, index) => (
+          <div key={index} className="h-28 rounded-xl border border-white/10 bg-white/6 motion-safe:animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AccountStatCard({
+  label,
+  value,
+  meta,
+  tone,
+}: {
+  label: string;
+  value: string;
+  meta: string;
+  tone: "blue" | "gold" | "green" | "ink" | "rose";
+}) {
+  const tones = {
+    blue: "border-[#6ea3ff]/24 bg-[#102034] text-[#d9e8ff]",
+    gold: "border-[#f1c45c]/24 bg-[#2e2512] text-[#ffe2a8]",
+    green: "border-[#7be3a0]/24 bg-[#10291f] text-[#bdf5cc]",
+    ink: "border-white/12 bg-white/8 text-white",
+    rose: "border-[#ff9b7c]/24 bg-[#321811] text-[#ffd4c6]",
+  };
+
+  return (
+    <div className={`min-h-28 rounded-xl border p-4 ${tones[tone]}`}>
+      <p className="text-xs font-semibold text-white/45">{label}</p>
+      <p className="mt-3 truncate font-mono text-2xl font-semibold leading-none" title={value}>
+        {value}
+      </p>
+      <p className="mt-3 truncate text-xs text-white/42" title={meta}>
+        {meta}
+      </p>
+    </div>
+  );
+}
+
+function AccountDailyTrend({ daily }: { daily: TokenAccountUsageProfile["daily"] }) {
+  const maxTokens = Math.max(1, ...daily.map((point) => point.tokens));
+
+  return (
+    <section className="rounded-2xl border border-white/10 bg-white/6 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-semibold">每日趋势</h3>
+        <span className="font-mono text-xs text-white/45">峰值 {formatTokens(maxTokens)}</span>
+      </div>
+      <div className="mt-4 grid h-64 grid-cols-[repeat(auto-fit,minmax(5px,1fr))] items-end gap-1 rounded-xl border border-white/8 bg-black/18 px-3 pb-3 pt-5">
+        {daily.map((point, index) => (
+          <div key={point.date} className="flex h-full items-end">
+            <div
+              className={`w-full rounded-t-[3px] transition hover:translate-y-[-2px] ${
+                index === daily.length - 1 ? "bg-[#f1c45c]" : "bg-[#43d184] hover:bg-[#7be3a0]"
+              }`}
+              style={{ height: `${Math.max(2, (point.tokens / maxTokens) * 100)}%` }}
+              title={`${point.date} ${formatTokens(point.tokens)}`}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex justify-between font-mono text-xs text-white/38">
+        <span>{daily[0]?.date.slice(5) ?? "--"}</span>
+        <span>{daily.at(-1)?.date.slice(5) ?? "--"}</span>
+      </div>
+    </section>
+  );
+}
+
+function AccountHeatmap({ heatmap }: { heatmap: TokenAccountUsageProfile["heatmap"] }) {
+  const maxTokens = Math.max(1, ...heatmap.map((cell) => cell.tokens));
+  const cells = new Map(heatmap.map((cell) => [`${cell.weekday}:${cell.hour}`, cell]));
+  const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+  return (
+    <section className="rounded-2xl border border-white/10 bg-white/6 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-semibold">分时活跃</h3>
+        <span className="font-mono text-xs text-white/45">少 → 多</span>
+      </div>
+      <div className="mt-4 overflow-x-auto">
+        <div className="min-w-[38rem]">
+          <div
+            className="grid gap-1 text-[10px] text-white/38"
+            style={{ gridTemplateColumns: "2.5rem repeat(24, minmax(0, 1fr))" }}
+          >
+            <span />
+            {Array.from({ length: 24 }, (_, hour) => (
+              <span key={hour} className={hour % 3 === 0 ? "text-center" : "text-transparent"}>
+                {String(hour).padStart(2, "0")}
+              </span>
+            ))}
+            {weekdays.map((weekday, weekdayIndex) => (
+              <div key={weekday} className="contents">
+                <span className="flex h-4 items-center">{weekday}</span>
+                {Array.from({ length: 24 }, (_, hour) => {
+                  const cell = cells.get(`${weekdayIndex}:${hour}`);
+                  const intensity = (cell?.tokens ?? 0) / maxTokens;
+
+                  return (
+                    <span
+                      key={`${weekday}:${hour}`}
+                      className="h-4 rounded-[4px] border border-white/5"
+                      style={{ backgroundColor: heatColor(intensity) }}
+                      title={`${weekday} ${String(hour).padStart(2, "0")}:00 ${formatTokens(cell?.tokens ?? 0)}`}
+                    />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AccountBreakdownPanel({
+  barColor,
+  items,
+  meta,
+  title,
+}: {
+  barColor: string;
+  items: Array<{ name: string; value: number; meta: string; share: number }>;
+  meta: string;
+  title: string;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-white/6 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-semibold">{title}</h3>
+        <span className="font-mono text-xs text-white/45">{meta}</span>
+      </div>
+      <div className="mt-4 space-y-3">
+        {items.length ? (
+          items.slice(0, 8).map((item) => (
+            <div key={item.name}>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <p className="truncate font-medium text-white/86">{item.name}</p>
+                <p className="shrink-0 font-mono text-white/62">{formatTokens(item.value)}</p>
+              </div>
+              <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_4.25rem] items-center gap-3">
+                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.max(2, item.share * 100)}%`, backgroundColor: barColor }}
+                  />
+                </div>
+                <p className="truncate text-right text-xs text-white/42">{item.meta}</p>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="rounded-xl border border-white/10 bg-black/16 px-3 py-4 text-center text-sm text-white/45">暂无数据</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AccountProjectList({ projects }: { projects: TokenAccountUsageProfile["projects"] }) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-white/6 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-semibold">项目分布</h3>
+        <span className="font-mono text-xs text-white/45">{projects.length} 个项目</span>
+      </div>
+      <div className="mt-4 space-y-3">
+        {projects.length ? (
+          projects.slice(0, 8).map((project) => (
+            <div key={project.name} className="rounded-xl border border-white/8 bg-black/16 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white/88">{project.name}</p>
+                  <p className="mt-1 text-xs text-white/42">
+                    {formatNumber(project.activeDays)}d · {formatNumber(project.models)} models
+                  </p>
+                </div>
+                <p className="shrink-0 font-mono text-sm font-semibold text-[#ffe2a8]">{formatUsd(project.costUsd)}</p>
+              </div>
+              <div className="mt-3 grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3">
+                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-[#7be3a0]"
+                    style={{ width: `${Math.max(2, project.share * 100)}%` }}
+                  />
+                </div>
+                <p className="text-right font-mono text-xs text-white/56">{formatTokens(project.tokens)}</p>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="rounded-xl border border-white/10 bg-black/16 px-3 py-4 text-center text-sm text-white/45">暂无数据</p>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -962,6 +1412,12 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat("zh-CN").format(Math.round(value));
 }
 
+function formatDecimal(value: number) {
+  return new Intl.NumberFormat("zh-CN", {
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
 function formatUsd(value: number) {
   if (value >= 1_000) {
     return `$${formatCompact(value / 1_000)}K`;
@@ -981,6 +1437,50 @@ function formatPercent(value: number) {
   }).format(value);
 }
 
+function formatRankDelta(value: number | null) {
+  if (value === null) {
+    return "--";
+  }
+
+  if (value === 0) {
+    return "0";
+  }
+
+  return `${value > 0 ? "+" : ""}${formatNumber(value)}`;
+}
+
+function rankDeltaTone(value: number | null) {
+  if (value === null || value === 0) {
+    return "text-white/52";
+  }
+
+  return value > 0 ? "text-[#bdf5cc]" : "text-[#ffb39d]";
+}
+
+function heatColor(intensity: number) {
+  if (intensity <= 0) {
+    return "rgba(255,255,255,0.06)";
+  }
+
+  if (intensity < 0.18) {
+    return "#123127";
+  }
+
+  if (intensity < 0.38) {
+    return "#1f684b";
+  }
+
+  if (intensity < 0.62) {
+    return "#2ca965";
+  }
+
+  if (intensity < 0.82) {
+    return "#43d184";
+  }
+
+  return "#bdf5cc";
+}
+
 function formatShortDate(value: string) {
   return new Intl.DateTimeFormat("zh-CN", {
     month: "2-digit",
@@ -998,6 +1498,10 @@ type RemoteStatsResponse =
       summary?: TokenLeaderboardSummary;
     };
 
+type AccountUsageResponse = {
+  profile?: TokenAccountUsageProfile;
+};
+
 function normalizeApiBaseUrl(value: string | undefined) {
   return value?.trim().replace(/\/+$/, "") || "";
 }
@@ -1008,6 +1512,18 @@ function isTokenLeaderboardSummary(value: unknown): value is TokenLeaderboardSum
     typeof value === "object" &&
     Array.isArray((value as TokenLeaderboardSummary).users) &&
     Array.isArray((value as TokenLeaderboardSummary).daily)
+  );
+}
+
+function isTokenAccountUsageProfile(value: unknown): value is TokenAccountUsageProfile {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as TokenAccountUsageProfile).daily) &&
+    Array.isArray((value as TokenAccountUsageProfile).models) &&
+    Array.isArray((value as TokenAccountUsageProfile).tools) &&
+    Array.isArray((value as TokenAccountUsageProfile).projects) &&
+    Array.isArray((value as TokenAccountUsageProfile).heatmap)
   );
 }
 
@@ -1022,3 +1538,4 @@ type ViewerState = {
 };
 
 type DataLoadState = "loading" | "ready";
+type AccountLoadState = "error" | "idle" | "loading" | "ready";

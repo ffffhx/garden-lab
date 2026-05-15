@@ -28,7 +28,7 @@ function NavLink({ item }: { item: (typeof NAV_LINKS)[number] }) {
     <Link
       key={item.href}
       href={item.href}
-      className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-950 hover:text-white"
+      className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-amber-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30"
     >
       {item.label}
     </Link>

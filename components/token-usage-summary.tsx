@@ -12,36 +12,48 @@ const PERIODS: Array<{ key: TokenUsagePeriodKey; label: string; range: string }>
 ];
 
 export function TokenUsageSummary({
+  apiBaseUrl,
   initialSnapshot,
+  userId,
 }: {
+  apiBaseUrl?: string;
   initialSnapshot: TokenUsageSnapshot;
+  userId?: string;
 }) {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
+  const normalizedApiBaseUrl = normalizeApiBaseUrl(apiBaseUrl);
 
   useEffect(() => {
     let active = true;
 
-    fetch(withBasePath("/stats/token-usage.json"), { cache: "no-store" })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Failed to load token usage: ${response.status}`);
-        }
+    async function loadSnapshot() {
+      const remoteSnapshot = normalizedApiBaseUrl
+        ? await fetchTokenUsageSnapshot(
+            `${normalizedApiBaseUrl}/api/usage/summary${userId ? `?${new URLSearchParams({ userId }).toString()}` : ""}`,
+            "include"
+          ).catch(() => undefined)
+        : undefined;
 
-        return response.json() as Promise<TokenUsageSnapshot>;
-      })
-      .then((nextSnapshot) => {
+      if (remoteSnapshot) {
         if (active) {
-          setSnapshot(nextSnapshot);
+          setSnapshot(remoteSnapshot);
         }
-      })
-      .catch(() => {
-        // Keep the build-time snapshot if runtime refresh is unavailable.
-      });
+        return;
+      }
+
+      const staticSnapshot = await fetchTokenUsageSnapshot(withBasePath("/stats/token-usage.json")).catch(() => undefined);
+
+      if (staticSnapshot && active) {
+        setSnapshot(staticSnapshot);
+      }
+    }
+
+    void loadSnapshot();
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [normalizedApiBaseUrl, userId]);
 
   const updatedAt = useMemo(
     () => formatUpdatedAt(snapshot.updatedAt),
@@ -82,6 +94,23 @@ export function TokenUsageSummary({
       <p className="text-xs leading-5 text-white/58">更新于 {updatedAt}</p>
     </div>
   );
+}
+
+async function fetchTokenUsageSnapshot(url: string, credentials?: RequestCredentials) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    credentials,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load token usage: ${response.status}`);
+  }
+
+  return (await response.json()) as TokenUsageSnapshot;
+}
+
+function normalizeApiBaseUrl(value: string | undefined) {
+  return value?.trim().replace(/\/+$/, "") || "";
 }
 
 function formatTokenCount(value: number) {

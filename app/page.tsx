@@ -31,7 +31,11 @@ export default function HomePage() {
               {SITE.description}
             </h1>
             <p className="max-w-2xl text-base leading-8 text-white/78 sm:text-lg">写作、实验、训练和观察都留在同一张工作台上。</p>
-            <TokenUsageSummary initialSnapshot={tokenUsage} />
+            <TokenUsageSummary
+              apiBaseUrl={process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL}
+              initialSnapshot={tokenUsage}
+              userId={process.env.NEXT_PUBLIC_TOKEN_USAGE_USER_ID}
+            />
           </div>
           <div className="rounded-lg border border-white/12 bg-white/12 p-5 backdrop-blur-md sm:p-6">
             <p className="text-sm uppercase tracking-[0.24em] text-white/68">内容分区</p>

@@ -62,6 +62,45 @@ export type TokenLeaderboardSummary = {
   users: TokenLeaderboardUser[];
 };
 
+export type TokenUsageProjectBreakdown = {
+  name: string;
+  tokens: number;
+  costUsd: number;
+  sessions: number;
+  activeDays: number;
+  models: number;
+  share: number;
+  lastReportedAt: string;
+};
+
+export type TokenUsageActivityCell = {
+  weekday: number;
+  hour: number;
+  tokens: number;
+  sessions: number;
+  messages: number;
+};
+
+export type TokenAccountUsageProfile = {
+  range: TokenBoardRange;
+  startAt: string;
+  endAt: string;
+  user: TokenLeaderboardUser | null;
+  rank: number | null;
+  previousRank: number | null;
+  rankDelta: number | null;
+  totalUsers: number;
+  percentile: number | null;
+  records: number;
+  daily: TokenLeaderboardSummary["daily"];
+  models: TokenLeaderboardSummary["models"];
+  tools: TokenLeaderboardSummary["tools"];
+  projects: TokenUsageProjectBreakdown[];
+  heatmap: TokenUsageActivityCell[];
+  topHour: string;
+  topWeekday: string;
+};
+
 const RANGE_DAYS: Record<TokenBoardRange, number> = {
   "1D": 1,
   "7D": 7,
@@ -132,6 +171,63 @@ export function buildTokenLeaderboard(
       ...user,
       share: totalTokens > 0 ? user.tokens / totalTokens : 0,
     })),
+  };
+}
+
+export function buildTokenAccountUsageProfile(
+  entries: TokenUsageEvent[],
+  {
+    userId,
+    range,
+    now = new Date(),
+  }: {
+    userId: string;
+    range: TokenBoardRange;
+    now?: Date;
+  }
+): TokenAccountUsageProfile {
+  const safeNow = Number.isFinite(now.getTime()) ? now : new Date();
+  const normalizedEntries = dedupeTokenEvents(entries.map(normalizeTokenUsageEvent));
+  const globalSummary = buildTokenLeaderboard(normalizedEntries, { range, metric: "tokens", now: safeNow });
+  const start = new Date(globalSummary.startAt);
+  const end = new Date(globalSummary.endAt);
+  const accountEntries = normalizedEntries.filter((entry) => {
+    const timestamp = new Date(entry.timestamp).getTime();
+    return entry.userId === userId && timestamp >= start.getTime() && timestamp <= end.getTime();
+  });
+  const accountSummary = buildTokenLeaderboard(accountEntries, { range, metric: "tokens", now: safeNow });
+  const rankedUser = globalSummary.users.find((user) => user.userId === userId) ?? null;
+  const accountUser = accountSummary.users[0]
+    ? {
+        ...accountSummary.users[0],
+        rank: rankedUser?.rank ?? accountSummary.users[0].rank,
+        share: rankedUser?.share ?? accountSummary.users[0].share,
+        deltaTokens: rankedUser?.deltaTokens ?? accountSummary.users[0].deltaTokens,
+      }
+    : null;
+  const previousSummary = buildTokenLeaderboard(normalizedEntries, { range, metric: "tokens", now: start });
+  const previousRank = previousSummary.users.find((user) => user.userId === userId)?.rank ?? null;
+  const rank = rankedUser?.rank ?? null;
+  const totalUsers = globalSummary.users.length;
+
+  return {
+    range,
+    startAt: globalSummary.startAt,
+    endAt: globalSummary.endAt,
+    user: accountUser,
+    rank,
+    previousRank,
+    rankDelta: rank !== null && previousRank !== null ? previousRank - rank : null,
+    totalUsers,
+    percentile: rank !== null && totalUsers > 0 ? (totalUsers - rank) / totalUsers : null,
+    records: accountEntries.length,
+    daily: accountSummary.daily,
+    models: accountSummary.models,
+    tools: accountSummary.tools,
+    projects: aggregateProjectUsage(accountEntries),
+    heatmap: buildActivityHeatmap(accountEntries),
+    topHour: topActivityHour(accountEntries),
+    topWeekday: topActivityWeekday(accountEntries),
   };
 }
 
@@ -479,6 +575,137 @@ function aggregateNamedUsage(entries: TokenUsageEvent[], key: "model" | "tool") 
     }))
     .sort((a, b) => b.tokens - a.tokens)
     .slice(0, 12);
+}
+
+function aggregateProjectUsage(entries: TokenUsageEvent[]): TokenUsageProjectBreakdown[] {
+  const totalTokens = entries.reduce((sum, entry) => sum + entry.totalTokens, 0);
+  const usage = new Map<
+    string,
+    {
+      tokens: number;
+      costUsd: number;
+      sessions: Set<string>;
+      days: Set<string>;
+      models: Set<string>;
+      lastReportedAt: string;
+    }
+  >();
+
+  for (const entry of entries) {
+    const name = entry.project || "未标记项目";
+    const current =
+      usage.get(name) ??
+      {
+        tokens: 0,
+        costUsd: 0,
+        sessions: new Set<string>(),
+        days: new Set<string>(),
+        models: new Set<string>(),
+        lastReportedAt: entry.timestamp,
+      };
+
+    current.tokens += entry.totalTokens;
+    current.costUsd += entry.costUsd ?? 0;
+    current.sessions.add(entry.sessionId || entry.id);
+    current.days.add(toDateKey(entry.timestamp));
+    current.models.add(entry.model || "unknown");
+    if (new Date(entry.timestamp).getTime() > new Date(current.lastReportedAt).getTime()) {
+      current.lastReportedAt = entry.timestamp;
+    }
+    usage.set(name, current);
+  }
+
+  return [...usage.entries()]
+    .map(([name, value]) => ({
+      name,
+      tokens: value.tokens,
+      costUsd: value.costUsd,
+      sessions: value.sessions.size,
+      activeDays: value.days.size,
+      models: value.models.size,
+      share: totalTokens > 0 ? value.tokens / totalTokens : 0,
+      lastReportedAt: value.lastReportedAt,
+    }))
+    .sort((a, b) => b.tokens - a.tokens)
+    .slice(0, 18);
+}
+
+function buildActivityHeatmap(entries: TokenUsageEvent[]): TokenUsageActivityCell[] {
+  const cells = new Map<
+    string,
+    {
+      weekday: number;
+      hour: number;
+      tokens: number;
+      sessions: Set<string>;
+      messages: number;
+    }
+  >();
+
+  for (let weekday = 0; weekday < 7; weekday += 1) {
+    for (let hour = 0; hour < 24; hour += 1) {
+      cells.set(`${weekday}:${hour}`, { weekday, hour, tokens: 0, sessions: new Set<string>(), messages: 0 });
+    }
+  }
+
+  for (const entry of entries) {
+    const { weekday, hour } = getShanghaiWeekdayHour(entry.timestamp);
+    const key = `${weekday}:${hour}`;
+    const cell = cells.get(key);
+
+    if (!cell) {
+      continue;
+    }
+
+    cell.tokens += entry.totalTokens;
+    cell.sessions.add(entry.sessionId || entry.id);
+    cell.messages += entry.messages ?? 0;
+  }
+
+  return [...cells.values()].map((cell) => ({
+    weekday: cell.weekday,
+    hour: cell.hour,
+    tokens: cell.tokens,
+    sessions: cell.sessions.size,
+    messages: cell.messages,
+  }));
+}
+
+function topActivityHour(entries: TokenUsageEvent[]) {
+  const hours = new Map<number, number>();
+
+  for (const entry of entries) {
+    const { hour } = getShanghaiWeekdayHour(entry.timestamp);
+    hours.set(hour, (hours.get(hour) ?? 0) + entry.totalTokens);
+  }
+
+  const hour = [...hours.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  return hour === undefined ? "--" : `${String(hour).padStart(2, "0")}:00`;
+}
+
+function topActivityWeekday(entries: TokenUsageEvent[]) {
+  const weekdays = new Map<number, number>();
+
+  for (const entry of entries) {
+    const { weekday } = getShanghaiWeekdayHour(entry.timestamp);
+    weekdays.set(weekday, (weekdays.get(weekday) ?? 0) + entry.totalTokens);
+  }
+
+  const weekday = [...weekdays.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  return weekday === undefined ? "--" : WEEKDAY_LABELS[weekday];
+}
+
+const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
+const WEEKDAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+function getShanghaiWeekdayHour(value: string) {
+  const time = new Date(value).getTime();
+  const shifted = new Date((Number.isFinite(time) ? time : Date.now()) + SHANGHAI_OFFSET_MS);
+
+  return {
+    weekday: shifted.getUTCDay(),
+    hour: shifted.getUTCHours(),
+  };
 }
 
 function buildDailySeries(entries: TokenUsageEvent[], start: Date, end: Date) {

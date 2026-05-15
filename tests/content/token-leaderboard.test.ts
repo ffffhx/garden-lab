@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { buildTokenUsageSnapshotFromEvents } from "@/lib/content/token-usage";
 import {
+  buildTokenAccountUsageProfile,
   buildTokenLeaderboard,
   parseTokenUsageImport,
   type TokenUsageEvent,
@@ -59,6 +61,41 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1000,200,1300,5`);
     expect(summary.users).toHaveLength(1);
     expect(summary.users[0].tokens).toBe(12_000);
   });
+
+  it("builds the homepage token usage snapshot from server events", () => {
+    const snapshot = buildTokenUsageSnapshotFromEvents(
+      [
+        event("today", "feng", "Feng", "2026-05-14T10:00:00.000Z", 10_000, 1, 0.12),
+        event("week", "feng", "Feng", "2026-05-12T10:00:00.000Z", 20_000, 1, 0.24),
+        event("last-month", "feng", "Feng", "2026-04-30T10:00:00.000Z", 99_000, 1, 0.99),
+      ],
+      { now, source: "test" }
+    );
+
+    expect(snapshot.periods.today.totalTokens).toBe(10_000);
+    expect(snapshot.periods.week.totalTokens).toBe(30_000);
+    expect(snapshot.periods.month.totalTokens).toBe(30_000);
+    expect(snapshot.periods.month.estimatedCostUsd).toBe(0.36);
+  });
+
+  it("builds a GitHub account usage profile from the signed-in user id", () => {
+    const profile = buildTokenAccountUsageProfile(
+      [
+        event("feng-now", "github:1", "Feng", "2026-05-14T10:00:00.000Z", 20_000, 4, 0.2),
+        event("feng-project", "github:1", "Feng", "2026-05-13T13:00:00.000Z", 8_000, 2, 0.08),
+        event("ava-now", "github:2", "Ava", "2026-05-14T09:00:00.000Z", 30_000, 3, 0.3),
+      ],
+      { userId: "github:1", range: "7D", now }
+    );
+
+    expect(profile.rank).toBe(2);
+    expect(profile.totalUsers).toBe(2);
+    expect(profile.user?.tokens).toBe(28_000);
+    expect(profile.records).toBe(2);
+    expect(profile.projects[0]).toEqual(expect.objectContaining({ name: "board", tokens: 28_000 }));
+    expect(profile.heatmap).toHaveLength(168);
+    expect(profile.topHour).toBe("18:00");
+  });
 });
 
 function event(
@@ -67,7 +104,8 @@ function event(
   displayName: string,
   timestamp: string,
   totalTokens: number,
-  messages: number
+  messages: number,
+  costUsd?: number
 ): TokenUsageEvent {
   return {
     id,
@@ -84,6 +122,7 @@ function event(
     outputTokens: 0,
     reasoningOutputTokens: 0,
     totalTokens,
+    costUsd,
     messages,
     sessionId: id,
   };

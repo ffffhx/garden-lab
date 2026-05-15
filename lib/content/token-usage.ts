@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import type { TokenUsageEvent } from "../token-leaderboard";
+
 export type TokenUsagePeriodKey = "today" | "week" | "month";
 
 export type TokenUsagePeriod = {
@@ -83,6 +85,9 @@ export const EMPTY_TOKEN_USAGE_SNAPSHOT: TokenUsageSnapshot = {
   },
 };
 
+const TIMEZONE = "Asia/Shanghai";
+const TIMEZONE_OFFSET_MS = 8 * 60 * 60 * 1000;
+
 export function getTokenUsageSnapshot() {
   const filePath = path.join(process.cwd(), "public", "stats", "token-usage.json");
 
@@ -94,7 +99,65 @@ export function getTokenUsageSnapshot() {
   }
 }
 
-function normalizeTokenUsageSnapshot(value: unknown): TokenUsageSnapshot {
+export function buildTokenUsageSnapshotFromEvents(
+  entries: TokenUsageEvent[],
+  {
+    now = new Date(),
+    source = "token-board-server",
+  }: {
+    now?: Date;
+    source?: string;
+  } = {}
+): TokenUsageSnapshot {
+  const safeNow = Number.isFinite(now.getTime()) ? now : new Date();
+  const starts = getPeriodStarts(safeNow);
+  const periods: Record<TokenUsagePeriodKey, TokenUsagePeriod> = {
+    today: createPeriod(starts.today),
+    week: createPeriod(starts.week),
+    month: createPeriod(starts.month),
+  };
+  const oldestStart = starts.month.getTime();
+  const nowWithSkew = safeNow.getTime() + 5 * 60 * 1000;
+
+  for (const entry of entries) {
+    const time = new Date(entry.timestamp).getTime();
+
+    if (!Number.isFinite(time) || time < oldestStart || time > nowWithSkew) {
+      continue;
+    }
+
+    if (time >= starts.today.getTime()) {
+      addEventToPeriod(periods.today, entry);
+    }
+
+    if (time >= starts.week.getTime()) {
+      addEventToPeriod(periods.week, entry);
+    }
+
+    addEventToPeriod(periods.month, entry);
+  }
+
+  return {
+    schemaVersion: 1,
+    updatedAt: safeNow.toISOString(),
+    timezone: TIMEZONE,
+    source,
+    filesScanned: entries.length,
+    pricing: {
+      currency: "USD",
+      basis: "estimated-api-equivalent",
+      note: "Estimated from token-board agent events and public model rates. This is not an invoice.",
+      pricesPerMillionTokens: {},
+    },
+    periods: {
+      today: finalizePeriod(periods.today),
+      week: finalizePeriod(periods.week),
+      month: finalizePeriod(periods.month),
+    },
+  };
+}
+
+export function normalizeTokenUsageSnapshot(value: unknown): TokenUsageSnapshot {
   if (!value || typeof value !== "object") {
     return EMPTY_TOKEN_USAGE_SNAPSHOT;
   }
@@ -115,6 +178,106 @@ function normalizeTokenUsageSnapshot(value: unknown): TokenUsageSnapshot {
       month: normalizePeriod(snapshot.periods?.month),
     },
   };
+}
+
+function getShanghaiParts(date: Date) {
+  const shifted = new Date(date.getTime() + TIMEZONE_OFFSET_MS);
+
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth(),
+    date: shifted.getUTCDate(),
+    day: shifted.getUTCDay(),
+  };
+}
+
+function fromShanghaiStartOfDay({
+  year,
+  month,
+  date,
+}: {
+  year: number;
+  month: number;
+  date: number;
+}) {
+  return new Date(Date.UTC(year, month, date) - TIMEZONE_OFFSET_MS);
+}
+
+function getPeriodStarts(now: Date) {
+  const parts = getShanghaiParts(now);
+  const today = fromShanghaiStartOfDay(parts);
+  const daysSinceMonday = (parts.day + 6) % 7;
+  const week = new Date(today.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000);
+  const month = fromShanghaiStartOfDay({ ...parts, date: 1 });
+
+  return { today, week, month };
+}
+
+function createPeriod(startAt: Date): TokenUsagePeriod {
+  return {
+    ...EMPTY_PERIOD,
+    startAt: startAt.toISOString(),
+    estimatedCost: { ...EMPTY_PERIOD.estimatedCost },
+    models: {},
+  };
+}
+
+function addEventToPeriod(period: TokenUsagePeriod, entry: TokenUsageEvent) {
+  period.totalTokens += entry.totalTokens;
+  period.inputTokens += entry.inputTokens;
+  period.cachedInputTokens += entry.cachedInputTokens;
+  period.outputTokens += entry.outputTokens;
+  period.reasoningOutputTokens += entry.reasoningOutputTokens;
+  period.events += 1;
+  period.estimatedCostUsd += entry.costUsd ?? 0;
+  period.estimatedCost.unpricedTokens += entry.costUsd === undefined ? entry.inputTokens + entry.outputTokens : 0;
+
+  const model = entry.model || "unknown";
+  const modelUsage = period.models[model] ?? {
+    inputTokens: 0,
+    cachedInputTokens: 0,
+    outputTokens: 0,
+    estimatedCostUsd: 0,
+    events: 0,
+  };
+
+  modelUsage.inputTokens += entry.inputTokens;
+  modelUsage.cachedInputTokens += entry.cachedInputTokens;
+  modelUsage.outputTokens += entry.outputTokens;
+  modelUsage.estimatedCostUsd += entry.costUsd ?? 0;
+  modelUsage.events += 1;
+  period.models[model] = modelUsage;
+}
+
+function finalizePeriod(period: TokenUsagePeriod): TokenUsagePeriod {
+  return {
+    ...period,
+    estimatedCostUsd: roundUsd(period.estimatedCostUsd),
+    estimatedCost: {
+      inputUsd: roundUsd(period.estimatedCost.inputUsd),
+      cachedInputUsd: roundUsd(period.estimatedCost.cachedInputUsd),
+      outputUsd: roundUsd(period.estimatedCost.outputUsd),
+      unpricedTokens: period.estimatedCost.unpricedTokens,
+    },
+    models: Object.fromEntries(
+      Object.entries(period.models)
+        .map(
+          ([model, usage]) =>
+            [
+              model,
+              {
+                ...usage,
+                estimatedCostUsd: roundUsd(usage.estimatedCostUsd),
+              },
+            ] as const
+        )
+        .sort(([, left], [, right]) => right.estimatedCostUsd - left.estimatedCostUsd)
+    ),
+  };
+}
+
+function roundUsd(value: number) {
+  return Number(value.toFixed(4));
 }
 
 function normalizePeriod(value: unknown): TokenUsagePeriod {

@@ -55,8 +55,17 @@ GET  /api/auth/logout
 POST /api/auth/device/start
 POST /api/auth/device/poll
 POST /api/usage/ingest
+GET  /api/usage/summary
 GET  /api/usage/stats
 ```
+
+如果首页「我用了多少 Token」只展示作者本人数据，给服务端加：
+
+```bash
+TOKEN_BOARD_SUMMARY_USER_ID=github:<your-github-id>
+```
+
+前端也可以在构建时用 `NEXT_PUBLIC_TOKEN_USAGE_USER_ID` 覆盖这个筛选条件；不配置时 `/api/usage/summary` 会按全部上报记录聚合。
 
 ### 兼容旧上传 token
 
@@ -91,10 +100,16 @@ TOKEN_BOARD_USERS_FILE=.token-board/users.json pnpm token:server
 NEXT_PUBLIC_TOKEN_BOARD_API_URL=http://127.0.0.1:8787 pnpm dev
 ```
 
-部署时把 `NEXT_PUBLIC_TOKEN_BOARD_API_URL` 换成公网后端地址。页面会读取：
+部署时把 `NEXT_PUBLIC_TOKEN_BOARD_API_URL` 换成公网后端地址。排行榜页面会读取：
 
 ```text
 GET /api/usage/stats?range=7D&metric=tokens
+```
+
+首页 Token 用量卡片会优先读取：
+
+```text
+GET /api/usage/summary
 ```
 
 如果后端不可用，页面会自动回退到本地/示例数据。

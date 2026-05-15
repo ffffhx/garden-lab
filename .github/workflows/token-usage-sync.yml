@@ -2,8 +2,6 @@ name: Sync Token Usage
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "17 */2 * * *"
 
 permissions: {}
 
@@ -97,6 +95,7 @@ jobs:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_TOKEN_BOARD_API_URL: https://8-218-149-148.anyip.dev/token-board
+          NEXT_PUBLIC_TOKEN_USAGE_USER_ID: ${{ vars.TOKEN_USAGE_USER_ID }}
         run: pnpm build
 
       - name: Upload Pages artifact

@@ -82,13 +82,17 @@ pnpm new:daily-news -- "2026-04-24 AI 与前端热点速览"
 
 ## Token 使用量同步
 
-首页的「我用了多少 Token」读取 `public/stats/token-usage.json`。这个文件由本机 Codex 会话日志生成，不适合放在 GitHub 托管 runner 上采集，所以仓库提供了一个专门跑在 Mac self-hosted runner 上的工作流：
+首页的「我用了多少 Token」优先读取 token-board 后端：
 
-- 工作流文件：`.github/workflows/token-usage-sync.yml`
-- 执行频率：每 2 小时一次，也可以在 GitHub Actions 页面选择 `main` 手动运行
-- 读取来源：默认读取 runner 用户的 `~/.codex/sessions` 和 `~/.codex/archived_sessions`
-- 写入目标：`public/stats/token-usage.json`
-- 调度标签：`self-hosted`、`macOS`、`blog-token-usage`
+```text
+GET /api/usage/summary
+```
+
+页面构建时通过 `NEXT_PUBLIC_TOKEN_BOARD_API_URL` 注入后端地址。后端可以用 `TOKEN_BOARD_SUMMARY_USER_ID` 指定首页展示哪个用户；也可以在构建博客时用 `NEXT_PUBLIC_TOKEN_USAGE_USER_ID` 显式传给前端。这个 userId 通常是 GitHub Device Login 生成的 `github:<id>`。
+
+如果后端不可用，页面会回退读取 `public/stats/token-usage.json`，所以仓库仍保留 `.github/workflows/token-usage-sync.yml` 作为手动兜底工作流。这个工作流不再定时运行；需要刷新静态快照时，可以在 GitHub Actions 页面手动触发。
+
+旧兜底工作流会读取 self-hosted runner 用户的本机 Codex 日志：
 
 首次启用时需要在 GitHub 仓库里添加一台 macOS self-hosted runner：
 
@@ -102,8 +106,6 @@ pnpm new:daily-news -- "2026-04-24 AI 与前端热点速览"
 ```text
 CODEX_HOME=/Users/你的用户名/.codex
 ```
-
-工作流会在 token 统计有实际变化时提交 `public/stats/token-usage.json`。因为 GitHub Actions 使用 `GITHUB_TOKEN` 推送的 commit 不会再触发新的 Pages 构建，这个工作流在提交后会继续构建并部署 GitHub Pages，保证线上博客同步更新。
 
 ## 朋友 Token 排行榜
 

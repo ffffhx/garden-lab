@@ -1,7 +1,9 @@
 services:
   token-board:
     image: token-board-service:latest
-    build: .
+    build:
+      context: ../..
+      dockerfile: deploy/token-board/Dockerfile
     restart: unless-stopped
     env_file:
       - .env

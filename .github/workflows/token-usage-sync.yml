@@ -15,7 +15,7 @@ jobs:
     runs-on:
       - self-hosted
       - macOS
-      - blog-token-usage
+      - garden-lab-token-usage
     permissions:
       contents: write
     outputs:
@@ -34,6 +34,7 @@ jobs:
           package-manager-cache: false
 
       - name: Sync token usage
+        working-directory: apps/site
         env:
           CODEX_HOME: ${{ vars.CODEX_HOME }}
         run: node scripts/sync-token-usage.mjs --preserve-updated-at-if-unchanged
@@ -41,7 +42,7 @@ jobs:
       - name: Commit token usage snapshot
         id: commit
         run: |
-          if git diff --quiet -- public/stats/token-usage.json; then
+          if git diff --quiet -- apps/site/public/stats/token-usage.json; then
             echo "committed=false" >> "$GITHUB_OUTPUT"
             echo "commit-sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             echo "No token usage changes to commit."
@@ -50,14 +51,14 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/stats/token-usage.json
+          git add apps/site/public/stats/token-usage.json
           git commit -m "chore: sync token usage"
           git push origin HEAD:main
           echo "committed=true" >> "$GITHUB_OUTPUT"
           echo "commit-sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   deploy:
-    name: Build and deploy updated blog
+    name: Build and deploy updated site
     needs: sync
     if: needs.sync.outputs.committed == 'true'
     runs-on: ubuntu-latest
@@ -101,7 +102,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./out
+          path: ./apps/site/out
 
       - name: Deploy to GitHub Pages
         id: deployment

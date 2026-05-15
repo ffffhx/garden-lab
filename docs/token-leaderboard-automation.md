@@ -30,8 +30,8 @@ GitHub 官方说明：<https://docs.github.com/en/apps/oauth-apps/building-oauth
 TOKEN_BOARD_HOST=0.0.0.0 \
 TOKEN_BOARD_PORT=8787 \
 TOKEN_BOARD_PUBLIC_URL=https://your-board.example.com \
-TOKEN_BOARD_ALLOWED_ORIGINS=https://your-blog.example.com \
-TOKEN_BOARD_ALLOWED_RETURN_ORIGINS=https://your-blog.example.com \
+TOKEN_BOARD_ALLOWED_ORIGINS=https://your-site.example.com \
+TOKEN_BOARD_ALLOWED_RETURN_ORIGINS=https://your-site.example.com \
 TOKEN_BOARD_AUTH_SECRET=replace-with-a-long-random-secret \
 GITHUB_CLIENT_ID=<your-github-client-id> \
 GITHUB_CLIENT_SECRET=<your-client-secret> \
@@ -208,10 +208,18 @@ agent 和服务端都会做过滤：
 TOKEN_BOARD_HOST=0.0.0.0
 TOKEN_BOARD_PORT=8787
 TOKEN_BOARD_PUBLIC_URL=https://your-board.example.com
-TOKEN_BOARD_ALLOWED_ORIGINS=https://your-blog.example.com
-TOKEN_BOARD_ALLOWED_RETURN_ORIGINS=https://your-blog.example.com
+TOKEN_BOARD_ALLOWED_ORIGINS=https://your-site.example.com
+TOKEN_BOARD_ALLOWED_RETURN_ORIGINS=https://your-site.example.com
 TOKEN_BOARD_AUTH_SECRET=replace-with-long-random-secret
 GITHUB_CLIENT_ID=<your-github-client-id>
 GITHUB_CLIENT_SECRET=<your-client-secret>
 TOKEN_BOARD_DATA_FILE=/data/usage-events.json
+```
+
+仓库内置 Docker Compose 部署包在 `deploy/token-board`。它的 build context 指向仓库根目录，这样镜像只复制后端需要的 `apps/site/lib/`、`apps/site/scripts/token-board-server.ts` 和部署包自己的 `package.json`：
+
+```bash
+cd deploy/token-board
+cp .env.example .env
+docker compose up -d --build
 ```

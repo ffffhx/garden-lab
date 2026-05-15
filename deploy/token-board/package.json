@@ -1,9 +1,10 @@
 {
-  "name": "token-board-service",
+  "name": "@garden-lab/token-board-service",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "token:server": "tsx scripts/token-board-server.ts"
+    "token:server": "tsx --tsconfig ../../apps/site/tsconfig.json ../../apps/site/scripts/token-board-server.ts",
+    "docker:start": "tsx scripts/token-board-server.ts"
   },
   "dependencies": {
     "tsx": "4.21.0",

@@ -2,17 +2,14 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
 import { PostCard } from "@/components/post-card";
-import { TokenUsageSummary } from "@/components/token-usage-summary";
 import { getAllCategories } from "@/lib/content/categories";
 import { SITE } from "@/lib/content/config";
 import { getAllPosts } from "@/lib/content/posts";
-import { getTokenUsageSnapshot } from "@/lib/content/token-usage";
 import { withBasePath } from "@/lib/utils/site-path";
 
 export default function HomePage() {
   const posts = getAllPosts();
   const categories = getAllCategories();
-  const tokenUsage = getTokenUsageSnapshot();
   const featuredPosts = posts.slice(0, 8);
   const priorityCoverSlug = featuredPosts.find((post) => post.cover)?.slug;
 
@@ -31,11 +28,6 @@ export default function HomePage() {
               {SITE.description}
             </h1>
             <p className="max-w-2xl text-base leading-8 text-white/78 sm:text-lg">写作、实验、训练和观察都留在同一张工作台上。</p>
-            <TokenUsageSummary
-              apiBaseUrl={process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL}
-              initialSnapshot={tokenUsage}
-              userId={process.env.NEXT_PUBLIC_TOKEN_USAGE_USER_ID}
-            />
           </div>
           <div className="rounded-lg border border-white/12 bg-white/12 p-5 backdrop-blur-md sm:p-6">
             <p className="text-sm uppercase tracking-[0.24em] text-white/68">内容分区</p>

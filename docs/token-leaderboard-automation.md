@@ -59,13 +59,13 @@ GET  /api/usage/summary
 GET  /api/usage/stats
 ```
 
-如果首页「我用了多少 Token」只展示作者本人数据，给服务端加：
+如果 `/api/usage/summary` 只需要聚合作者本人数据，给服务端加：
 
 ```bash
 TOKEN_BOARD_SUMMARY_USER_ID=github:<your-github-id>
 ```
 
-前端也可以在构建时用 `NEXT_PUBLIC_TOKEN_USAGE_USER_ID` 覆盖这个筛选条件；不配置时 `/api/usage/summary` 会按全部上报记录聚合。
+不配置时 `/api/usage/summary` 会按全部上报记录聚合。
 
 ### 兼容旧上传 token
 

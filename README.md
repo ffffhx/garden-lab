@@ -98,17 +98,9 @@ pnpm new:daily-news -- "2026-04-24 AI 与前端热点速览"
 pnpm prepare:public
 ```
 
-## Token 使用量同步
+## Token 使用量静态快照
 
-首页的「我用了多少 Token」优先读取 token-board 后端：
-
-```text
-GET /api/usage/summary
-```
-
-页面构建时通过 `NEXT_PUBLIC_TOKEN_BOARD_API_URL` 注入后端地址。后端可以用 `TOKEN_BOARD_SUMMARY_USER_ID` 指定首页展示哪个用户；也可以在构建站点时用 `NEXT_PUBLIC_TOKEN_USAGE_USER_ID` 显式传给前端。这个 userId 通常是 GitHub Device Login 生成的 `github:<id>`。
-
-如果后端不可用，页面会回退读取 `apps/site/public/stats/token-usage.json`，所以仓库仍保留 `.github/workflows/token-usage-sync.yml` 作为手动兜底工作流。这个工作流不再定时运行；需要刷新静态快照时，可以在 GitHub Actions 页面手动触发。
+首页不再展示个人 Token 消耗。仓库仍保留 `apps/site/public/stats/token-usage.json` 和 `.github/workflows/token-usage-sync.yml`，用于手动生成本地静态快照或调试 token-board 数据。这个工作流不再定时运行；需要刷新静态快照时，可以在 GitHub Actions 页面手动触发。
 
 旧兜底工作流会读取 self-hosted runner 用户的本机 Codex 日志：
 

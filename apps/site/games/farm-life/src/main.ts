@@ -15,7 +15,6 @@ import {
   bedtimeWarning,
   calendarEventActionHint,
   calendarEventRouteHint,
-  calendarEventUrgencyHint,
   calendarPlanHint,
   calendarSocialPrepHint,
   createDefaultMastery,
@@ -145,6 +144,26 @@ const VIEW_HEIGHT = 720;
 const HUD_MARGIN = 18;
 const HOTBAR_HEIGHT = 72;
 const UI_FONT = "Inter, PingFang SC, Microsoft YaHei, sans-serif";
+const UI_COLORS = {
+  ink: 0x181425,
+  night: 0x222b45,
+  nightSoft: 0x2d3658,
+  shadow: 0x070914,
+  gold: 0xfec742,
+  goldSoft: 0xffe2a8,
+  cream: 0xfff3cf,
+  paper: 0xf8dfae,
+  paperSoft: 0xfff1c2,
+  mint: 0x7be3a0,
+  blue: 0x5acde8,
+  rose: 0xff9b7c,
+  red: 0xff6b5f,
+  green: 0x43d184,
+  brown: 0x6b3f1d,
+  brownDark: 0x3f2614,
+  muted: 0xb8c0d6,
+  white: 0xffffff,
+};
 const SAVE_KEY = "farm-life-mvp-save-v2";
 const AUDIO_KEY = "farm-life-mvp-audio";
 const MAX_ENERGY = 100;
@@ -3091,23 +3110,23 @@ class FarmLifeScene extends Phaser.Scene {
       .map((track) => `${masteryDisplay[track].shortName}Lv${progressForXp(this.save.mastery[track].xp).level}`)
       .join("  ");
 
-    this.addPanel(HUD_MARGIN, HUD_MARGIN, 372, 104, 0x7b4a24, 0x3a2212, 64);
-    this.addUiText(placeLabels[this.save.player.place], HUD_MARGIN + 16, HUD_MARGIN + 10, 15, 0xfff0c0, 280, 67);
+    this.addPanel(HUD_MARGIN, HUD_MARGIN, 380, 108, UI_COLORS.night, UI_COLORS.ink, 64);
+    this.addUiText(placeLabels[this.save.player.place], HUD_MARGIN + 16, HUD_MARGIN + 10, 15, UI_COLORS.goldSoft, 280, 67);
     this.addUiText(
       objectiveHudSummaryHint({ objectiveLabel: objective.label, objectiveDetail: objective.detail }),
       HUD_MARGIN + 16,
       HUD_MARGIN + 31,
       10,
-      0xffefba,
+      UI_COLORS.cream,
       330,
       67,
     );
-    this.addUiText(`售卖箱 ${shippingHint} · ${shippingUrgency}  J 日志  I/B 背包`, HUD_MARGIN + 16, HUD_MARGIN + 50, 11, 0xf8d9a0, 330, 67);
-    this.addUiText(`背包 ${backpackHint}`, HUD_MARGIN + 16, HUD_MARGIN + 70, 10, 0xffefba, 330, 67);
-    this.addUiText(`当前 ${selectedLabel} · 熟练度 ${masteryLine}`, HUD_MARGIN + 16, HUD_MARGIN + 88, 10, 0xf8d9a0, 330, 67);
+    this.addUiText(`售卖箱 ${shippingHint} · ${shippingUrgency}  J 日志  I/B 背包`, HUD_MARGIN + 16, HUD_MARGIN + 50, 11, UI_COLORS.goldSoft, 338, 67);
+    this.addUiText(`背包 ${backpackHint}`, HUD_MARGIN + 16, HUD_MARGIN + 70, 10, UI_COLORS.cream, 338, 67);
+    this.addUiText(`当前 ${selectedLabel} · 熟练度 ${masteryLine}`, HUD_MARGIN + 16, HUD_MARGIN + 88, 10, UI_COLORS.mint, 338, 67);
     const pocketHitArea = this.addUiObject(
       this.add
-        .rectangle(HUD_MARGIN, HUD_MARGIN, 372, 104, 0xffffff, 0)
+        .rectangle(HUD_MARGIN, HUD_MARGIN, 380, 108, 0xffffff, 0)
         .setOrigin(0, 0)
         .setDepth(90),
     );
@@ -3288,86 +3307,61 @@ class FarmLifeScene extends Phaser.Scene {
     const x = this.viewWidth() - 218;
     const y = HUD_MARGIN;
 
-    this.addPanel(x, y, 200, 150, 0x9c642f, 0x3f2614, 70);
-    this.addUiText(`第 ${this.save.day} 天 · ${SEASONS[season].name}`, x + 16, y + 12, 14, 0xffefba, 158, 74);
-    this.addUiText(formatTime(this.save.timeMinutes), x + 16, y + 36, 24, 0x2a160b, 142, 74);
-    this.addUiText(period.label, x + 116, y + 45, 12, period.id === "late" || period.id === "night" ? 0x7c2d12 : 0x5f3719, 48, 76);
+    this.addPanel(x, y, 200, 146, UI_COLORS.night, UI_COLORS.ink, 70);
+    this.addUiText(`第 ${this.save.day} 天 · ${SEASONS[season].name}`, x + 16, y + 12, 14, UI_COLORS.cream, 158, 74);
+    this.addUiText(formatTime(this.save.timeMinutes), x + 16, y + 36, 24, UI_COLORS.gold, 142, 74);
+    this.addUiText(period.label, x + 116, y + 45, 12, period.id === "late" || period.id === "night" ? UI_COLORS.rose : UI_COLORS.mint, 48, 76);
     this.addUiIcon(ICON_FRAMES.coin, x + 27, y + 70, 0.72, 76);
-    this.addUiText(String(this.save.gold), x + 48, y + 62, 14, 0x2a160b, 88, 76);
+    this.addUiText(String(this.save.gold), x + 48, y + 62, 14, UI_COLORS.goldSoft, 88, 76);
     this.addUiIcon(this.weatherIconFrame(weather), x + 27, y + 95, 0.72, 76);
     this.addUiText(
-      weatherHudPlanHint({ weatherName: WEATHER[weather].name, weatherPlan: this.weatherPlanFor(weather) }),
+      `${WEATHER[weather].name} · ${weather === "rain" ? "雨水浇田" : "记得浇水"}`,
       x + 48,
       y + 88,
       10,
-      weather === "rain" ? 0x1d4ed8 : 0x2a160b,
+      weather === "rain" ? UI_COLORS.blue : UI_COLORS.cream,
       108,
       76,
     );
-    this.addUiText(this.currentDayEndPacingHint(), x + 16, y + 114, 8, 0x7a4a22, 166, 76);
     this.addSoundButton(x + 158, y + 94);
-    this.addEnergyBar(x + 16, y + 132, 160, 75);
+    this.addEnergyBar(x + 16, y + 126, 160, 75);
   }
 
   private renderQuestSlip() {
     const order = this.ensureDailyOrder();
-    const event = calendarEventForDay(this.save.day);
     const quest = this.storyQuestStatus();
     const objective = this.currentDailyObjective();
     const rewardSummary = this.orderRewardSummaryFor(order);
-    const eventUrgency = event
-      ? calendarEventUrgencyHint({
-        eventTitle: event.title,
-        daysUntil: 0,
-        currentPlace: this.save.player.place,
-        timeMinutes: this.save.timeMinutes,
-        travelMinutes: TRAVEL_MINUTES,
-        giftReadyCount: this.giftCandidates().length,
-        sellableInventoryCount: this.currentSellableInventoryCount(),
-        energy: this.save.energy,
-      })
-      : WEATHER[this.currentWeather()].note;
-    const width = 212;
-    const height = 244;
+    const progress = this.currentOrderProgress(order);
+    const orderState = order.completed ? "已完成" : order.accepted ? "进行中" : "去小镇接单";
+    const width = 224;
+    const height = 218;
     const defaultX = this.viewWidth() - width - HUD_MARGIN;
-    const defaultY = 192;
+    const defaultY = 188;
     const overlapsPlayer = this.playerOverlapsScreenRect(defaultX, defaultY, width, height, 28);
     const x = overlapsPlayer ? HUD_MARGIN : defaultX;
     const y = overlapsPlayer ? 138 : defaultY;
-    this.addPanel(x, y, width, height, 0xd7a865, 0x6b3f1d, 65);
+    this.addPanel(x, y, width, height, UI_COLORS.night, UI_COLORS.ink, 65);
     this.addUiIcon(ICON_FRAMES.order, x + 29, y + 22, 0.7, 68);
-    this.addUiText("公告板委托", x + 50, y + 12, 15, 0x3a2212, 128, 68);
+    this.addUiText("公告板委托", x + 50, y + 12, 15, UI_COLORS.goldSoft, 136, 68);
     this.addUiIcon(ICON_FRAMES[order.cropId], x + 28, y + 58, 0.72, 68);
-    this.addUiText(`${CROPS[order.cropId].name} x${order.count}`, x + 54, y + 49, 13, 0x3a2212, 126, 68);
+    this.addUiText(`${CROPS[order.cropId].name} x${order.count}`, x + 54, y + 49, 13, UI_COLORS.cream, 138, 68);
     this.addUiIcon(ICON_FRAMES.coin, x + 28, y + 88, 0.6, 68);
-    this.addUiText(rewardSummary, x + 54, y + 80, 10, 0x3a2212, 138, 68);
-    this.addUiText(this.orderBoardPreviewFor(order), x + 16, y + 112, 10, 0x5f3719, 176, 68);
-    this.addUiText(this.orderTurnInHintFor(order), x + 16, y + 126, 9, 0x7c2d12, 176, 68);
-    this.addUiText(
-      this.save.stats.currentOrderStreak > 0
-        ? `委托连击 ${this.save.stats.currentOrderStreak} 天`
-        : eventUrgency,
-      x + 16,
-      y + 138,
-      10,
-      0x5f3719,
-      176,
-      68,
-    );
-    this.addUiText(`山居线索 ${quest.completed}/${quest.total}`, x + 16, y + 164, 10, 0x7a4a22, 176, 68);
-    this.addUiText(`下一步：${objective.label}`, x + 16, y + 184, 11, 0x3a2212, 176, 68);
-    this.addUiText(objective.detail, x + 16, y + 204, 9, 0x5f3719, 176, 68);
-    this.addUiText(this.currentDayEndPacingHint(), x + 16, y + 220, 8, 0x7c2d12, 176, 68);
-    this.addUiText(this.currentQuestClueRouteHint(), x + 16, y + 232, 7, 0x7a4a22, 176, 68);
+    this.addUiText(rewardSummary, x + 54, y + 80, 10, UI_COLORS.goldSoft, 148, 68);
+    this.addUiText(`状态 ${orderState} · 进度 ${progress.availableCount}/${progress.requiredCount}`, x + 16, y + 108, 10, UI_COLORS.cream, 188, 68);
+    this.addUiText(`线索 ${quest.completed}/${quest.total} · ${quest.complete ? "继续经营" : quest.active.title}`, x + 16, y + 130, 10, UI_COLORS.mint, 188, 68);
+    this.addUiText(`下一步：${objective.label}`, x + 16, y + 154, 11, UI_COLORS.goldSoft, 188, 68);
+    this.addUiText(objective.detail, x + 16, y + 174, 9, UI_COLORS.cream, 188, 68);
+    this.addUiText(this.currentQuestClueRouteHint(), x + 16, y + 194, 8, UI_COLORS.muted, 188, 68);
   }
 
   private renderShopShelf() {
     const x = this.viewWidth() - 230;
     const y = 184;
-    this.addPanel(x, y, 212, 206, 0xd7a865, 0x6b3f1d, 65);
-    this.addUiText("山风种子铺", x + 16, y + 14, 15, 0x3a2212, 164, 68);
-    this.addUiText("点击购买，或用底部工具栏选种。", x + 16, y + 38, 10, 0x5f3719, 174, 68);
-    this.addUiText(this.currentSeedShopRecommendationHint(), x + 16, y + 54, 9, 0x14532d, 174, 68);
+    this.addPanel(x, y, 212, 206, UI_COLORS.night, UI_COLORS.ink, 65);
+    this.addUiText("山风种子铺", x + 16, y + 14, 15, UI_COLORS.goldSoft, 164, 68);
+    this.addUiText("点击购买，或用底部工具栏选种。", x + 16, y + 38, 10, UI_COLORS.cream, 174, 68);
+    this.addUiText(this.currentSeedShopRecommendationHint(), x + 16, y + 54, 9, UI_COLORS.mint, 174, 68);
 
     cropIds.forEach((cropId, index) => {
       this.addBuyButton(cropId, x + 16, y + 70 + index * 40);
@@ -3978,9 +3972,9 @@ class FarmLifeScene extends Phaser.Scene {
 
     this.addMenuPanel(x, y, width, height);
     this.addMenuText("背包", x + 30, y + 22, 22, 0xffefba);
-    this.addMenuText(backpackHint, x + 94, y + 30, 10, 0x14532d, 168, 170);
-    this.addMenuText(this.currentBackpackActionHint(), x + 94, y + 44, 9, 0x5f3719, 210, 170);
-    this.addMenuText(this.currentBackpackSortPlanHint(), x + 304, y + 44, 8, 0x7c2d12, 146, 170);
+    this.addMenuText(backpackHint, x + 94, y + 30, 10, UI_COLORS.mint, 168, 170);
+    this.addMenuText(this.currentBackpackActionHint(), x + 94, y + 44, 9, UI_COLORS.cream, 210, 170);
+    this.addMenuText(this.currentBackpackSortPlanHint(), x + 304, y + 44, 8, UI_COLORS.rose, 146, 170);
     this.addMenuText(this.currentBackpackDecisionHint(), x + 94, y + 58, 8, 0x7c2d12, 210, 170);
     this.addMenuText(this.currentBackpackShortcutHint(), x + 304, y + 58, 8, 0x14532d, 146, 170);
     this.addMenuText("I/B 或 Esc 关闭", x + width - 148, y + 28, 11, 0xf8d9a0);
@@ -4124,14 +4118,14 @@ class FarmLifeScene extends Phaser.Scene {
       ? `${this.currentHotbarActionHint()} · ${this.currentSeedFieldReadinessHint()}`
       : this.currentHotbarActionHint();
 
-    this.addPanel(layout.panelX, layout.panelY, layout.panelWidth, layout.panelHeight, 0x8b5428, 0x3f2614, 72);
-    this.addUiText(actionHint, layout.startX - 3, layout.y + 45, 8, 0xffefba, layout.totalWidth + 6, 80);
+    this.addPanel(layout.panelX, layout.panelY, layout.panelWidth, layout.panelHeight, UI_COLORS.night, UI_COLORS.ink, 72);
+    this.addUiText(actionHint, layout.startX - 3, layout.y + 45, 8, UI_COLORS.goldSoft, layout.totalWidth + 6, 80);
 
     entries.forEach((entry, index) => {
       const x = layout.startX + index * (layout.slot + layout.gap);
       const active = this.isHotbarActive(entry.id);
-      const fill = active ? 0xffd37a : 0xf5c47b;
-      const stroke = active ? 0x4b2e17 : 0x7a4a22;
+      const fill = active ? UI_COLORS.gold : UI_COLORS.nightSoft;
+      const stroke = active ? UI_COLORS.cream : UI_COLORS.gold;
       const rect = this.addUiObject(
         this.add
           .rectangle(x, layout.y, layout.slot, 42, fill)
@@ -4142,7 +4136,7 @@ class FarmLifeScene extends Phaser.Scene {
       rect.setInteractive({ useHandCursor: true });
       rect.on("pointerdown", entry.onClick);
 
-      this.addUiText(String(index + 1), x + 4, layout.y + 2, 8, 0x5f3719, undefined, 80);
+      this.addUiText(String(index + 1), x + 4, layout.y + 2, 8, active ? UI_COLORS.ink : UI_COLORS.goldSoft, undefined, 80);
       const icon = this.addUiObject(
         this.add
           .image(x + layout.slot / 2, layout.y + 21, "icons", entry.icon)
@@ -4155,11 +4149,11 @@ class FarmLifeScene extends Phaser.Scene {
       if (entry.count !== undefined) {
         this.addUiObject(
           this.add
-            .rectangle(x + layout.slot - 16, layout.y + 27, 14, 12, 0x3f2614, 0.82)
+            .rectangle(x + layout.slot - 16, layout.y + 27, 14, 12, UI_COLORS.ink, 0.86)
             .setOrigin(0, 0)
             .setDepth(81),
         );
-        this.addUiText(String(entry.count), x + layout.slot - 12, layout.y + 27, 8, 0xffefba, undefined, 82);
+        this.addUiText(String(entry.count), x + layout.slot - 12, layout.y + 27, 8, UI_COLORS.goldSoft, undefined, 82);
       }
     });
   }
@@ -4260,7 +4254,7 @@ class FarmLifeScene extends Phaser.Scene {
   private addPanel(x: number, y: number, width: number, height: number, fill: number, stroke: number, depth: number) {
     this.addUiObject(
       this.add
-        .rectangle(x + 4, y + 5, width, height, 0x1f1308, 0.34)
+        .rectangle(x + 6, y + 7, width, height, UI_COLORS.shadow, 0.46)
         .setOrigin(0, 0)
         .setDepth(depth - 2),
     );
@@ -4268,12 +4262,19 @@ class FarmLifeScene extends Phaser.Scene {
       this.add
         .rectangle(x, y, width, height, fill)
         .setOrigin(0, 0)
-        .setStrokeStyle(3, stroke)
+        .setStrokeStyle(4, stroke)
         .setDepth(depth),
     );
     this.addUiObject(
       this.add
-        .rectangle(x + 6, y + 6, width - 12, 2, 0xffe2a3, 0.45)
+        .rectangle(x + 5, y + 5, width - 10, height - 10, UI_COLORS.white, 0.04)
+        .setOrigin(0, 0)
+        .setStrokeStyle(1, UI_COLORS.gold, 0.34)
+        .setDepth(depth + 1),
+    );
+    this.addUiObject(
+      this.add
+        .rectangle(x + 8, y + 8, width - 16, 3, UI_COLORS.gold, 0.72)
         .setOrigin(0, 0)
         .setDepth(depth + 1),
     );
@@ -4282,29 +4283,42 @@ class FarmLifeScene extends Phaser.Scene {
   private addMenuPanel(x: number, y: number, width: number, height: number) {
     this.addMenuObject(
       this.add
-        .rectangle(this.viewWidth() / 2, this.viewHeight() / 2, this.viewWidth(), this.viewHeight(), 0x111827, 0.22)
+        .rectangle(this.viewWidth() / 2, this.viewHeight() / 2, this.viewWidth(), this.viewHeight(), UI_COLORS.ink, 0.5)
         .setDepth(158)
         .setInteractive(),
     );
     this.addMenuObject(
       this.add
-        .rectangle(x + 7, y + 8, width, height, 0x1f1308, 0.42)
+        .rectangle(x + 8, y + 9, width, height, UI_COLORS.shadow, 0.56)
         .setOrigin(0, 0)
         .setDepth(159),
     );
     this.addMenuObject(
       this.add
-        .rectangle(x, y, width, height, 0xb9793a)
+        .rectangle(x, y, width, height, UI_COLORS.ink)
         .setOrigin(0, 0)
-        .setStrokeStyle(5, 0x3f2614)
+        .setStrokeStyle(5, UI_COLORS.gold)
         .setDepth(160),
     );
     this.addMenuObject(
       this.add
-        .rectangle(x + 10, y + 10, width - 20, height - 20, 0xf1c27d)
+        .rectangle(x + 10, y + 10, width - 20, 48, UI_COLORS.night)
         .setOrigin(0, 0)
-        .setStrokeStyle(2, 0x8a5a2b)
+        .setStrokeStyle(2, UI_COLORS.brown)
         .setDepth(161),
+    );
+    this.addMenuObject(
+      this.add
+        .rectangle(x + 10, y + 58, width - 20, height - 68, UI_COLORS.paperSoft)
+        .setOrigin(0, 0)
+        .setStrokeStyle(2, UI_COLORS.brown)
+        .setDepth(161),
+    );
+    this.addMenuObject(
+      this.add
+        .rectangle(x + 16, y + 16, width - 32, 4, UI_COLORS.gold, 0.72)
+        .setOrigin(0, 0)
+        .setDepth(162),
     );
   }
 
@@ -4489,8 +4503,8 @@ class FarmLifeScene extends Phaser.Scene {
   private addSoundButton(x: number, y: number) {
     const button = this.addUiObject(
       this.add
-        .rectangle(x - 13, y - 13, 26, 26, 0x5b371c)
-        .setStrokeStyle(2, 0xf8d9a0)
+        .rectangle(x - 13, y - 13, 26, 26, UI_COLORS.ink)
+        .setStrokeStyle(2, UI_COLORS.gold)
         .setDepth(76),
     );
     button.setInteractive({ useHandCursor: true });
@@ -4521,15 +4535,15 @@ class FarmLifeScene extends Phaser.Scene {
   private addEnergyBar(x: number, y: number, width = 118, depth = 80) {
     const status = energyStatus(this.save.energy, MAX_ENERGY);
     const ratio = Phaser.Math.Clamp(status.ratio, 0, 1);
-    const statusColor = status.id === "exhausted" ? 0xdc2626 : status.id === "tired" ? 0x7c2d12 : 0x2a160b;
+    const statusColor = status.id === "exhausted" ? UI_COLORS.red : status.id === "tired" ? UI_COLORS.rose : UI_COLORS.mint;
 
     this.addUiIcon(ICON_FRAMES.energy, x + 7, y - 9, 0.42, depth);
-    this.addUiText(`${this.save.energy}/${MAX_ENERGY}`, x + 18, y - 16, 11, 0x2a160b, undefined, depth);
+    this.addUiText(`${this.save.energy}/${MAX_ENERGY}`, x + 18, y - 16, 11, UI_COLORS.cream, undefined, depth);
     this.addUiText(status.label, x + width - 38, y - 16, 10, statusColor, 34, depth);
-    this.addUiObject(this.add.rectangle(x, y, width, 9, 0x5b371c).setOrigin(0, 0).setDepth(depth));
+    this.addUiObject(this.add.rectangle(x, y, width, 9, UI_COLORS.ink).setOrigin(0, 0).setStrokeStyle(1, UI_COLORS.gold, 0.55).setDepth(depth));
     this.addUiObject(
       this.add
-        .rectangle(x + 2, y + 2, Math.max(2, (width - 4) * ratio), 5, ratio < 0.25 ? 0xdc2626 : 0x2f9e44)
+        .rectangle(x + 2, y + 2, Math.max(2, (width - 4) * ratio), 5, ratio < 0.25 ? UI_COLORS.red : UI_COLORS.green)
         .setOrigin(0, 0)
         .setDepth(depth + 1),
     );
@@ -6458,12 +6472,12 @@ class FarmLifeScene extends Phaser.Scene {
     const y = 24;
     const weather = this.currentWeather();
     const objects = [
-      this.add.rectangle(x + 5, y + 6, width, height, 0x1f1308, 0.4).setOrigin(0, 0).setDepth(150).setScrollFactor(0),
-      this.add.rectangle(x, y, width, height, 0xf8dfae).setOrigin(0, 0).setStrokeStyle(4, 0x6b3f1d).setDepth(151).setScrollFactor(0),
+      this.add.rectangle(x + 6, y + 7, width, height, UI_COLORS.shadow, 0.48).setOrigin(0, 0).setDepth(150).setScrollFactor(0),
+      this.add.rectangle(x, y, width, height, UI_COLORS.night).setOrigin(0, 0).setStrokeStyle(4, UI_COLORS.gold).setDepth(151).setScrollFactor(0),
       this.add.image(x + 30, y + 30, "icons", this.weatherIconFrame(weather)).setScale(0.64).setDepth(152).setScrollFactor(0),
       this.add
         .text(x + 56, y + 10, `第 ${this.save.day} 天`, {
-          color: "#2a160b",
+          color: hexColor(UI_COLORS.goldSoft),
           fontFamily: UI_FONT,
           fontSize: "16px",
           fontStyle: "800",
@@ -6472,7 +6486,7 @@ class FarmLifeScene extends Phaser.Scene {
         .setScrollFactor(0),
       this.add
         .text(x + 56, y + 34, summary, {
-          color: "#6b3f1d",
+          color: hexColor(UI_COLORS.cream),
           fontFamily: UI_FONT,
           fontSize: "11px",
           fontStyle: "700",
@@ -6517,15 +6531,15 @@ class FarmLifeScene extends Phaser.Scene {
 
     this.addMessageObject(
       this.add
-        .rectangle(x + 5, y + 6, width, height, 0x1f1308, 0.42)
+        .rectangle(x + 6, y + 7, width, height, UI_COLORS.shadow, 0.5)
         .setOrigin(0, 0)
         .setDepth(116),
     );
     this.addMessageObject(
       this.add
-        .rectangle(x, y, width, height, 0xf8dfae)
+        .rectangle(x, y, width, height, UI_COLORS.night)
         .setOrigin(0, 0)
-        .setStrokeStyle(4, 0x6b3f1d)
+        .setStrokeStyle(4, UI_COLORS.gold)
         .setDepth(118),
     );
 
@@ -6533,9 +6547,9 @@ class FarmLifeScene extends Phaser.Scene {
       const portraitFrame = this.speakerFrame(speaker);
       this.addMessageObject(
         this.add
-          .rectangle(x + 18, y + 18, 74, 46, 0x8b5428)
+          .rectangle(x + 18, y + 18, 74, 46, UI_COLORS.ink)
           .setOrigin(0, 0)
-          .setStrokeStyle(3, 0x3f2614)
+          .setStrokeStyle(3, UI_COLORS.gold)
           .setDepth(119),
       );
 
@@ -6549,7 +6563,7 @@ class FarmLifeScene extends Phaser.Scene {
         this.addMessageObject(
           this.add
             .text(x + 55, y + 54, speaker, {
-              color: "#fff0c0",
+              color: hexColor(UI_COLORS.goldSoft),
               fontFamily: UI_FONT,
               fontSize: "10px",
               fontStyle: "700",
@@ -6561,7 +6575,7 @@ class FarmLifeScene extends Phaser.Scene {
         this.addMessageObject(
           this.add
             .text(x + 55, y + 30, speaker, {
-              color: "#fff0c0",
+              color: hexColor(UI_COLORS.goldSoft),
               fontFamily: UI_FONT,
               fontSize: "13px",
               fontStyle: "700",
@@ -6575,7 +6589,7 @@ class FarmLifeScene extends Phaser.Scene {
     this.addMessageObject(
       this.add
         .text(hasSpeaker ? x + 112 : x + 22, hasSpeaker ? y + 18 : y + 15, line, {
-          color: "#2a160b",
+          color: hexColor(UI_COLORS.cream),
           fontFamily: UI_FONT,
           fontSize: hasSpeaker ? "15px" : "13px",
           fontStyle: "700",
@@ -6590,7 +6604,7 @@ class FarmLifeScene extends Phaser.Scene {
       this.addMessageObject(
         this.add
           .text(x + width - 94, y + height - 24, "E/Space", {
-            color: "#7a4a22",
+            color: hexColor(UI_COLORS.mint),
             fontFamily: UI_FONT,
             fontSize: "11px",
             fontStyle: "700",

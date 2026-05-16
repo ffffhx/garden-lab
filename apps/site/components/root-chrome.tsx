@@ -47,10 +47,15 @@ function isDesktopPetRoute(pathname: string | null) {
   return normalizedPathname === "/desktop-pet" || normalizedPathname.startsWith("/desktop-pet/");
 }
 
-function isGameTableRoute(pathname: string | null) {
+function shouldHidePet(pathname: string | null) {
   const normalizedPathname = normalizeAppPathname(pathname);
 
-  return normalizedPathname === "/texas-holdem" || normalizedPathname.startsWith("/texas-holdem/");
+  return (
+    normalizedPathname === "/farm-life-mvp" ||
+    normalizedPathname.startsWith("/farm-life-mvp/") ||
+    normalizedPathname === "/texas-holdem" ||
+    normalizedPathname.startsWith("/texas-holdem/")
+  );
 }
 
 function isPrivateFeatureRoute(pathname: string | null) {
@@ -81,7 +86,7 @@ export function RootChrome({ children, posts }: RootChromeProps) {
   return (
     <PrivateFeatureAccessProvider>
       <WebMcpTools posts={posts} />
-      <SiteShell showPet={!isGameTableRoute(pathname)}>
+      <SiteShell showPet={!shouldHidePet(pathname)}>
         {isPrivateRoute ? (
           <PrivateFeatureGate
             fallback={<PrivateFeaturePageFallback />}

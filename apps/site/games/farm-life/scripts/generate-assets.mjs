@@ -168,6 +168,284 @@ function tile(base, accent, extras = []) {
   ]);
 }
 
+function pixelTile(base, highlight, shadow, details = []) {
+  return svg([
+    rect(0, 0, TILE, TILE, base),
+    rect(0, 0, TILE, 1, highlight, 0.18),
+    rect(0, 0, 1, TILE, highlight, 0.14),
+    rect(TILE - 1, 0, 1, TILE, shadow, 0.18),
+    rect(0, TILE - 1, TILE, 1, shadow, 0.18),
+    ...details,
+  ]);
+}
+
+function grassMarks(dark = "#438a49", light = "#7acb70") {
+  return [
+    rect(4, 7, 5, 2, light, 0.2),
+    rect(6, 9, 2, 3, dark, 0.22),
+    rect(17, 5, 3, 2, "#91d37a", 0.2),
+    rect(22, 12, 5, 2, dark, 0.18),
+    rect(24, 14, 2, 3, dark, 0.18),
+    rect(10, 22, 6, 2, light, 0.16),
+    rect(27, 25, 3, 2, "#4c9850", 0.18),
+  ];
+}
+
+function grassTile() {
+  return pixelTile("#5da960", "#8bd97b", "#2e6f42", [
+    rect(0, 0, TILE, TILE, "#73bf67", 0.1),
+    rect(0, 19, TILE, 3, "#4d9953", 0.11),
+    ...grassMarks(),
+  ]);
+}
+
+function deepForestTile() {
+  return pixelTile("#3f7f53", "#65aa61", "#1e4d36", [
+    rect(0, 0, TILE, TILE, "#2f6849", 0.22),
+    rect(5, 5, 7, 3, "#64ad5f", 0.2),
+    rect(20, 7, 5, 3, "#2b5c41", 0.38),
+    rect(8, 19, 4, 5, "#244b35", 0.34),
+    rect(22, 22, 7, 2, "#6dbb68", 0.18),
+    rect(25, 12, 2, 2, "#aee27a", 0.45),
+  ]);
+}
+
+function fieldTile() {
+  return pixelTile("#a97943", "#d0a05e", "#5f3924", [
+    rect(0, 5, TILE, 3, "#8b5c32", 0.34),
+    rect(0, 13, TILE, 3, "#c58c48", 0.2),
+    rect(0, 21, TILE, 3, "#7d4f2d", 0.28),
+    rect(3, 3, 3, 2, "#d7ac68", 0.45),
+    rect(18, 10, 4, 2, "#6f442b", 0.3),
+    rect(26, 25, 3, 2, "#d6a45f", 0.35),
+  ]);
+}
+
+function soilTile() {
+  return pixelTile("#8c5736", "#bd7948", "#4b2f22", [
+    rect(0, 6, TILE, 2, "#6c4029", 0.32),
+    rect(0, 16, TILE, 2, "#b06b3e", 0.26),
+    rect(0, 25, TILE, 2, "#5f3825", 0.28),
+    rect(7, 10, 5, 2, "#c98955", 0.34),
+    rect(20, 4, 4, 2, "#5b3523", 0.28),
+    rect(24, 21, 5, 2, "#c17b49", 0.32),
+  ]);
+}
+
+function wetSoilTile() {
+  return pixelTile("#5e4939", "#876954", "#2c2521", [
+    rect(0, 7, TILE, 2, "#342b25", 0.36),
+    rect(0, 17, TILE, 2, "#78604e", 0.28),
+    rect(0, 26, TILE, 2, "#2a221f", 0.28),
+    rect(7, 11, 7, 2, "#8eb3b7", 0.22),
+    rect(21, 22, 6, 2, "#9dc8c8", 0.18),
+    rect(24, 6, 4, 2, "#2e2723", 0.25),
+  ]);
+}
+
+function roadTile() {
+  return roadVariantTile(15);
+}
+
+function roadVariantTile(mask) {
+  const left = mask & 8 ? 0 : 5;
+  const top = mask & 1 ? 0 : 5;
+  const right = mask & 2 ? TILE : TILE - 5;
+  const bottom = mask & 4 ? TILE : TILE - 5;
+  const width = right - left;
+  const height = bottom - top;
+  const roadDetails = [
+    rect(left, top, width, height, "#b8895a"),
+    rect(left, top, width, 1, "#d7b07c", 0.28),
+    rect(left, bottom - 1, width, 1, "#6b4931", 0.2),
+    rect(right - 1, top, 1, height, "#6b4931", 0.16),
+    rect(Math.min(right - 6, left + 4), Math.min(bottom - 5, top + 4), 6, 4, "#cfa16d", 0.38),
+    rect(Math.min(right - 12, left + 13), Math.min(bottom - 6, top + 8), 9, 3, "#9f714b", 0.18),
+    rect(Math.min(right - 9, left + 18), Math.min(bottom - 8, top + 17), 8, 4, "#d7b07c", 0.22),
+    rect(Math.min(right - 8, left + 7), Math.min(bottom - 4, top + 25), 7, 2, "#6f4b33", 0.14),
+  ];
+
+  return pixelTile("#5da960", "#8bd97b", "#2e6f42", [
+    rect(0, 0, TILE, TILE, "#73bf67", 0.08),
+    ...grassMarks("#438a49", "#7acb70"),
+    ...roadDetails,
+  ]);
+}
+
+function addRoadVariantFrames(frames) {
+  for (let mask = 0; mask < 16; mask += 1) {
+    addTileFrame(frames, `road_${mask}`, roadVariantTile(mask));
+  }
+}
+
+function waterTile() {
+  return pixelTile("#3b91bc", "#8fd3ec", "#1d5f88", [
+    rect(0, 0, TILE, TILE, "#4caed1", 0.18),
+    rect(2, 8, 12, 2, "#a7def1", 0.42),
+    rect(18, 6, 9, 2, "#2b7fae", 0.35),
+    rect(7, 18, 11, 2, "#94d4ec", 0.34),
+    rect(22, 22, 8, 2, "#1f6f9c", 0.32),
+    rect(0, 29, TILE, 2, "#18557f", 0.2),
+  ]);
+}
+
+function woodFloorTile() {
+  return pixelTile("#c98d4e", "#e5b56c", "#6f3f24", [
+    rect(0, 7, TILE, 1, "#704225", 0.42),
+    rect(0, 15, TILE, 1, "#704225", 0.34),
+    rect(0, 23, TILE, 1, "#704225", 0.42),
+    rect(11, 0, 1, 7, "#9c6639", 0.35),
+    rect(24, 8, 1, 7, "#9c6639", 0.28),
+    rect(5, 18, 7, 2, "#e6b56c", 0.22),
+    rect(20, 3, 5, 2, "#7b4728", 0.22),
+    rect(24, 26, 4, 2, "#e9bd75", 0.22),
+  ]);
+}
+
+function woodWallTile() {
+  return pixelTile("#815336", "#a06d45", "#402817", [
+    rect(0, 0, TILE, 6, "#9b6742", 0.48),
+    rect(0, 12, TILE, 2, "#5f3923", 0.28),
+    rect(0, 22, TILE, 2, "#4c301f", 0.35),
+    rect(7, 0, 1, TILE, "#5b3823", 0.23),
+    rect(19, 0, 1, TILE, "#a56e45", 0.22),
+    rect(25, 0, 1, TILE, "#4a2d1c", 0.22),
+  ]);
+}
+
+function counterTile() {
+  return pixelTile("#9f673c", "#c98955", "#4f321f", [
+    rect(0, 0, TILE, 10, "#c58a53", 0.5),
+    rect(0, 10, TILE, 3, "#5a3823", 0.42),
+    rect(0, 25, TILE, 2, "#3d2718", 0.36),
+    rect(6, 4, 10, 2, "#e2b275", 0.32),
+    rect(21, 17, 5, 4, "#7a4c2f", 0.3),
+  ]);
+}
+
+function sandTile() {
+  return pixelTile("#d9bc75", "#f1da96", "#92724b", [
+    rect(0, 0, TILE, TILE, "#ead18a", 0.18),
+    rect(5, 7, 5, 2, "#b89054", 0.26),
+    rect(20, 5, 3, 2, "#fff0b5", 0.4),
+    rect(13, 17, 8, 2, "#bf995b", 0.22),
+    rect(27, 24, 3, 3, "#f2a6a6", 0.5),
+    rect(6, 26, 8, 2, "#f6df9d", 0.28),
+  ]);
+}
+
+function caveFloorTile() {
+  return pixelTile("#635f6f", "#8d8997", "#33313e", [
+    rect(3, 5, 9, 5, "#797585", 0.36),
+    rect(17, 4, 8, 4, "#4e4b5a", 0.3),
+    rect(6, 18, 11, 5, "#4a4756", 0.3),
+    rect(21, 23, 7, 4, "#7d788a", 0.22),
+    rect(10, 29, 12, 2, "#302f39", 0.24),
+  ]);
+}
+
+function caveWallTile() {
+  return pixelTile("#4a4658", "#6e687d", "#23212d", [
+    rect(0, 0, TILE, 8, "#5b5668", 0.55),
+    rect(2, 11, 11, 6, "#393646", 0.35),
+    rect(16, 9, 12, 7, "#625d70", 0.25),
+    rect(7, 22, 9, 5, "#2e2b38", 0.28),
+    rect(24, 24, 5, 4, "#777082", 0.18),
+  ]);
+}
+
+function templeFloorTile() {
+  return pixelTile("#bb9b6a", "#e3c38b", "#6f5a42", [
+    rect(0, 0, TILE, 1, "#7d684d", 0.32),
+    rect(0, 15, TILE, 1, "#7d684d", 0.3),
+    rect(15, 0, 1, TILE, "#7d684d", 0.3),
+    rect(4, 5, 7, 5, "#d9bb80", 0.25),
+    rect(20, 20, 7, 5, "#8e7352", 0.18),
+  ]);
+}
+
+function templeWallTile() {
+  return pixelTile("#8f7854", "#c5a979", "#4c4032", [
+    rect(0, 0, TILE, 8, "#b99b69", 0.48),
+    rect(0, 14, TILE, 2, "#66533b", 0.3),
+    rect(5, 20, 7, 5, "#715c42", 0.25),
+    rect(19, 20, 8, 5, "#bda16f", 0.2),
+    rect(14, 4, 3, 3, "#edd99a", 0.34),
+  ]);
+}
+
+function barnFloorTile() {
+  return pixelTile("#9a6337", "#c58a4e", "#4d2f1d", [
+    rect(0, 9, TILE, 2, "#654025", 0.35),
+    rect(0, 20, TILE, 2, "#c0874b", 0.2),
+    rect(9, 0, 1, 9, "#6f4428", 0.28),
+    rect(23, 11, 1, 9, "#6f4428", 0.22),
+    rect(4, 25, 7, 2, "#d4a15f", 0.22),
+  ]);
+}
+
+function barnWallTile() {
+  return pixelTile("#7f3f2f", "#a9503f", "#3e241c", [
+    rect(0, 0, TILE, 7, "#9a4b37", 0.52),
+    rect(0, 15, TILE, 2, "#4f2b21", 0.32),
+    rect(8, 0, 2, TILE, "#5b2e25", 0.24),
+    rect(22, 0, 2, TILE, "#a9503f", 0.2),
+    rect(5, 22, 7, 4, "#5c3026", 0.22),
+  ]);
+}
+
+function cliffTile() {
+  return pixelTile("#786b54", "#a49471", "#3d362d", [
+    rect(0, 0, TILE, 7, "#557a4f", 0.32),
+    rect(3, 10, 10, 6, "#95845f", 0.28),
+    rect(18, 8, 9, 7, "#5c5344", 0.35),
+    rect(7, 21, 12, 5, "#51483b", 0.28),
+    rect(23, 23, 6, 4, "#aa9872", 0.2),
+  ]);
+}
+
+function dockTile() {
+  return pixelTile("#9b673c", "#c79258", "#4f3420", [
+    rect(0, 5, TILE, 2, "#4b321f", 0.42),
+    rect(0, 15, TILE, 2, "#4b321f", 0.38),
+    rect(0, 25, TILE, 2, "#4b321f", 0.42),
+    rect(7, 0, 2, TILE, "#c79258", 0.2),
+    rect(20, 0, 2, TILE, "#5e3d25", 0.24),
+    rect(4, 9, 5, 2, "#d7a86b", 0.28),
+    rect(23, 19, 5, 2, "#6c462b", 0.22),
+  ]);
+}
+
+function dungeonFloorTile() {
+  return pixelTile("#55515f", "#807889", "#262631", [
+    rect(0, 0, TILE, 1, "#24232c", 0.3),
+    rect(0, 15, TILE, 1, "#24232c", 0.28),
+    rect(15, 0, 1, TILE, "#24232c", 0.28),
+    rect(3, 5, 8, 5, "#6b6574", 0.25),
+    rect(20, 20, 7, 5, "#393743", 0.32),
+  ]);
+}
+
+function dungeonWallTile() {
+  return pixelTile("#393541", "#615a6b", "#171820", [
+    rect(0, 0, TILE, 8, "#50495b", 0.46),
+    rect(2, 12, 12, 6, "#292731", 0.35),
+    rect(18, 10, 9, 6, "#5b5364", 0.24),
+    rect(6, 24, 9, 4, "#23222b", 0.3),
+    rect(23, 23, 4, 4, "#756b79", 0.16),
+  ]);
+}
+
+function hayTile() {
+  return pixelTile("#cf9d3f", "#f2cc6c", "#75501f", [
+    rect(2, 7, 12, 3, "#f4ce68", 0.42),
+    rect(16, 5, 11, 3, "#9f6f28", 0.24),
+    rect(5, 16, 22, 3, "#e5b04f", 0.38),
+    rect(4, 24, 13, 3, "#8b6126", 0.26),
+    rect(21, 25, 6, 2, "#f8d778", 0.32),
+  ]);
+}
+
 function tileSprites() {
   return [
     tile("#6fb45f", "#3f8a3c", [rect(8, 25, 2, 4, "#347a35", 0.34), rect(22, 16, 2, 4, "#347a35", 0.28), rect(26, 8, 2, 2, "#f8d96a", 0.65)]),
@@ -750,9 +1028,6 @@ function cropStageAsset(file, frame) {
 }
 
 async function farmRpgTileSprites() {
-  const grass = assetPath("Tileset", "Tileset Grass Spring.png");
-  const tilledSoil = assetPath("Tileset", "Tilled Soil and wet soil.png");
-  const water = assetPath("Tileset", "Water tile.png");
   const house = assetPath("Tileset", "Tileset House.png");
   const doors = assetPath("Objects", "Exterior", "Houses", "Door, windows, and chimney.png");
   const exterior = assetPath("Objects", "Exterior", "Exterior.png");
@@ -765,29 +1040,22 @@ async function farmRpgTileSprites() {
   const tables = assetPath("Objects", "Interior", "Tables and desks.png");
   const fireplace = assetPath("Objects", "Interior", "Fireplace.png");
   const interior = assetPath("Objects", "Interior", "Others.png");
-  const deepForest = assetPath("Tileset", "Tileset Grass Deep Forest.png");
-  const beach = assetPath("Tileset", "Beach animations tiles.png");
   const caves = assetPath("Tileset", "Caves.png");
-  const temple = assetPath("Tileset", "Tileset Temple.png");
-  const barn = assetPath("Tileset", "Barn tileset.png");
-  const cliff = assetPath("Tileset", "Tileset Grass Cliff Tileset Deep Forest.png");
-  const beachBridge = assetPath("Tileset", "Bridge Beach Tileset.png");
-  const dungeon = assetPath("Tileset", "Dungeon tileset.png");
   const beachExterior = assetPath("Objects", "Exterior", "Beach", "Exterior Beach.png");
   const templeInterior = assetPath("Objects", "Interior", "Temple.png");
   const barnBuilding = assetPath("Objects", "Exterior", "Houses", "Farm Buildings", "Barn", "Barn.png");
   const templeBuilding = assetPath("Objects", "Exterior", "Houses", "NPCS houses", "temple.png");
 
   const frames = [
-    tileAsset(grass, 6, 2),
-    tileAsset(tilledSoil, 5, 2),
-    tileAsset(grass, 3, 9),
-    tileAsset(tilledSoil, 5, 2),
-    tileAsset(tilledSoil, 5, 6),
-    assetFrame(water),
-    tileAsset(house, 13, 1),
-    tileAsset(house, 1, 6),
-    tileAsset(house, 13, 16),
+    grassTile(),
+    fieldTile(),
+    roadTile(),
+    soilTile(),
+    wetSoilTile(),
+    waterTile(),
+    woodFloorTile(),
+    woodWallTile(),
+    counterTile(),
     tileAsset(house, 0, 0),
     tileAsset(house, 1, 4),
     tileAsset(house, 34, 0),
@@ -816,19 +1084,19 @@ async function farmRpgTileSprites() {
     assetFrame(tables, { left: 0, top: 11 * SOURCE_TILE, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
     assetFrame(fireplace, { left: 0, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
     assetFrame(interior, { left: 4 * SOURCE_TILE, top: SOURCE_TILE, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
-    tileAsset(deepForest, 1, 1),
-    tileAsset(beach, 13, 12),
-    tileAsset(caves, 6, 2),
-    tileAsset(caves, 1, 1),
-    tileAsset(house, 14, 16),
-    tileAsset(temple, 1, 1),
-    tileAsset(house, 25, 16),
-    tileAsset(barn, 1, 1),
-    tileAsset(cliff, 1, 1),
-    assetFrame(beachBridge, { left: 0, top: 4 * SOURCE_TILE, width: TILE, height: SOURCE_TILE, targetWidth: TILE, targetHeight: TILE }),
-    tileAsset(dungeon, 6, 8),
-    tileAsset(dungeon, 1, 1),
-    tileAsset(barn, 1, 12),
+    deepForestTile(),
+    sandTile(),
+    caveFloorTile(),
+    caveWallTile(),
+    templeFloorTile(),
+    templeWallTile(),
+    barnFloorTile(),
+    barnWallTile(),
+    cliffTile(),
+    dockTile(),
+    dungeonFloorTile(),
+    dungeonWallTile(),
+    hayTile(),
     assetFrame(beachExterior, { left: 8 * SOURCE_TILE, top: 4 * SOURCE_TILE, width: SOURCE_TILE, height: SOURCE_TILE }),
     tileAsset(caves, 12, 2),
     assetFrame(templeInterior, { left: 2 * SOURCE_TILE, top: 2 * SOURCE_TILE, width: SOURCE_TILE, height: SOURCE_TILE }),
@@ -836,6 +1104,7 @@ async function farmRpgTileSprites() {
 
   addChunkFrames(frames, "barnFront", barnBuilding, { col: 0, row: 0, width: 5, height: 5 });
   addChunkFrames(frames, "templeFront", templeBuilding, { col: 0, row: 2, width: 8, height: 11 });
+  addRoadVariantFrames(frames);
 
   return Promise.all(frames);
 }
@@ -947,6 +1216,27 @@ function setRect(data, x, y, width, height, value) {
   }
 }
 
+function applyRoadVariants(data) {
+  const road = gid("road");
+  const original = data.map((value) => value === road);
+  const isRoad = (x, y) => x >= 0 && x < COLS && y >= 0 && y < ROWS && original[y * COLS + x];
+
+  for (let y = 0; y < ROWS; y += 1) {
+    for (let x = 0; x < COLS; x += 1) {
+      if (!isRoad(x, y)) {
+        continue;
+      }
+
+      let mask = 0;
+      if (isRoad(x, y - 1)) mask |= 1;
+      if (isRoad(x + 1, y)) mask |= 2;
+      if (isRoad(x, y + 1)) mask |= 4;
+      if (isRoad(x - 1, y)) mask |= 8;
+      setTile(data, x, y, gid(`road_${mask}`));
+    }
+  }
+}
+
 function setChunk(data, prefix, x, y, width, height) {
   for (let row = 0; row < height; row += 1) {
     for (let col = 0; col < width; col += 1) {
@@ -1043,6 +1333,7 @@ function makeFarmMap() {
   setRect(ground, 23, 17, 7, 2, gid("road"));
   setRect(ground, 30, 8, 2, 12, gid("road"));
   setRect(ground, 23, 19, 9, 2, gid("road"));
+  applyRoadVariants(ground);
 
   const decor = emptyLayer();
   setRect(decor, 3, 2, 7, 2, gid("roofRed"));
@@ -1153,6 +1444,7 @@ function makeTownMap() {
   setRect(ground, 0, 14, 4, 3, gid("road"));
   setRect(ground, 4, 14, 34, 3, gid("road"));
   setRect(ground, 38, 14, 4, 3, gid("road"));
+  applyRoadVariants(ground);
 
   const decor = emptyLayer();
   setRect(decor, 16, 6, 10, 2, gid("roofGreen"));

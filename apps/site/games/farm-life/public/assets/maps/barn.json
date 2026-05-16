@@ -2540,11 +2540,11 @@
       "name": "farm-tiles",
       "image": "../sprites/farm-tiles.png",
       "imagewidth": 256,
-      "imageheight": 672,
+      "imageheight": 736,
       "tilewidth": 32,
       "tileheight": 32,
       "columns": 8,
-      "tilecount": 166
+      "tilecount": 182
     }
   ]
 }

@@ -2072,7 +2072,7 @@
         0,
         0,
         0,
-        0,
+        61,
         0,
         0,
         0,
@@ -2118,7 +2118,7 @@
         0,
         0,
         0,
-        0,
+        63,
         0,
         0,
         0,
@@ -2621,6 +2621,178 @@
           "width": 32,
           "height": 32,
           "properties": []
+        },
+        {
+          "id": 21,
+          "name": "forest-altar",
+          "type": "interaction",
+          "x": 608,
+          "y": 640,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "altar"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "林中祭坛"
+            }
+          ]
+        },
+        {
+          "id": 22,
+          "name": "forest-bonfire",
+          "type": "interaction",
+          "x": 736,
+          "y": 672,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "bonfire"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "营火"
+            }
+          ]
+        },
+        {
+          "id": 19,
+          "name": "forest-rabbit",
+          "type": "animal",
+          "x": 416,
+          "y": 512,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "rabbitBrown"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "林兔"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "林兔竖起耳朵，停了一下又钻回草丛。"
+            }
+          ]
+        },
+        {
+          "id": 20,
+          "name": "forest-fox",
+          "type": "animal",
+          "x": 896,
+          "y": 448,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "redFox"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "赤狐"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "赤狐绕着蘑菇走了一圈，像是在巡视这片深林。"
+            }
+          ]
+        },
+        {
+          "id": 23,
+          "name": "forest-deer",
+          "type": "animal",
+          "x": 512,
+          "y": 640,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "deerDoe"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "林鹿"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "林鹿在古树阴影里停步，鼻尖带着潮湿的草气。"
+            }
+          ]
+        },
+        {
+          "id": 24,
+          "name": "forest-crow",
+          "type": "animal",
+          "x": 1024,
+          "y": 288,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "crow"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "黑鸦"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "黑鸦偏着头看你，像是在记住今天的来客。"
+            }
+          ]
+        },
+        {
+          "id": 25,
+          "name": "forest-frog",
+          "type": "animal",
+          "x": 192,
+          "y": 224,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "frogBlue"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "蓝蛙"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "蓝蛙贴着水边一跳，叶面晃出一圈小水纹。"
+            }
+          ]
         }
       ]
     }
@@ -2631,11 +2803,11 @@
       "name": "farm-tiles",
       "image": "../sprites/farm-tiles.png",
       "imagewidth": 256,
-      "imageheight": 672,
+      "imageheight": 736,
       "tilewidth": 32,
       "tileheight": 32,
       "columns": 8,
-      "tilecount": 166
+      "tilecount": 178
     }
   ]
 }

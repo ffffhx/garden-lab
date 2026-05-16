@@ -1495,7 +1495,7 @@
         0,
         0,
         0,
-        0,
+        64,
         0,
         0,
         0,
@@ -1797,7 +1797,7 @@
         0,
         0,
         0,
-        0,
+        64,
         0,
         0,
         0,
@@ -1853,7 +1853,7 @@
         0,
         0,
         0,
-        0,
+        59,
         0,
         0,
         0,
@@ -1865,7 +1865,7 @@
         0,
         0,
         47,
-        0,
+        60,
         0,
         0,
         0,
@@ -2510,6 +2510,187 @@
           "width": 32,
           "height": 32,
           "properties": []
+        },
+        {
+          "id": 12,
+          "name": "beach-boat",
+          "type": "collision",
+          "x": 320,
+          "y": 480,
+          "width": 32,
+          "height": 32,
+          "properties": []
+        },
+        {
+          "id": 13,
+          "name": "beach-fish-point",
+          "type": "interaction",
+          "x": 704,
+          "y": 480,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "fish-point"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "鱼影"
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "beach-coconut-left",
+          "type": "collision",
+          "x": 960,
+          "y": 192,
+          "width": 32,
+          "height": 32,
+          "properties": []
+        },
+        {
+          "id": 15,
+          "name": "beach-coconut-right",
+          "type": "collision",
+          "x": 1216,
+          "y": 416,
+          "width": 32,
+          "height": 32,
+          "properties": []
+        },
+        {
+          "id": 17,
+          "name": "beach-coconut-tree-left",
+          "type": "fruit-tree",
+          "x": 960,
+          "y": 192,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "treeId",
+              "type": "string",
+              "value": "coconutTree"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "coconut"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "椰子树"
+            }
+          ]
+        },
+        {
+          "id": 18,
+          "name": "beach-coconut-tree-right",
+          "type": "fruit-tree",
+          "x": 1216,
+          "y": 416,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "treeId",
+              "type": "string",
+              "value": "coconutTree"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "coconut"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "椰子树"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "name": "beach-pelican",
+          "type": "animal",
+          "x": 416,
+          "y": 352,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "pelican"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "鹈鹕"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "鹈鹕站在沙地和水线之间，盯着浪花等鱼影。"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "beach-seagull",
+          "type": "animal",
+          "x": 832,
+          "y": 320,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "seagull"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "海鸥"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "海鸥扑了扑翅膀，把码头边的风声搅亮了。"
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "name": "beach-dolphin",
+          "type": "animal",
+          "x": 1056,
+          "y": 480,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "blueDolphin"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "蓝海豚"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "蓝海豚在浅水边露出背鳍，像把浪花往岸边轻轻推了一下。"
+            }
+          ]
         }
       ]
     }
@@ -2520,11 +2701,11 @@
       "name": "farm-tiles",
       "image": "../sprites/farm-tiles.png",
       "imagewidth": 256,
-      "imageheight": 672,
+      "imageheight": 736,
       "tilewidth": 32,
       "tileheight": 32,
       "columns": 8,
-      "tilecount": 166
+      "tilecount": 178
     }
   ]
 }

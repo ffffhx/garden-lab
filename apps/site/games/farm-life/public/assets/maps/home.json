@@ -2552,6 +2552,32 @@
               "value": "down"
             }
           ]
+        },
+        {
+          "id": 12,
+          "name": "home-cat",
+          "type": "animal",
+          "x": 480,
+          "y": 480,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "catGinger"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "橘猫"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "橘猫在桌边绕了一圈，像是确认这间小屋终于有人住了。"
+            }
+          ]
         }
       ]
     }
@@ -2562,11 +2588,11 @@
       "name": "farm-tiles",
       "image": "../sprites/farm-tiles.png",
       "imagewidth": 256,
-      "imageheight": 672,
+      "imageheight": 736,
       "tilewidth": 32,
       "tileheight": 32,
       "columns": 8,
-      "tilecount": 166
+      "tilecount": 178
     }
   ]
 }

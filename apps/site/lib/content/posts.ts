@@ -23,6 +23,10 @@ import type {
 import { formatDate, parseDateInput } from "@/lib/utils/date";
 
 const POSTS_ROOT = path.join(process.cwd(), "source", "_posts");
+const ARTICLE_CATEGORY_KEYS = new Set<CategoryKey>([
+  CATEGORY_DEFINITIONS.tech.key,
+  CATEGORY_DEFINITIONS.fitness.key,
+]);
 
 let cachedPosts: Post[] | null = null;
 
@@ -111,6 +115,22 @@ function toSummary(post: Post): PostSummary {
   };
 }
 
+function hasDailyNewsCategory(post: Pick<PostSummary, "categories">) {
+  return post.categories.includes(CATEGORY_DEFINITIONS.dailyNews.key);
+}
+
+function hasArticleCategory(post: Pick<PostSummary, "categories">) {
+  return post.categories.some((category) => ARTICLE_CATEGORY_KEYS.has(category));
+}
+
+export function isArticlePost(post: Pick<PostSummary, "categories">) {
+  return hasArticleCategory(post) && !hasDailyNewsCategory(post);
+}
+
+export function isDailyNewsPost(post: Pick<PostSummary, "categories">) {
+  return hasDailyNewsCategory(post);
+}
+
 function loadPosts() {
   const markdownFiles = walkMarkdownFiles(POSTS_ROOT);
   const takenSlugs = new Set<string>();
@@ -165,6 +185,14 @@ function getPostRecords() {
 
 export function getAllPosts() {
   return getPostRecords().map(toSummary);
+}
+
+export function getArticlePosts() {
+  return getPostRecords().filter(isArticlePost).map(toSummary);
+}
+
+export function getDailyNewsPosts() {
+  return getPostRecords().filter(isDailyNewsPost).map(toSummary);
 }
 
 export function getAllPostSlugs() {

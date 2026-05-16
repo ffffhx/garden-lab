@@ -144,7 +144,7 @@ const VIEW_WIDTH = 1280;
 const VIEW_HEIGHT = 720;
 const HUD_MARGIN = 18;
 const HOTBAR_HEIGHT = 72;
-const UI_FONT = "Inter, PingFang SC, Microsoft YaHei, sans-serif";
+const UI_FONT = "Courier New, PingFang SC, Microsoft YaHei, monospace";
 const SAVE_KEY = "farm-life-mvp-save-v2";
 const AUDIO_KEY = "farm-life-mvp-audio";
 const MAX_ENERGY = 100;
@@ -187,6 +187,18 @@ const TILE_FRAMES = {
   crate: 50,
   mineCrystal: 51,
   templeStatue: 52,
+  well: 53,
+  scarecrow: 54,
+  beehive: 55,
+  cheesePress: 56,
+  butterChurn: 57,
+  beachBoat: 58,
+  beachFishPoint: 59,
+  deepForestAltar: 60,
+  mineLamp: 61,
+  bonfire: 62,
+  coconutTree: 63,
+  jamMaker: 64,
 } as const;
 
 const CHARACTER_FRAMES = {
@@ -208,12 +220,6 @@ const CHARACTER_FRAMES = {
   elder: 15,
 } as const;
 
-const CROP_FRAME_OFFSET = {
-  turnip: 0,
-  wheat: 4,
-  potato: 8,
-} as const;
-
 const ICON_FRAMES = {
   hoe: 0,
   seedBag: 1,
@@ -222,22 +228,113 @@ const ICON_FRAMES = {
   turnip: 4,
   wheat: 5,
   potato: 6,
-  coin: 7,
-  sun: 8,
-  rain: 9,
-  mist: 10,
-  energy: 11,
-  order: 12,
-  heart: 13,
-  soundOn: 14,
-  soundOff: 15,
-  berry: 16,
-  mushroom: 17,
-  wildFlower: 18,
-  fishingRod: 19,
-  creekFish: 20,
-  carp: 21,
-  silverFish: 22,
+  asparagus: 7,
+  blueberry: 8,
+  broccoli: 9,
+  cabbage: 10,
+  carrot: 11,
+  cauliflower: 12,
+  onion: 13,
+  rice: 14,
+  springOnion: 15,
+  strawberry: 16,
+  adzukiBean: 17,
+  bellPepper: 18,
+  blackberry: 19,
+  cucumber: 20,
+  greenBeans: 21,
+  hotPepper: 22,
+  melon: 23,
+  pineapple: 24,
+  sunflower: 25,
+  tomato: 26,
+  watermelon: 27,
+  aloe: 28,
+  beetroot: 29,
+  corn: 30,
+  eggplant: 31,
+  grapes: 32,
+  pumpkin: 33,
+  coin: 34,
+  sun: 35,
+  rain: 36,
+  mist: 37,
+  energy: 38,
+  order: 39,
+  heart: 40,
+  soundOn: 41,
+  soundOff: 42,
+  berry: 43,
+  mushroom: 44,
+  wildFlower: 45,
+  fishingRod: 46,
+  creekFish: 47,
+  carp: 48,
+  silverFish: 49,
+  sturgeon: 50,
+  sunfish: 51,
+  redSnapper: 52,
+  tuna: 53,
+  clownfish: 54,
+  crab: 55,
+  chickenEgg: 56,
+  duckEgg: 57,
+  cowMilk: 58,
+  goatMilk: 59,
+  wool: 60,
+  truffle: 61,
+  ostrichEgg: 62,
+  honey: 63,
+  cheese: 64,
+  butter: 65,
+  jam: 66,
+  apple: 67,
+  apricot: 68,
+  cherry: 69,
+  banana: 70,
+  mango: 71,
+  orange: 72,
+  peach: 73,
+  coconut: 74,
+} as const;
+
+const ANIMAL_FRAMES = {
+  chickenRed: 0,
+  duckWhite: 1,
+  goatBrown: 2,
+  sheepWhite: 3,
+  pigPink: 4,
+  ostrichBrown: 5,
+  rabbitBrown: 6,
+  redFox: 7,
+  pelican: 8,
+  seagull: 9,
+  cowBrown: 10,
+  horseBrown: 11,
+  deerDoe: 12,
+  crow: 13,
+  frogBlue: 14,
+  blueDolphin: 15,
+  catGinger: 16,
+  dogBrown: 17,
+} as const;
+
+const FRUIT_TREE_FRAMES = {
+  appleTree: 0,
+  apricotTree: 1,
+  cherryTree: 2,
+  bananaTree: 3,
+  mangoTree: 4,
+  orangeTree: 5,
+  peachTree: 6,
+  coconutTree: 7,
+} as const;
+
+const ENEMY_FRAMES = {
+  blueSlime: 0,
+  sproutSlime: 1,
+  purpleMyconid: 2,
+  spikePlant: 3,
 } as const;
 
 const CROPS = {
@@ -247,6 +344,7 @@ const CROPS = {
     seedPrice: 10,
     sellPrice: 24,
     growDays: 2,
+    season: "spring",
   },
   wheat: {
     name: "小麦",
@@ -254,6 +352,7 @@ const CROPS = {
     seedPrice: 15,
     sellPrice: 38,
     growDays: 3,
+    season: "summer",
   },
   potato: {
     name: "土豆",
@@ -261,6 +360,223 @@ const CROPS = {
     seedPrice: 20,
     sellPrice: 56,
     growDays: 4,
+    season: "spring",
+  },
+  asparagus: {
+    name: "芦笋",
+    seedName: "芦笋种子",
+    seedPrice: 16,
+    sellPrice: 42,
+    growDays: 3,
+    season: "spring",
+  },
+  blueberry: {
+    name: "蓝莓",
+    seedName: "蓝莓种子",
+    seedPrice: 28,
+    sellPrice: 72,
+    growDays: 5,
+    season: "spring",
+  },
+  broccoli: {
+    name: "西兰花",
+    seedName: "西兰花种子",
+    seedPrice: 22,
+    sellPrice: 58,
+    growDays: 4,
+    season: "spring",
+  },
+  cabbage: {
+    name: "卷心菜",
+    seedName: "卷心菜种子",
+    seedPrice: 18,
+    sellPrice: 46,
+    growDays: 3,
+    season: "spring",
+  },
+  carrot: {
+    name: "胡萝卜",
+    seedName: "胡萝卜种子",
+    seedPrice: 12,
+    sellPrice: 30,
+    growDays: 2,
+    season: "spring",
+  },
+  cauliflower: {
+    name: "花椰菜",
+    seedName: "花椰菜种子",
+    seedPrice: 24,
+    sellPrice: 68,
+    growDays: 5,
+    season: "spring",
+  },
+  onion: {
+    name: "洋葱",
+    seedName: "洋葱种子",
+    seedPrice: 14,
+    sellPrice: 36,
+    growDays: 3,
+    season: "spring",
+  },
+  rice: {
+    name: "水稻",
+    seedName: "水稻种子",
+    seedPrice: 18,
+    sellPrice: 48,
+    growDays: 4,
+    season: "spring",
+  },
+  springOnion: {
+    name: "青葱",
+    seedName: "青葱种子",
+    seedPrice: 10,
+    sellPrice: 26,
+    growDays: 2,
+    season: "spring",
+  },
+  strawberry: {
+    name: "草莓",
+    seedName: "草莓种子",
+    seedPrice: 30,
+    sellPrice: 78,
+    growDays: 5,
+    season: "spring",
+  },
+  adzukiBean: {
+    name: "红豆",
+    seedName: "红豆种子",
+    seedPrice: 18,
+    sellPrice: 46,
+    growDays: 3,
+    season: "summer",
+  },
+  bellPepper: {
+    name: "甜椒",
+    seedName: "甜椒种子",
+    seedPrice: 20,
+    sellPrice: 52,
+    growDays: 4,
+    season: "summer",
+  },
+  blackberry: {
+    name: "黑莓",
+    seedName: "黑莓种子",
+    seedPrice: 26,
+    sellPrice: 70,
+    growDays: 5,
+    season: "summer",
+  },
+  cucumber: {
+    name: "黄瓜",
+    seedName: "黄瓜种子",
+    seedPrice: 16,
+    sellPrice: 42,
+    growDays: 3,
+    season: "summer",
+  },
+  greenBeans: {
+    name: "四季豆",
+    seedName: "四季豆种子",
+    seedPrice: 18,
+    sellPrice: 50,
+    growDays: 4,
+    season: "summer",
+  },
+  hotPepper: {
+    name: "辣椒",
+    seedName: "辣椒种子",
+    seedPrice: 14,
+    sellPrice: 38,
+    growDays: 3,
+    season: "summer",
+  },
+  melon: {
+    name: "甜瓜",
+    seedName: "甜瓜种子",
+    seedPrice: 32,
+    sellPrice: 92,
+    growDays: 6,
+    season: "summer",
+  },
+  pineapple: {
+    name: "菠萝",
+    seedName: "菠萝种子",
+    seedPrice: 34,
+    sellPrice: 96,
+    growDays: 6,
+    season: "summer",
+  },
+  sunflower: {
+    name: "向日葵",
+    seedName: "向日葵种子",
+    seedPrice: 24,
+    sellPrice: 64,
+    growDays: 5,
+    season: "summer",
+  },
+  tomato: {
+    name: "番茄",
+    seedName: "番茄种子",
+    seedPrice: 18,
+    sellPrice: 44,
+    growDays: 3,
+    season: "summer",
+  },
+  watermelon: {
+    name: "西瓜",
+    seedName: "西瓜种子",
+    seedPrice: 36,
+    sellPrice: 104,
+    growDays: 6,
+    season: "summer",
+  },
+  aloe: {
+    name: "芦荟",
+    seedName: "芦荟种子",
+    seedPrice: 18,
+    sellPrice: 48,
+    growDays: 3,
+    season: "autumn",
+  },
+  beetroot: {
+    name: "甜菜根",
+    seedName: "甜菜根种子",
+    seedPrice: 16,
+    sellPrice: 44,
+    growDays: 3,
+    season: "autumn",
+  },
+  corn: {
+    name: "玉米",
+    seedName: "玉米种子",
+    seedPrice: 22,
+    sellPrice: 58,
+    growDays: 4,
+    season: "autumn",
+  },
+  eggplant: {
+    name: "茄子",
+    seedName: "茄子种子",
+    seedPrice: 18,
+    sellPrice: 52,
+    growDays: 4,
+    season: "autumn",
+  },
+  grapes: {
+    name: "葡萄",
+    seedName: "葡萄种子",
+    seedPrice: 30,
+    sellPrice: 84,
+    growDays: 5,
+    season: "autumn",
+  },
+  pumpkin: {
+    name: "南瓜",
+    seedName: "南瓜种子",
+    seedPrice: 36,
+    sellPrice: 112,
+    growDays: 6,
+    season: "autumn",
   },
 } as const;
 
@@ -297,6 +613,252 @@ const FISH = {
     name: "银鳞鱼",
     sellPrice: 72,
     icon: "silverFish",
+  },
+  sturgeon: {
+    name: "鲟鱼",
+    sellPrice: 104,
+    icon: "sturgeon",
+  },
+  sunfish: {
+    name: "太阳鱼",
+    sellPrice: 40,
+    icon: "sunfish",
+  },
+  redSnapper: {
+    name: "红鲷鱼",
+    sellPrice: 76,
+    icon: "redSnapper",
+  },
+  tuna: {
+    name: "金枪鱼",
+    sellPrice: 96,
+    icon: "tuna",
+  },
+  clownfish: {
+    name: "小丑鱼",
+    sellPrice: 58,
+    icon: "clownfish",
+  },
+  crab: {
+    name: "海蟹",
+    sellPrice: 88,
+    icon: "crab",
+  },
+} as const;
+
+const PRODUCTS = {
+  chickenEgg: {
+    name: "鸡蛋",
+    sellPrice: 32,
+    icon: "chickenEgg",
+  },
+  duckEgg: {
+    name: "鸭蛋",
+    sellPrice: 38,
+    icon: "duckEgg",
+  },
+  cowMilk: {
+    name: "牛奶",
+    sellPrice: 48,
+    icon: "cowMilk",
+  },
+  goatMilk: {
+    name: "山羊奶",
+    sellPrice: 54,
+    icon: "goatMilk",
+  },
+  wool: {
+    name: "羊毛",
+    sellPrice: 62,
+    icon: "wool",
+  },
+  truffle: {
+    name: "松露",
+    sellPrice: 96,
+    icon: "truffle",
+  },
+  ostrichEgg: {
+    name: "鸵鸟蛋",
+    sellPrice: 118,
+    icon: "ostrichEgg",
+  },
+  honey: {
+    name: "蜂蜜",
+    sellPrice: 72,
+    icon: "honey",
+  },
+  cheese: {
+    name: "奶酪",
+    sellPrice: 88,
+    icon: "cheese",
+  },
+  butter: {
+    name: "黄油",
+    sellPrice: 76,
+    icon: "butter",
+  },
+  jam: {
+    name: "果酱",
+    sellPrice: 104,
+    icon: "jam",
+  },
+  apple: {
+    name: "苹果",
+    sellPrice: 46,
+    icon: "apple",
+  },
+  apricot: {
+    name: "杏子",
+    sellPrice: 48,
+    icon: "apricot",
+  },
+  cherry: {
+    name: "樱桃",
+    sellPrice: 52,
+    icon: "cherry",
+  },
+  banana: {
+    name: "香蕉",
+    sellPrice: 54,
+    icon: "banana",
+  },
+  mango: {
+    name: "芒果",
+    sellPrice: 68,
+    icon: "mango",
+  },
+  orange: {
+    name: "橙子",
+    sellPrice: 56,
+    icon: "orange",
+  },
+  peach: {
+    name: "桃子",
+    sellPrice: 60,
+    icon: "peach",
+  },
+  coconut: {
+    name: "椰子",
+    sellPrice: 64,
+    icon: "coconut",
+  },
+} as const;
+
+const ANIMALS = {
+  chickenRed: {
+    name: "红羽鸡",
+    product: "chickenEgg",
+  },
+  duckWhite: {
+    name: "白鸭",
+    product: "duckEgg",
+  },
+  goatBrown: {
+    name: "褐山羊",
+    product: "goatMilk",
+  },
+  sheepWhite: {
+    name: "白绵羊",
+    product: "wool",
+  },
+  pigPink: {
+    name: "粉猪",
+    product: "truffle",
+  },
+  ostrichBrown: {
+    name: "褐鸵鸟",
+    product: "ostrichEgg",
+  },
+  cowBrown: {
+    name: "褐奶牛",
+    product: "cowMilk",
+  },
+  horseBrown: {
+    name: "栗色马",
+  },
+  rabbitBrown: {
+    name: "林兔",
+  },
+  redFox: {
+    name: "赤狐",
+  },
+  pelican: {
+    name: "鹈鹕",
+  },
+  seagull: {
+    name: "海鸥",
+  },
+  deerDoe: {
+    name: "林鹿",
+  },
+  crow: {
+    name: "黑鸦",
+  },
+  frogBlue: {
+    name: "蓝蛙",
+  },
+  blueDolphin: {
+    name: "蓝海豚",
+  },
+  catGinger: {
+    name: "橘猫",
+  },
+  dogBrown: {
+    name: "山居犬",
+  },
+} as const;
+
+const FRUIT_TREES = {
+  appleTree: {
+    name: "苹果树",
+    product: "apple",
+  },
+  apricotTree: {
+    name: "杏树",
+    product: "apricot",
+  },
+  cherryTree: {
+    name: "樱桃树",
+    product: "cherry",
+  },
+  bananaTree: {
+    name: "香蕉树",
+    product: "banana",
+  },
+  mangoTree: {
+    name: "芒果树",
+    product: "mango",
+  },
+  orangeTree: {
+    name: "橙树",
+    product: "orange",
+  },
+  peachTree: {
+    name: "桃树",
+    product: "peach",
+  },
+  coconutTree: {
+    name: "椰子树",
+    product: "coconut",
+  },
+} as const;
+
+const ENEMIES = {
+  blueSlime: {
+    name: "蓝史莱姆",
+    rewardGold: 18,
+  },
+  sproutSlime: {
+    name: "芽史莱姆",
+    rewardGold: 24,
+  },
+  purpleMyconid: {
+    name: "紫菇卫",
+    rewardGold: 36,
+  },
+  spikePlant: {
+    name: "刺芽",
+    rewardGold: 42,
   },
 } as const;
 
@@ -339,17 +901,22 @@ const SEASONS = {
 } as const;
 
 type CropId = keyof typeof CROPS;
+type CropSeasonId = (typeof CROPS)[CropId]["season"];
 type ForageId = keyof typeof FORAGE;
 type FishId = keyof typeof FISH;
+type ProductId = keyof typeof PRODUCTS;
+type AnimalId = keyof typeof ANIMALS;
+type FruitTreeId = keyof typeof FRUIT_TREES;
+type EnemyId = keyof typeof ENEMIES;
 type WeatherId = keyof typeof WEATHER;
 type SeasonId = keyof typeof SEASONS;
 type ToolId = "hoe" | "seed" | "water" | "harvest" | "fish";
-type HotbarId = ToolId | `seed:${CropId}`;
+type HotbarId = ToolId | "selected-seed" | "prev-seed" | "next-seed";
 type PlaceId = "farm" | "home" | "town" | "shop" | "deepForest" | "beach" | "cave" | "dungeon" | "temple" | "barn";
 type Direction = "up" | "down" | "left" | "right";
-type ItemId = `${CropId}_seed` | `${CropId}_crop` | `${ForageId}_forage` | `${FishId}_fish`;
+type ItemId = `${CropId}_seed` | `${CropId}_crop` | `${ForageId}_forage` | `${FishId}_fish` | `${ProductId}_product`;
 type NpcId = "shopkeeper" | "liang" | "auntChen" | "elder";
-type GiftCategory = "crop" | "forage" | "fish";
+type GiftCategory = "crop" | "forage" | "fish" | "product";
 type SfxId = "step" | "hoe" | "seed" | "water" | "harvest" | "fish" | "coin" | "menu" | "day" | "ambient";
 
 type PlotState = {
@@ -388,8 +955,13 @@ type FarmSave = {
   shipping: Partial<Record<CropId, number>>;
   forageShipping: Partial<Record<ForageId, number>>;
   fishShipping: Partial<Record<FishId, number>>;
+  productShipping: Partial<Record<ProductId, number>>;
   stats: FarmStats;
   collectedForage: Partial<Record<string, number>>;
+  caredForAnimals: Partial<Record<string, number>>;
+  harvestedFruitTrees: Partial<Record<string, number>>;
+  clearedEnemies: Partial<Record<string, number>>;
+  usedWorkbenches: Partial<Record<string, number>>;
   plots: Record<string, PlotState>;
   friendship: Partial<Record<NpcId, number>>;
   talkedToNpcs: Partial<Record<NpcId, number>>;
@@ -563,17 +1135,53 @@ type StoryQuestDefinition = {
 
 type ForageSpawn = {
   id: ForageId;
-  place: "farm" | "town";
+  place: Extract<PlaceId, "farm" | "town" | "deepForest" | "beach" | "cave">;
   x: number;
   y: number;
+};
+
+type AnimalInteraction = {
+  object: TiledObject;
+  id: AnimalId;
+  name: string;
+  productId?: ProductId;
+  x: number;
+  y: number;
+  line?: string;
+};
+
+type FruitTreeInteraction = {
+  object: TiledObject;
+  id: FruitTreeId;
+  name: string;
+  productId: ProductId;
+  x: number;
+  y: number;
+};
+
+type EnemyInteraction = {
+  object: TiledObject;
+  id: EnemyId;
+  name: string;
+  rewardGold: number;
+  x: number;
+  y: number;
+  line?: string;
 };
 
 const cropIds = Object.keys(CROPS) as CropId[];
 const forageIds = Object.keys(FORAGE) as ForageId[];
 const fishIds = Object.keys(FISH) as FishId[];
+const productIds = Object.keys(PRODUCTS) as ProductId[];
+const animalIds = Object.keys(ANIMALS) as AnimalId[];
+const fruitTreeIds = Object.keys(FRUIT_TREES) as FruitTreeId[];
+const enemyIds = Object.keys(ENEMIES) as EnemyId[];
 const npcIds: NpcId[] = ["shopkeeper", "liang", "auntChen", "elder"];
+const CROP_FRAME_OFFSET = Object.fromEntries(cropIds.map((cropId, index) => [cropId, index * 4])) as Record<CropId, number>;
 
-const forageSpawnPoints: Record<"farm" | "town", TilePoint[]> = {
+const winterMarketCropIds: CropId[] = ["turnip", "potato", "wheat", "aloe", "carrot", "pumpkin"];
+
+const forageSpawnPoints: Record<ForageSpawn["place"], TilePoint[]> = {
   farm: [
     { x: 3, y: 15 },
     { x: 7, y: 3 },
@@ -594,6 +1202,25 @@ const forageSpawnPoints: Record<"farm" | "town", TilePoint[]> = {
     { x: 36, y: 24 },
     { x: 24, y: 22 },
   ],
+  deepForest: [
+    { x: 7, y: 18 },
+    { x: 13, y: 17 },
+    { x: 21, y: 6 },
+    { x: 27, y: 15 },
+    { x: 33, y: 14 },
+    { x: 36, y: 22 },
+  ],
+  beach: [
+    { x: 6, y: 14 },
+    { x: 12, y: 10 },
+    { x: 27, y: 8 },
+    { x: 30, y: 6 },
+  ],
+  cave: [
+    { x: 10, y: 18 },
+    { x: 18, y: 15 },
+    { x: 31, y: 20 },
+  ],
 };
 
 const seasonalForage: Record<SeasonId, ForageId[]> = {
@@ -601,6 +1228,29 @@ const seasonalForage: Record<SeasonId, ForageId[]> = {
   summer: ["berry", "wildFlower"],
   autumn: ["mushroom", "berry"],
   winter: ["mushroom"],
+};
+
+const fishPoolsByPlace: Partial<Record<PlaceId, Record<Exclude<FishingCatchTier, "miss">, FishId[]>>> = {
+  farm: {
+    common: ["creekFish", "sunfish"],
+    good: ["carp"],
+    rare: ["silverFish", "sturgeon"],
+  },
+  deepForest: {
+    common: ["creekFish", "sunfish"],
+    good: ["carp"],
+    rare: ["sturgeon", "silverFish"],
+  },
+  cave: {
+    common: ["silverFish"],
+    good: ["sturgeon"],
+    rare: ["crab"],
+  },
+  beach: {
+    common: ["redSnapper", "clownfish"],
+    good: ["tuna"],
+    rare: ["crab"],
+  },
 };
 
 const toolLabels: Record<ToolId, string> = {
@@ -654,11 +1304,11 @@ const npcGiftPreferences: Record<NpcId, { loves: GiftCategory[]; line: string }>
     line: "阿良最喜欢听水边带回来的故事。",
   },
   auntChen: {
-    loves: ["forage"],
-    line: "陈婶总能把野味做成温暖的饭。",
+    loves: ["forage", "product"],
+    line: "陈婶总能把山里收成做成温暖的饭。",
   },
   elder: {
-    loves: ["crop", "forage"],
+    loves: ["crop", "forage", "product"],
     line: "老周喜欢带着土地气息的礼物。",
   },
 };
@@ -1007,8 +1657,46 @@ function fishItem(fishId: FishId): ItemId {
   return `${fishId}_fish`;
 }
 
+function productItem(productId: ProductId): ItemId {
+  return `${productId}_product`;
+}
+
 function forageKey(day: number, place: PlaceId, forageId: ForageId, x: number, y: number) {
   return `${day}:${place}:${forageId}:${x},${y}`;
+}
+
+function animalKey(day: number, place: PlaceId, animalId: AnimalId, x: number, y: number) {
+  return `${day}:${place}:${animalId}:${x},${y}`;
+}
+
+function fruitTreeKey(day: number, place: PlaceId, treeId: FruitTreeId, x: number, y: number) {
+  return `${day}:${place}:${treeId}:${x},${y}`;
+}
+
+function enemyKey(day: number, place: PlaceId, enemyId: EnemyId, x: number, y: number) {
+  return `${day}:${place}:${enemyId}:${x},${y}`;
+}
+
+function workbenchKey(day: number, place: PlaceId, action: string, x: number, y: number) {
+  return `${day}:${place}:${action}:${x},${y}`;
+}
+
+function marketCropIdsForSeason(season: SeasonId) {
+  if (season === "winter") {
+    return winterMarketCropIds;
+  }
+
+  return cropIds.filter((cropId) => CROPS[cropId].season === season);
+}
+
+function seasonNameForCrop(cropId: CropId) {
+  const names: Record<CropSeasonId, string> = {
+    spring: "春",
+    summer: "夏",
+    autumn: "秋",
+  };
+
+  return names[CROPS[cropId].season];
 }
 
 function createInitialPlots() {
@@ -1029,7 +1717,8 @@ function createInitialPlots() {
 
 function createDailyOrder(day: number): DailyOrder {
   const normalizedDay = Math.max(1, Math.floor(day));
-  const cropId = cropIds[(normalizedDay - 1) % cropIds.length];
+  const marketCrops = marketCropIdsForSeason(seasonForDay(normalizedDay));
+  const cropId = marketCrops[(normalizedDay - 1) % marketCrops.length] ?? cropIds[(normalizedDay - 1) % cropIds.length];
   const count = 2 + ((normalizedDay * 7) % 4);
   const marketBonus = seasonDayFor(normalizedDay) === 3 ? 42 : 0;
   const reward = count * CROPS[cropId].sellPrice + 18 + ((normalizedDay * 11) % 12) + marketBonus;
@@ -1065,6 +1754,7 @@ function createDefaultSave(): FarmSave {
     shipping: {},
     forageShipping: {},
     fishShipping: {},
+    productShipping: {},
     stats: {
       totalShipped: 0,
       totalShippingIncome: 0,
@@ -1074,6 +1764,10 @@ function createDefaultSave(): FarmSave {
       bestOrderStreak: 0,
     },
     collectedForage: {},
+    caredForAnimals: {},
+    harvestedFruitTrees: {},
+    clearedEnemies: {},
+    usedWorkbenches: {},
     plots: createInitialPlots(),
     friendship: {},
     talkedToNpcs: {},
@@ -1101,6 +1795,22 @@ function isForageId(value: unknown): value is ForageId {
 
 function isFishId(value: unknown): value is FishId {
   return typeof value === "string" && value in FISH;
+}
+
+function isProductId(value: unknown): value is ProductId {
+  return typeof value === "string" && value in PRODUCTS;
+}
+
+function isAnimalId(value: unknown): value is AnimalId {
+  return typeof value === "string" && value in ANIMALS;
+}
+
+function isFruitTreeId(value: unknown): value is FruitTreeId {
+  return typeof value === "string" && value in FRUIT_TREES;
+}
+
+function isEnemyId(value: unknown): value is EnemyId {
+  return typeof value === "string" && value in ENEMIES;
 }
 
 function isToolId(value: unknown): value is ToolId {
@@ -1213,7 +1923,11 @@ function itemName(itemId: ItemId) {
     return FORAGE[itemId.replace("_forage", "") as ForageId].name;
   }
 
-  return FISH[itemId.replace("_fish", "") as FishId].name;
+  if (itemId.endsWith("_fish")) {
+    return FISH[itemId.replace("_fish", "") as FishId].name;
+  }
+
+  return PRODUCTS[itemId.replace("_product", "") as ProductId].name;
 }
 
 function itemIcon(itemId: ItemId) {
@@ -1225,7 +1939,11 @@ function itemIcon(itemId: ItemId) {
     return ICON_FRAMES[FORAGE[itemId.replace("_forage", "") as ForageId].icon];
   }
 
-  return ICON_FRAMES[FISH[itemId.replace("_fish", "") as FishId].icon];
+  if (itemId.endsWith("_fish")) {
+    return ICON_FRAMES[FISH[itemId.replace("_fish", "") as FishId].icon];
+  }
+
+  return ICON_FRAMES[PRODUCTS[itemId.replace("_product", "") as ProductId].icon];
 }
 
 function sanitizeDailyOrder(value: Partial<DailyOrder> | undefined, day: number) {
@@ -1412,6 +2130,22 @@ class FarmLifeScene extends Phaser.Scene {
       frameWidth: TILE,
       frameHeight: TILE,
     });
+    this.load.spritesheet("animals", "assets/sprites/animals.png", {
+      frameWidth: TILE,
+      frameHeight: TILE,
+    });
+    this.load.spritesheet("fruitTrees", "assets/sprites/fruit-trees.png", {
+      frameWidth: 48,
+      frameHeight: 48,
+    });
+    this.load.spritesheet("enemies", "assets/sprites/enemies.png", {
+      frameWidth: TILE,
+      frameHeight: TILE,
+    });
+    this.load.image("ui-panel", "assets/ui/panel-light.png");
+    this.load.image("ui-slot", "assets/ui/slot.png");
+    this.load.image("ui-button", "assets/ui/button-amber.png");
+    this.load.image("ui-button-light", "assets/ui/button-light.png");
     this.load.json("map-farm", "assets/maps/farm.json");
     this.load.json("map-home", "assets/maps/home.json");
     this.load.json("map-town", "assets/maps/town.json");
@@ -1512,11 +2246,11 @@ class FarmLifeScene extends Phaser.Scene {
     } else if (this.justDown(this.keys.five)) {
       this.selectTool("fish");
     } else if (this.justDown(this.keys.six)) {
-      this.selectSeed("turnip");
+      this.cycleSeed(-1);
     } else if (this.justDown(this.keys.seven)) {
-      this.selectSeed("wheat");
+      this.selectSeed(this.save.selectedSeed);
     } else if (this.justDown(this.keys.eight)) {
-      this.selectSeed("potato");
+      this.cycleSeed(1);
     } else if (this.justDown(this.keys.r)) {
       this.eatBestSnack();
       return;
@@ -1681,11 +2415,15 @@ class FarmLifeScene extends Phaser.Scene {
       (sum, fishId) => sum + clampCount(this.save.fishShipping[fishId]) * FISH[fishId].sellPrice,
       0,
     );
+    const productIncome = productIds.reduce(
+      (sum, productId) => sum + clampCount(this.save.productShipping[productId]) * PRODUCTS[productId].sellPrice,
+      0,
+    );
     const shippedForOrder = clampCount(this.save.shipping[order.cropId]);
     const nextStreakBonus = orderStreakBonus(this.save.stats.currentOrderStreak + 1);
 
     return shippingPreview({
-      sellableIncome: cropIncome + forageIncome + fishIncome,
+      sellableIncome: cropIncome + forageIncome + fishIncome + productIncome,
       orderAccepted: order.accepted,
       orderCompleted: order.completed,
       shippedForOrder,
@@ -1759,11 +2497,18 @@ class FarmLifeScene extends Phaser.Scene {
           FISH[fishId].sellPrice,
       0,
     );
+    const productIncome = productIds.reduce(
+      (sum, productId) =>
+        sum +
+        (clampCount(this.save.inventory[productItem(productId)]) + clampCount(this.save.productShipping[productId])) *
+          PRODUCTS[productId].sellPrice,
+      0,
+    );
     const shippedForOrder = this.currentOrderAvailableCount(order);
     const nextStreakBonus = orderStreakBonus(this.save.stats.currentOrderStreak + 1);
 
     return shippingPreview({
-      sellableIncome: cropIncome + forageIncome + fishIncome,
+      sellableIncome: cropIncome + forageIncome + fishIncome + productIncome,
       orderAccepted: order.accepted,
       orderCompleted: order.completed,
       shippedForOrder,
@@ -1958,8 +2703,15 @@ class FarmLifeScene extends Phaser.Scene {
         fishShipping: {
           ...(parsed.fishShipping ?? {}),
         },
+        productShipping: {
+          ...(parsed.productShipping ?? {}),
+        },
         stats: sanitizeFarmStats(parsed.stats),
         collectedForage: sanitizeForageRecord(parsed.collectedForage, day),
+        caredForAnimals: sanitizeForageRecord(parsed.caredForAnimals, day),
+        harvestedFruitTrees: sanitizeForageRecord(parsed.harvestedFruitTrees, day),
+        clearedEnemies: sanitizeForageRecord(parsed.clearedEnemies, day),
+        usedWorkbenches: sanitizeForageRecord(parsed.usedWorkbenches, day),
         plots: {
           ...fallback.plots,
           ...(parsed.plots ?? {}),
@@ -2202,6 +2954,9 @@ class FarmLifeScene extends Phaser.Scene {
     this.renderMap();
     this.renderCrops();
     this.renderForage();
+    this.renderFruitTrees();
+    this.renderAnimals();
+    this.renderEnemies();
     this.renderNpcs();
     this.renderPlayer();
     this.setupCamera();
@@ -2389,27 +3144,246 @@ class FarmLifeScene extends Phaser.Scene {
   }
 
   private forageSpawns(place = this.save.player.place): ForageSpawn[] {
-    if (place !== "farm" && place !== "town") {
+    if (!(place in forageSpawnPoints)) {
       return [];
     }
 
     const pool = seasonalForage[this.currentSeason()];
-    const placeBias = place === "town" ? 7 : 3;
+    const placeBiasByPlace: Record<ForageSpawn["place"], number> = {
+      farm: 3,
+      town: 7,
+      deepForest: 11,
+      beach: 13,
+      cave: 17,
+    };
+    const spawnPlace = place as ForageSpawn["place"];
+    const placeBias = placeBiasByPlace[spawnPlace];
 
-    return forageSpawnPoints[place]
+    return forageSpawnPoints[spawnPlace]
       .map((point, index) => ({
         id: pool[(this.save.day + index + placeBias) % pool.length],
-        place,
+        place: spawnPlace,
         x: point.x,
         y: point.y,
       }))
       .filter((_spawn, index) => ((this.save.day * 23 + index * 11 + placeBias) % 10) < 7)
-      .slice(0, place === "farm" ? 4 : 5)
+      .slice(0, spawnPlace === "farm" ? 4 : spawnPlace === "cave" ? 2 : 5)
       .filter((spawn) => !this.save.collectedForage[forageKey(this.save.day, spawn.place, spawn.id, spawn.x, spawn.y)]);
   }
 
   private forageAt(x: number, y: number) {
     return this.forageSpawns().find((spawn) => spawn.x === x && spawn.y === y);
+  }
+
+  private renderFruitTrees() {
+    for (const tree of this.getObjects(this.save.player.place, "fruit-tree")) {
+      const interaction = this.fruitTreeInteractionFromObject(tree);
+
+      if (!interaction) {
+        continue;
+      }
+
+      const harvested = Boolean(
+        this.save.harvestedFruitTrees[
+          fruitTreeKey(this.save.day, this.save.player.place, interaction.id, interaction.x, interaction.y)
+        ],
+      );
+      const sprite = this.addMapObject(
+        this.add
+          .image(this.tileCenterX(interaction.x), this.tileCenterY(interaction.y) - 8, "fruitTrees", FRUIT_TREE_FRAMES[interaction.id])
+          .setAlpha(harvested ? 0.72 : 1)
+          .setDepth(13),
+      );
+
+      if (!harvested) {
+        this.tweens.add({
+          targets: sprite,
+          y: sprite.y - 2,
+          yoyo: true,
+          repeat: -1,
+          duration: 1500 + ((interaction.x + interaction.y) % 4) * 120,
+          ease: "Sine.easeInOut",
+        });
+      }
+    }
+  }
+
+  private fruitTreeInteractionFromObject(object: TiledObject): FruitTreeInteraction | undefined {
+    const treeId = objectProp(object, "treeId", object.name);
+
+    if (!isFruitTreeId(treeId)) {
+      return undefined;
+    }
+
+    const defaultTree = FRUIT_TREES[treeId];
+    const product = objectProp<string>(object, "product", defaultTree.product);
+    const productId = isProductId(product) ? product : defaultTree.product;
+    const rect = objectTileRect(object);
+
+    return {
+      object,
+      id: treeId,
+      name: String(objectProp(object, "displayName", defaultTree.name)),
+      productId,
+      x: rect.x,
+      y: rect.y,
+    };
+  }
+
+  private fruitTreeAt(x: number, y: number) {
+    return this.getObjects(this.save.player.place, "fruit-tree")
+      .map((object) => this.fruitTreeInteractionFromObject(object))
+      .find((tree): tree is FruitTreeInteraction => Boolean(tree && Math.abs(tree.x - x) + Math.abs(tree.y - y) <= 1));
+  }
+
+  private renderAnimals() {
+    for (const animal of this.getObjects(this.save.player.place, "animal")) {
+      const interaction = this.animalInteractionFromObject(animal);
+
+      if (!interaction) {
+        continue;
+      }
+
+      const sprite = this.addMapObject(
+        this.add
+          .image(this.tileCenterX(interaction.x), this.tileCenterY(interaction.y), "animals", ANIMAL_FRAMES[interaction.id])
+          .setDepth(16),
+      );
+      const label = this.addMapObject(
+        this.add
+          .text(this.tileCenterX(interaction.x), this.tileCenterY(interaction.y) + 16, interaction.name, {
+            color: this.currentWeather() === "mist" ? "#f8fafc" : "#2a160b",
+            fontFamily: UI_FONT,
+            fontSize: "8px",
+            fontStyle: "700",
+          })
+          .setOrigin(0.5, 0)
+          .setDepth(17),
+      );
+
+      this.tweens.add({
+        targets: [sprite, label],
+        y: (target: Phaser.GameObjects.GameObject) =>
+          target === label ? label.y - 2 : sprite.y - 2,
+        yoyo: true,
+        repeat: -1,
+        duration: 1200 + ((interaction.x + interaction.y) % 5) * 120,
+        ease: "Sine.easeInOut",
+      });
+    }
+  }
+
+  private animalInteractionFromObject(object: TiledObject): AnimalInteraction | undefined {
+    const animalId = objectProp(object, "animalId", object.name);
+
+    if (!isAnimalId(animalId)) {
+      return undefined;
+    }
+
+    const rect = objectTileRect(object);
+    const product = objectProp<string>(object, "product", "");
+    const defaultAnimal = ANIMALS[animalId];
+    const productId = isProductId(product)
+      ? product
+      : "product" in defaultAnimal && isProductId(defaultAnimal.product)
+        ? defaultAnimal.product
+        : undefined;
+
+    return {
+      object,
+      id: animalId,
+      name: String(objectProp(object, "displayName", defaultAnimal.name)),
+      productId,
+      x: rect.x,
+      y: rect.y,
+      line: String(objectProp(object, "line", "")) || undefined,
+    };
+  }
+
+  private animalAt(x: number, y: number) {
+    return this.getObjects(this.save.player.place, "animal")
+      .map((object) => this.animalInteractionFromObject(object))
+      .find((animal): animal is AnimalInteraction => Boolean(animal && Math.abs(animal.x - x) + Math.abs(animal.y - y) <= 1));
+  }
+
+  private renderEnemies() {
+    for (const enemy of this.getObjects(this.save.player.place, "enemy")) {
+      const interaction = this.enemyInteractionFromObject(enemy);
+
+      if (!interaction) {
+        continue;
+      }
+
+      const cleared = Boolean(
+        this.save.clearedEnemies[enemyKey(this.save.day, this.save.player.place, interaction.id, interaction.x, interaction.y)],
+      );
+
+      if (cleared) {
+        continue;
+      }
+
+      const sprite = this.addMapObject(
+        this.add
+          .image(this.tileCenterX(interaction.x), this.tileCenterY(interaction.y), "enemies", ENEMY_FRAMES[interaction.id])
+          .setDepth(15),
+      );
+      const label = this.addMapObject(
+        this.add
+          .text(this.tileCenterX(interaction.x), this.tileCenterY(interaction.y) + 16, interaction.name, {
+            color: "#fef2f2",
+            fontFamily: UI_FONT,
+            fontSize: "8px",
+            fontStyle: "700",
+            stroke: "#3a120d",
+            strokeThickness: 2,
+          })
+          .setOrigin(0.5, 0)
+          .setDepth(16),
+      );
+
+      this.tweens.add({
+        targets: [sprite, label],
+        y: (target: Phaser.GameObjects.GameObject) =>
+          target === label ? label.y - 2 : sprite.y - 2,
+        yoyo: true,
+        repeat: -1,
+        duration: 920 + ((interaction.x + interaction.y) % 5) * 110,
+        ease: "Sine.easeInOut",
+      });
+    }
+  }
+
+  private enemyInteractionFromObject(object: TiledObject): EnemyInteraction | undefined {
+    const enemyId = objectProp(object, "enemyId", object.name);
+
+    if (!isEnemyId(enemyId)) {
+      return undefined;
+    }
+
+    const rect = objectTileRect(object);
+    const defaultEnemy = ENEMIES[enemyId];
+
+    return {
+      object,
+      id: enemyId,
+      name: String(objectProp(object, "displayName", defaultEnemy.name)),
+      rewardGold: Number(objectProp(object, "rewardGold", defaultEnemy.rewardGold)),
+      x: rect.x,
+      y: rect.y,
+      line: String(objectProp(object, "line", "")) || undefined,
+    };
+  }
+
+  private enemyAt(x: number, y: number) {
+    return this.getObjects(this.save.player.place, "enemy")
+      .map((object) => this.enemyInteractionFromObject(object))
+      .find((enemy): enemy is EnemyInteraction => {
+        if (!enemy || Math.abs(enemy.x - x) + Math.abs(enemy.y - y) > 1) {
+          return false;
+        }
+
+        return !this.save.clearedEnemies[enemyKey(this.save.day, this.save.player.place, enemy.id, enemy.x, enemy.y)];
+      });
   }
 
   private renderNpcs() {
@@ -2749,6 +3723,44 @@ class FarmLifeScene extends Phaser.Scene {
       })} · 5分`;
     }
 
+    const animal = this.animalAt(x, y);
+
+    if (animal) {
+      const key = animalKey(this.save.day, this.save.player.place, animal.id, animal.x, animal.y);
+      const product = animal.productId ? PRODUCTS[animal.productId] : undefined;
+      const caredToday = Boolean(this.save.caredForAnimals[key]);
+
+      return mapInteractionCueHint({
+        actionLabel: caredToday ? `${animal.name}已照料` : `照料${animal.name}`,
+        purposeHint: product ? `${product.name} ${product.sellPrice}金` : "野外相遇",
+        nextStepHint: caredToday ? "明天再来" : `${ACTION_MINUTES}分`,
+      });
+    }
+
+    const fruitTree = this.fruitTreeAt(x, y);
+
+    if (fruitTree) {
+      const key = fruitTreeKey(this.save.day, this.save.player.place, fruitTree.id, fruitTree.x, fruitTree.y);
+      const product = PRODUCTS[fruitTree.productId];
+      const harvested = Boolean(this.save.harvestedFruitTrees[key]);
+
+      return mapInteractionCueHint({
+        actionLabel: harvested ? `${fruitTree.name}已采` : `采 ${product.name}`,
+        purposeHint: `${product.sellPrice}金 · 可做果酱`,
+        nextStepHint: harvested ? "明天再来" : `${SHOP_MINUTES}分`,
+      });
+    }
+
+    const enemy = this.enemyAt(x, y);
+
+    if (enemy) {
+      return mapInteractionCueHint({
+        actionLabel: `驱散${enemy.name}`,
+        purposeHint: `探索奖励 ${enemy.rewardGold}金`,
+        nextStepHint: `体力8 · ${ACTION_MINUTES}分`,
+      });
+    }
+
     const transition = this.getObjects(this.save.player.place, "transition").find((object) => containsTile(object, x, y));
 
     if (transition) {
@@ -2817,6 +3829,28 @@ class FarmLifeScene extends Phaser.Scene {
         });
       }
 
+      if (action === "beehive") {
+        const rect = objectTileRect(interaction);
+        const used = Boolean(this.save.usedWorkbenches[workbenchKey(this.save.day, this.save.player.place, "beehive", rect.x, rect.y)]);
+
+        return mapInteractionCueHint({
+          actionLabel: used ? "蜂箱已取蜜" : "取蜂蜜",
+          purposeHint: `${PRODUCTS.honey.sellPrice}金 · 可送礼`,
+          nextStepHint: used ? "明天再来" : `${SHOP_MINUTES}分`,
+        });
+      }
+
+      if (action === "workbench") {
+        const label = String(objectProp(interaction, "label", "工坊"));
+        const output = label.includes("果酱") ? PRODUCTS.jam : label.includes("奶酪") ? PRODUCTS.cheese : PRODUCTS.butter;
+
+        return mapInteractionCueHint({
+          actionLabel: label,
+          purposeHint: label.includes("果酱") ? `水果加工 · ${output.name}${output.sellPrice}金` : `牛奶加工 · ${output.name}${output.sellPrice}金`,
+          nextStepHint: `${ACTION_MINUTES}分`,
+        });
+      }
+
       return `E ${objectProp(interaction, "label", "互动")}`;
     }
 
@@ -2842,7 +3876,7 @@ class FarmLifeScene extends Phaser.Scene {
 
     if (this.save.selectedTool === "fish" && this.isFishableWater(x, y)) {
       const catchTier = this.fishingCatchTierAt(x, y);
-      const previewFishId = this.fishIdForTier(catchTier);
+      const previewFishId = this.fishIdForTier(catchTier, x, y);
       const previewText = previewFishId
         ? fishingCastPreviewHint({
             tier: catchTier,
@@ -3119,7 +4153,8 @@ class FarmLifeScene extends Phaser.Scene {
     return (
       cropIds.reduce((sum, cropId) => sum + clampCount(this.save.shipping[cropId]), 0) +
       forageIds.reduce((sum, forageId) => sum + clampCount(this.save.forageShipping[forageId]), 0) +
-      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.fishShipping[fishId]), 0)
+      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.fishShipping[fishId]), 0) +
+      productIds.reduce((sum, productId) => sum + clampCount(this.save.productShipping[productId]), 0)
     );
   }
 
@@ -3140,7 +4175,8 @@ class FarmLifeScene extends Phaser.Scene {
     return (
       cropIds.reduce((sum, cropId) => sum + clampCount(this.save.inventory[cropItem(cropId)]), 0) +
       forageIds.reduce((sum, forageId) => sum + clampCount(this.save.inventory[forageItem(forageId)]), 0) +
-      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.inventory[fishItem(fishId)]), 0)
+      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.inventory[fishItem(fishId)]), 0) +
+      productIds.reduce((sum, productId) => sum + clampCount(this.save.inventory[productItem(productId)]), 0)
     );
   }
 
@@ -3148,7 +4184,8 @@ class FarmLifeScene extends Phaser.Scene {
     return (
       cropIds.reduce((sum, cropId) => sum + clampCount(this.save.inventory[cropItem(cropId)]) * CROPS[cropId].sellPrice, 0) +
       forageIds.reduce((sum, forageId) => sum + clampCount(this.save.inventory[forageItem(forageId)]) * FORAGE[forageId].sellPrice, 0) +
-      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.inventory[fishItem(fishId)]) * FISH[fishId].sellPrice, 0)
+      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.inventory[fishItem(fishId)]) * FISH[fishId].sellPrice, 0) +
+      productIds.reduce((sum, productId) => sum + clampCount(this.save.inventory[productItem(productId)]) * PRODUCTS[productId].sellPrice, 0)
     );
   }
 
@@ -3362,15 +4399,22 @@ class FarmLifeScene extends Phaser.Scene {
   }
 
   private renderShopShelf() {
-    const x = this.viewWidth() - 230;
-    const y = 184;
-    this.addPanel(x, y, 212, 206, 0xd7a865, 0x6b3f1d, 65);
-    this.addUiText("山风种子铺", x + 16, y + 14, 15, 0x3a2212, 164, 68);
-    this.addUiText("点击购买，或用底部工具栏选种。", x + 16, y + 38, 10, 0x5f3719, 174, 68);
-    this.addUiText(this.currentSeedShopRecommendationHint(), x + 16, y + 54, 9, 0x14532d, 174, 68);
+    const shelfCropIds = marketCropIdsForSeason(this.currentSeason());
+    const columns = 2;
+    const rows = Math.ceil(shelfCropIds.length / columns);
+    const width = 388;
+    const height = 88 + rows * 40;
+    const x = this.viewWidth() - width - 18;
+    const y = 174;
+    this.addPanel(x, y, width, height, 0xd7a865, 0x6b3f1d, 65);
+    this.addUiText(`${SEASONS[this.currentSeason()].name}种子铺`, x + 16, y + 14, 15, 0x3a2212, 164, 68);
+    this.addUiText("点击购买，或用底部工具栏切换种子。", x + 16, y + 38, 10, 0x5f3719, 260, 68);
+    this.addUiText(this.currentSeedShopRecommendationHint(), x + 16, y + 54, 9, 0x14532d, 342, 68);
 
-    cropIds.forEach((cropId, index) => {
-      this.addBuyButton(cropId, x + 16, y + 70 + index * 40);
+    shelfCropIds.forEach((cropId, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      this.addBuyButton(cropId, x + 16 + column * 178, y + 76 + row * 40);
     });
   }
 
@@ -3776,7 +4820,8 @@ class FarmLifeScene extends Phaser.Scene {
     const shippedCount =
       cropIds.reduce((sum, cropId) => sum + clampCount(this.save.shipping[cropId]), 0) +
       forageIds.reduce((sum, forageId) => sum + clampCount(this.save.forageShipping[forageId]), 0) +
-      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.fishShipping[fishId]), 0);
+      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.fishShipping[fishId]), 0) +
+      productIds.reduce((sum, productId) => sum + clampCount(this.save.productShipping[productId]), 0);
     const shippingPreview = this.currentShippingPreview();
     const shippingBreakdown = shippingBreakdownHint(shippingPreview);
     const talked = npcIds.some((npcId) => this.save.talkedToNpcs[npcId] === this.save.day);
@@ -3834,7 +4879,8 @@ class FarmLifeScene extends Phaser.Scene {
     const shippedCount =
       cropIds.reduce((sum, cropId) => sum + clampCount(this.save.shipping[cropId]), 0) +
       forageIds.reduce((sum, forageId) => sum + clampCount(this.save.forageShipping[forageId]), 0) +
-      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.fishShipping[fishId]), 0);
+      fishIds.reduce((sum, fishId) => sum + clampCount(this.save.fishShipping[fishId]), 0) +
+      productIds.reduce((sum, productId) => sum + clampCount(this.save.productShipping[productId]), 0);
 
     return dailyObjectiveHint({
       mailRead: this.save.mailReadDay === this.save.day,
@@ -3965,9 +5011,47 @@ class FarmLifeScene extends Phaser.Scene {
     this.playSfx("menu");
   }
 
+  private limitedInventoryIds<T extends string>(ids: T[], limit = 4) {
+    const result: T[] = [];
+
+    for (const id of ids) {
+      if (!result.includes(id)) {
+        result.push(id);
+      }
+    }
+
+    return result.slice(0, limit);
+  }
+
+  private inventoryCropDisplayIds(kind: "seed" | "crop") {
+    const market = marketCropIdsForSeason(this.currentSeason());
+    const owned = cropIds.filter((cropId) =>
+      clampCount(this.save.inventory[kind === "seed" ? seedItem(cropId) : cropItem(cropId)]) > 0
+    );
+    const anchors = kind === "seed"
+      ? [this.save.selectedSeed, ...market]
+      : [this.ensureDailyOrder().cropId, this.save.selectedSeed, ...market];
+
+    return this.limitedInventoryIds([...owned, ...anchors]);
+  }
+
+  private inventoryFishDisplayIds() {
+    const pool = fishPoolsByPlace[this.save.player.place] ?? fishPoolsByPlace.farm;
+    const localFish = pool ? [...pool.common, ...pool.good, ...pool.rare] : [];
+    const owned = fishIds.filter((fishId) => clampCount(this.save.inventory[fishItem(fishId)]) > 0);
+
+    return this.limitedInventoryIds([...owned, ...localFish, ...fishIds]);
+  }
+
+  private inventoryProductDisplayIds() {
+    const owned = productIds.filter((productId) => clampCount(this.save.inventory[productItem(productId)]) > 0);
+
+    return this.limitedInventoryIds([...owned, ...productIds]);
+  }
+
   private renderInventoryPanel() {
-    const width = 624;
-    const height = 444;
+    const width = 760;
+    const height = 540;
     const x = Math.round((this.viewWidth() - width) / 2);
     const y = Math.round((this.viewHeight() - height) / 2);
     const order = this.ensureDailyOrder();
@@ -3999,11 +5083,11 @@ class FarmLifeScene extends Phaser.Scene {
       () => this.hideInventory(),
     );
 
-    this.addMenuText("种子", x + 32, y + 66, 13, 0x3a2212);
-    cropIds.forEach((cropId, index) => {
+    this.addMenuText("种子", x + 32, y + 72, 13, 0x3a2212);
+    this.inventoryCropDisplayIds("seed").forEach((cropId, index) => {
       this.addInventorySlot({
         x: x + 32 + index * 132,
-        y: y + 90,
+        y: y + 94,
         icon: ICON_FRAMES[cropId],
         label: CROPS[cropId].seedName,
         count: clampCount(this.save.inventory[seedItem(cropId)]),
@@ -4011,15 +5095,15 @@ class FarmLifeScene extends Phaser.Scene {
       });
     });
 
-    this.addMenuText("收获物（点选可吃，R 快速点心）", x + 32, y + 160, 13, 0x3a2212);
-    cropIds.forEach((cropId, index) => {
+    this.addMenuText("收获物（点选可吃，R 快速点心）", x + 32, y + 158, 13, 0x3a2212);
+    this.inventoryCropDisplayIds("crop").forEach((cropId, index) => {
       const snack = this.cropSnack(cropId);
       const count = clampCount(this.save.inventory[cropItem(cropId)]);
       const reserve = snack.orderReserveCount ?? 0;
 
       this.addInventorySlot({
         x: x + 32 + index * 132,
-        y: y + 184,
+        y: y + 180,
         icon: snack.icon,
         label: CROPS[cropId].name,
         count,
@@ -4041,13 +5125,13 @@ class FarmLifeScene extends Phaser.Scene {
       });
     });
 
-    this.addMenuText("采集物", x + 32, y + 254, 13, 0x3a2212);
+    this.addMenuText("采集物", x + 32, y + 244, 13, 0x3a2212);
     forageIds.forEach((forageId, index) => {
       const snack = this.forageSnack(forageId);
 
       this.addInventorySlot({
         x: x + 32 + index * 132,
-        y: y + 278,
+        y: y + 266,
         icon: snack.icon,
         label: FORAGE[forageId].name,
         count: clampCount(this.save.inventory[forageItem(forageId)]),
@@ -4057,13 +5141,13 @@ class FarmLifeScene extends Phaser.Scene {
       });
     });
 
-    this.addMenuText("渔获", x + 32, y + 348, 13, 0x3a2212);
-    fishIds.forEach((fishId, index) => {
+    this.addMenuText("渔获", x + 32, y + 330, 13, 0x3a2212);
+    this.inventoryFishDisplayIds().forEach((fishId, index) => {
       const snack = this.fishSnack(fishId);
 
       this.addInventorySlot({
         x: x + 32 + index * 132,
-        y: y + 372,
+        y: y + 352,
         icon: snack.icon,
         label: FISH[fishId].name,
         count: clampCount(this.save.inventory[fishItem(fishId)]),
@@ -4073,10 +5157,23 @@ class FarmLifeScene extends Phaser.Scene {
       });
     });
 
-    const sideX = x + 438;
+    this.addMenuText("畜产 / 工坊 / 果物", x + 32, y + 416, 13, 0x3a2212);
+    this.inventoryProductDisplayIds().forEach((productId, index) => {
+      this.addInventorySlot({
+        x: x + 32 + index * 132,
+        y: y + 438,
+        icon: ICON_FRAMES[PRODUCTS[productId].icon],
+        label: PRODUCTS[productId].name,
+        count: clampCount(this.save.inventory[productItem(productId)]),
+        detail: `${PRODUCTS[productId].sellPrice} 金 · 可送礼`,
+      });
+    });
+
+    const sideX = x + 584;
     const cropShippingCount = cropIds.reduce((sum, cropId) => sum + clampCount(this.save.shipping[cropId]), 0);
     const forageShippingCount = forageIds.reduce((sum, forageId) => sum + clampCount(this.save.forageShipping[forageId]), 0);
     const fishShippingCount = fishIds.reduce((sum, fishId) => sum + clampCount(this.save.fishShipping[fishId]), 0);
+    const productShippingCount = productIds.reduce((sum, productId) => sum + clampCount(this.save.productShipping[productId]), 0);
     const orderSource = orderSourceHint({
       backpackCount: clampCount(this.save.inventory[cropItem(order.cropId)]),
       boxedCount: clampCount(this.save.shipping[order.cropId]),
@@ -4086,7 +5183,7 @@ class FarmLifeScene extends Phaser.Scene {
     });
     this.addMenuObject(
       this.add
-        .rectangle(sideX, y + 72, 150, 342, 0xf8dfae)
+        .rectangle(sideX, y + 72, 150, 424, 0xf8dfae)
         .setOrigin(0, 0)
         .setStrokeStyle(3, 0x8a5a2b)
         .setDepth(168),
@@ -4107,10 +5204,11 @@ class FarmLifeScene extends Phaser.Scene {
     this.addMenuText(`作物 ${cropShippingCount}`, sideX + 48, y + 264, 10, 0x5f3719, 76, 170);
     this.addMenuText(`采集 ${forageShippingCount}`, sideX + 48, y + 282, 10, 0x5f3719, 76, 170);
     this.addMenuText(`渔获 ${fishShippingCount}`, sideX + 48, y + 300, 10, 0x5f3719, 76, 170);
+    this.addMenuText(`产物 ${productShippingCount}`, sideX + 48, y + 318, 10, 0x5f3719, 76, 170);
 
-    this.addMenuText("好感", sideX + 18, y + 318, 13, 0x3a2212, 120, 170);
+    this.addMenuText("好感", sideX + 18, y + 342, 13, 0x3a2212, 120, 170);
     npcIds.forEach((npcId, index) => {
-      const rowY = y + 340 + index * 18;
+      const rowY = y + 364 + index * 18;
       this.addMenuObject(this.add.image(sideX + 12, rowY + 7, "icons", ICON_FRAMES.heart).setScale(0.34).setDepth(170));
       this.addMenuText(npcDisplayNames[npcId], sideX + 26, rowY, 10, 0x3a2212, 42, 170);
       this.addMenuText(String(clampCount(this.save.friendship[npcId])), sideX + 116, rowY, 10, 0x7c2d12, 20, 170);
@@ -4130,15 +5228,7 @@ class FarmLifeScene extends Phaser.Scene {
     entries.forEach((entry, index) => {
       const x = layout.startX + index * (layout.slot + layout.gap);
       const active = this.isHotbarActive(entry.id);
-      const fill = active ? 0xffd37a : 0xf5c47b;
-      const stroke = active ? 0x4b2e17 : 0x7a4a22;
-      const rect = this.addUiObject(
-        this.add
-          .rectangle(x, layout.y, layout.slot, 42, fill)
-          .setOrigin(0, 0)
-          .setStrokeStyle(active ? 3 : 2, stroke)
-          .setDepth(78),
-      );
+      const rect = this.addUiSlice("ui-slot", x, layout.y, layout.slot, 42, 78, active ? 0xffd37a : 0xf5c47b);
       rect.setInteractive({ useHandCursor: true });
       rect.on("pointerdown", entry.onClick);
 
@@ -4221,12 +5311,24 @@ class FarmLifeScene extends Phaser.Scene {
         icon: ICON_FRAMES.fishingRod,
         onClick: () => this.selectTool("fish"),
       },
-      ...cropIds.map((cropId) => ({
-        id: `seed:${cropId}` as HotbarId,
-        icon: ICON_FRAMES[cropId],
-        count: clampCount(this.save.inventory[seedItem(cropId)]),
-        onClick: () => this.selectSeed(cropId),
-      })),
+      {
+        id: "prev-seed" as HotbarId,
+        icon: ICON_FRAMES[this.seedNeighbor(-1)],
+        count: clampCount(this.save.inventory[seedItem(this.seedNeighbor(-1))]),
+        onClick: () => this.cycleSeed(-1),
+      },
+      {
+        id: "selected-seed" as HotbarId,
+        icon: ICON_FRAMES[this.save.selectedSeed],
+        count: clampCount(this.save.inventory[seedItem(this.save.selectedSeed)]),
+        onClick: () => this.selectSeed(this.save.selectedSeed),
+      },
+      {
+        id: "next-seed" as HotbarId,
+        icon: ICON_FRAMES[this.seedNeighbor(1)],
+        count: clampCount(this.save.inventory[seedItem(this.seedNeighbor(1))]),
+        onClick: () => this.cycleSeed(1),
+      },
     ];
   }
 
@@ -4250,11 +5352,45 @@ class FarmLifeScene extends Phaser.Scene {
   }
 
   private isHotbarActive(id: HotbarId) {
-    if (id.startsWith("seed:")) {
-      return this.save.selectedTool === "seed" && id === `seed:${this.save.selectedSeed}`;
+    if (id === "selected-seed") {
+      return this.save.selectedTool === "seed";
+    }
+
+    if (id === "prev-seed" || id === "next-seed") {
+      return false;
     }
 
     return this.save.selectedTool === id;
+  }
+
+  private addUiSlice(
+    texture: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    depth: number,
+    tint?: number,
+    fixed: "ui" | "menu" | "message" = "ui",
+  ) {
+    const slice = this.add
+      .nineslice(x, y, texture, undefined, width, height, 8, 8, 8, 8)
+      .setOrigin(0, 0)
+      .setDepth(depth);
+
+    if (tint !== undefined) {
+      slice.setTint(tint);
+    }
+
+    if (fixed === "menu") {
+      return this.addMenuObject(slice);
+    }
+
+    if (fixed === "message") {
+      return this.addMessageObject(slice);
+    }
+
+    return this.addUiObject(slice);
   }
 
   private addPanel(x: number, y: number, width: number, height: number, fill: number, stroke: number, depth: number) {
@@ -4264,16 +5400,10 @@ class FarmLifeScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDepth(depth - 2),
     );
+    this.addUiSlice("ui-panel", x, y, width, height, depth, fill);
     this.addUiObject(
       this.add
-        .rectangle(x, y, width, height, fill)
-        .setOrigin(0, 0)
-        .setStrokeStyle(3, stroke)
-        .setDepth(depth),
-    );
-    this.addUiObject(
-      this.add
-        .rectangle(x + 6, y + 6, width - 12, 2, 0xffe2a3, 0.45)
+        .rectangle(x + 7, y + 7, width - 14, 2, stroke === 0x3a2212 ? 0xffe2a3 : 0xffffff, 0.38)
         .setOrigin(0, 0)
         .setDepth(depth + 1),
     );
@@ -4292,20 +5422,8 @@ class FarmLifeScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDepth(159),
     );
-    this.addMenuObject(
-      this.add
-        .rectangle(x, y, width, height, 0xb9793a)
-        .setOrigin(0, 0)
-        .setStrokeStyle(5, 0x3f2614)
-        .setDepth(160),
-    );
-    this.addMenuObject(
-      this.add
-        .rectangle(x + 10, y + 10, width - 20, height - 20, 0xf1c27d)
-        .setOrigin(0, 0)
-        .setStrokeStyle(2, 0x8a5a2b)
-        .setDepth(161),
-    );
+    this.addUiSlice("ui-panel", x, y, width, height, 160, 0xb9793a, "menu");
+    this.addUiSlice("ui-panel", x + 10, y + 10, width - 20, height - 20, 161, 0xf1c27d, "menu");
   }
 
   private addUiText(
@@ -4373,13 +5491,7 @@ class FarmLifeScene extends Phaser.Scene {
     blockedActionLabel?: string;
     onClick?: () => void;
   }) {
-    const slot = this.addMenuObject(
-      this.add
-        .rectangle(x, y, 116, 58, 0xf8dfae)
-        .setOrigin(0, 0)
-        .setStrokeStyle(2, count > 0 ? 0x6b3f1d : 0xb99057)
-        .setDepth(168),
-    );
+    const slot = this.addUiSlice("ui-slot", x, y, 116, 58, 168, count > 0 ? 0xf8dfae : 0xc8a06f, "menu");
     if (onClick && count > 0) {
       slot.setInteractive({ useHandCursor: true });
       slot.on("pointerdown", onClick);
@@ -4399,13 +5511,7 @@ class FarmLifeScene extends Phaser.Scene {
   }
 
   private addMenuButton(label: string, x: number, y: number, width: number, onClick: () => void) {
-    const button = this.addMenuObject(
-      this.add
-        .rectangle(x, y, width, 32, 0x5b371c)
-        .setOrigin(0, 0)
-        .setStrokeStyle(2, 0xf8d9a0)
-        .setDepth(170),
-    );
+    const button = this.addUiSlice("ui-button", x, y, width, 32, 170, 0x9c5428, "menu");
     button.setInteractive({ useHandCursor: true });
     button.on("pointerdown", onClick);
     this.addMenuText(label, x + width / 2 - label.length * 6, y + 8, 12, 0xffefba, width - 12, 171)
@@ -4487,12 +5593,7 @@ class FarmLifeScene extends Phaser.Scene {
   }
 
   private addSoundButton(x: number, y: number) {
-    const button = this.addUiObject(
-      this.add
-        .rectangle(x - 13, y - 13, 26, 26, 0x5b371c)
-        .setStrokeStyle(2, 0xf8d9a0)
-        .setDepth(76),
-    );
+    const button = this.addUiSlice("ui-button", x - 13, y - 13, 26, 26, 76, 0x9c5428);
     button.setInteractive({ useHandCursor: true });
     button.on("pointerdown", () => this.toggleAudio());
 
@@ -4632,7 +5733,7 @@ class FarmLifeScene extends Phaser.Scene {
       this.add
         .text(MAP_X + tileX * TILE, MAP_Y + tileY * TILE, text, {
           color: hexColor(color),
-          fontFamily: "Inter, PingFang SC, Microsoft YaHei, sans-serif",
+          fontFamily: UI_FONT,
           fontSize: `${size}px`,
           fontStyle: "700",
         })
@@ -4689,8 +5790,10 @@ class FarmLifeScene extends Phaser.Scene {
   }
 
   private currentSeedShopRecommendationHint() {
+    const shelfCropIds = marketCropIdsForSeason(this.currentSeason());
+
     return seedShopRecommendationHint({
-      options: cropIds.map((cropId) => ({
+      options: shelfCropIds.map((cropId) => ({
         cropName: CROPS[cropId].name,
         seedCost: this.seedPriceFor(cropId).price,
         sellPrice: CROPS[cropId].sellPrice,
@@ -4803,17 +5906,9 @@ class FarmLifeScene extends Phaser.Scene {
     active: boolean;
     onClick: () => void;
   }) {
-    const fill = active ? 0xffd37a : 0xf8dfae;
-    const stroke = active ? 0x4b2e17 : 0x8a5a2b;
     const color = 0x2a160b;
 
-    const rect = this.addUiObject(
-      this.add
-        .rectangle(x, y, width, height, fill)
-        .setOrigin(0, 0)
-        .setStrokeStyle(active ? 3 : 2, stroke)
-        .setDepth(78),
-    );
+    const rect = this.addUiSlice("ui-button", x, y, width, height, 78, active ? 0xffd37a : 0xf5a35b);
     rect.setInteractive({ useHandCursor: true });
     rect.on("pointerdown", onClick);
 
@@ -4849,6 +5944,19 @@ class FarmLifeScene extends Phaser.Scene {
     this.renderUi();
     this.playSfx("menu");
     this.showToast(this.currentToolSelectionToastHint());
+  }
+
+  private seedNeighbor(delta: number) {
+    const ids = marketCropIdsForSeason(this.currentSeason());
+    const pool = ids.includes(this.save.selectedSeed) ? ids : [...ids, this.save.selectedSeed];
+    const currentIndex = Math.max(0, pool.indexOf(this.save.selectedSeed));
+    const nextIndex = (currentIndex + delta + pool.length) % pool.length;
+
+    return pool[nextIndex] ?? this.save.selectedSeed;
+  }
+
+  private cycleSeed(delta: number) {
+    this.selectSeed(this.seedNeighbor(delta));
   }
 
   private buySeed(cropId: CropId) {
@@ -5222,6 +6330,27 @@ class FarmLifeScene extends Phaser.Scene {
       return;
     }
 
+    const animal = this.animalAt(x, y);
+
+    if (animal) {
+      this.careForAnimal(animal);
+      return;
+    }
+
+    const fruitTree = this.fruitTreeAt(x, y);
+
+    if (fruitTree) {
+      this.harvestFruitTree(fruitTree);
+      return;
+    }
+
+    const enemy = this.enemyAt(x, y);
+
+    if (enemy) {
+      this.clearEnemy(enemy);
+      return;
+    }
+
     const transition = this.getObjects(this.save.player.place, "transition").find((object) => containsTile(object, x, y));
 
     if (transition) {
@@ -5256,6 +6385,43 @@ class FarmLifeScene extends Phaser.Scene {
 
       if (action === "forecast") {
         this.showForecast();
+        return;
+      }
+
+      if (action === "well") {
+        this.playSfx("water");
+        this.showToast("古井里的水很凉。今天的田地、池塘和天气都在山风里连成一条线。");
+        return;
+      }
+
+      if (action === "beehive") {
+        this.collectBeehive(interaction);
+        return;
+      }
+
+      if (action === "workbench") {
+        this.useWorkbench(interaction);
+        return;
+      }
+
+      if (action === "fish-point") {
+        this.save.selectedTool = "fish";
+        this.persist();
+        this.renderUi();
+        this.playSfx("fish");
+        this.showToast("水面冒出一串鱼影。已切到钓竿，对着水面按 E 抛竿。");
+        return;
+      }
+
+      if (action === "altar") {
+        this.playSfx("menu");
+        this.showToast("林中祭坛被藤叶围住。这里的蘑菇、鹿迹和矿洞入口像在提醒你多走几条山路。");
+        return;
+      }
+
+      if (action === "bonfire") {
+        this.playSfx("ambient");
+        this.showToast("火光稳稳地贴着石头跳动。赶路前可以在这里确认背包和体力。");
         return;
       }
     }
@@ -5382,6 +6548,12 @@ class FarmLifeScene extends Phaser.Scene {
         category: "fish" as GiftCategory,
         name: FISH[fishId].name,
         icon: ICON_FRAMES[FISH[fishId].icon],
+      })),
+      ...productIds.map((productId) => ({
+        item: productItem(productId),
+        category: "product" as GiftCategory,
+        name: PRODUCTS[productId].name,
+        icon: ICON_FRAMES[PRODUCTS[productId].icon],
       })),
     ].filter((gift) => clampCount(this.save.inventory[gift.item]) > 0);
   }
@@ -5517,6 +6689,229 @@ class FarmLifeScene extends Phaser.Scene {
     })}${count > 1 ? "（采集熟练加成）" : ""}。${masteryUpdate}`);
   }
 
+  private careForAnimal(animal: AnimalInteraction) {
+    if (!this.isNear(animal.x, animal.y)) {
+      this.showToast(`离${animal.name}再近一点。`);
+      return;
+    }
+
+    const key = animalKey(this.save.day, this.save.player.place, animal.id, animal.x, animal.y);
+
+    if (this.save.caredForAnimals[key]) {
+      this.showToast(`${animal.name}今天已经被照料过了，明天再来吧。${animal.line ?? ""}`);
+      return;
+    }
+
+    this.save.caredForAnimals[key] = this.save.day;
+    const product = animal.productId ? PRODUCTS[animal.productId] : undefined;
+    let productText = "";
+    let masteryUpdate = "";
+
+    if (product && animal.productId) {
+      const item = productItem(animal.productId);
+      this.save.inventory[item] = clampCount(this.save.inventory[item]) + 1;
+      productText = `获得${product.name} x1，售价 ${product.sellPrice} 金`;
+      masteryUpdate = this.gainMastery("farming", 6);
+      this.rememberAction(`照料${animal.name}`);
+    } else {
+      productText = animal.line ?? `${animal.name}很快又回到自己的小径。`;
+      masteryUpdate = this.gainMastery("foraging", 3);
+      this.rememberAction(`观察${animal.name}`);
+    }
+
+    if (this.advanceTime(ACTION_MINUTES)) {
+      return;
+    }
+
+    this.persist();
+    this.renderAll();
+    this.playSfx(product ? "harvest" : "menu");
+    this.playTileFeedback(animal.x, animal.y, {
+      color: product ? 0xfef08a : 0x86efac,
+      icon: product && animal.productId ? ICON_FRAMES[product.icon] : ICON_FRAMES.heart,
+      label: product ? `+${product.name}` : animal.name,
+      labelColor: product ? 0xfff7ad : 0xd9f99d,
+    });
+    this.showToast(`${animal.name}：${animal.line ?? "它安静地靠近了一点。"} ${productText}。${masteryUpdate}`);
+  }
+
+  private harvestFruitTree(tree: FruitTreeInteraction) {
+    if (!this.isNear(tree.x, tree.y)) {
+      this.showToast(`离${tree.name}再近一点。`);
+      return;
+    }
+
+    const key = fruitTreeKey(this.save.day, this.save.player.place, tree.id, tree.x, tree.y);
+
+    if (this.save.harvestedFruitTrees[key]) {
+      this.showToast(`${tree.name}今天已经采过了，明天还会有新的果子。`);
+      return;
+    }
+
+    const product = PRODUCTS[tree.productId];
+    const count = this.currentSeason() === "summer" && ["banana", "mango", "coconut"].includes(tree.productId) ? 2 : 1;
+    this.save.harvestedFruitTrees[key] = this.save.day;
+    this.save.inventory[productItem(tree.productId)] = clampCount(this.save.inventory[productItem(tree.productId)]) + count;
+    this.rememberAction(`采${product.name}`);
+    const masteryUpdate = this.gainMastery("foraging", 7 + count);
+
+    if (this.advanceTime(SHOP_MINUTES)) {
+      return;
+    }
+
+    this.persist();
+    this.renderAll();
+    this.playSfx("harvest");
+    this.playTileFeedback(tree.x, tree.y, {
+      color: 0xfacc15,
+      icon: ICON_FRAMES[product.icon],
+      label: count > 1 ? `+${product.name} x${count}` : `+${product.name}`,
+      labelColor: 0xfff7ad,
+    });
+    this.showToast(`${tree.name}落下${product.name} x${count}，可入箱或留给工坊做果酱。${masteryUpdate}`);
+  }
+
+  private clearEnemy(enemy: EnemyInteraction) {
+    if (!this.isNear(enemy.x, enemy.y)) {
+      this.showToast(`离${enemy.name}再近一点。`);
+      return;
+    }
+
+    const key = enemyKey(this.save.day, this.save.player.place, enemy.id, enemy.x, enemy.y);
+
+    if (this.save.clearedEnemies[key]) {
+      this.showToast(`${enemy.name}已经退回阴影里了。`);
+      return;
+    }
+
+    const cost = 8;
+
+    if (this.save.energy < cost) {
+      this.showToast(`体力不够，驱散${enemy.name}需要 ${cost} 点体力。`);
+      return;
+    }
+
+    this.save.energy -= cost;
+    this.save.gold += enemy.rewardGold;
+    this.save.clearedEnemies[key] = this.save.day;
+    this.rememberAction(`探索${enemy.name}`);
+    const masteryUpdate = this.gainMastery("foraging", 12);
+
+    if (this.advanceTime(ACTION_MINUTES)) {
+      return;
+    }
+
+    this.persist();
+    this.renderAll();
+    this.playSfx("coin");
+    this.playTileFeedback(enemy.x, enemy.y, {
+      color: 0xf97316,
+      icon: ICON_FRAMES.coin,
+      label: `+${enemy.rewardGold}金`,
+      labelColor: 0xffefba,
+    });
+    this.showToast(`${enemy.name}：${enemy.line ?? "山路安静下来。"} 获得 ${enemy.rewardGold} 金。${masteryUpdate}`);
+  }
+
+  private collectBeehive(object: TiledObject) {
+    const rect = objectTileRect(object);
+    const key = workbenchKey(this.save.day, this.save.player.place, "beehive", rect.x, rect.y);
+
+    if (this.save.usedWorkbenches[key]) {
+      this.showToast("蜂箱今天已经取过蜜了，明天花粉会重新酿起来。");
+      return;
+    }
+
+    this.save.usedWorkbenches[key] = this.save.day;
+    this.save.inventory.honey_product = clampCount(this.save.inventory.honey_product) + 1;
+    this.rememberAction("取蜂蜜");
+    const masteryUpdate = this.gainMastery("foraging", 8);
+
+    if (this.advanceTime(SHOP_MINUTES)) {
+      return;
+    }
+
+    this.persist();
+    this.renderUi();
+    this.playSfx("harvest");
+    this.playTileFeedback(rect.x, rect.y, {
+      color: 0xfacc15,
+      icon: ICON_FRAMES.honey,
+      label: "+蜂蜜",
+      labelColor: 0xfff7ad,
+    });
+    this.showToast(`蜂箱里收到了蜂蜜 x1。花田、果树和蜂箱现在接上了同一个山居循环。${masteryUpdate}`);
+  }
+
+  private useWorkbench(object: TiledObject) {
+    const label = String(objectProp(object, "label", "工坊"));
+    const rect = objectTileRect(object);
+
+    if (label.includes("果酱")) {
+      const fruitProductIds: ProductId[] = ["apple", "apricot", "cherry", "banana", "mango", "orange", "peach", "coconut"];
+      const source = fruitProductIds.find((productId) => clampCount(this.save.inventory[productItem(productId)]) > 0);
+
+      if (!source) {
+        this.showToast("果酱机需要水果。先去农场、小镇或海滩采一棵果树。");
+        return;
+      }
+
+      this.save.inventory[productItem(source)] = clampCount(this.save.inventory[productItem(source)]) - 1;
+      this.save.inventory.jam_product = clampCount(this.save.inventory.jam_product) + 1;
+      this.rememberAction("熬果酱");
+      const masteryUpdate = this.gainMastery("farming", 10);
+
+      if (this.advanceTime(ACTION_MINUTES)) {
+        return;
+      }
+
+      this.persist();
+      this.renderUi();
+      this.playSfx("harvest");
+      this.playTileFeedback(rect.x, rect.y, {
+        color: 0xf472b6,
+        icon: ICON_FRAMES.jam,
+        label: "+果酱",
+        labelColor: 0xffe4e6,
+      });
+      this.showToast(`果酱机把${PRODUCTS[source].name}熬成果酱，售价 ${PRODUCTS.jam.sellPrice} 金。${masteryUpdate}`);
+      return;
+    }
+
+    const isCheesePress = label.includes("奶酪");
+    const source = isCheesePress
+      ? clampCount(this.save.inventory.cowMilk_product) > 0 ? "cowMilk" : "goatMilk"
+      : clampCount(this.save.inventory.cowMilk_product) > 0 ? "cowMilk" : "goatMilk";
+    const sourceItem = productItem(source as ProductId);
+    const outputId: ProductId = isCheesePress ? "cheese" : "butter";
+    const outputItem = productItem(outputId);
+
+    if (clampCount(this.save.inventory[sourceItem]) <= 0) {
+      this.showToast(`${label}需要牛奶或山羊奶。先去照料谷仓里的奶牛、山羊。`);
+      return;
+    }
+
+    this.save.inventory[sourceItem] = clampCount(this.save.inventory[sourceItem]) - 1;
+    this.save.inventory[outputItem] = clampCount(this.save.inventory[outputItem]) + 1;
+    this.rememberAction(`${label}${PRODUCTS[outputId].name}`);
+    const masteryUpdate = this.gainMastery("farming", 8);
+
+    if (this.advanceTime(ACTION_MINUTES)) {
+      return;
+    }
+
+    this.persist();
+    this.renderUi();
+    this.playSfx("harvest");
+    this.playTileFeedback(rect.x, rect.y, {
+      color: 0xfef08a,
+      icon: ICON_FRAMES[PRODUCTS[outputId].icon],
+      label: `+${PRODUCTS[outputId].name}`,
+      labelColor: 0xfff7ad,
+    });
+    this.showToast(`${label}把${PRODUCTS[source as ProductId].name}加工成${PRODUCTS[outputId].name}，售价 ${PRODUCTS[outputId].sellPrice} 金。${masteryUpdate}`);
+  }
+
   private fishingCatchTierAt(x: number, y: number) {
     const baseRoll = (this.save.day * 29 + this.save.timeMinutes * 7 + x * 13 + y * 17) % 100;
     const pondLightsActive =
@@ -5530,24 +6925,19 @@ class FarmLifeScene extends Phaser.Scene {
     });
   }
 
-  private fishIdForTier(tier: FishingCatchTier) {
+  private fishIdForTier(tier: FishingCatchTier, x = this.save.player.x, y = this.save.player.y) {
     if (tier === "miss") {
       return undefined;
     }
 
-    if (tier === "rare") {
-      return "silverFish" as FishId;
-    }
-
-    if (tier === "good") {
-      return "carp" as FishId;
-    }
-
-    return "creekFish" as FishId;
+    const pool = fishPoolsByPlace[this.save.player.place] ?? fishPoolsByPlace.farm;
+    const candidates = pool?.[tier] ?? ["creekFish"];
+    const index = Math.abs(this.save.day * 17 + this.save.timeMinutes * 3 + x * 5 + y * 7) % candidates.length;
+    return candidates[index];
   }
 
   private fishForCast(x: number, y: number) {
-    return this.fishIdForTier(this.fishingCatchTierAt(x, y));
+    return this.fishIdForTier(this.fishingCatchTierAt(x, y), x, y);
   }
 
   private fishAt(x: number, y: number) {
@@ -5589,7 +6979,7 @@ class FarmLifeScene extends Phaser.Scene {
       pondLights: hasCalendarEvent(this.save.day, "溪畔夜灯"),
     });
     const nextTier = this.fishingCatchTierAt(x, y);
-    const nextFishId = this.fishIdForTier(nextTier);
+    const nextFishId = this.fishIdForTier(nextTier, x, y);
     const nextPreview = nextFishId
       ? fishingCastPreviewHint({
           tier: nextTier,
@@ -6100,6 +7490,13 @@ class FarmLifeScene extends Phaser.Scene {
       income += count * FISH[fishId].sellPrice;
       this.save.fishShipping[fishId] = 0;
     }
+
+    for (const productId of productIds) {
+      const count = clampCount(this.save.productShipping[productId]);
+      shippedItems += count;
+      income += count * PRODUCTS[productId].sellPrice;
+      this.save.productShipping[productId] = 0;
+    }
     this.save.stats.totalShipped += shippedItems;
     this.save.stats.totalShippingIncome += income;
     this.save.stats.totalOrderRewards += orderReward + streakBonus;
@@ -6220,8 +7617,19 @@ class FarmLifeScene extends Phaser.Scene {
       }
     }
 
+    for (const productId of productIds) {
+      const item = productItem(productId);
+      const count = clampCount(this.save.inventory[item]);
+
+      if (count > 0) {
+        this.save.productShipping[productId] = clampCount(this.save.productShipping[productId]) + count;
+        this.save.inventory[item] = 0;
+        shipped += count;
+      }
+    }
+
     if (shipped === 0) {
-      this.showToast("背包里没有可售卖的作物、采集物或渔获。");
+      this.showToast("背包里没有可售卖的作物、采集物、渔获或畜产品。");
       return;
     }
 
@@ -6336,17 +7744,24 @@ class FarmLifeScene extends Phaser.Scene {
       return false;
     }
 
-    if (
-      this.getObjects(place).some(
-        (object) =>
-          (object.type === "collision" || object.type === "closed-building" || object.type === "counter") &&
-          containsTile(object, x, y),
-      )
-    ) {
+    if (this.getObjects(place).some((object) => this.objectBlocksTile(object, place, x, y))) {
       return true;
     }
 
     return this.npcActors.some((actor) => actor.x === x && actor.y === y);
+  }
+
+  private objectBlocksTile(object: TiledObject, place: PlaceId, x: number, y: number) {
+    if (!containsTile(object, x, y)) {
+      return false;
+    }
+
+    if (object.type === "enemy") {
+      const enemy = this.enemyInteractionFromObject(object);
+      return Boolean(enemy && !this.save.clearedEnemies[enemyKey(this.save.day, place, enemy.id, enemy.x, enemy.y)]);
+    }
+
+    return object.type === "collision" || object.type === "closed-building" || object.type === "counter" || object.type === "fruit-tree";
   }
 
   private inMap(x: number, y: number, place = this.save.player.place) {
@@ -6459,7 +7874,7 @@ class FarmLifeScene extends Phaser.Scene {
     const weather = this.currentWeather();
     const objects = [
       this.add.rectangle(x + 5, y + 6, width, height, 0x1f1308, 0.4).setOrigin(0, 0).setDepth(150).setScrollFactor(0),
-      this.add.rectangle(x, y, width, height, 0xf8dfae).setOrigin(0, 0).setStrokeStyle(4, 0x6b3f1d).setDepth(151).setScrollFactor(0),
+      this.add.nineslice(x, y, "ui-panel", undefined, width, height, 8, 8, 8, 8).setOrigin(0, 0).setTint(0xf8dfae).setDepth(151).setScrollFactor(0),
       this.add.image(x + 30, y + 30, "icons", this.weatherIconFrame(weather)).setScale(0.64).setDepth(152).setScrollFactor(0),
       this.add
         .text(x + 56, y + 10, `第 ${this.save.day} 天`, {
@@ -6521,23 +7936,11 @@ class FarmLifeScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDepth(116),
     );
-    this.addMessageObject(
-      this.add
-        .rectangle(x, y, width, height, 0xf8dfae)
-        .setOrigin(0, 0)
-        .setStrokeStyle(4, 0x6b3f1d)
-        .setDepth(118),
-    );
+    this.addUiSlice("ui-panel", x, y, width, height, 118, 0xf8dfae, "message");
 
     if (hasSpeaker) {
       const portraitFrame = this.speakerFrame(speaker);
-      this.addMessageObject(
-        this.add
-          .rectangle(x + 18, y + 18, 74, 46, 0x8b5428)
-          .setOrigin(0, 0)
-          .setStrokeStyle(3, 0x3f2614)
-          .setDepth(119),
-      );
+      this.addUiSlice("ui-slot", x + 18, y + 18, 74, 46, 119, 0x8b5428, "message");
 
       if (portraitFrame !== undefined) {
         this.addMessageObject(

@@ -1,0 +1,14 @@
+services:
+  lark-codex-hub:
+    image: lark-codex-bot-hub:latest
+    build:
+      context: ../..
+      dockerfile: deploy/lark-codex-bot/Dockerfile
+    restart: unless-stopped
+    user: "${LARK_CODEX_HUB_UID:-1000}:${LARK_CODEX_HUB_GID:-1000}"
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8790:8790"
+    volumes:
+      - ./data:/data

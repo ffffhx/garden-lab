@@ -9,6 +9,7 @@ describe("getAllCategories", () => {
 
     expect(categories.map((item) => item.slug)).toContain("tech");
     expect(categories.map((item) => item.slug)).toContain("fitness");
+    expect(categories.map((item) => item.slug)).toContain("daily-news");
   });
 });
 

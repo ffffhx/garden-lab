@@ -1738,7 +1738,7 @@
         0,
         0,
         0,
-        0,
+        65,
         0,
         0,
         0,
@@ -1860,14 +1860,14 @@
         0,
         0,
         0,
+        57,
         0,
         0,
         0,
         0,
         0,
         0,
-        0,
-        0,
+        58,
         0,
         0,
         0,
@@ -2530,6 +2530,193 @@
               "value": "down"
             }
           ]
+        },
+        {
+          "id": 15,
+          "name": "cheese-press",
+          "type": "interaction",
+          "x": 544,
+          "y": 480,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "workbench"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "奶酪机"
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "name": "butter-churn",
+          "type": "interaction",
+          "x": 768,
+          "y": 480,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "workbench"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "搅乳桶"
+            }
+          ]
+        },
+        {
+          "id": 18,
+          "name": "jam-maker",
+          "type": "interaction",
+          "x": 672,
+          "y": 384,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "workbench"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "果酱机"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "sheep-white",
+          "type": "animal",
+          "x": 384,
+          "y": 416,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "sheepWhite"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "白绵羊"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "wool"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "绵羊蹭过木柱，留下一点暖乎乎的羊毛。"
+            }
+          ]
+        },
+        {
+          "id": 13,
+          "name": "pig-pink",
+          "type": "animal",
+          "x": 928,
+          "y": 416,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "pigPink"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "粉猪"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "truffle"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "粉猪拱了拱草堆，好像翻出一枚山野松露。"
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "ostrich-brown",
+          "type": "animal",
+          "x": 672,
+          "y": 576,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "ostrichBrown"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "褐鸵鸟"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "ostrichEgg"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "鸵鸟把长脚收得很稳，谷仓里一下显得热闹了。"
+            }
+          ]
+        },
+        {
+          "id": 17,
+          "name": "barn-cow",
+          "type": "animal",
+          "x": 576,
+          "y": 576,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "cowBrown"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "褐奶牛"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "cowMilk"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "奶牛靠着草堆慢慢呼气，牛奶桶还带着温度。"
+            }
+          ]
         }
       ]
     }
@@ -2540,11 +2727,11 @@
       "name": "farm-tiles",
       "image": "../sprites/farm-tiles.png",
       "imagewidth": 256,
-      "imageheight": 672,
+      "imageheight": 736,
       "tilewidth": 32,
       "tileheight": 32,
       "columns": 8,
-      "tilecount": 166
+      "tilecount": 178
     }
   ]
 }

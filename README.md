@@ -8,9 +8,9 @@
 - 健身：训练记录、动作笔记、饮食复盘和阶段总结
 - 每日新闻：AI、前端与工程圈每天值得关注的热点速览
 
-文章和页面内容保存在站点应用包里的 Markdown 文件中：
+内容和页面保存在站点应用包里的 Markdown 文件中：
 
-- 文章：`apps/site/source/_posts/YYYY/MM/DD/*.md`
+- 技术/健身文章与每日新闻：`apps/site/source/_posts/YYYY/MM/DD/*.md`
 - 关于页：`apps/site/source/about/index.md`
 
 ## 本地开发
@@ -84,15 +84,15 @@ pnpm new:daily-news -- "2026-04-24 AI 与前端热点速览"
 
 ## 内容兼容说明
 
-这次重构保留了现有 Markdown 内容和本地文章资源文件夹结构。
+这次重构保留了现有 Markdown 内容和本地内容资源文件夹结构。
 
 新站点会在内容编译阶段兼容这些能力：
 
 - front matter：`title`、`date`、`categories`、`tags`、`excerpt`
 - 标准 Markdown：标题、列表、引用、代码块、表格、链接、图片
-- Hexo 风格的 `{% asset_img ... %}` 文章资源图片标签
+- Hexo 风格的 `{% asset_img ... %}` 内容资源图片标签
 
-文章图片会在开发和构建前自动同步到 `apps/site/public/post-assets/`，不需要手动复制。手动刷新公开静态资源可以运行：
+内容图片会在开发和构建前自动同步到 `apps/site/public/post-assets/`，不需要手动复制。手动刷新公开静态资源可以运行：
 
 ```bash
 pnpm prepare:public

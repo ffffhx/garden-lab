@@ -1366,31 +1366,34 @@
         0,
         0,
         0,
+        66,
+        67,
+        68,
+        69,
+        70,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        0,
+        0,
         54,
-        55,
-        56,
-        57,
-        58,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        11,
-        11,
-        11,
-        11,
-        11,
-        11,
-        11,
         0,
         0,
         0,
@@ -1405,14 +1408,11 @@
         0,
         0,
         0,
-        0,
-        0,
-        0,
-        59,
-        60,
-        61,
-        62,
-        63,
+        71,
+        72,
+        73,
+        74,
+        75,
         0,
         0,
         0,
@@ -1450,11 +1450,11 @@
         0,
         0,
         0,
-        64,
-        65,
-        66,
-        67,
-        68,
+        76,
+        77,
+        78,
+        79,
+        80,
         0,
         0,
         0,
@@ -1492,11 +1492,11 @@
         0,
         0,
         0,
-        69,
-        70,
-        71,
-        72,
-        73,
+        81,
+        82,
+        83,
+        84,
+        85,
         0,
         0,
         0,
@@ -1534,11 +1534,11 @@
         0,
         0,
         0,
-        74,
-        75,
-        76,
-        77,
-        78,
+        86,
+        87,
+        88,
+        89,
+        90,
         0,
         0,
         0,
@@ -1775,7 +1775,7 @@
         0,
         0,
         0,
-        0,
+        55,
         0,
         0,
         0,
@@ -2205,7 +2205,7 @@
         0,
         0,
         0,
-        0,
+        56,
         0,
         0,
         0,
@@ -2541,6 +2541,136 @@
           "properties": []
         },
         {
+          "id": 46,
+          "name": "well",
+          "type": "interaction",
+          "x": 384,
+          "y": 128,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "well"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "古井"
+            }
+          ]
+        },
+        {
+          "id": 47,
+          "name": "scarecrow",
+          "type": "collision",
+          "x": 512,
+          "y": 416,
+          "width": 32,
+          "height": 32,
+          "properties": []
+        },
+        {
+          "id": 48,
+          "name": "beehive",
+          "type": "interaction",
+          "x": 832,
+          "y": 736,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "beehive"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "蜂箱"
+            }
+          ]
+        },
+        {
+          "id": 51,
+          "name": "apple-tree",
+          "type": "fruit-tree",
+          "x": 1184,
+          "y": 160,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "treeId",
+              "type": "string",
+              "value": "appleTree"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "apple"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "苹果树"
+            }
+          ]
+        },
+        {
+          "id": 52,
+          "name": "apricot-tree",
+          "type": "fruit-tree",
+          "x": 1184,
+          "y": 384,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "treeId",
+              "type": "string",
+              "value": "apricotTree"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "apricot"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "杏树"
+            }
+          ]
+        },
+        {
+          "id": 53,
+          "name": "cherry-tree",
+          "type": "fruit-tree",
+          "x": 192,
+          "y": 576,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "treeId",
+              "type": "string",
+              "value": "cherryTree"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "cherry"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "樱桃树"
+            }
+          ]
+        },
+        {
           "id": 4,
           "name": "shipping-bin",
           "type": "interaction",
@@ -2645,6 +2775,182 @@
           ]
         },
         {
+          "id": 43,
+          "name": "chicken-red",
+          "type": "animal",
+          "x": 1056,
+          "y": 288,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "chickenRed"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "红羽鸡"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "chickenEgg"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "它在谷仓门口啄着草籽，像是在催你开饭。"
+            }
+          ]
+        },
+        {
+          "id": 44,
+          "name": "duck-white",
+          "type": "animal",
+          "x": 992,
+          "y": 448,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "duckWhite"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "白鸭"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "duckEgg"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "白鸭从池塘边摇回来，脚印湿漉漉的。"
+            }
+          ]
+        },
+        {
+          "id": 45,
+          "name": "goat-brown",
+          "type": "animal",
+          "x": 1088,
+          "y": 384,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "goatBrown"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "褐山羊"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "goatMilk"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "山羊顶了顶围栏，等着今天的一把干草。"
+            }
+          ]
+        },
+        {
+          "id": 49,
+          "name": "cow-brown",
+          "type": "animal",
+          "x": 1024,
+          "y": 352,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "cowBrown"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "褐奶牛"
+            },
+            {
+              "name": "product",
+              "type": "string",
+              "value": "cowMilk"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "奶牛慢慢嚼着草，铃铛声压得很低。"
+            }
+          ]
+        },
+        {
+          "id": 50,
+          "name": "horse-brown",
+          "type": "animal",
+          "x": 1152,
+          "y": 320,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "horseBrown"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "栗色马"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "栗色马把头探过栅栏，像是在辨认山路的方向。"
+            }
+          ]
+        },
+        {
+          "id": 54,
+          "name": "farm-dog",
+          "type": "animal",
+          "x": 224,
+          "y": 672,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "animalId",
+              "type": "string",
+              "value": "dogBrown"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "山居犬"
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "山居犬沿着田埂嗅了一圈，把陌生脚步都记住了。"
+            }
+          ]
+        },
+        {
           "id": 6,
           "name": "town-road",
           "type": "transition",
@@ -2720,11 +3026,11 @@
       "name": "farm-tiles",
       "image": "../sprites/farm-tiles.png",
       "imagewidth": 256,
-      "imageheight": 672,
+      "imageheight": 736,
       "tilewidth": 32,
       "tileheight": 32,
       "columns": 8,
-      "tilecount": 166
+      "tilecount": 178
     }
   ]
 }

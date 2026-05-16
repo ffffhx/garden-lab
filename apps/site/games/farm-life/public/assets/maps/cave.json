@@ -1558,6 +1558,7 @@
         0,
         0,
         0,
+        62,
         0,
         0,
         0,
@@ -1580,8 +1581,7 @@
         0,
         0,
         0,
-        0,
-        0,
+        62,
         0,
         0,
         0,
@@ -1990,7 +1990,7 @@
         0,
         0,
         0,
-        0,
+        63,
         0,
         0,
         0,
@@ -2541,6 +2541,89 @@
           "width": 32,
           "height": 32,
           "properties": []
+        },
+        {
+          "id": 11,
+          "name": "cave-bonfire",
+          "type": "interaction",
+          "x": 672,
+          "y": 576,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "bonfire"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "矿灯营火"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "cave-slime",
+          "type": "enemy",
+          "x": 576,
+          "y": 512,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "enemyId",
+              "type": "string",
+              "value": "blueSlime"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "蓝史莱姆"
+            },
+            {
+              "name": "rewardGold",
+              "type": "int",
+              "value": 18
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "它从湿石边弹起来，啪地一声散成矿洞水光。"
+            }
+          ]
+        },
+        {
+          "id": 13,
+          "name": "cave-sprout-slime",
+          "type": "enemy",
+          "x": 992,
+          "y": 576,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "enemyId",
+              "type": "string",
+              "value": "sproutSlime"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "芽史莱姆"
+            },
+            {
+              "name": "rewardGold",
+              "type": "int",
+              "value": 24
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "嫩芽从软泥里缩回去，留下几枚亮晶晶的矿砂。"
+            }
+          ]
         }
       ]
     }
@@ -2551,11 +2634,11 @@
       "name": "farm-tiles",
       "image": "../sprites/farm-tiles.png",
       "imagewidth": 256,
-      "imageheight": 672,
+      "imageheight": 736,
       "tilewidth": 32,
       "tileheight": 32,
       "columns": 8,
-      "tilecount": 166
+      "tilecount": 178
     }
   ]
 }

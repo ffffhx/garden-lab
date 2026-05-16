@@ -1478,6 +1478,7 @@
         0,
         0,
         0,
+        62,
         0,
         0,
         0,
@@ -1492,8 +1493,7 @@
         0,
         0,
         0,
-        0,
-        0,
+        62,
         0,
         0,
         0,
@@ -2116,7 +2116,7 @@
         0,
         0,
         0,
-        0,
+        63,
         0,
         0,
         0,
@@ -2530,6 +2530,89 @@
           "width": 32,
           "height": 32,
           "properties": []
+        },
+        {
+          "id": 12,
+          "name": "dungeon-bonfire",
+          "type": "interaction",
+          "x": 672,
+          "y": 672,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "action",
+              "type": "string",
+              "value": "bonfire"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "value": "地下营火"
+            }
+          ]
+        },
+        {
+          "id": 13,
+          "name": "dungeon-myconid",
+          "type": "enemy",
+          "x": 448,
+          "y": 416,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "enemyId",
+              "type": "string",
+              "value": "purpleMyconid"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "紫菇卫"
+            },
+            {
+              "name": "rewardGold",
+              "type": "int",
+              "value": 36
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "紫色孢子被山风吹散，石室里露出一条更亮的矿脉。"
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "dungeon-spike",
+          "type": "enemy",
+          "x": 896,
+          "y": 416,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "enemyId",
+              "type": "string",
+              "value": "spikePlant"
+            },
+            {
+              "name": "displayName",
+              "type": "string",
+              "value": "刺芽"
+            },
+            {
+              "name": "rewardGold",
+              "type": "int",
+              "value": 42
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "value": "刺芽收起尖刺，地面只剩一点发烫的根须。"
+            }
+          ]
         }
       ]
     }
@@ -2540,11 +2623,11 @@
       "name": "farm-tiles",
       "image": "../sprites/farm-tiles.png",
       "imagewidth": 256,
-      "imageheight": 672,
+      "imageheight": 736,
       "tilewidth": 32,
       "tileheight": 32,
       "columns": 8,
-      "tilecount": 166
+      "tilecount": 178
     }
   ]
 }

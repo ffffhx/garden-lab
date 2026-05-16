@@ -8,6 +8,12 @@ Thumbs.db
 /main-*.js
 /workspace-root-drop-handler-*.js
 tools/**/*.tgz
+tools/lark-codex-bot/.env
+tools/lark-codex-bot/.env.hub
+tools/lark-codex-bot/.env.worker
+tools/lark-codex-bot/.sessions.json
+tools/lark-codex-bot/.hub-queue.json
+deploy/lark-codex-bot/.env
 node_modules/
 .next/
 out/

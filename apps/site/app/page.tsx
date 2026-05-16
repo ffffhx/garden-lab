@@ -3,14 +3,16 @@ import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { PostCard } from "@/components/post-card";
 import { getAllCategories } from "@/lib/content/categories";
-import { SITE } from "@/lib/content/config";
-import { getAllPosts } from "@/lib/content/posts";
+import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
+import { getArticlePosts, getDailyNewsPosts } from "@/lib/content/posts";
 import { withBasePath } from "@/lib/utils/site-path";
 
 export default function HomePage() {
-  const posts = getAllPosts();
+  const articlePosts = getArticlePosts();
+  const dailyNewsPosts = getDailyNewsPosts();
   const categories = getAllCategories();
-  const featuredPosts = posts.slice(0, 8);
+  const featuredPosts = articlePosts.slice(0, 8);
+  const featuredNews = dailyNewsPosts.slice(0, 4);
   const priorityCoverSlug = featuredPosts.find((post) => post.cover)?.slug;
 
   return (
@@ -74,6 +76,30 @@ export default function HomePage() {
           </div>
         ) : (
           <EmptyState title="还没有文章" description="内容会在这里出现。" />
+        )}
+      </section>
+
+      <section className="space-y-5">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.32em] text-slate-500">Daily News</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">每日新闻</h2>
+          </div>
+          <Link
+            href={`/category/${CATEGORY_DEFINITIONS.dailyNews.slug}`}
+            className="text-sm font-semibold text-amber-800 underline decoration-amber-400/50 underline-offset-4"
+          >
+            查看全部
+          </Link>
+        </div>
+        {featuredNews.length > 0 ? (
+          <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+            {featuredNews.map((post) => (
+              <PostCard key={post.slug} post={post} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="还没有新闻" description="每日新闻会在这里单独更新。" />
         )}
       </section>
     </main>

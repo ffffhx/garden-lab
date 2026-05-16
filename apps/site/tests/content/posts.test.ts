@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { getAllPosts, getPostBySlug } from "../../lib/content/posts";
+import {
+  getAllPosts,
+  getArticlePosts,
+  getDailyNewsPosts,
+  getPostBySlug,
+} from "../../lib/content/posts";
 
 const POST_SCAN_TIMEOUT_MS = 15_000;
 
@@ -10,6 +15,21 @@ describe("getAllPosts", () => {
 
     expect(posts.length).toBeGreaterThan(1);
     expect(posts[0].date.getTime()).toBeGreaterThanOrEqual(posts[1].date.getTime());
+  }, POST_SCAN_TIMEOUT_MS);
+
+  it("separates articles from daily news", () => {
+    const articles = getArticlePosts();
+    const dailyNews = getDailyNewsPosts();
+
+    expect(articles.length).toBeGreaterThan(0);
+    expect(dailyNews.length).toBeGreaterThan(0);
+    expect(articles.every((post) => !post.categories.includes("dailyNews"))).toBe(true);
+    expect(
+      articles.every((post) => {
+        return post.categories.some((category) => category === "tech" || category === "fitness");
+      })
+    ).toBe(true);
+    expect(dailyNews.every((post) => post.categories.includes("dailyNews"))).toBe(true);
   }, POST_SCAN_TIMEOUT_MS);
 });
 

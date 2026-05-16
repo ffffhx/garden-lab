@@ -52,7 +52,7 @@ const categorySchema = {
   type: "string",
   enum: ["tech", "fitness", "dailyNews", "daily-news", "技术", "健身", "每日新闻"],
   description:
-    "Optional category filter. Prefer tech, fitness, or dailyNews. Chinese labels and slugs are also accepted.",
+    "Optional content section filter. Prefer tech, fitness, or dailyNews. Chinese labels and slugs are also accepted.",
 };
 
 function getCurrentArticleHeadings() {
@@ -81,9 +81,9 @@ function createTools(posts: AgentPostSummary[]): WebMcpTool[] {
   return [
     {
       name: "search_blog_posts",
-      title: "搜索博客文章",
+      title: "搜索博客内容",
       description:
-        "Search this blog's articles by title, excerpt, tags, and category. Use this when the user asks for posts about a topic.",
+        "Search this blog's articles and daily news by title, excerpt, tags, and section. Use this when the user asks for site content about a topic.",
       inputSchema: {
         type: "object",
         properties: {
@@ -119,9 +119,9 @@ function createTools(posts: AgentPostSummary[]): WebMcpTool[] {
     },
     {
       name: "list_recent_blog_posts",
-      title: "列出最近博客文章",
+      title: "列出最近博客内容",
       description:
-        "List the newest articles on this blog, optionally filtered by category.",
+        "List the newest content on this blog, optionally filtered by section.",
       inputSchema: {
         type: "object",
         properties: {
@@ -150,9 +150,9 @@ function createTools(posts: AgentPostSummary[]): WebMcpTool[] {
     },
     {
       name: "get_blog_post_by_slug",
-      title: "读取博客文章元数据",
+      title: "读取博客内容元数据",
       description:
-        "Get one blog article's machine-readable metadata by slug. Use search_blog_posts first if you do not know the slug.",
+        "Get one blog content item's machine-readable metadata by slug. Use search_blog_posts first if you do not know the slug.",
       inputSchema: {
         type: "object",
         properties: {
@@ -179,9 +179,9 @@ function createTools(posts: AgentPostSummary[]): WebMcpTool[] {
     },
     {
       name: "get_current_article_context",
-      title: "读取当前文章上下文",
+      title: "读取当前内容上下文",
       description:
-        "Return metadata and headings for the currently open article page. Use this when the user asks about the page they are viewing.",
+        "Return metadata and headings for the currently open article or daily news page. Use this when the user asks about the page they are viewing.",
       inputSchema: {
         type: "object",
         properties: {},

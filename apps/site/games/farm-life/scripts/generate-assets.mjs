@@ -10,9 +10,116 @@ const root = new URL("..", import.meta.url).pathname;
 const publicDir = join(root, "public");
 const spriteDir = join(publicDir, "assets", "sprites");
 const mapDir = join(publicDir, "assets", "maps");
+const uiDir = join(publicDir, "assets", "ui");
 const farmRpgAssetDir = join(root, "..", "..", "game", "Farm RPG - Tiny Asset Pack - (All in One)");
 const SOURCE_TILE = 16;
 const CHARACTER_TILE = 32;
+
+const cropCatalog = [
+  { id: "turnip", season: "spring", crop: ["Crops", "Spring", "Parsnip.png"], icon: "Parsnip.png" },
+  { id: "wheat", season: "summer", crop: ["Crops", "Summer", "Wheat.png"], icon: "Wheat.png" },
+  { id: "potato", season: "spring", crop: ["Crops", "Spring", "Potato.png"], icon: "Potato.png" },
+  { id: "asparagus", season: "spring", crop: ["Crops", "Spring", "Asparagus.png"], icon: "Asparagus.png" },
+  { id: "blueberry", season: "spring", crop: ["Crops", "Spring", "Blueberry.png"], icon: "Blueberry.png" },
+  { id: "broccoli", season: "spring", crop: ["Crops", "Spring", "Broccoli.png"], icon: "Broccoli.png" },
+  { id: "cabbage", season: "spring", crop: ["Crops", "Spring", "Cabbage.png"], icon: "Cabbage.png" },
+  { id: "carrot", season: "spring", crop: ["Crops", "Spring", "Carrot.png"], icon: "Carrot.png" },
+  { id: "cauliflower", season: "spring", crop: ["Crops", "Spring", "Cauliflower.png"], icon: "Cauliflower.png" },
+  { id: "onion", season: "spring", crop: ["Crops", "Spring", "Onion.png"], icon: "Onion.png" },
+  { id: "rice", season: "spring", crop: ["Crops", "Spring", "Rice.png"], icon: "Rice.png" },
+  { id: "springOnion", season: "spring", crop: ["Crops", "Spring", "Spring Onion.png"], icon: "Spring Onion.png" },
+  { id: "strawberry", season: "spring", crop: ["Crops", "Spring", "Strawberry.png"], icon: "Strawberry.png" },
+  { id: "adzukiBean", season: "summer", crop: ["Crops", "Summer", "Adzuki Bean.png"], icon: "Adzuki Bean.png" },
+  { id: "bellPepper", season: "summer", crop: ["Crops", "Summer", "Bell Pepper.png"], icon: "Green Bell Pepper.png" },
+  { id: "blackberry", season: "summer", crop: ["Crops", "Summer", "Blackberry.png"], icon: "Blackberry.png" },
+  { id: "cucumber", season: "summer", crop: ["Crops", "Summer", "Cucumber.png"], icon: "Cucumber.png" },
+  { id: "greenBeans", season: "summer", crop: ["Crops", "Summer", "Green Beans.png"], icon: "Green Beans.png" },
+  { id: "hotPepper", season: "summer", crop: ["Crops", "Summer", "Hot Pepper.png"], icon: "Hot Pepper.png" },
+  { id: "melon", season: "summer", crop: ["Crops", "Summer", "Melon.png"], icon: "Melon.png" },
+  { id: "pineapple", season: "summer", crop: ["Crops", "Summer", "Pineapple.png"], icon: "Pineapple.png" },
+  { id: "sunflower", season: "summer", crop: ["Crops", "Summer", "Sunflower.png"], icon: "Sunflower.png" },
+  { id: "tomato", season: "summer", crop: ["Crops", "Summer", "Tomato.png"], icon: "Tomato.png" },
+  { id: "watermelon", season: "summer", crop: ["Crops", "Summer", "Watermelon.png"], icon: "Watermelon.png" },
+  { id: "aloe", season: "autumn", crop: ["Crops", "Fall", "Aloe.png"], icon: "Aloe.png" },
+  { id: "beetroot", season: "autumn", crop: ["Crops", "Fall", "Beetroot.png"], icon: "Beetroot.png" },
+  { id: "corn", season: "autumn", crop: ["Crops", "Fall", "Corn.png"], icon: "Corn.png" },
+  { id: "eggplant", season: "autumn", crop: ["Crops", "Fall", "Eggplant.png"], icon: "Eggplant.png" },
+  { id: "grapes", season: "autumn", crop: ["Crops", "Fall", "Grapes.png"], icon: "Grapes.png" },
+  { id: "pumpkin", season: "autumn", crop: ["Crops", "Fall", "Pumpkin.png"], icon: "Pumpkin.png" },
+];
+
+const productCatalog = [
+  { id: "chickenEgg", icon: ["Icons", "Food Icons", "Chicken Egg.png"] },
+  { id: "duckEgg", icon: ["Icons", "Food Icons", "Duck Egg.png"] },
+  { id: "cowMilk", icon: ["Icons", "Food Icons", "Small Cow Milk.png"] },
+  { id: "goatMilk", icon: ["Icons", "Food Icons", "Small Goat Milk.png"] },
+  { id: "wool", icon: ["Icons", "Food Icons", "Wool.png"] },
+  { id: "truffle", icon: ["Icons", "Food Icons", "Truffle.png"] },
+  { id: "ostrichEgg", icon: ["Icons", "Food Icons", "Ostrich Egg.png"] },
+  { id: "honey", icon: ["Icons", "Food Icons", "Honey.png"] },
+  { id: "cheese", icon: ["Icons", "Food Icons", "Cheese.png"] },
+  { id: "butter", icon: ["Icons", "Food Icons", "Butter.png"] },
+  { id: "jam", icon: ["Icons", "Food Icons", "Jam.png"] },
+  { id: "apple", icon: ["Icons", "Food Icons", "Apple.png"] },
+  { id: "apricot", icon: ["Icons", "Food Icons", "Apricot.png"] },
+  { id: "cherry", icon: ["Icons", "Food Icons", "Cherry.png"] },
+  { id: "banana", icon: ["Icons", "Food Icons", "Banana.png"] },
+  { id: "mango", icon: ["Icons", "Food Icons", "Mango.png"] },
+  { id: "orange", icon: ["Icons", "Food Icons", "Orange.png"] },
+  { id: "peach", icon: ["Icons", "Food Icons", "Peach.png"] },
+  { id: "coconut", icon: ["Icons", "Food Icons", "Coconut.png"] },
+];
+
+const fishCatalog = [
+  { id: "creekFish", icon: ["Icons", "Fish", "River", "Chub.png"] },
+  { id: "carp", icon: ["Icons", "Fish", "River", "Carp.png"] },
+  { id: "silverFish", icon: ["Icons", "Fish", "River", "Perch.png"] },
+  { id: "sturgeon", icon: ["Icons", "Fish", "River", "Sturgeon.png"] },
+  { id: "sunfish", icon: ["Icons", "Fish", "River", "Sunfish.png"] },
+  { id: "redSnapper", icon: ["Icons", "Fish", "Sea", "Red Snapper.png"] },
+  { id: "tuna", icon: ["Icons", "Fish", "Sea", "Tuna.png"] },
+  { id: "clownfish", icon: ["Icons", "Fish", "Sea", "Clownfish.png"] },
+  { id: "crab", icon: ["Icons", "Fish", "Sea", "Creatures", "Crab.png"] },
+];
+
+const animalCatalog = [
+  { id: "chickenRed", path: ["Animals", "Farm", "Chicken", "Chicken Red.png"], frameWidth: 16, frameHeight: 16 },
+  { id: "duckWhite", path: ["Animals", "Farm", "Ducks", "Duck White.png"], frameWidth: 16, frameHeight: 16 },
+  { id: "goatBrown", path: ["Animals", "Farm", "Goat", "Goat Female Brown.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "sheepWhite", path: ["Animals", "Farm", "Sheep", "Sheep Female.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "pigPink", path: ["Animals", "Farm", "Pig", "Pig Pink.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "ostrichBrown", path: ["Animals", "Farm", "Ostrich", "Ostrich Brown.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "rabbitBrown", path: ["Animals", "Forest", "Rabbit", "Rabbit Brown.png"], frameWidth: 16, frameHeight: 16 },
+  { id: "redFox", path: ["Animals", "Forest", "Fox", "Red Fox.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "pelican", path: ["Animals", "Forest", "Beach", "Pelican.png"], frameWidth: 16, frameHeight: 16 },
+  { id: "seagull", path: ["Animals", "Forest", "Beach", "seagull.png"], frameWidth: 16, frameHeight: 16 },
+  { id: "cowBrown", path: ["Animals", "Farm", "Cow", "Common Cow", "Female Cow Brown.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "horseBrown", path: ["Animals", "Farm", "Horse", "1", "idle.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "deerDoe", path: ["Animals", "Forest", "Deer", "Female", "Idle.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "crow", path: ["Animals", "Forest", "Crow", "Crow.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "frogBlue", path: ["Animals", "Forest", "Frog", "Blue.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "blueDolphin", path: ["Animals", "Forest", "Beach", "Blue Dolphin.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "catGinger", path: ["Animals", "Pets", "Cats", "1", "Ginger.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "dogBrown", path: ["Animals", "Pets", "Dogs", "Premade", "1", "1.png"], frameWidth: 32, frameHeight: 32 },
+];
+
+const fruitTreeCatalog = [
+  { id: "appleTree", product: "apple", path: ["Crops", "Fruits Tree", "Fall", "Apple Tree - no shadow.png"], frameWidth: 32, frameHeight: 48 },
+  { id: "apricotTree", product: "apricot", path: ["Crops", "Fruits Tree", "Spring", "Apricot Tree - no shadow.png"], frameWidth: 32, frameHeight: 48 },
+  { id: "cherryTree", product: "cherry", path: ["Crops", "Fruits Tree", "Spring", "Cherry Tree - no shadow.png"], frameWidth: 32, frameHeight: 48 },
+  { id: "bananaTree", product: "banana", path: ["Crops", "Fruits Tree", "Summer", "Banana Tree - no Shadow.png"], frameWidth: 32, frameHeight: 48 },
+  { id: "mangoTree", product: "mango", path: ["Crops", "Fruits Tree", "Summer", "Mango Tree - no shadow.png"], frameWidth: 32, frameHeight: 48 },
+  { id: "orangeTree", product: "orange", path: ["Crops", "Fruits Tree", "Summer", "Orange Tree - no shadow.png"], frameWidth: 32, frameHeight: 48 },
+  { id: "peachTree", product: "peach", path: ["Crops", "Fruits Tree", "Summer", "Peach Tree - no shadow.png"], frameWidth: 32, frameHeight: 48 },
+  { id: "coconutTree", product: "coconut", path: ["Crops", "Fruits Tree", "Summer", "Coconut tree - no Shadow.png"], frameWidth: 32, frameHeight: 48 },
+];
+
+const enemyCatalog = [
+  { id: "blueSlime", path: ["Enemy", "Slimes", "Blue", "Slime.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "sproutSlime", path: ["Enemy", "Sprout Slime", "Blue", "Idle.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "purpleMyconid", path: ["Enemy", "Myconid", "Purple", "Idle.png"], frameWidth: 32, frameHeight: 32 },
+  { id: "spikePlant", path: ["Enemy", "Spike", "idle.png"], frameWidth: 32, frameHeight: 32 },
+];
 
 const tileFrames = {
   grass: 0,
@@ -68,6 +175,18 @@ const tileFrames = {
   crate: 50,
   mineCrystal: 51,
   templeStatue: 52,
+  well: 53,
+  scarecrow: 54,
+  beehive: 55,
+  cheesePress: 56,
+  butterChurn: 57,
+  beachBoat: 58,
+  beachFishPoint: 59,
+  deepForestAltar: 60,
+  mineLamp: 61,
+  bonfire: 62,
+  coconutTree: 63,
+  jamMaker: 64,
 };
 
 function tileCount() {
@@ -94,46 +213,37 @@ const characterFrames = {
   elder: 15,
 };
 
-const cropFrames = {
-  turnip0: 0,
-  turnip1: 1,
-  turnip2: 2,
-  turnip3: 3,
-  wheat0: 4,
-  wheat1: 5,
-  wheat2: 6,
-  wheat3: 7,
-  potato0: 8,
-  potato1: 9,
-  potato2: 10,
-  potato3: 11,
-};
+const cropFrames = Object.fromEntries(
+  cropCatalog.flatMap((crop, cropIndex) => [0, 1, 2, 3].map((stage) => [`${crop.id}${stage}`, cropIndex * 4 + stage])),
+);
 
-const iconFrames = {
-  hoe: 0,
-  seedBag: 1,
-  wateringCan: 2,
-  harvestBasket: 3,
-  turnip: 4,
-  wheat: 5,
-  potato: 6,
-  coin: 7,
-  sun: 8,
-  rain: 9,
-  mist: 10,
-  energy: 11,
-  order: 12,
-  heart: 13,
-  soundOn: 14,
-  soundOff: 15,
-  berry: 16,
-  mushroom: 17,
-  wildFlower: 18,
-  fishingRod: 19,
-  creekFish: 20,
-  carp: 21,
-  silverFish: 22,
-};
+const iconFrameNames = [
+  "hoe",
+  "seedBag",
+  "wateringCan",
+  "harvestBasket",
+  ...cropCatalog.map((crop) => crop.id),
+  "coin",
+  "sun",
+  "rain",
+  "mist",
+  "energy",
+  "order",
+  "heart",
+  "soundOn",
+  "soundOff",
+  "berry",
+  "mushroom",
+  "wildFlower",
+  "fishingRod",
+  ...fishCatalog.map((fish) => fish.id),
+  ...productCatalog.map((product) => product.id),
+];
+
+const iconFrames = Object.fromEntries(iconFrameNames.map((name, index) => [name, index]));
+const animalFrames = Object.fromEntries(animalCatalog.map((animal, index) => [animal.id, index]));
+const fruitTreeFrames = Object.fromEntries(fruitTreeCatalog.map((tree, index) => [tree.id, index]));
+const enemyFrames = Object.fromEntries(enemyCatalog.map((enemy, index) => [enemy.id, index]));
 
 function rect(x, y, width, height, fill, opacity = 1) {
   return `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${fill}" fill-opacity="${opacity}"/>`;
@@ -605,9 +715,13 @@ function iconSprite(kind) {
 }
 
 async function makeSheet(file, frames, columns) {
-  const width = columns * TILE;
+  await makeSizedSheet(file, frames, columns, TILE, TILE);
+}
+
+async function makeSizedSheet(file, frames, columns, frameWidth, frameHeight) {
+  const width = columns * frameWidth;
   const rows = Math.ceil(frames.length / columns);
-  const height = rows * TILE;
+  const height = rows * frameHeight;
   const base = sharp({
     create: {
       width,
@@ -619,8 +733,8 @@ async function makeSheet(file, frames, columns) {
 
   const composites = frames.map((input, index) => ({
     input,
-    left: (index % columns) * TILE,
-    top: Math.floor(index / columns) * TILE,
+    left: (index % columns) * frameWidth,
+    top: Math.floor(index / columns) * frameHeight,
   }));
 
   await base.composite(composites).png().toFile(join(spriteDir, file));
@@ -669,6 +783,53 @@ async function assetFrame(
         input,
         left: Math.floor((TILE - targetWidth) / 2),
         top: Math.floor((TILE - targetHeight) / 2),
+      },
+    ])
+    .png()
+    .toBuffer();
+}
+
+async function canvasFrame(
+  file,
+  {
+    left = 0,
+    top = 0,
+    width = SOURCE_TILE,
+    height = SOURCE_TILE,
+    canvasWidth = TILE,
+    canvasHeight = TILE,
+    targetWidth = canvasWidth,
+    targetHeight = canvasHeight,
+    flip = false,
+  } = {},
+) {
+  let source = sharp(file).extract({ left, top, width, height });
+
+  if (flip) {
+    source = source.flop();
+  }
+
+  const input = await source
+    .resize(targetWidth, targetHeight, {
+      fit: "fill",
+      kernel: "nearest",
+    })
+    .png()
+    .toBuffer();
+
+  return sharp({
+    create: {
+      width: canvasWidth,
+      height: canvasHeight,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([
+      {
+        input,
+        left: Math.floor((canvasWidth - targetWidth) / 2),
+        top: Math.floor((canvasHeight - targetHeight) / 2),
       },
     ])
     .png()
@@ -749,6 +910,50 @@ function cropStageAsset(file, frame) {
   });
 }
 
+async function cropStageFrames(file) {
+  const metadata = await sharp(file).metadata();
+  const frameCount = Math.max(1, Math.floor((metadata.width ?? SOURCE_TILE) / SOURCE_TILE));
+  const matureFrame = frameCount >= 10 ? 8 : Math.min(7, frameCount - 1);
+  const stageFrames = [1, 3, 5, matureFrame].map((frame) => Math.max(0, Math.min(frame, frameCount - 1)));
+
+  return Promise.all(stageFrames.map((frame) => cropStageAsset(file, frame)));
+}
+
+function animalAsset(file, { frameWidth, frameHeight, col = 0, row = 0 }) {
+  return assetFrame(file, {
+    left: col * frameWidth,
+    top: row * frameHeight,
+    width: frameWidth,
+    height: frameHeight,
+    targetWidth: TILE,
+    targetHeight: TILE,
+  });
+}
+
+function fruitTreeAsset(file, { frameWidth, frameHeight }) {
+  return canvasFrame(file, {
+    left: 0,
+    top: 0,
+    width: frameWidth,
+    height: frameHeight,
+    canvasWidth: 48,
+    canvasHeight: 48,
+    targetWidth: 32,
+    targetHeight: 48,
+  });
+}
+
+function enemyAsset(file, { frameWidth, frameHeight, col = 0, row = 0 }) {
+  return assetFrame(file, {
+    left: col * frameWidth,
+    top: row * frameHeight,
+    width: frameWidth,
+    height: frameHeight,
+    targetWidth: TILE,
+    targetHeight: TILE,
+  });
+}
+
 async function farmRpgTileSprites() {
   const grass = assetPath("Tileset", "Tileset Grass Spring.png");
   const tilledSoil = assetPath("Tileset", "Tilled Soil and wet soil.png");
@@ -777,9 +982,21 @@ async function farmRpgTileSprites() {
   const templeInterior = assetPath("Objects", "Interior", "Temple.png");
   const barnBuilding = assetPath("Objects", "Exterior", "Houses", "Farm Buildings", "Barn", "Barn.png");
   const templeBuilding = assetPath("Objects", "Exterior", "Houses", "NPCS houses", "temple.png");
+  const well = assetPath("Objects", "Exterior", "Well .png");
+  const scarecrow = assetPath("Objects", "Exterior", "Scarescrow.png");
+  const beehive = assetPath("Objects", "Work Benches", "Beehive.png");
+  const cheesePress = assetPath("Objects", "Work Benches", "Cheese Press.png");
+  const butterChurn = assetPath("Objects", "Work Benches", "Butter Churn.png");
+  const jamMaker = assetPath("Objects", "Work Benches", "Jam Maker.png");
+  const beachBoat = assetPath("Objects", "Exterior", "Beach", "Wood Boat.png");
+  const beachFishPoint = assetPath("Objects", "Exterior", "Beach", "FishPoint.png");
+  const deepForestAltar = assetPath("Objects", "Exterior", "Deep Forest", "Altar.png");
+  const mineLamp = assetPath("Objects", "Exterior", "Mine and Dungeon", "Lamp .png");
+  const bonfire = assetPath("Objects", "Exterior", "Mine and Dungeon", "bonfire.png");
+  const coconutTree = assetPath("Objects", "Exterior", "Beach", "Coconut Tree.png");
 
   const frames = [
-    tileAsset(grass, 6, 2),
+    tileAsset(grass, 9, 2),
     tileAsset(tilledSoil, 5, 2),
     tileAsset(grass, 3, 9),
     tileAsset(tilledSoil, 5, 2),
@@ -832,6 +1049,18 @@ async function farmRpgTileSprites() {
     assetFrame(beachExterior, { left: 8 * SOURCE_TILE, top: 4 * SOURCE_TILE, width: SOURCE_TILE, height: SOURCE_TILE }),
     tileAsset(caves, 12, 2),
     assetFrame(templeInterior, { left: 2 * SOURCE_TILE, top: 2 * SOURCE_TILE, width: SOURCE_TILE, height: SOURCE_TILE }),
+    assetFrame(well, { left: 0, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(scarecrow, { left: 0, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(beehive, { left: 0, top: 0, width: SOURCE_TILE, height: TILE, targetWidth: SOURCE_TILE, targetHeight: TILE }),
+    assetFrame(cheesePress, { left: 0, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(butterChurn, { left: 0, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(beachBoat, { left: 0, top: 0, width: 176, height: 112, targetWidth: TILE, targetHeight: 20 }),
+    assetFrame(beachFishPoint, { left: 0, top: 0, width: SOURCE_TILE, height: SOURCE_TILE, targetWidth: 28, targetHeight: 28 }),
+    assetFrame(deepForestAltar, { left: 0, top: 0, width: 48, height: 48, targetWidth: TILE, targetHeight: TILE }),
+    assetFrame(mineLamp, { left: 0, top: 0, width: 12, height: SOURCE_TILE, targetWidth: 24, targetHeight: TILE }),
+    assetFrame(bonfire, { left: 0, top: 0, width: SOURCE_TILE, height: TILE, targetWidth: SOURCE_TILE, targetHeight: TILE }),
+    assetFrame(coconutTree, { left: 0, top: 0, width: 40, height: 48, targetWidth: 28, targetHeight: TILE }),
+    assetFrame(jamMaker, { left: 0, top: 0, width: TILE, height: TILE, targetWidth: TILE, targetHeight: TILE }),
   ];
 
   addChunkFrames(frames, "barnFront", barnBuilding, { col: 0, row: 0, width: 5, height: 5 });
@@ -868,30 +1097,14 @@ async function farmRpgCharacterSprites() {
 }
 
 async function farmRpgCropSprites() {
-  const turnip = assetPath("Crops", "Spring", "Parsnip.png");
-  const wheat = assetPath("Crops", "Summer", "Wheat.png");
-  const potato = assetPath("Crops", "Spring", "Potato.png");
+  const cropFramesByCrop = await Promise.all(cropCatalog.map((crop) => cropStageFrames(assetPath(...crop.crop))));
 
-  return Promise.all([
-    cropStageAsset(turnip, 1),
-    cropStageAsset(turnip, 3),
-    cropStageAsset(turnip, 5),
-    cropStageAsset(turnip, 7),
-    cropStageAsset(wheat, 1),
-    cropStageAsset(wheat, 3),
-    cropStageAsset(wheat, 5),
-    cropStageAsset(wheat, 8),
-    cropStageAsset(potato, 1),
-    cropStageAsset(potato, 3),
-    cropStageAsset(potato, 5),
-    cropStageAsset(potato, 7),
-  ]);
+  return cropFramesByCrop.flat();
 }
 
 async function farmRpgIconSprites() {
   const woodTools = assetPath("Icons", "RPG icons", "Weapons and Armor", "1. Wood");
   const foodIcons = assetPath("Icons", "Food Icons");
-  const fishIcons = assetPath("Icons", "Fish", "River");
   const weather = assetPath("UI", "weather icons.png");
   const bars = assetPath("UI", "Bars.png");
   const money = assetPath("UI", "Money.png");
@@ -900,14 +1113,12 @@ async function farmRpgIconSprites() {
   const mushrooms = assetPath("Objects", "Tree", "Deep Forest", "Fantasy Mushroom.png");
   const music = assetPath("UI", "UI music.png");
 
-  return Promise.all([
+  const frames = [
     smallIcon(join(woodTools, "Hoe.png"), 0, 0),
     smallIcon(bags, 0, 0),
     smallIcon(join(woodTools, "Watering can.png"), 0, 0),
     smallIcon(exterior, 0, 2),
-    wideIcon(join(foodIcons, "Parsnip.png")),
-    wideIcon(join(foodIcons, "Wheat.png")),
-    wideIcon(join(foodIcons, "Potato.png")),
+    ...cropCatalog.map((crop) => wideIcon(join(foodIcons, crop.icon))),
     smallIcon(money, 0, 0),
     smallIcon(weather, 0, 0),
     smallIcon(weather, 2, 0),
@@ -921,10 +1132,55 @@ async function farmRpgIconSprites() {
     assetFrame(mushrooms, { left: 0, top: 0, width: SOURCE_TILE, height: SOURCE_TILE, targetWidth: 28, targetHeight: 28 }),
     wideIcon(join(foodIcons, "Sunflower.png")),
     smallIcon(join(woodTools, "Fishing Rod.png"), 0, 0),
-    wideIcon(join(fishIcons, "Chub.png")),
-    wideIcon(join(fishIcons, "Carp.png")),
-    wideIcon(join(fishIcons, "Perch.png")),
-  ]);
+    ...fishCatalog.map((fish) => wideIcon(assetPath(...fish.icon))),
+    ...productCatalog.map((product) => wideIcon(assetPath(...product.icon))),
+  ];
+
+  return Promise.all(frames);
+}
+
+async function farmRpgAnimalSprites() {
+  return Promise.all(
+    animalCatalog.map((animal) =>
+      animalAsset(assetPath(...animal.path), {
+        frameWidth: animal.frameWidth,
+        frameHeight: animal.frameHeight,
+      }),
+    ),
+  );
+}
+
+async function farmRpgFruitTreeSprites() {
+  return Promise.all(
+    fruitTreeCatalog.map((tree) =>
+      fruitTreeAsset(assetPath(...tree.path), {
+        frameWidth: tree.frameWidth,
+        frameHeight: tree.frameHeight,
+      }),
+    ),
+  );
+}
+
+async function farmRpgEnemySprites() {
+  return Promise.all(
+    enemyCatalog.map((enemy) =>
+      enemyAsset(assetPath(...enemy.path), {
+        frameWidth: enemy.frameWidth,
+        frameHeight: enemy.frameHeight,
+      }),
+    ),
+  );
+}
+
+async function makeUiAssets() {
+  const dialogue = assetPath("UI", "dialogue box.png");
+  const buttons = assetPath("UI", "button.png");
+  const slots = assetPath("UI", "Inventory", "Slots.png");
+
+  await sharp(dialogue).extract({ left: 0, top: 0, width: 48, height: 48 }).png().toFile(join(uiDir, "panel-light.png"));
+  await sharp(slots).extract({ left: 0, top: 0, width: 48, height: 48 }).png().toFile(join(uiDir, "slot.png"));
+  await sharp(buttons).extract({ left: 48, top: 0, width: 48, height: 48 }).png().toFile(join(uiDir, "button-amber.png"));
+  await sharp(buttons).extract({ left: 0, top: 144, width: 48, height: 16 }).png().toFile(join(uiDir, "button-light.png"));
 }
 
 function gid(name) {
@@ -1060,11 +1316,14 @@ function makeFarmMap() {
   setTile(decor, 15, 22, gid("flowerBlue"));
   setTile(decor, 26, 21, gid("flowerRed"));
   setTile(decor, 32, 24, gid("flowerBlue"));
-  setTile(decor, 25, 24, gid("rock"));
-  setTile(decor, 35, 7, gid("flowerBlue"));
-  setTile(decor, 37, 8, gid("flowerRed"));
-  setTile(decor, 35, 4, gid("treeTop"));
-  setTile(decor, 35, 5, gid("treeTrunk"));
+    setTile(decor, 25, 24, gid("rock"));
+    setTile(decor, 35, 7, gid("flowerBlue"));
+    setTile(decor, 37, 8, gid("flowerRed"));
+    setTile(decor, 12, 4, gid("well"));
+    setTile(decor, 16, 13, gid("scarecrow"));
+    setTile(decor, 26, 23, gid("beehive"));
+    setTile(decor, 35, 4, gid("treeTop"));
+    setTile(decor, 35, 5, gid("treeTrunk"));
   setTile(decor, 38, 13, gid("treeTop"));
   setTile(decor, 38, 14, gid("treeTrunk"));
   setTile(decor, 2, 18, gid("treeTop"));
@@ -1093,10 +1352,62 @@ function makeFarmMap() {
       object(39, "field-fence-south-left", "collision", 10, 19, 5, 1),
       object(40, "field-fence-south-right", "collision", 18, 19, 5, 1),
       object(41, "barn-building", "collision", 27, 3, 5, 5),
+      object(46, "well", "interaction", 12, 4, 1, 1, { action: "well", label: "古井" }),
+      object(47, "scarecrow", "collision", 16, 13, 1, 1),
+      object(48, "beehive", "interaction", 26, 23, 1, 1, { action: "beehive", label: "蜂箱" }),
+      object(51, "apple-tree", "fruit-tree", 37, 5, 1, 1, {
+        treeId: "appleTree",
+        product: "apple",
+        displayName: "苹果树",
+      }),
+      object(52, "apricot-tree", "fruit-tree", 37, 12, 1, 1, {
+        treeId: "apricotTree",
+        product: "apricot",
+        displayName: "杏树",
+      }),
+      object(53, "cherry-tree", "fruit-tree", 6, 18, 1, 1, {
+        treeId: "cherryTree",
+        product: "cherry",
+        displayName: "樱桃树",
+      }),
       object(4, "shipping-bin", "interaction", 9, 5, 1, 1, { action: "ship", label: "售卖箱" }),
       object(5, "home-door", "transition", 5, 6, 1, 1, { targetPlace: "home", targetX: 21, targetY: 25, facing: "down" }),
       object(42, "barn-door", "transition", 29, 7, 2, 1, { targetPlace: "barn", targetX: 21, targetY: 25, facing: "up" }),
       object(37, "mailbox", "interaction", 10, 5, 1, 1, { action: "mailbox", label: "邮箱" }),
+      object(43, "chicken-red", "animal", 33, 9, 1, 1, {
+        animalId: "chickenRed",
+        displayName: "红羽鸡",
+        product: "chickenEgg",
+        line: "它在谷仓门口啄着草籽，像是在催你开饭。",
+      }),
+      object(44, "duck-white", "animal", 31, 14, 1, 1, {
+        animalId: "duckWhite",
+        displayName: "白鸭",
+        product: "duckEgg",
+        line: "白鸭从池塘边摇回来，脚印湿漉漉的。",
+      }),
+      object(45, "goat-brown", "animal", 34, 12, 1, 1, {
+        animalId: "goatBrown",
+        displayName: "褐山羊",
+        product: "goatMilk",
+        line: "山羊顶了顶围栏，等着今天的一把干草。",
+      }),
+      object(49, "cow-brown", "animal", 32, 11, 1, 1, {
+        animalId: "cowBrown",
+        displayName: "褐奶牛",
+        product: "cowMilk",
+        line: "奶牛慢慢嚼着草，铃铛声压得很低。",
+      }),
+      object(50, "horse-brown", "animal", 36, 10, 1, 1, {
+        animalId: "horseBrown",
+        displayName: "栗色马",
+        line: "栗色马把头探过栅栏，像是在辨认山路的方向。",
+      }),
+      object(54, "farm-dog", "animal", 7, 21, 1, 1, {
+        animalId: "dogBrown",
+        displayName: "山居犬",
+        line: "山居犬沿着田埂嗅了一圈，把陌生脚步都记住了。",
+      }),
       object(6, "town-road", "transition", 20, 27, 3, 1, { targetPlace: "town", targetX: 21, targetY: 1, facing: "down" }),
       object(7, "aunt-chen", "npc", 12, 22, 1, 1, {
         npcId: "auntChen",
@@ -1143,6 +1454,11 @@ function makeHomeMap() {
       object(9, "left-shelf", "collision", 6, 16, 1, 1),
       object(10, "right-shelf", "collision", 34, 16, 1, 1),
       object(11, "home-exit", "transition", 21, 26, 1, 1, { targetPlace: "farm", targetX: 5, targetY: 7, facing: "down" }),
+      object(12, "home-cat", "animal", 15, 15, 1, 1, {
+        animalId: "catGinger",
+        displayName: "橘猫",
+        line: "橘猫在桌边绕了一圈，像是确认这间小屋终于有人住了。",
+      }),
     ]),
   ]);
 }
@@ -1213,6 +1529,26 @@ function makeTownMap() {
       object(12, "town-west-tree", "collision", 3, 21, 1, 1),
       object(13, "town-east-rock", "collision", 36, 23, 1, 1),
       object(14, "town-west-rock", "collision", 5, 25, 1, 1),
+      object(18, "town-banana-tree", "fruit-tree", 2, 23, 1, 1, {
+        treeId: "bananaTree",
+        product: "banana",
+        displayName: "香蕉树",
+      }),
+      object(19, "town-mango-tree", "fruit-tree", 36, 21, 1, 1, {
+        treeId: "mangoTree",
+        product: "mango",
+        displayName: "芒果树",
+      }),
+      object(20, "town-orange-tree", "fruit-tree", 33, 24, 1, 1, {
+        treeId: "orangeTree",
+        product: "orange",
+        displayName: "橙树",
+      }),
+      object(21, "town-peach-tree", "fruit-tree", 8, 21, 1, 1, {
+        treeId: "peachTree",
+        product: "peach",
+        displayName: "桃树",
+      }),
     ]),
   ]);
 }
@@ -1327,6 +1663,8 @@ function makeDeepForestMap() {
   setRect(decor, 34, 9, 5, 4, gid("cliff"));
   setTile(decor, 36, 12, gid("caveFloor"));
   setTile(decor, 37, 12, gid("mineCrystal"));
+  setTile(decor, 19, 20, gid("deepForestAltar"));
+  setTile(decor, 23, 21, gid("bonfire"));
 
   return mapShell([
     tileLayer(1, "Ground", ground),
@@ -1350,6 +1688,33 @@ function makeDeepForestMap() {
       object(16, "forest-tree-8", "collision", 5, 21, 1, 1),
       object(17, "forest-rock-1", "collision", 14, 21, 1, 1),
       object(18, "forest-rock-2", "collision", 31, 18, 1, 1),
+      object(21, "forest-altar", "interaction", 19, 20, 1, 1, { action: "altar", label: "林中祭坛" }),
+      object(22, "forest-bonfire", "interaction", 23, 21, 1, 1, { action: "bonfire", label: "营火" }),
+      object(19, "forest-rabbit", "animal", 13, 16, 1, 1, {
+        animalId: "rabbitBrown",
+        displayName: "林兔",
+        line: "林兔竖起耳朵，停了一下又钻回草丛。",
+      }),
+      object(20, "forest-fox", "animal", 28, 14, 1, 1, {
+        animalId: "redFox",
+        displayName: "赤狐",
+        line: "赤狐绕着蘑菇走了一圈，像是在巡视这片深林。",
+      }),
+      object(23, "forest-deer", "animal", 16, 20, 1, 1, {
+        animalId: "deerDoe",
+        displayName: "林鹿",
+        line: "林鹿在古树阴影里停步，鼻尖带着潮湿的草气。",
+      }),
+      object(24, "forest-crow", "animal", 32, 9, 1, 1, {
+        animalId: "crow",
+        displayName: "黑鸦",
+        line: "黑鸦偏着头看你，像是在记住今天的来客。",
+      }),
+      object(25, "forest-frog", "animal", 6, 7, 1, 1, {
+        animalId: "frogBlue",
+        displayName: "蓝蛙",
+        line: "蓝蛙贴着水边一跳，叶面晃出一圈小水纹。",
+      }),
     ]),
   ]);
 }
@@ -1370,6 +1735,10 @@ function makeBeachMap() {
   setTile(decor, 29, 13, gid("rock"));
   setTile(decor, 35, 5, gid("rock"));
   setTile(decor, 6, 14, gid("sign"));
+  setTile(decor, 10, 15, gid("beachBoat"));
+  setTile(decor, 22, 15, gid("beachFishPoint"));
+  setTile(decor, 30, 6, gid("coconutTree"));
+  setTile(decor, 38, 13, gid("coconutTree"));
 
   return mapShell([
     tileLayer(1, "Ground", ground),
@@ -1384,6 +1753,35 @@ function makeBeachMap() {
       object(7, "beach-crate", "collision", 8, 7, 1, 1),
       object(8, "beach-rock-1", "collision", 29, 13, 1, 1),
       object(9, "beach-rock-2", "collision", 35, 5, 1, 1),
+      object(12, "beach-boat", "collision", 10, 15, 1, 1),
+      object(13, "beach-fish-point", "interaction", 22, 15, 1, 1, { action: "fish-point", label: "鱼影" }),
+      object(14, "beach-coconut-left", "collision", 30, 6, 1, 1),
+      object(15, "beach-coconut-right", "collision", 38, 13, 1, 1),
+      object(17, "beach-coconut-tree-left", "fruit-tree", 30, 6, 1, 1, {
+        treeId: "coconutTree",
+        product: "coconut",
+        displayName: "椰子树",
+      }),
+      object(18, "beach-coconut-tree-right", "fruit-tree", 38, 13, 1, 1, {
+        treeId: "coconutTree",
+        product: "coconut",
+        displayName: "椰子树",
+      }),
+      object(10, "beach-pelican", "animal", 13, 11, 1, 1, {
+        animalId: "pelican",
+        displayName: "鹈鹕",
+        line: "鹈鹕站在沙地和水线之间，盯着浪花等鱼影。",
+      }),
+      object(11, "beach-seagull", "animal", 26, 10, 1, 1, {
+        animalId: "seagull",
+        displayName: "海鸥",
+        line: "海鸥扑了扑翅膀，把码头边的风声搅亮了。",
+      }),
+      object(16, "beach-dolphin", "animal", 33, 15, 1, 1, {
+        animalId: "blueDolphin",
+        displayName: "蓝海豚",
+        line: "蓝海豚在浅水边露出背鳍，像把浪花往岸边轻轻推了一下。",
+      }),
     ]),
   ]);
 }
@@ -1412,6 +1810,9 @@ function makeCaveMap() {
   setTile(decor, 21, 26, gid("caveFloor"));
   setTile(decor, 13, 10, gid("rock"));
   setTile(decor, 29, 12, gid("rock"));
+  setTile(decor, 9, 8, gid("mineLamp"));
+  setTile(decor, 32, 8, gid("mineLamp"));
+  setTile(decor, 21, 18, gid("bonfire"));
 
   return mapShell([
     tileLayer(1, "Ground", ground),
@@ -1427,6 +1828,19 @@ function makeCaveMap() {
       object(8, "dungeon-door", "transition", 21, 0, 1, 1, { targetPlace: "dungeon", targetX: 21, targetY: 25, facing: "up" }),
       object(9, "cave-rock-1", "collision", 13, 10, 1, 1),
       object(10, "cave-rock-2", "collision", 29, 12, 1, 1),
+      object(11, "cave-bonfire", "interaction", 21, 18, 1, 1, { action: "bonfire", label: "矿灯营火" }),
+      object(12, "cave-slime", "enemy", 18, 16, 1, 1, {
+        enemyId: "blueSlime",
+        displayName: "蓝史莱姆",
+        rewardGold: 18,
+        line: "它从湿石边弹起来，啪地一声散成矿洞水光。",
+      }),
+      object(13, "cave-sprout-slime", "enemy", 31, 18, 1, 1, {
+        enemyId: "sproutSlime",
+        displayName: "芽史莱姆",
+        rewardGold: 24,
+        line: "嫩芽从软泥里缩回去，留下几枚亮晶晶的矿砂。",
+      }),
     ]),
   ]);
 }
@@ -1450,6 +1864,9 @@ function makeDungeonMap() {
   setTile(decor, 21, 12, gid("templeStatue"));
   setTile(decor, 17, 20, gid("mineCrystal"));
   setTile(decor, 24, 20, gid("mineCrystal"));
+  setTile(decor, 13, 6, gid("mineLamp"));
+  setTile(decor, 28, 6, gid("mineLamp"));
+  setTile(decor, 21, 21, gid("bonfire"));
 
   return mapShell([
     tileLayer(1, "Ground", ground),
@@ -1466,6 +1883,19 @@ function makeDungeonMap() {
       object(9, "dungeon-crate-1", "collision", 12, 15, 1, 1),
       object(10, "dungeon-crate-2", "collision", 29, 15, 1, 1),
       object(11, "dungeon-statue", "collision", 21, 12, 1, 1),
+      object(12, "dungeon-bonfire", "interaction", 21, 21, 1, 1, { action: "bonfire", label: "地下营火" }),
+      object(13, "dungeon-myconid", "enemy", 14, 13, 1, 1, {
+        enemyId: "purpleMyconid",
+        displayName: "紫菇卫",
+        rewardGold: 36,
+        line: "紫色孢子被山风吹散，石室里露出一条更亮的矿脉。",
+      }),
+      object(14, "dungeon-spike", "enemy", 28, 13, 1, 1, {
+        enemyId: "spikePlant",
+        displayName: "刺芽",
+        rewardGold: 42,
+        line: "刺芽收起尖刺，地面只剩一点发烫的根须。",
+      }),
     ]),
   ]);
 }
@@ -1525,6 +1955,9 @@ function makeBarnMap() {
   setTile(decor, 24, 8, gid("lantern"));
   setTile(decor, 20, 16, gid("table"));
   setTile(decor, 22, 16, gid("table"));
+  setTile(decor, 17, 15, gid("cheesePress"));
+  setTile(decor, 24, 15, gid("butterChurn"));
+  setTile(decor, 21, 12, gid("jamMaker"));
 
   return mapShell([
     tileLayer(1, "Ground", ground),
@@ -1541,6 +1974,33 @@ function makeBarnMap() {
       object(9, "barn-table-left", "collision", 20, 16, 1, 1),
       object(10, "barn-table-right", "collision", 22, 16, 1, 1),
       object(11, "farm-exit", "transition", 21, 26, 1, 1, { targetPlace: "farm", targetX: 30, targetY: 9, facing: "down" }),
+      object(15, "cheese-press", "interaction", 17, 15, 1, 1, { action: "workbench", label: "奶酪机" }),
+      object(16, "butter-churn", "interaction", 24, 15, 1, 1, { action: "workbench", label: "搅乳桶" }),
+      object(18, "jam-maker", "interaction", 21, 12, 1, 1, { action: "workbench", label: "果酱机" }),
+      object(12, "sheep-white", "animal", 12, 13, 1, 1, {
+        animalId: "sheepWhite",
+        displayName: "白绵羊",
+        product: "wool",
+        line: "绵羊蹭过木柱，留下一点暖乎乎的羊毛。",
+      }),
+      object(13, "pig-pink", "animal", 29, 13, 1, 1, {
+        animalId: "pigPink",
+        displayName: "粉猪",
+        product: "truffle",
+        line: "粉猪拱了拱草堆，好像翻出一枚山野松露。",
+      }),
+      object(14, "ostrich-brown", "animal", 21, 18, 1, 1, {
+        animalId: "ostrichBrown",
+        displayName: "褐鸵鸟",
+        product: "ostrichEgg",
+        line: "鸵鸟把长脚收得很稳，谷仓里一下显得热闹了。",
+      }),
+      object(17, "barn-cow", "animal", 18, 18, 1, 1, {
+        animalId: "cowBrown",
+        displayName: "褐奶牛",
+        product: "cowMilk",
+        line: "奶牛靠着草堆慢慢呼气，牛奶桶还带着温度。",
+      }),
     ]),
   ]);
 }
@@ -1548,11 +2008,16 @@ function makeBarnMap() {
 async function main() {
   await mkdir(spriteDir, { recursive: true });
   await mkdir(mapDir, { recursive: true });
+  await mkdir(uiDir, { recursive: true });
 
   await makeSheet("farm-tiles.png", await farmRpgTileSprites(), 8);
   await makeSheet("characters.png", await farmRpgCharacterSprites(), 8);
   await makeSheet("crops.png", await farmRpgCropSprites(), 4);
   await makeSheet("icons.png", await farmRpgIconSprites(), 8);
+  await makeSheet("animals.png", await farmRpgAnimalSprites(), 8);
+  await makeSizedSheet("fruit-trees.png", await farmRpgFruitTreeSprites(), 4, 48, 48);
+  await makeSheet("enemies.png", await farmRpgEnemySprites(), 4);
+  await makeUiAssets();
 
   await writeFile(join(mapDir, "farm.json"), `${JSON.stringify(makeFarmMap(), null, 2)}\n`);
   await writeFile(join(mapDir, "home.json"), `${JSON.stringify(makeHomeMap(), null, 2)}\n`);
@@ -1567,7 +2032,7 @@ async function main() {
 
   await writeFile(
     join(spriteDir, "asset-frames.json"),
-    `${JSON.stringify({ tileFrames, characterFrames, cropFrames, iconFrames }, null, 2)}\n`,
+    `${JSON.stringify({ tileFrames, characterFrames, cropFrames, iconFrames, animalFrames, fruitTreeFrames, enemyFrames }, null, 2)}\n`,
   );
 }
 

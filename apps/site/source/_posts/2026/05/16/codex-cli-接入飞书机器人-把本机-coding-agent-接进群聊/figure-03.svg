@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">按飞书 chat_id 复用 Codex session</title>
+  <desc id="desc">同一个飞书群绑定一个 Codex session，不同群互相隔离。</desc>
+  <rect width="1200" height="760" fill="#fffdf7"/>
+  <g font-family="Arial, 'PingFang SC', sans-serif">
+    <text x="70" y="78" fill="#111827" font-size="36" font-weight="800">推荐按 chat_id 续聊，而不是每条消息都新开</text>
+    <text x="72" y="120" fill="#64748b" font-size="21">Mac worker 在本地维护映射：同一个飞书群复用一个 Codex session，不同群和私聊互相隔离。</text>
+    <g transform="translate(82 205)">
+      <rect width="300" height="335" rx="24" fill="#dcfce7" stroke="#86efac"/>
+      <text x="32" y="52" fill="#166534" font-size="26" font-weight="800">飞书群 A</text>
+      <rect x="32" y="90" width="230" height="56" rx="16" fill="#ffffff"/>
+      <text x="52" y="126" fill="#334155" font-size="19">第一句：写教程</text>
+      <rect x="32" y="166" width="230" height="56" rx="16" fill="#ffffff"/>
+      <text x="52" y="202" fill="#334155" font-size="19">第二句：继续补图</text>
+      <rect x="32" y="242" width="230" height="56" rx="16" fill="#ffffff"/>
+      <text x="52" y="278" fill="#334155" font-size="19">第三句：跑 build</text>
+    </g>
+    <g transform="translate(458 205)">
+      <rect width="284" height="335" rx="24" fill="#f8fafc" stroke="#cbd5e1"/>
+      <text x="32" y="52" fill="#0f172a" font-size="26" font-weight="800">.sessions.json</text>
+      <rect x="32" y="94" width="220" height="164" rx="18" fill="#0f172a"/>
+      <text x="54" y="134" fill="#93c5fd" font-size="18">"oc_group_a"</text>
+      <text x="54" y="172" fill="#fcd34d" font-size="18">"sessionId"</text>
+      <text x="54" y="210" fill="#86efac" font-size="18">"019e..."</text>
+      <text x="32" y="300" fill="#475569" font-size="19">Mac 本地私有文件</text>
+    </g>
+    <g transform="translate(818 205)">
+      <rect width="300" height="335" rx="24" fill="#ede9fe" stroke="#c4b5fd"/>
+      <text x="32" y="52" fill="#5b21b6" font-size="26" font-weight="800">Codex session</text>
+      <rect x="32" y="92" width="236" height="58" rx="16" fill="#ffffff"/>
+      <text x="52" y="129" fill="#334155" font-size="19">exec 新建</text>
+      <rect x="32" y="170" width="236" height="58" rx="16" fill="#ffffff"/>
+      <text x="52" y="207" fill="#334155" font-size="19">exec resume</text>
+      <rect x="32" y="248" width="236" height="58" rx="16" fill="#ffffff"/>
+      <text x="52" y="285" fill="#334155" font-size="19">继续保留上下文</text>
+    </g>
+    <path d="M394 372 L442 372" stroke="#334155" stroke-width="6" stroke-linecap="round"/>
+    <path d="M432 357 L458 372 L432 387" fill="none" stroke="#334155" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M754 372 L802 372" stroke="#334155" stroke-width="6" stroke-linecap="round"/>
+    <path d="M792 357 L818 372 L792 387" fill="none" stroke="#334155" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(178 605)">
+      <rect width="844" height="72" rx="22" fill="#fffbeb" stroke="#fcd34d"/>
+      <text x="34" y="45" fill="#92400e" font-size="22" font-weight="700">群 B 会有自己的 key 和 session，不会串到群 A 的上下文里。</text>
+    </g>
+  </g>
+</svg>

@@ -20,7 +20,6 @@ import {
   findUserByUploadToken,
   isTokenBoardMetric,
   isTokenBoardRange,
-  mergeTokenEvents,
   normalizeUploadUsers,
   sanitizeIngestEvents,
   type TokenBoardUploadUser,
@@ -28,11 +27,14 @@ import {
 import {
   buildTokenAccountUsageProfile,
   buildTokenLeaderboard,
-  parseTokenUsageImport,
   type TokenBoardMetric,
   type TokenBoardRange,
-  type TokenUsageEvent,
 } from "../lib/token-leaderboard";
+import {
+  createTokenUsageStore,
+  importTokenUsageEventsFromJsonFile,
+  type TokenUsageStore,
+} from "../lib/token-board-storage";
 import { buildTokenUsageSnapshotFromEvents } from "../lib/content/token-usage";
 
 const PORT = Number(process.env.TOKEN_BOARD_PORT || 8787);
@@ -45,8 +47,18 @@ const SESSION_COOKIE_NAME = "token_board_session";
 const WEB_SESSION_TTL_SECONDS = Number(process.env.TOKEN_BOARD_WEB_SESSION_TTL_SECONDS || 30 * 24 * 60 * 60);
 const AGENT_SESSION_TTL_SECONDS = Number(process.env.TOKEN_BOARD_AGENT_SESSION_TTL_SECONDS || 180 * 24 * 60 * 60);
 const OAUTH_STATE_TTL_SECONDS = 15 * 60;
+let tokenUsageStore: TokenUsageStore | undefined;
 
 async function main() {
+  tokenUsageStore = await openTokenUsageStore();
+
+  if (process.env.TOKEN_BOARD_MIGRATE_JSON_ON_START === "true") {
+    const result = await importTokenUsageEventsFromJsonFile(tokenUsageStore, DATA_FILE);
+    console.log(
+      `migrated ${result.accepted}/${result.imported} token usage events from ${result.filePath}; duplicates=${result.duplicates}; records=${result.records}`
+    );
+  }
+
   const server = createServer((request, response) => {
     void routeRequest(request, response).catch((error) => {
       sendJson(request, response, 500, {
@@ -57,8 +69,28 @@ async function main() {
 
   server.listen(PORT, HOST, () => {
     console.log(`token-board server listening on http://${HOST}:${PORT}`);
-    console.log(`data file: ${DATA_FILE}`);
+    console.log(`storage: ${tokenUsageStore?.kind} (${tokenUsageStore?.label})`);
   });
+}
+
+async function migrateJson() {
+  const store = await openTokenUsageStore();
+
+  try {
+    const result = await importTokenUsageEventsFromJsonFile(store, DATA_FILE);
+    console.log(`source: ${result.filePath}`);
+    console.log(`storage: ${store.kind} (${store.label})`);
+    console.log(`imported: ${result.imported}`);
+    console.log(`accepted: ${result.accepted}`);
+    console.log(`duplicates: ${result.duplicates}`);
+    console.log(`records: ${result.records}`);
+
+    if (result.errors.length) {
+      console.log(`parse warnings: ${result.errors.join("; ")}`);
+    }
+  } finally {
+    await store.close?.();
+  }
 }
 
 async function routeRequest(request: IncomingMessage, response: ServerResponse) {
@@ -73,11 +105,12 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
 
   if (request.method === "GET" && url.pathname === "/api/usage/health") {
     const users = await loadUploadUsers();
-    const events = await loadStoredEvents();
+    const records = await usageStore().countEvents();
     sendJson(request, response, 200, {
       ok: true,
       users: users.length,
-      records: events.length,
+      records,
+      storage: usageStore().kind,
       githubAuth: Boolean(process.env.GITHUB_CLIENT_ID),
       generatedAt: new Date().toISOString(),
     });
@@ -123,7 +156,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
     const range = parseRange(url.searchParams.get("range"));
     const metric = parseMetric(url.searchParams.get("metric"));
     const now = parseNow(url.searchParams.get("now"));
-    const events = await loadStoredEvents();
+    const events = await usageStore().listEvents();
 
     sendJson(request, response, 200, {
       schemaVersion: 1,
@@ -145,7 +178,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
 
     const range = parseRange(url.searchParams.get("range"));
     const now = parseNow(url.searchParams.get("now"));
-    const events = await loadStoredEvents();
+    const events = await usageStore().listEvents();
     const profile = buildTokenAccountUsageProfile(events, {
       userId: identity.userId,
       range,
@@ -167,7 +200,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
   if (request.method === "GET" && url.pathname === "/api/usage/summary") {
     const now = parseNow(url.searchParams.get("now"));
     const ownerUserId = normalizeOptionalText(url.searchParams.get("userId")) || normalizeOptionalText(process.env.TOKEN_BOARD_SUMMARY_USER_ID);
-    const events = await loadStoredEvents();
+    const events = await usageStore().listEvents();
     const filteredEvents = ownerUserId ? events.filter((event) => event.userId === ownerUserId) : events;
 
     sendJson(request, response, 200, {
@@ -187,7 +220,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
     const metric = parseMetric(url.searchParams.get("metric"));
     const now = parseNow(url.searchParams.get("now"));
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") || 50)));
-    const events = await loadStoredEvents();
+    const events = await usageStore().listEvents();
     const summary = buildTokenLeaderboard(events, { range, metric, now });
 
     sendJson(request, response, 200, {
@@ -217,7 +250,7 @@ async function handleIngest(request: IncomingMessage, response: ServerResponse) 
 
   const body = await readJsonBody(request);
   const rawEvents = Array.isArray((body as { events?: unknown }).events)
-    ? ((body as { events: Array<Partial<TokenUsageEvent>> }).events)
+    ? ((body as { events: Parameters<typeof sanitizeIngestEvents>[0] }).events)
     : [];
 
   if (!rawEvents.length) {
@@ -225,27 +258,20 @@ async function handleIngest(request: IncomingMessage, response: ServerResponse) 
     return;
   }
 
-  const existing = await loadStoredEvents();
-  const existingIds = new Set(existing.map((event) => event.id));
   const sanitized = sanitizeIngestEvents(rawEvents, identity, {
     projectMode: parseProjectMode(process.env.TOKEN_BOARD_PROJECT_MODE),
     includeModel: process.env.TOKEN_BOARD_INCLUDE_MODEL !== "false",
     includeSource: process.env.TOKEN_BOARD_INCLUDE_SOURCE !== "false",
     hashSessionId: process.env.TOKEN_BOARD_HASH_SESSION_ID !== "false",
   });
-  const incomingNew = sanitized.entries.filter((event) => !existingIds.has(event.id));
-  const merged = mergeTokenEvents(existing, sanitized.entries, MAX_EVENTS);
-
-  if (incomingNew.length) {
-    await saveStoredEvents(merged);
-  }
+  const result = await usageStore().insertEvents(sanitized.entries);
 
   sendJson(request, response, 200, {
     ok: true,
-    accepted: incomingNew.length,
-    duplicates: sanitized.entries.length - incomingNew.length,
+    accepted: result.accepted,
+    duplicates: result.duplicates,
     errors: sanitized.errors,
-    records: merged.length,
+    records: result.records,
     user: {
       userId: identity.userId,
       displayName: identity.displayName,
@@ -398,24 +424,6 @@ async function loadUploadUsers(): Promise<TokenBoardUploadUser[]> {
   }
 }
 
-async function loadStoredEvents() {
-  try {
-    const text = await fs.readFile(DATA_FILE, "utf8");
-    const parsed = parseTokenUsageImport(text);
-    return parsed.entries;
-  } catch {
-    return [];
-  }
-}
-
-async function saveStoredEvents(events: TokenUsageEvent[]) {
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
-  await fs.writeFile(
-    DATA_FILE,
-    `${JSON.stringify({ schemaVersion: 1, updatedAt: new Date().toISOString(), entries: events }, null, 2)}\n`
-  );
-}
-
 async function readJsonBody(request: IncomingMessage) {
   const chunks: Buffer[] = [];
   let size = 0;
@@ -559,6 +567,24 @@ function requireEnv(name: string) {
   return value;
 }
 
+async function openTokenUsageStore() {
+  return createTokenUsageStore({
+    dataFile: DATA_FILE,
+    maxEvents: MAX_EVENTS,
+    databaseUrl: normalizeOptionalText(process.env.TOKEN_BOARD_DATABASE_URL) || normalizeOptionalText(process.env.DATABASE_URL),
+    postgresSchema: normalizeOptionalText(process.env.TOKEN_BOARD_POSTGRES_SCHEMA) || "token_board",
+    postgresSsl: process.env.TOKEN_BOARD_DATABASE_SSL === "true" ? { rejectUnauthorized: process.env.TOKEN_BOARD_DATABASE_SSL_REJECT_UNAUTHORIZED !== "false" } : undefined,
+  });
+}
+
+function usageStore() {
+  if (!tokenUsageStore) {
+    throw new Error("Token usage store is not initialized");
+  }
+
+  return tokenUsageStore;
+}
+
 function applyCors(request: IncomingMessage, response: ServerResponse) {
   const allowed = (process.env.TOKEN_BOARD_ALLOWED_ORIGINS || "*")
     .split(",")
@@ -612,4 +638,23 @@ function sendJson(request: IncomingMessage, response: ServerResponse, status: nu
   response.end(JSON.stringify(payload, null, 2));
 }
 
-void main();
+async function run() {
+  const command = process.argv[2] || "serve";
+
+  if (command === "serve" || command === "server") {
+    await main();
+    return;
+  }
+
+  if (command === "migrate-json") {
+    await migrateJson();
+    return;
+  }
+
+  throw new Error(`Unknown token-board command: ${command}`);
+}
+
+void run().catch((error) => {
+  console.error(error instanceof Error ? error.stack || error.message : error);
+  process.exitCode = 1;
+});

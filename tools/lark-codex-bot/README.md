@@ -136,6 +136,17 @@ hub 暴露这些接口：
 Authorization: Bearer <HUB_WORKER_TOKEN>
 ```
 
+如果开启双机器人中转，worker 在 claim 时会额外提交自己的逻辑机器人 ID：
+
+```json
+{
+  "workerId": "my-mac",
+  "botId": "my_codex"
+}
+```
+
+hub 只会把 `targetBotId=my_codex` 的任务发给它；这样你和你女朋友的两个 worker 可以共用同一个公网 hub。
+
 阿里云前面建议配 Nginx/Caddy 做 HTTPS，转发到本机 hub 端口：
 
 ```text
@@ -200,17 +211,105 @@ hub -> 飞书 OpenAPI /im/v1/messages/:message_id/reply
 
 这样飞书凭证集中放在阿里云 hub，Mac worker 只需要知道 hub 地址和 worker token。
 
-## 6. 安全建议
+如果要让两个机器人都用自己的飞书机器人身份在群里展示回复，把两边 worker 都设成：
+
+```bash
+RESULT_REPLY_MODE=worker
+LARK_REPLY_MODE=cli
+```
+
+这时每台 Mac 用本机 `lark-cli --as bot` 回复同一条飞书消息；hub 只负责排队和转发结果。
+
+## 6. 双机器人中转
+
+飞书通常不会把“机器人 A 发出的 @ 消息”再作为用户消息事件推给机器人 B，所以双机器人交流不能依赖互相 @ 触发。这里实现的是：
+
+```text
+你的 Codex worker
+  -> POST result 到 hub
+  -> hub 生成 targetBotId=girlfriend_codex 的 relay 任务
+  <- 女朋友 worker 轮询 claim
+  -> 女朋友 Codex worker 生成回复
+  -> hub 生成 targetBotId=my_codex 的 relay 任务
+  <- 你的 worker 再 claim
+```
+
+### hub 配置
+
+阿里云 hub 开启 relay，并给这个飞书入口对应的机器人设置逻辑 ID：
+
+```bash
+RELAY_ENABLED=true
+RELAY_BOT_ID=my_codex
+RELAY_MAX_TURNS=6
+RELAY_TRIGGER_PREFIX=/relay
+```
+
+当前实现推荐先用一个 hub 作为入口：你在飞书里 @ 你的机器人启动对话，两个 worker 通过同一个 hub 队列来回接力。不要直接让两个 hub 进程共享同一个 JSON `HUB_QUEUE_FILE`；如果以后要支持双方都从各自飞书应用启动，需要把多 callback path 收进同一进程，或换成带锁的外部队列。
+
+### 你的 worker 配置
+
+```bash
+RESULT_REPLY_MODE=worker
+LARK_REPLY_MODE=cli
+
+RELAY_ENABLED=true
+RELAY_BOT_ID=my_codex
+RELAY_PEER_BOT_ID=girlfriend_codex
+RELAY_TRIGGER_PREFIX=/relay
+RELAY_AUTO_START_HUMAN_TASKS=false
+RELAY_MAX_TURNS=6
+RELAY_VISIBLE_MENTION=@女朋友的Codex
+```
+
+### 女朋友 worker 配置
+
+她那边把两个 ID 对调：
+
+```bash
+RESULT_REPLY_MODE=worker
+LARK_REPLY_MODE=cli
+
+RELAY_ENABLED=true
+RELAY_BOT_ID=girlfriend_codex
+RELAY_PEER_BOT_ID=my_codex
+RELAY_TRIGGER_PREFIX=/relay
+RELAY_AUTO_START_HUMAN_TASKS=false
+RELAY_MAX_TURNS=6
+RELAY_VISIBLE_MENTION=@你的Codex
+```
+
+### 在飞书里启动一轮对话
+
+在允许的群里 @ 你的机器人：
+
+```text
+@Codex /relay 你先和另一个机器人讨论一下：这个周末我们去哪玩？
+```
+
+流程会是：
+
+1. 你的机器人先处理用户请求，并在飞书里回复一条可见消息。
+2. worker 把这条 Codex 输出作为 relay 任务投给 `girlfriend_codex`。
+3. 女朋友 worker 拉到任务后运行她自己的 Codex，并用她的机器人身份回复。
+4. hub 再把她的输出投回 `my_codex`。
+5. 到达 `RELAY_MAX_TURNS` 后自动停止，避免无限互聊。
+
+`RELAY_VISIBLE_MENTION` 只是让群里看起来像互相 @；真正触发仍然靠 hub 队列。
+
+## 7. 安全建议
 
 - `HUB_WORKER_TOKEN` 用长随机值，不要提交到仓库。
 - 阿里云只开放 HTTPS 入口，不要裸露未加密 HTTP。
 - 配置 `LARK_ALLOWED_CHAT_IDS` 和 `LARK_ALLOWED_USER_OPEN_IDS`。
 - 群聊默认要求 @ 机器人；也可以设置 `BOT_COMMAND_PREFIX=/codex`。
+- 双机器人中转时固定 `RELAY_MAX_TURNS`，不要开启无限转发。
+- 如果不想所有任务都触发对方机器人，保持 `RELAY_AUTO_START_HUMAN_TASKS=false`，只用 `/relay` 显式启动。
 - `CODEX_SANDBOX` 保持 `workspace-write`，不要随便改成 `danger-full-access`。
 - `HUB_QUEUE_FILE` 和 `.sessions.json` 都属于本地状态文件，不要提交。
 - 如果 Mac 关机，hub 会继续收任务；要避免任务堆积，可以先在飞书群里停用机器人或停掉 hub。
 
-## 7. 常见问题
+## 8. 常见问题
 
 ### 飞书保存 callback URL 失败
 

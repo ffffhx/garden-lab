@@ -15,7 +15,7 @@ const SINCE_MS = readPositiveNumber(process.env.TOKEN_BOARD_SINCE_HOURS, 24 * 30
 const MAX_FILES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILES, 800);
 const MAX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILE_BYTES, 5 * 1024 * 1024);
 const BATCH_SIZE = 1000;
-const VERSION = "0.4.0";
+const VERSION = "0.4.1";
 const PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${VERSION}`;
 const INSTALL_DIR = path.join(os.homedir(), ".token-board-agent");
 const INSTALLED_AGENT_FILE = path.join(INSTALL_DIR, "token-board-agent.mjs");
@@ -164,6 +164,12 @@ async function main() {
     return;
   }
 
+  if (command === "resync") {
+    await uploadOnce(await loadOrLoginConfig(), { force: true });
+    console.log(`Open leaderboard: ${LEADERBOARD_URL}`);
+    return;
+  }
+
   if (command === "collect") {
     const config = await readAgentConfig();
     const events = await collectLocalUsageEvents(config);
@@ -230,10 +236,17 @@ async function printLaunchAgentStatus() {
   ensureMacosLaunchd();
   const plistExists = await fileExists(LAUNCH_AGENT_PLIST);
   const installedScriptExists = await fileExists(INSTALLED_AGENT_FILE);
+  const config = await readAgentConfig();
+  const state = await readJson(STATE_FILE);
+  const stateMatches = uploadStateMatchesConfig(state, config);
+  const uploadedIds = stateMatches && Array.isArray(state.uploadedIds) ? state.uploadedIds.length : 0;
 
   console.log(`LaunchAgent plist: ${plistExists ? LAUNCH_AGENT_PLIST : "not installed"}`);
   console.log(`Installed script: ${installedScriptExists ? INSTALLED_AGENT_FILE : "not installed"}`);
   console.log(`Logs: ${LOG_FILE}`);
+  console.log(`Upload state: ${STATE_FILE}`);
+  console.log(`Last uploaded: ${stateMatches && state.lastUploadedAt ? state.lastUploadedAt : "never"}`);
+  console.log(`Tracked uploaded IDs: ${uploadedIds}`);
 
   if (process.env.TOKEN_BOARD_AGENT_SKIP_LAUNCHCTL === "1") {
     return;
@@ -298,13 +311,20 @@ async function login() {
   throw new Error("GitHub device login expired. Run this command again.");
 }
 
-async function uploadOnce(config) {
+async function uploadOnce(config, options = {}) {
   const state = await readJson(STATE_FILE);
-  const uploadedIds = new Set(Array.isArray(state.uploadedIds) ? state.uploadedIds : []);
-  const events = (await collectLocalUsageEvents(config)).filter((event) => !uploadedIds.has(event.id));
+  const force = options.force === true || process.env.TOKEN_BOARD_FORCE_RESYNC === "1";
+  const stateMatches = uploadStateMatchesConfig(state, config);
+  const uploadedIds = force || !stateMatches ? new Set() : new Set(Array.isArray(state.uploadedIds) ? state.uploadedIds : []);
+  const collectedEvents = await collectLocalUsageEvents(config);
+  const events = collectedEvents.filter((event) => !uploadedIds.has(event.id));
 
   if (!events.length) {
-    console.log("No new token usage events to upload.");
+    console.log(
+      force
+        ? "No token usage events collected for resync."
+        : "No new token usage events to upload."
+    );
     console.log("Checked Codex, Claude Code, Cursor, Trae, and custom usage paths for recent token logs.");
     return;
   }
@@ -319,13 +339,26 @@ async function uploadOnce(config) {
   }
 
   await writeJson(STATE_FILE, {
+    apiUrl: API_URL,
+    userId: config.userId,
     uploadedIds: [...new Set([...uploadedIds, ...events.map((event) => event.id)])].slice(-50_000),
     lastUploadedAt: new Date().toISOString(),
   });
 
   console.log(
-    `Uploaded ${events.length} events. accepted=${result.accepted} duplicates=${result.duplicates} records=${result.records}`
+    `${force ? "Resynced" : "Uploaded"} ${events.length} events. accepted=${result.accepted} duplicates=${result.duplicates} records=${result.records}`
   );
+}
+
+function uploadStateMatchesConfig(state, config) {
+  if (!state || typeof state !== "object") {
+    return false;
+  }
+
+  const stateApiUrl = typeof state.apiUrl === "string" ? state.apiUrl.replace(/\/+$/, "") : "";
+  const stateUserId = typeof state.userId === "string" ? state.userId : "";
+
+  return (!stateApiUrl || stateApiUrl === API_URL) && (!stateUserId || stateUserId === config.userId);
 }
 
 async function collectLocalUsageEvents(config) {
@@ -896,7 +929,8 @@ function printHelp() {
   npx --yes --package ${PACKAGE_URL} -- token-board-agent watch
   npx --yes --package ${PACKAGE_URL} -- token-board-agent login
   npx --yes --package ${PACKAGE_URL} -- token-board-agent collect
-  npx --yes --package ${PACKAGE_URL} -- token-board-agent upload`);
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent upload
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent resync`);
 }
 
 async function readJson(filePath) {

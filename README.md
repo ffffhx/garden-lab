@@ -124,7 +124,7 @@ CODEX_HOME=/Users/你的用户名/.codex
 朋友不需要 clone 仓库。首次安装后台同步时在自己的 Mac 上执行：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.0 -- token-board-agent install
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent install
 ```
 
 这条命令会先引导 GitHub Device Login，授权成功后安装一个 macOS LaunchAgent。之后终端关闭也会每 5 分钟读取本机 AI 编码工具 token 记录并上传到排行榜后端。
@@ -132,16 +132,43 @@ npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=
 查看后台同步状态：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.0 -- token-board-agent status
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent status
+```
+
+如果后端数据被清空或迁移，且页面只显示最近少量记录，可以强制重传最近 30 天可采集到的记录：
+
+```bash
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent resync
 ```
 
 卸载后台同步：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.0 -- token-board-agent uninstall
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent uninstall
 ```
 
 轻量 npx agent 默认读取本机 Codex、Claude Code、Cursor、Trae 的本地 token 记录；也可以通过 `TOKEN_BOARD_USAGE_PATHS` 或配置文件里的 `usagePaths` 补充自定义 JSON / JSONL / CSV 路径。上传内容只包含 token 数、模型、工具、项目 basename 和匿名 session hash，不上传 prompt 文本。
+
+### Token Board 后端存储
+
+Token Board 后端优先使用 PostgreSQL。部署配置在 `deploy/token-board/compose.yaml`，会启动一个 `postgres:17-alpine` 容器，并把数据保存在 Compose volume `postgres-data` 里。
+
+旧 JSON 文件仍保留为本地开发 fallback 和迁移来源。没有配置 `TOKEN_BOARD_DATABASE_URL` 时，服务会继续读写 `TOKEN_BOARD_DATA_FILE`；生产部署建议使用 `.env.example` 里的 PostgreSQL 变量。
+
+从旧 JSON 导入 PostgreSQL：
+
+```bash
+cd deploy/token-board
+docker compose run --rm token-board npm run docker:start -- migrate-json
+```
+
+本地开发也可以直接跑：
+
+```bash
+TOKEN_BOARD_DATABASE_URL=postgresql://token_board:password@127.0.0.1:5432/token_board pnpm token:migrate-json
+```
+
+导入使用事件 `id` 主键去重，可以重复执行。确认数据库已有历史数据后，再让朋友们执行一次 `token-board-agent resync` 补齐本机还能采集到的最近记录。
 
 ## 部署到 GitHub Pages
 

@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "token:server": "tsx --tsconfig ../../apps/site/tsconfig.json ../../apps/site/scripts/token-board-server.ts",
+    "token:migrate-json": "tsx --tsconfig ../../apps/site/tsconfig.json ../../apps/site/scripts/token-board-server.ts migrate-json",
     "docker:start": "tsx scripts/token-board-server.ts"
   },
   "dependencies": {
+    "pg": "^8.20.0",
     "tsx": "4.21.0",
     "typescript": "5.8.3"
   }

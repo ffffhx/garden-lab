@@ -173,7 +173,8 @@ function createHubApp(config) {
       verifyWorkerAuth(config, request.headers);
       const body = await readJsonBody(request, config.maxBodyBytes, true);
       const workerId = String(body.workerId || config.workerId || "worker");
-      const task = await claimHubTask(config, workerId);
+      const botId = String(body.botId || "");
+      const task = await claimHubTask(config, workerId, botId);
       sendJson(response, 200, { ok: true, task });
       return;
     }
@@ -300,18 +301,26 @@ async function processRemoteTask(config, hubTask) {
   const text = result.ok
     ? result.output
     : `Codex 运行失败${result.timedOut ? "：任务超时" : ""}。\n\n${result.output}`;
+  const relay = buildRelayResult(config, task, result);
+  const replyText = formatRelayVisibleText(
+    config,
+    task,
+    formatReplyText(config, redactSecrets(config, text), result.sessionId),
+    relay,
+  );
   const replied = config.resultReplyMode === "worker"
     ? await safeReply(
       config,
       { expiresAt: 0, tenantAccessToken: "" },
       task.messageId,
-      formatReplyText(config, redactSecrets(config, text), result.sessionId),
+      replyText,
     )
     : false;
 
   await submitWorkerResultWithRetry(config, hubTask.id, {
     ok: result.ok,
     output: redactSecrets(config, result.output),
+    relay,
     replied,
     sessionId: result.sessionId,
     timedOut: result.timedOut,
@@ -324,6 +333,7 @@ async function claimRemoteTask(config) {
     method: "POST",
     headers: workerHeaders(config),
     body: JSON.stringify({
+      botId: config.relayBotId,
       workerId: config.workerId,
     }),
   });
@@ -390,7 +400,7 @@ async function enqueueHubTask(config, task) {
   return hubTask;
 }
 
-async function claimHubTask(config, workerId) {
+async function claimHubTask(config, workerId, botId) {
   const store = await readHubStore(config);
   const nowMs = Date.now();
   const now = new Date(nowMs).toISOString();
@@ -410,7 +420,9 @@ async function claimHubTask(config, workerId) {
     }
   }
 
-  const task = store.tasks.find((candidate) => candidate.status === "queued");
+  const task = store.tasks.find((candidate) => (
+    candidate.status === "queued" && canWorkerClaimTask(candidate, botId)
+  ));
   if (!task) {
     if (changed) {
       await writeHubStore(config, store);
@@ -441,6 +453,7 @@ async function recordHubTaskResult(config, taskId, result) {
   }
 
   const now = new Date().toISOString();
+  const existingRelayNextTaskId = task.relayNextTaskId || task.result?.relayNextTaskId || "";
   task.status = result.ok ? "done" : "failed";
   task.completedAt = now;
   task.updatedAt = now;
@@ -449,11 +462,22 @@ async function recordHubTaskResult(config, taskId, result) {
     ok: Boolean(result.ok),
     output: String(result.output || ""),
     replied: Boolean(result.replied),
+    relayNextTaskId: existingRelayNextTaskId,
     sessionId: String(result.sessionId || ""),
     timedOut: Boolean(result.timedOut),
     workerId: String(result.workerId || task.workerId || ""),
   };
 
+  if (!existingRelayNextTaskId) {
+    const relayTask = buildRelayHubTask(config, task, result, now);
+    if (relayTask) {
+      store.tasks.push(relayTask);
+      task.relayNextTaskId = relayTask.id;
+      task.result.relayNextTaskId = relayTask.id;
+    }
+  }
+
+  pruneHubStore(config, store);
   await writeHubStore(config, store);
   return task;
 }
@@ -531,8 +555,19 @@ function summarizeHubTask(task) {
     completedAt: task.completedAt || "",
     createdAt: task.createdAt || "",
     id: task.id,
+    kind: task.task?.kind || "lark",
     messageId: task.task?.messageId || "",
+    relay: task.task?.relay
+      ? {
+        conversationId: task.task.relay.conversationId || "",
+        fromBotId: task.task.relay.fromBotId || "",
+        maxTurns: task.task.relay.maxTurns || 0,
+        toBotId: task.task.relay.toBotId || "",
+        turn: task.task.relay.turn || 0,
+      }
+      : null,
     status: task.status,
+    targetBotId: task.task?.targetBotId || "",
     text: task.task?.text ? task.task.text.slice(0, 160) : "",
     updatedAt: task.updatedAt || "",
     workerId: task.workerId || task.result?.workerId || "",
@@ -541,6 +576,71 @@ function summarizeHubTask(task) {
 
 function isTerminalTaskStatus(status) {
   return status === "done" || status === "failed";
+}
+
+function canWorkerClaimTask(hubTask, botId) {
+  const targetBotId = hubTask.task?.targetBotId || "";
+  if (!targetBotId) {
+    return true;
+  }
+  return Boolean(botId) && targetBotId === botId;
+}
+
+function buildRelayHubTask(config, completedHubTask, result, now) {
+  if (!result.ok || !result.relay || typeof result.relay !== "object") {
+    return null;
+  }
+
+  const relay = result.relay;
+  const fromBotId = String(relay.fromBotId || "");
+  const toBotId = String(relay.toBotId || "");
+  const text = String(result.output || "").trim();
+  if (!fromBotId || !toBotId || !text) {
+    return null;
+  }
+
+  const previousTask = completedHubTask.task || {};
+  const previousRelay = previousTask.relay || {};
+  const maxTurns = positiveInt(relay.maxTurns, config.relayMaxTurns);
+  const turn = positiveInt(relay.turn, positiveInt(previousRelay.turn, 0) + 1);
+  if (turn > maxTurns) {
+    return null;
+  }
+
+  const conversationId = String(
+    relay.conversationId ||
+      previousRelay.conversationId ||
+      `lark:${previousTask.chatId || "unknown"}:${previousTask.messageId || completedHubTask.id}`,
+  );
+
+  return {
+    attempts: 0,
+    createdAt: now,
+    id: randomUUID(),
+    result: null,
+    status: "queued",
+    task: {
+      accepted: true,
+      chatId: previousTask.chatId || "",
+      chatType: previousTask.chatType || "",
+      eventId: `relay:${completedHubTask.id}`,
+      kind: "relay",
+      messageId: previousTask.messageId || "",
+      relay: {
+        conversationId,
+        fromBotId,
+        maxTurns,
+        sourceTaskId: completedHubTask.id,
+        toBotId,
+        turn,
+      },
+      senderOpenId: previousTask.senderOpenId || "",
+      targetBotId: toBotId,
+      text,
+    },
+    updatedAt: now,
+    workerId: "",
+  };
 }
 
 function matchWorkerResultPath(config, pathname) {
@@ -704,6 +804,16 @@ function buildCodexTask(config, payload) {
     text = text.slice(config.commandPrefix.length).trim();
   }
 
+  let relayStart = Boolean(config.relayAutoStartHumanTasks);
+  if (config.relayEnabled && config.relayTriggerPrefix) {
+    if (text.startsWith(config.relayTriggerPrefix)) {
+      relayStart = true;
+      text = text.slice(config.relayTriggerPrefix.length).trim();
+    } else if (!relayStart) {
+      relayStart = false;
+    }
+  }
+
   if (!text) {
     return {
       accepted: false,
@@ -718,8 +828,11 @@ function buildCodexTask(config, payload) {
     chatId,
     chatType,
     eventId: payload.header?.event_id || "",
+    kind: "lark",
     messageId,
+    relayStart,
     senderOpenId,
+    targetBotId: config.relayEnabled ? config.relayBotId : "",
     text,
   };
 }
@@ -781,19 +894,7 @@ async function runCodex(config, task) {
   const outputFile = path.join(tempDir, "last-message.txt");
   const reusableSession = await getReusableSession(config, task);
   const args = buildCodexArgs(config, outputFile, reusableSession?.sessionId || "");
-
-  const prompt = [
-    config.codexPromptPreamble || DEFAULT_PROMPT_PREAMBLE,
-    "",
-    "飞书用户请求：",
-    task.text,
-    "",
-    "飞书事件上下文：",
-    `- chat_type: ${task.chatType || "unknown"}`,
-    `- chat_id: ${task.chatId || "unknown"}`,
-    `- message_id: ${task.messageId}`,
-    `- sender_open_id: ${task.senderOpenId || "unknown"}`,
-  ].join("\n");
+  const prompt = buildCodexPrompt(config, task);
 
   let stdout = "";
   let stderr = "";
@@ -868,6 +969,60 @@ async function runCodex(config, task) {
   }
 }
 
+function buildCodexPrompt(config, task) {
+  const preamble = config.codexPromptPreamble || DEFAULT_PROMPT_PREAMBLE;
+  if (task.kind === "relay") {
+    const relay = task.relay || {};
+    return [
+      preamble,
+      "",
+      "机器人中转对话：",
+      `上一位机器人（${relay.fromBotId || "unknown"}）的消息：`,
+      task.text,
+      "",
+      "请作为当前 Codex 机器人生成一段回复，面向对方机器人继续对话。",
+      "保持回复具体、简洁，并避免要求用户手动转述。",
+      "",
+      "中转上下文：",
+      `- conversation_id: ${relay.conversationId || "unknown"}`,
+      `- from_bot_id: ${relay.fromBotId || "unknown"}`,
+      `- to_bot_id: ${relay.toBotId || config.relayBotId || "unknown"}`,
+      `- turn: ${relay.turn || 0}`,
+      `- max_turns: ${relay.maxTurns || config.relayMaxTurns}`,
+      `- chat_type: ${task.chatType || "unknown"}`,
+      `- chat_id: ${task.chatId || "unknown"}`,
+      `- message_id: ${task.messageId || "unknown"}`,
+    ].join("\n");
+  }
+
+  const lines = [
+    preamble,
+    "",
+    "飞书用户请求：",
+    task.text,
+    "",
+  ];
+
+  if (task.relayStart) {
+    lines.push(
+      "这条消息会启动机器人间中转对话。",
+      `你的回复会被发送给对方机器人（${config.relayPeerBotId || "unknown"}）作为下一轮输入。`,
+      `最多中转 ${config.relayMaxTurns} 轮。`,
+      "",
+    );
+  }
+
+  lines.push(
+    "飞书事件上下文：",
+    `- chat_type: ${task.chatType || "unknown"}`,
+    `- chat_id: ${task.chatId || "unknown"}`,
+    `- message_id: ${task.messageId}`,
+    `- sender_open_id: ${task.senderOpenId || "unknown"}`,
+  );
+
+  return lines.join("\n");
+}
+
 function buildCodexArgs(config, outputFile, sessionId) {
   if (sessionId) {
     const args = [
@@ -924,6 +1079,66 @@ function formatReplyText(config, text, sessionId) {
   const bodyMaxChars = Math.max(500, config.maxOutputChars - hint.length - 8);
 
   return `${limitText(text, bodyMaxChars).trimEnd()}\n\n---\n${hint}`;
+}
+
+function buildRelayResult(config, task, result) {
+  if (!config.relayEnabled || !result.ok) {
+    return null;
+  }
+
+  const currentBotId = config.relayBotId;
+  if (!currentBotId) {
+    return null;
+  }
+
+  if (task.kind === "relay") {
+    const relay = task.relay || {};
+    const maxTurns = positiveInt(relay.maxTurns, config.relayMaxTurns);
+    const currentTurn = positiveInt(relay.turn, 0);
+    if (currentTurn >= maxTurns) {
+      return null;
+    }
+
+    const toBotId = relay.fromBotId || config.relayPeerBotId;
+    if (!toBotId) {
+      return null;
+    }
+
+    return {
+      conversationId: relay.conversationId || makeRelayConversationId(task),
+      fromBotId: currentBotId,
+      maxTurns,
+      toBotId,
+      turn: currentTurn + 1,
+    };
+  }
+
+  if (!task.relayStart || !config.relayPeerBotId) {
+    return null;
+  }
+
+  return {
+    conversationId: makeRelayConversationId(task),
+    fromBotId: currentBotId,
+    maxTurns: config.relayMaxTurns,
+    toBotId: config.relayPeerBotId,
+    turn: 1,
+  };
+}
+
+function makeRelayConversationId(task) {
+  return `lark:${task.chatId || "unknown"}:${task.messageId || randomUUID()}`;
+}
+
+function formatRelayVisibleText(config, task, text, relay) {
+  if (!relay || !config.relayVisibleMention) {
+    return text;
+  }
+
+  const prefix = task.kind === "relay"
+    ? `${config.relayVisibleMention} `
+    : `${config.relayVisibleMention} 我先说这一轮：\n`;
+  return limitText(`${prefix}${text}`, config.maxOutputChars);
 }
 
 async function getReusableSession(config, task) {
@@ -1443,6 +1658,13 @@ function readConfig(args) {
     replyInThread: boolEnv("LARK_REPLY_IN_THREAD", false),
     replyMode: env("LARK_REPLY_MODE", mode === "hub" ? "openapi" : "cli"),
     resultReplyMode: env("RESULT_REPLY_MODE", "hub"),
+    relayAutoStartHumanTasks: boolEnv("RELAY_AUTO_START_HUMAN_TASKS", false),
+    relayBotId: env("RELAY_BOT_ID"),
+    relayEnabled: boolEnv("RELAY_ENABLED", false),
+    relayMaxTurns: numberEnv("RELAY_MAX_TURNS", 6),
+    relayPeerBotId: env("RELAY_PEER_BOT_ID"),
+    relayTriggerPrefix: env("RELAY_TRIGGER_PREFIX", "/relay"),
+    relayVisibleMention: env("RELAY_VISIBLE_MENTION"),
     sendRunningMessage: boolEnv("LARK_SEND_RUNNING_MESSAGE", true),
     signatureMaxAgeSeconds: numberEnv("LARK_SIGNATURE_MAX_AGE_SECONDS", 10 * 60),
     verificationToken: env("LARK_VERIFICATION_TOKEN"),
@@ -1466,6 +1688,20 @@ function validateConfig(config) {
   }
   if (config.resultReplyMode !== "hub" && config.resultReplyMode !== "worker") {
     throw new Error("RESULT_REPLY_MODE must be hub or worker");
+  }
+  if (config.relayMaxTurns < 1) {
+    throw new Error("RELAY_MAX_TURNS must be greater than 0");
+  }
+  if (config.relayEnabled && !config.relayBotId) {
+    throw new Error("RELAY_BOT_ID is required when RELAY_ENABLED=true");
+  }
+  if (
+    config.relayEnabled &&
+    config.mode === "worker" &&
+    (config.relayAutoStartHumanTasks || config.relayTriggerPrefix) &&
+    !config.relayPeerBotId
+  ) {
+    throw new Error("RELAY_PEER_BOT_ID is required to start relay conversations");
   }
   if (
     config.mode === "hub" &&
@@ -1491,6 +1727,14 @@ function numberEnv(name, fallback) {
     throw new Error(`${name} must be a number`);
   }
   return value;
+}
+
+function positiveInt(value, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 1) {
+    return fallback;
+  }
+  return Math.floor(number);
 }
 
 function boolEnv(name, fallback) {

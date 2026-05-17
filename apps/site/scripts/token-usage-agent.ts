@@ -20,6 +20,8 @@ type AgentConfig = TokenUsageCollectorConfig & {
 };
 
 type AgentState = {
+  apiUrl?: string;
+  userId?: string;
   uploadedIds?: string[];
   lastUploadedAt?: string;
 };
@@ -71,17 +73,24 @@ async function main() {
     return;
   }
 
+  if (command === "resync") {
+    await uploadOnce(config, { force: true });
+    return;
+  }
+
   printHelp();
   process.exitCode = 1;
 }
 
-export async function uploadOnce(config: AgentConfig) {
+export async function uploadOnce(config: AgentConfig, options: { force?: boolean } = {}) {
   const state = await readState(config.stateFile);
-  const uploadedIds = new Set(state.uploadedIds || []);
+  const force = options.force === true || process.env.TOKEN_BOARD_FORCE_RESYNC === "1";
+  const stateMatches = uploadStateMatchesConfig(state, config);
+  const uploadedIds = force || !stateMatches ? new Set<string>() : new Set(state.uploadedIds || []);
   const events = (await collectAndSanitize(config)).filter((event) => !uploadedIds.has(event.id));
 
   if (!events.length) {
-    console.log("No new token usage events to upload.");
+    console.log(force ? "No token usage events collected for resync." : "No new token usage events to upload.");
     return { accepted: 0, duplicates: 0, records: 0 };
   }
 
@@ -97,16 +106,26 @@ export async function uploadOnce(config: AgentConfig) {
 
   if (result.accepted > 0 || result.duplicates > 0) {
     await writeState(config.stateFile, {
+      apiUrl: config.apiUrl,
+      userId: config.userId || "local",
       uploadedIds: [...new Set([...uploadedIds, ...events.map((event) => event.id)])].slice(-50_000),
       lastUploadedAt: new Date().toISOString(),
     });
   }
 
   console.log(
-    `Uploaded ${events.length} events in ${batches.length} batches. accepted=${result.accepted} duplicates=${result.duplicates} records=${result.records}`
+    `${force ? "Resynced" : "Uploaded"} ${events.length} events in ${batches.length} batches. accepted=${result.accepted} duplicates=${result.duplicates} records=${result.records}`
   );
 
   return result;
+}
+
+function uploadStateMatchesConfig(state: AgentState, config: AgentConfig) {
+  const stateApiUrl = state.apiUrl?.replace(/\/+$/, "") || "";
+  const stateUserId = state.userId || "";
+  const configUserId = config.userId || "local";
+
+  return (!stateApiUrl || stateApiUrl === config.apiUrl) && (!stateUserId || stateUserId === configUserId);
 }
 
 export async function collectAndSanitize(config: AgentConfig) {
@@ -374,13 +393,14 @@ function clientInfo() {
 
 function printHelp() {
   console.log(`Usage:
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.3.0 -- token-board-agent
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.3.0 -- token-board-agent install
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.3.0 -- token-board-agent status
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.3.0 -- token-board-agent uninstall
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.3.0 -- token-board-agent login
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.3.0 -- token-board-agent upload
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.3.0 -- token-board-agent watch
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent install
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent status
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent uninstall
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent login
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent upload
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent resync
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent watch
 
 Local repo equivalents:
   pnpm token:agent init
@@ -388,6 +408,7 @@ Local repo equivalents:
   pnpm token:agent sync
   pnpm token:agent collect
   pnpm token:agent upload
+  pnpm token:agent resync
   pnpm token:agent watch`);
 }
 

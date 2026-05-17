@@ -27,7 +27,7 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 
 const CSV_PLACEHOLDER =
   "user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages";
-const NPX_PACKAGE_URL = "https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.0";
+const NPX_PACKAGE_URL = "https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1";
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
 const NPX_STATUS_COMMAND =

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 
 import {
   TOKEN_LEADERBOARD_STORAGE_KEY,
@@ -636,6 +636,7 @@ function AccountUsagePanel({
 }) {
   const user = profile?.user ?? null;
   const inputContextTokens = user ? user.inputTokens + user.cachedInputTokens : 0;
+  const generatedTokens = user ? user.outputTokens + user.reasoningOutputTokens : 0;
   const cacheHitRate = inputContextTokens > 0 && user ? user.cachedInputTokens / inputContextTokens : 0;
   const messagesPerSession = user?.sessions ? user.messages / user.sessions : 0;
   const dashboardProfile = profile && user ? profile : null;
@@ -739,16 +740,126 @@ function AccountUsagePanel({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <AccountStatCard label="预估费用" value={formatUsd(user.costUsd)} meta="USD estimate" tone="gold" />
-            <AccountStatCard label="总 Token" value={formatTokens(user.tokens)} meta={`${formatNumber(dashboardProfile.records)} records`} tone="green" />
-            <AccountStatCard label="输入上下文" value={formatTokens(inputContextTokens)} meta={`缓存 ${formatTokens(user.cachedInputTokens)}`} tone="blue" />
-            <AccountStatCard label="输出 Token" value={formatTokens(user.outputTokens)} meta={`推理 ${formatTokens(user.reasoningOutputTokens)}`} tone="rose" />
-            <AccountStatCard label="缓存命中率" value={formatPercent(cacheHitRate)} meta={user.topTool} tone="ink" />
-            <AccountStatCard label="活跃天数" value={`${formatNumber(user.activeDays)}d`} meta={dashboardProfile.topWeekday} tone="green" />
-            <AccountStatCard label="会话数" value={formatNumber(user.sessions)} meta={`${formatDecimal(messagesPerSession)} msg/session`} tone="blue" />
-            <AccountStatCard label="总消息数" value={formatNumber(user.messages)} meta="messages" tone="ink" />
-            <AccountStatCard label="高峰时段" value={dashboardProfile.topHour} meta="Asia/Shanghai" tone="gold" />
-            <AccountStatCard label="常用模型" value={user.topModel} meta={`${dashboardProfile.models.length} models`} tone="rose" />
+            <AccountStatCard
+              label="预估费用"
+              value={formatUsd(user.costUsd)}
+              meta="USD estimate"
+              tone="gold"
+              tooltip={{
+                title: "预估费用",
+                description: "按公开模型单价估算的美元成本，不等同于 Codex 账号额度或实际账单。",
+                formula: "Σ(input/1M × input 单价 + cached/1M × cached 单价 + output/1M × output 单价)",
+                detail: `当前区间估算 ${formatUsd(user.costUsd)}`,
+              }}
+            />
+            <AccountStatCard
+              label="总 Token"
+              value={formatTokens(user.tokens)}
+              meta={`${formatNumber(dashboardProfile.records)} records`}
+              tone="green"
+              tooltip={{
+                title: "总 Token",
+                description: "排行榜主口径，来自日志里的 total_tokens；缓存命中的输入会单独展示，不在这里重复相加。",
+                formula: "Σ total_tokens",
+                detail: `${formatNumber(dashboardProfile.records)} 条记录，共 ${formatTokens(user.tokens)}`,
+              }}
+            />
+            <AccountStatCard
+              label="输入上下文"
+              value={formatTokens(inputContextTokens)}
+              meta={`缓存 ${formatTokens(user.cachedInputTokens)}`}
+              tone="blue"
+              tooltip={{
+                title: "输入上下文",
+                description: "模型阅读过的上下文吞吐量，包含普通输入和缓存命中的输入。",
+                formula: "Σ input_tokens + Σ cached_input_tokens",
+                detail: `普通输入 ${formatTokens(user.inputTokens)}，缓存 ${formatTokens(user.cachedInputTokens)}`,
+              }}
+            />
+            <AccountStatCard
+              label="输出 Token"
+              value={formatTokens(user.outputTokens)}
+              meta={`推理 ${formatTokens(user.reasoningOutputTokens)}`}
+              tone="rose"
+              tooltip={{
+                title: "输出 Token",
+                description: "模型写出来的可见内容 token；推理 token 单独列在副指标里。",
+                formula: "主值 = Σ output_tokens；生成侧合计 = output + reasoning",
+                detail: `输出 ${formatTokens(user.outputTokens)}，推理 ${formatTokens(user.reasoningOutputTokens)}，合计 ${formatTokens(generatedTokens)}`,
+              }}
+            />
+            <AccountStatCard
+              label="缓存命中率"
+              value={formatPercent(cacheHitRate)}
+              meta={user.topTool}
+              tone="ink"
+              tooltip={{
+                title: "缓存命中率",
+                description: "输入上下文里有多少来自缓存命中。命中越高，通常代表重复上下文更多、单位成本更低。",
+                formula: "Σ cached_input_tokens ÷ (Σ input_tokens + Σ cached_input_tokens)",
+                detail: `${formatTokens(user.cachedInputTokens)} ÷ ${formatTokens(inputContextTokens)} = ${formatPercent(cacheHitRate)}`,
+              }}
+            />
+            <AccountStatCard
+              label="活跃天数"
+              value={`${formatNumber(user.activeDays)}d`}
+              meta={dashboardProfile.topWeekday}
+              tone="green"
+              tooltip={{
+                title: "活跃天数",
+                description: "当前时间范围内出现 token 记录的自然日数量。",
+                formula: "count(distinct date(timestamp))",
+                detail: `当前区间 ${formatNumber(user.activeDays)} 天有记录`,
+              }}
+            />
+            <AccountStatCard
+              label="会话数"
+              value={formatNumber(user.sessions)}
+              meta={`${formatDecimal(messagesPerSession)} msg/session`}
+              tone="blue"
+              tooltip={{
+                title: "会话数",
+                description: "按匿名 sessionId 聚合的会话数量；没有 sessionId 时用事件 ID 兜底。",
+                formula: "count(distinct session_id || event_id)",
+                detail: `${formatNumber(user.messages)} 条消息 / ${formatNumber(user.sessions)} 个会话`,
+              }}
+            />
+            <AccountStatCard
+              label="总消息数"
+              value={formatNumber(user.messages)}
+              meta="messages"
+              tone="ink"
+              tooltip={{
+                title: "总消息数",
+                description: "日志里上报的 messages/message_count 累计值；没有上报的来源会记为 0。",
+                formula: "Σ messages",
+                detail: `当前区间 ${formatNumber(user.messages)} 条`,
+              }}
+            />
+            <AccountStatCard
+              label="高峰时段"
+              value={dashboardProfile.topHour}
+              meta="Asia/Shanghai"
+              tone="gold"
+              tooltip={{
+                title: "高峰时段",
+                description: "按北京时间把记录归到 24 小时桶，取 token 累计最多的小时。",
+                formula: "argmax(hour(timestamp), Σ total_tokens)",
+                detail: `当前高峰 ${dashboardProfile.topHour}`,
+              }}
+            />
+            <AccountStatCard
+              label="常用模型"
+              value={user.topModel}
+              meta={`${dashboardProfile.models.length} models`}
+              tone="rose"
+              tooltip={{
+                title: "常用模型",
+                description: "当前区间内 token 累计最多的模型。",
+                formula: "argmax(model, Σ total_tokens)",
+                detail: `${dashboardProfile.models.length} 个模型参与统计`,
+              }}
+            />
           </div>
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]">
@@ -814,12 +925,20 @@ function AccountStatCard({
   value,
   meta,
   tone,
+  tooltip,
 }: {
   label: string;
   value: string;
   meta: string;
   tone: "blue" | "gold" | "green" | "ink" | "rose";
+  tooltip?: {
+    title: string;
+    description: string;
+    formula: string;
+    detail: string;
+  };
 }) {
+  const tooltipId = useId();
   const tones = {
     blue: "border-[#6ea3ff]/24 bg-[#102034] text-[#d9e8ff]",
     gold: "border-[#f1c45c]/24 bg-[#2e2512] text-[#ffe2a8]",
@@ -829,7 +948,11 @@ function AccountStatCard({
   };
 
   return (
-    <div className={`min-h-28 rounded-xl border p-4 ${tones[tone]}`}>
+    <div
+      className={`group/stat relative min-h-28 rounded-xl border p-4 outline-none transition duration-150 hover:-translate-y-0.5 hover:border-white/24 focus-visible:-translate-y-0.5 focus-visible:border-white/32 focus-visible:ring-2 focus-visible:ring-white/18 ${tones[tone]}`}
+      tabIndex={tooltip ? 0 : undefined}
+      aria-describedby={tooltip ? tooltipId : undefined}
+    >
       <p className="text-xs font-semibold text-white/45">{label}</p>
       <p className="mt-3 truncate font-mono text-2xl font-semibold leading-none" title={value}>
         {value}
@@ -837,6 +960,20 @@ function AccountStatCard({
       <p className="mt-3 truncate text-xs text-white/42" title={meta}>
         {meta}
       </p>
+      {tooltip ? (
+        <div
+          id={tooltipId}
+          role="tooltip"
+          className="pointer-events-none absolute inset-x-3 bottom-[calc(100%-0.35rem)] z-40 rounded-xl border border-white/14 bg-[#080b09]/96 p-3 text-left text-[#f7f4ec] opacity-0 shadow-[0_24px_70px_-34px_rgba(0,0,0,0.9)] backdrop-blur-xl transition duration-150 group-hover/stat:translate-y-[-0.25rem] group-hover/stat:opacity-100 group-focus-visible/stat:translate-y-[-0.25rem] group-focus-visible/stat:opacity-100"
+        >
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7be3a0]">{tooltip.title}</p>
+          <p className="mt-1.5 text-xs leading-5 text-white/72">{tooltip.description}</p>
+          <p className="mt-2 rounded-lg border border-white/8 bg-white/6 px-2 py-1.5 font-mono text-[11px] leading-4 text-white/70">
+            {tooltip.formula}
+          </p>
+          <p className="mt-2 text-[11px] leading-4 text-white/46">{tooltip.detail}</p>
+        </div>
+      ) : null}
     </div>
   );
 }

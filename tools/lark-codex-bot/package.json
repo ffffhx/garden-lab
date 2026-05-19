@@ -9,6 +9,10 @@
     "local": "node src/server.mjs --mode local",
     "hub": "node src/server.mjs --mode hub",
     "worker": "node src/server.mjs --mode worker",
+    "setup-two-workers": "node scripts/create-two-worker-envs.mjs",
+    "init-bot-b-lark-cli": "node scripts/init-bot-b-lark-cli.mjs",
+    "apply-two-bots": "node scripts/apply-two-bot-credentials.mjs",
+    "check-two-workers": "node scripts/check-two-worker-envs.mjs",
     "check": "node --check src/server.mjs"
   },
   "engines": {

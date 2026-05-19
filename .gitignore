@@ -11,8 +11,14 @@ tools/**/*.tgz
 tools/lark-codex-bot/.env
 tools/lark-codex-bot/.env.hub
 tools/lark-codex-bot/.env.worker
+tools/lark-codex-bot/.env.worker.bot-a
+tools/lark-codex-bot/.env.worker.bot-b
+tools/lark-codex-bot/.lark-cli.bot-b/
 tools/lark-codex-bot/.sessions.json
+tools/lark-codex-bot/.sessions.bot-a.json
+tools/lark-codex-bot/.sessions.bot-b.json
 tools/lark-codex-bot/.hub-queue.json
+tools/lark-codex-bot/logs/
 deploy/lark-codex-bot/.env
 node_modules/
 .next/

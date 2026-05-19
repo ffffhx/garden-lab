@@ -39,6 +39,7 @@ export type TokenLeaderboardUser = {
   messages: number;
   records: number;
   activeDays: number;
+  lastReportedAt?: string;
   topModel: string;
   topTool: string;
   share: number;
@@ -461,6 +462,7 @@ function aggregateUsers(
       toolTokens: Map<string, number>;
       days: Set<string>;
       sessionIds: Set<string>;
+      lastReportedAt: string;
     }
   >();
 
@@ -485,6 +487,7 @@ function aggregateUsers(
         toolTokens: new Map<string, number>(),
         days: new Set<string>(),
         sessionIds: new Set<string>(),
+        lastReportedAt: entry.timestamp,
       };
 
     user.displayName = entry.displayName || user.displayName;
@@ -499,6 +502,9 @@ function aggregateUsers(
     user.records += 1;
     user.days.add(toDateKey(entry.timestamp));
     user.sessionIds.add(entry.sessionId || entry.id);
+    if (new Date(entry.timestamp).getTime() > new Date(user.lastReportedAt).getTime()) {
+      user.lastReportedAt = entry.timestamp;
+    }
     addMapValue(user.modelTokens, entry.model, entry.totalTokens);
     addMapValue(user.toolTokens, entry.tool || entry.source, entry.totalTokens);
     users.set(entry.userId, user);
@@ -522,6 +528,7 @@ function aggregateUsers(
       messages: user.messages,
       records: user.records,
       activeDays: user.days.size,
+      lastReportedAt: user.lastReportedAt,
       topModel: topMapEntry(user.modelTokens),
       topTool: topMapEntry(user.toolTokens),
       share: 0,

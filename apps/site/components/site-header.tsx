@@ -28,6 +28,7 @@ function NavLink({ item }: { item: (typeof NAV_LINKS)[number] }) {
     <Link
       key={item.href}
       href={item.href}
+      prefetch={false}
       className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-amber-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30"
     >
       {item.label}
@@ -44,6 +45,7 @@ export function SiteHeader() {
         <div className="max-w-xl">
           <Link
             href="/"
+            prefetch={false}
             className="inline-flex items-baseline gap-3 text-2xl font-semibold tracking-tight text-slate-950"
           >
             <span>{SITE.title}</span>

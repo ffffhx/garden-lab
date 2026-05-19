@@ -17,6 +17,12 @@ import {
 import { withBasePath } from "@/lib/utils/site-path";
 
 const RANGES: TokenBoardRange[] = ["1D", "7D", "30D", "90D"];
+const ROLLING_RANGE_LABELS: Record<TokenBoardRange, string> = {
+  "1D": "滚动 24 小时",
+  "7D": "滚动 7x24 小时",
+  "30D": "滚动 30x24 小时",
+  "90D": "滚动 90x24 小时",
+};
 
 const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
   { key: "tokens", label: "Tokens" },
@@ -323,6 +329,11 @@ export function TokenLeaderboardApp({
   const topModelLabel = isDataLoading ? "Loading" : summary.topModel === "unknown" ? "--" : summary.topModel;
   const topToolLabel = isDataLoading ? "真实数据加载中" : summary.topTool === "unknown" ? "--" : summary.topTool;
   const recordCountLabel = isDataLoading ? "..." : formatNumber(recordCount);
+  const rangeRecordCount = summary.users.reduce((sum, user) => sum + user.records, 0);
+  const rangeRecordCountLabel = isDataLoading ? "..." : formatNumber(rangeRecordCount);
+  const insightText = isDataLoading
+    ? "正在生成自动洞察"
+    : buildLeaderboardInsight(summary, cacheHitRate);
 
   useEffect(() => {
     if (!isDataLoading && metric === "messages" && !hasMessageData) {
@@ -421,12 +432,207 @@ export function TokenLeaderboardApp({
     }
   }
 
+  const leaderboardPanel = (
+    <section id="token-leaderboard-rankings" className="min-w-0 overflow-hidden rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] shadow-[0_20px_70px_-60px_rgba(28,25,23,0.65)]">
+      <PanelHeader
+        title="排行榜"
+        meta={isDataLoading ? "loading" : `${summary.users.length} 位用户 · 当前区间 ${rangeRecordCountLabel} 条`}
+        action={isDataLoading ? "Loading" : `按${selectedMetricLabel}降序`}
+      />
+      <div className="grid gap-3 p-3 sm:hidden">
+        {isDataLoading ? (
+          <MobileLeaderboardLoading slow={isLoadSlow} />
+        ) : isDataError ? (
+          <LeaderboardErrorState error={dataLoadError} onRetry={retryDataLoad} />
+        ) : summary.users.length ? (
+          topUsers.map((user) => <LeaderboardMobileCard key={user.userId} metric={metric} user={user} />)
+        ) : (
+          <LeaderboardEmptyState />
+        )}
+      </div>
+      <div className="hidden overflow-x-auto sm:block">
+        <table className="w-full min-w-[780px] border-collapse text-left text-sm">
+          <thead className="bg-[#f3ede0] text-xs font-semibold uppercase tracking-[0.08em] text-stone-500">
+            <tr>
+              <th className="px-4 py-3">排名</th>
+              <th className="px-4 py-3">用户</th>
+              <SortableColumnHeader active={metric === "tokens"} align="right">Tokens</SortableColumnHeader>
+              <SortableColumnHeader active={metric === "cost"} align="right">费用</SortableColumnHeader>
+              <SortableColumnHeader active={metric === "sessions"} align="right">会话</SortableColumnHeader>
+              <SortableColumnHeader active={metric === "messages"} align="right" disabled={!hasMessageData}>消息</SortableColumnHeader>
+              <th className="px-4 py-3">常用模型</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-stone-950/8">
+            {isDataLoading ? (
+              <LeaderboardLoadingRow slow={isLoadSlow} />
+            ) : isDataError ? (
+              <LeaderboardErrorRow error={dataLoadError} onRetry={retryDataLoad} />
+            ) : summary.users.length ? (
+              summary.users.map((user) => <LeaderboardRow key={user.userId} user={user} />)
+            ) : (
+              <LeaderboardEmptyRow />
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+
+  const sharePanel = (
+    <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#f5efe4] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold">{selectedMetricLabel}份额</h2>
+        <span className="font-mono text-xs text-stone-500">{isDataLoading ? "Loading" : `${topUsers.length} 人`}</span>
+      </div>
+      <div className="mt-4 space-y-3">
+        {isDataLoading ? <ShareLoadingRows /> : topUsers.length ? topUsers.map((user) => (
+          <ShareRow key={user.userId} metric={metric} total={shareTotal} user={user} />
+        )) : <EmptyPanelMessage />}
+      </div>
+    </section>
+  );
+
+  const dataEntryPanel = (
+    <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold">加入榜单</h2>
+          <p className="mt-1 text-xs text-stone-500">安装 agent 后自动上报，公开榜单不需要登录也能看。</p>
+        </div>
+        <span className="rounded-full bg-stone-950 px-2.5 py-1 font-mono text-xs text-white">{rangeRecordCountLabel}</span>
+      </div>
+      <div className="mt-4 space-y-3">
+        {normalizedApiBaseUrl ? (
+          <div className="rounded-xl border border-[#26745e]/25 bg-[#eaf5ef] p-3 text-xs text-[#163d33]">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold">自动上报</p>
+              <span className="rounded-full bg-white/80 px-2 py-0.5 font-mono text-[11px]">live</span>
+            </div>
+            <p className="mt-2 text-[#26745e]">
+              {viewer?.authenticated
+                ? `当前账号 @${viewer.user?.githubLogin || viewer.user?.displayName}`
+                : "GitHub 登录 + npx agent"}
+            </p>
+          </div>
+        ) : null}
+        <div className="grid gap-2">
+          <button
+            type="button"
+            onClick={() => void copyCommand(NPX_INSTALL_COMMAND, "安装命令")}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#11130f] px-3 text-sm font-semibold text-white transition hover:bg-[#26745e]"
+          >
+            <Icon name="upload" />
+            复制安装命令
+          </button>
+          <button
+            type="button"
+            onClick={() => void copyCommand(NPX_STATUS_COMMAND, "状态命令")}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-stone-950/15 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:border-[#26745e]/40 hover:bg-[#eef7f2]"
+          >
+            <Icon name="refresh" />
+            复制 status
+          </button>
+          {!viewer?.authenticated && normalizedApiBaseUrl ? (
+            <button
+              type="button"
+              onClick={loginWithGitHub}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-stone-950/15 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:border-[#26745e]/40 hover:bg-[#eef7f2]"
+            >
+              <Icon name="github" />
+              GitHub 登录
+            </button>
+          ) : null}
+        </div>
+        <p className="min-h-5 rounded-lg bg-[#f5efe4] px-3 py-2 text-xs text-stone-600" aria-live="polite">
+          {statusMessage}
+        </p>
+        <details className="group rounded-xl border border-stone-950/10 bg-[#fbf7ef]">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold text-stone-800 [&::-webkit-details-marker]:hidden">
+            高级导入与调试
+            <span className="font-mono text-xs text-stone-500 group-open:hidden">展开</span>
+            <span className="hidden font-mono text-xs text-stone-500 group-open:inline">收起</span>
+          </summary>
+          <div className="space-y-3 border-t border-stone-950/8 p-3">
+            {normalizedApiBaseUrl ? (
+              <div className="rounded-lg border border-[#26745e]/18 bg-white/70 p-2 text-xs text-[#163d33]">
+                <p className="font-semibold text-[#26745e]">ingest endpoint</p>
+                <p className="mt-1 break-all font-mono leading-5">{normalizedApiBaseUrl}/api/usage/ingest</p>
+                <p className="mt-2 font-semibold text-[#26745e]">agent install</p>
+                <code className="mt-1 block break-all font-mono text-[11px] leading-5">{NPX_INSTALL_COMMAND}</code>
+                <p className="mt-2 break-all text-[11px] text-[#26745e]">
+                  status: <code className="font-mono">{NPX_STATUS_COMMAND}</code>
+                </p>
+              </div>
+            ) : null}
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">CSV / JSON</span>
+              <textarea
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder={CSV_PLACEHOLDER}
+                className="mt-2 min-h-32 w-full resize-y rounded-xl border border-stone-950/12 bg-white p-3 font-mono text-xs leading-5 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#26745e] focus:bg-white focus:ring-4 focus:ring-[#26745e]/12"
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <ActionButton icon="upload" onClick={() => importText(draft)}>
+                导入
+              </ActionButton>
+              <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-stone-950/15 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:border-[#26745e]/40 hover:bg-[#eef7f2]">
+                <Icon name="file" />
+                文件
+                <input
+                  type="file"
+                  accept=".json,.csv,text/csv,application/json"
+                  className="sr-only"
+                  onChange={(event) => {
+                    void importFile(event.target.files?.[0]);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            <div className="grid gap-2">
+              <ActionButton icon="download" variant="secondary" onClick={exportJson}>
+                导出本地
+              </ActionButton>
+              <ActionButton icon="refresh" variant="secondary" onClick={clearLocalData}>
+                清空本地
+              </ActionButton>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">上报字段</h3>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-stone-600">
+                {[
+                  "user",
+                  "timestamp",
+                  "model",
+                  "tool",
+                  "inputTokens",
+                  "outputTokens",
+                  "cachedInputTokens",
+                  "reasoningOutputTokens",
+                  "totalTokens",
+                  "sessionId",
+                ].map((field) => (
+                  <code key={field} className="truncate rounded-md border border-stone-950/10 bg-white px-2 py-1">
+                    {field}
+                  </code>
+                ))}
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+  );
+
   return (
     <main className="min-w-0 font-sans text-stone-950">
       <div className="space-y-5">
-        <header className="relative overflow-hidden rounded-[1.25rem] border border-stone-950/15 bg-[#11130f] px-5 py-5 text-[#f8f1e5] shadow-[0_28px_90px_-62px_rgba(17,19,15,0.85)] sm:px-6 lg:px-7">
+        <header className="relative overflow-hidden rounded-[1.25rem] border border-stone-950/15 bg-[#11130f] px-5 py-4 text-[#f8f1e5] shadow-[0_28px_90px_-62px_rgba(17,19,15,0.85)] sm:px-6 lg:px-7">
           <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(135deg,rgba(241,196,92,0.16)_0_1px,transparent_1px_24px),linear-gradient(90deg,rgba(255,255,255,0.07),transparent_42%)]" />
-          <div className="relative space-y-5">
+          <div className="relative space-y-4">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
@@ -436,12 +642,17 @@ export function TokenLeaderboardApp({
                   <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs font-semibold text-white/78">
                     {sourceLabel}
                   </span>
+                  <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 font-mono text-xs text-white/70">
+                    {ROLLING_RANGE_LABELS[range]}
+                  </span>
                 </div>
-                <h1 className="mt-3 text-3xl font-semibold leading-tight text-white sm:text-5xl">
+                <h1 className="mt-3 text-3xl font-semibold leading-tight text-white sm:text-4xl">
                   朋友间的 Token 排行榜
                 </h1>
-                <p className="mt-3 text-sm leading-6 text-white/68">
-                  {isDataLoading ? "正在加载真实用户数据" : `${formatShortDate(summary.startAt)} - ${formatShortDate(summary.endAt)}`}
+                <p className="mt-2 text-sm leading-6 text-white/68">
+                  {isDataLoading
+                    ? "正在加载真实用户数据"
+                    : `${formatShortDate(summary.startAt)} - ${formatShortDate(summary.endAt)} · Asia/Shanghai`}
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 xl:w-auto xl:items-end">
@@ -460,25 +671,48 @@ export function TokenLeaderboardApp({
                     label="排序指标"
                   />
                 </div>
+                <div className="grid w-full gap-2 sm:grid-cols-2 xl:max-w-[32rem]">
+                  <button
+                    type="button"
+                    onClick={() => void copyCommand(NPX_INSTALL_COMMAND, "安装命令")}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#f8f1e5] px-4 text-sm font-semibold text-[#11130f] transition hover:bg-[#ffe2a8]"
+                  >
+                    <Icon name="upload" />
+                    复制安装命令
+                  </button>
+                  {!viewer?.authenticated && normalizedApiBaseUrl ? (
+                    <button
+                      type="button"
+                      onClick={loginWithGitHub}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                    >
+                      <Icon name="github" />
+                      GitHub 登录
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={retryDataLoad}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                    >
+                      <Icon name="refresh" />
+                      刷新榜单
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="grid gap-3 border-t border-white/10 pt-4 sm:grid-cols-3">
+            <div className="grid grid-cols-3 gap-2 border-t border-white/10 pt-4 sm:gap-3">
               <HeroSignal
                 label="当前榜首"
                 value={isDataLoading ? "Loading" : leader?.displayName ?? "--"}
                 meta={isDataLoading ? "真实数据加载中" : leaderMeta}
               />
               <HeroSignal
-                label="排序指标"
-                value={selectedMetricLabel}
-                meta={
-                  isDataLoading
-                    ? "Loading"
-                    : metric === "messages" && !hasMessageData
-                      ? "暂未上报"
-                      : "降序排列"
-                }
+                label="当前区间记录"
+                value={rangeRecordCountLabel}
+                meta={isDataLoading ? "Loading" : `${ROLLING_RANGE_LABELS[range]}`}
               />
               <HeroSignal label="高频组合" value={topModelLabel} meta={topToolLabel} />
             </div>
@@ -486,12 +720,18 @@ export function TokenLeaderboardApp({
               apiBaseUrl={normalizedApiBaseUrl}
               error={isDataError ? dataLoadError : ""}
               loading={isDataLoading}
+              range={range}
+              rangeRecordCount={rangeRecordCount}
               recordCount={recordCount}
               sourceLabel={sourceLabel}
               summary={summary}
             />
           </div>
         </header>
+
+        <InsightStrip loading={isDataLoading} text={insightText} />
+
+        {leaderboardPanel}
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
           <div className="min-w-0 space-y-5">
@@ -505,7 +745,7 @@ export function TokenLeaderboardApp({
               <StatTile
                 label="活跃用户"
                 value={isDataLoading ? "Loading" : formatNumber(summary.activeUsers)}
-                meta={isDataLoading ? "真实数据加载中" : `${topUsers.length} listed`}
+                meta={isDataLoading ? "真实数据加载中" : `${summary.activeUsers} 位参与`}
                 tone="mint"
               />
               <StatTile
@@ -529,65 +769,6 @@ export function TokenLeaderboardApp({
               loading={isDataLoading}
               tokensPerSession={tokensPerSession}
             />
-
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(17rem,0.65fr)]">
-              <section className="min-w-0 overflow-hidden rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] shadow-[0_20px_70px_-60px_rgba(28,25,23,0.65)]">
-                <PanelHeader
-                  title="排行榜"
-                  meta={isDataLoading ? "loading" : `${summary.users.length} users`}
-                  action={isDataLoading ? "Loading" : `按${selectedMetricLabel}降序`}
-                />
-                <div className="grid gap-3 p-3 sm:hidden">
-                  {isDataLoading ? (
-                    <MobileLeaderboardLoading slow={isLoadSlow} />
-                  ) : isDataError ? (
-                    <LeaderboardErrorState error={dataLoadError} onRetry={retryDataLoad} />
-                  ) : summary.users.length ? (
-                    topUsers.map((user) => <LeaderboardMobileCard key={user.userId} metric={metric} user={user} />)
-                  ) : (
-                    <LeaderboardEmptyState />
-                  )}
-                </div>
-                <div className="hidden overflow-x-auto sm:block">
-                  <table className="w-full min-w-[780px] border-collapse text-left text-sm">
-                    <thead className="bg-[#f3ede0] text-xs font-semibold uppercase tracking-[0.08em] text-stone-500">
-                      <tr>
-                        <th className="px-4 py-3">排名</th>
-                        <th className="px-4 py-3">用户</th>
-                        <SortableColumnHeader active={metric === "tokens"} align="right">Tokens</SortableColumnHeader>
-                        <SortableColumnHeader active={metric === "cost"} align="right">费用</SortableColumnHeader>
-                        <SortableColumnHeader active={metric === "sessions"} align="right">会话</SortableColumnHeader>
-                        <SortableColumnHeader active={metric === "messages"} align="right" disabled={!hasMessageData}>消息</SortableColumnHeader>
-                        <th className="px-4 py-3">常用模型</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-950/8">
-                      {isDataLoading ? (
-                        <LeaderboardLoadingRow slow={isLoadSlow} />
-                      ) : isDataError ? (
-                        <LeaderboardErrorRow error={dataLoadError} onRetry={retryDataLoad} />
-                      ) : summary.users.length ? (
-                        summary.users.map((user) => <LeaderboardRow key={user.userId} user={user} />)
-                      ) : (
-                        <LeaderboardEmptyRow />
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-
-              <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#f5efe4] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-base font-semibold">{selectedMetricLabel}份额</h2>
-                  <span className="font-mono text-xs text-stone-500">{isDataLoading ? "Loading" : `${topUsers.length} 人`}</span>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {isDataLoading ? <ShareLoadingRows /> : topUsers.length ? topUsers.map((user) => (
-                    <ShareRow key={user.userId} metric={metric} total={shareTotal} user={user} />
-                  )) : <EmptyPanelMessage />}
-                </div>
-              </section>
-            </div>
 
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.18fr)_minmax(18rem,0.82fr)]">
               <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
@@ -618,6 +799,7 @@ export function TokenLeaderboardApp({
               </section>
 
               <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+                {sharePanel}
                 <BreakdownPanel title="模型消耗" loading={isDataLoading} items={summary.models.map((item) => ({
                   name: item.name,
                   value: item.tokens,
@@ -635,102 +817,20 @@ export function TokenLeaderboardApp({
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-24 xl:self-start">
-            <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-base font-semibold">数据入口</h2>
-                <span className="rounded-full bg-stone-950 px-2.5 py-1 font-mono text-xs text-white">{recordCountLabel}</span>
-              </div>
-              <div className="mt-4 space-y-3">
-                {normalizedApiBaseUrl ? (
-                  <div className="rounded-xl border border-[#26745e]/25 bg-[#eaf5ef] p-3 text-xs text-[#163d33]">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold">自动上报</p>
-                      <span className="rounded-full bg-white/80 px-2 py-0.5 font-mono text-[11px]">live</span>
-                    </div>
-                    <p className="mt-2 break-all font-mono leading-5">{normalizedApiBaseUrl}/api/usage/ingest</p>
-                    <p className="mt-2 text-[#26745e]">
-                      {viewer?.authenticated
-                        ? `@${viewer.user?.githubLogin || viewer.user?.displayName}`
-                        : "GitHub / npx agent"}
-                    </p>
-                    <div className="mt-3 rounded-lg border border-[#26745e]/18 bg-white/70 p-2">
-                      <p className="text-[11px] font-semibold text-[#26745e]">agent install</p>
-                      <code className="mt-1 block break-all font-mono text-[11px] leading-5 text-[#163d33]">
-                        {NPX_INSTALL_COMMAND}
-                      </code>
-                    </div>
-                    <p className="mt-2 break-all text-[11px] text-[#26745e]">
-                      status: <code className="font-mono">{NPX_STATUS_COMMAND}</code>
-                    </p>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                      <button
-                        type="button"
-                        onClick={() => void copyCommand(NPX_INSTALL_COMMAND, "安装命令")}
-                        className="rounded-lg border border-[#26745e]/20 bg-white/80 px-2 py-1.5 text-xs font-semibold text-[#163d33] transition hover:bg-white"
-                      >
-                        复制安装命令
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void copyCommand(NPX_STATUS_COMMAND, "状态命令")}
-                        className="rounded-lg border border-[#26745e]/20 bg-white/80 px-2 py-1.5 text-xs font-semibold text-[#163d33] transition hover:bg-white"
-                      >
-                        复制 status
-                      </button>
-                      <button
-                        type="button"
-                        onClick={retryDataLoad}
-                        className="rounded-lg border border-[#26745e]/20 bg-white/80 px-2 py-1.5 text-xs font-semibold text-[#163d33] transition hover:bg-white"
-                      >
-                        刷新榜单
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-                <label className="block">
-                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">CSV / JSON</span>
-                  <textarea
-                    value={draft}
-                    onChange={(event) => setDraft(event.target.value)}
-                    placeholder={CSV_PLACEHOLDER}
-                    className="mt-2 min-h-36 w-full resize-y rounded-xl border border-stone-950/12 bg-[#fbf7ef] p-3 font-mono text-xs leading-5 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#26745e] focus:bg-white focus:ring-4 focus:ring-[#26745e]/12"
-                  />
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <ActionButton icon="upload" onClick={() => importText(draft)}>
-                    导入
-                  </ActionButton>
-                  <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-stone-950/15 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:border-[#26745e]/40 hover:bg-[#eef7f2]">
-                    <Icon name="file" />
-                    文件
-                    <input
-                      type="file"
-                      accept=".json,.csv,text/csv,application/json"
-                      className="sr-only"
-                      onChange={(event) => {
-                        void importFile(event.target.files?.[0]);
-                        event.target.value = "";
-                      }}
-                    />
-                  </label>
-                </div>
-                <div className="grid gap-2">
-                  <ActionButton icon="download" variant="secondary" onClick={exportJson}>
-                    导出本地
-                  </ActionButton>
-                  <ActionButton icon="refresh" variant="secondary" onClick={clearLocalData}>
-                    清空本地
-                  </ActionButton>
-                </div>
-                <p className="min-h-5 rounded-lg bg-[#f5efe4] px-3 py-2 text-xs text-stone-600" aria-live="polite">
-                  {statusMessage}
-                </p>
-              </div>
-            </section>
+            {dataEntryPanel}
 
             <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
               <h2 className="text-base font-semibold">统计口径</h2>
               <div className="mt-3 space-y-2 text-xs leading-5 text-stone-600">
+                <p>
+                  <strong className="text-stone-900">时间窗口</strong>：{ROLLING_RANGE_LABELS[range]}，展示时间按 Asia/Shanghai。
+                </p>
+                <p>
+                  <strong className="text-stone-900">记录数</strong>：全库/可用记录 {recordCountLabel} 条；当前区间参与排行 {rangeRecordCountLabel} 条。
+                </p>
+                <p>
+                  <strong className="text-stone-900">更新时间</strong>：{isDataLoading ? "加载中" : formatShortDate(summary.endAt)}。
+                </p>
                 <p>
                   <strong className="text-stone-900">费用是估算值</strong>：按公开模型单价计算，不等同于账号额度或实际账单。
                 </p>
@@ -740,28 +840,6 @@ export function TokenLeaderboardApp({
                 <p>
                   <strong className="text-stone-900">隐私边界</strong>：只展示 token、模型、工具、项目 basename、匿名 session，不展示 prompt 文本。
                 </p>
-              </div>
-            </section>
-
-            <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
-              <h2 className="text-base font-semibold">上报字段</h2>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-stone-600">
-                {[
-                  "user",
-                  "timestamp",
-                  "model",
-                  "tool",
-                  "inputTokens",
-                  "outputTokens",
-                  "cachedInputTokens",
-                  "reasoningOutputTokens",
-                  "totalTokens",
-                  "sessionId",
-                ].map((field) => (
-                  <code key={field} className="truncate rounded-md border border-stone-950/10 bg-[#f5efe4] px-2 py-1">
-                    {field}
-                  </code>
-                ))}
               </div>
             </section>
           </aside>
@@ -1327,10 +1405,27 @@ function AccountProjectList({ projects }: { projects: TokenAccountUsageProfile["
   );
 }
 
+function InsightStrip({ loading, text }: { loading: boolean; text: string }) {
+  return (
+    <section className="rounded-[1.15rem] border border-stone-950/10 bg-[#fffdfa] px-4 py-3 shadow-[0_18px_55px_-52px_rgba(28,25,23,0.58)]">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <span className="w-fit rounded-full bg-[#11130f] px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f8f1e5]">
+          自动洞察
+        </span>
+        <p className="text-sm leading-6 text-stone-700">
+          {loading ? "真实数据加载后会生成榜首、峰值与效率摘要。" : text}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function TrustEvidenceBar({
   apiBaseUrl,
   error,
   loading,
+  range,
+  rangeRecordCount,
   recordCount,
   sourceLabel,
   summary,
@@ -1338,6 +1433,8 @@ function TrustEvidenceBar({
   apiBaseUrl: string;
   error: string;
   loading: boolean;
+  range: TokenBoardRange;
+  rangeRecordCount: number;
   recordCount: number;
   sourceLabel: string;
   summary: TokenLeaderboardSummary;
@@ -1349,9 +1446,10 @@ function TrustEvidenceBar({
       : [
           `更新时间 ${formatShortDate(summary.endAt)}`,
           `数据源 ${sourceLabel}`,
-          `记录 ${formatNumber(recordCount)}`,
+          `全库/可用 ${formatNumber(recordCount)}`,
+          `当前${range} ${formatNumber(rangeRecordCount)}`,
           `活跃用户 ${formatNumber(summary.activeUsers)}`,
-          `${formatShortDate(summary.startAt)} - ${formatShortDate(summary.endAt)}`,
+          `${ROLLING_RANGE_LABELS[range]} · Asia/Shanghai`,
         ];
 
   return (
@@ -1363,7 +1461,7 @@ function TrustEvidenceBar({
           </span>
         ))}
       </div>
-      <p className="mt-2 text-xs leading-5 text-white/48">
+      <p className="mt-2 hidden text-xs leading-5 text-white/48 sm:block">
         {apiBaseUrl ? "本页由自动上报服务汇总。" : "当前使用静态或本地数据。"}
         只展示 token、模型、工具、项目 basename 与匿名 session；费用为公开模型单价估算，不代表实际账单。
       </p>
@@ -1423,12 +1521,11 @@ function SegmentedControl({
           type="button"
           role="radio"
           aria-checked={value === item.key}
-          aria-pressed={value === item.key}
           aria-disabled={item.disabled || undefined}
           disabled={item.disabled}
           title={item.disabled ? item.disabledReason : undefined}
           onClick={() => onChange(item.key)}
-          className={`min-h-9 rounded-lg px-2 text-sm font-semibold transition ${
+          className={`min-h-11 rounded-lg px-2 text-sm font-semibold transition ${
             value === item.key
               ? "bg-[#f8f1e5] text-[#11130f] shadow-[0_10px_24px_-20px_rgba(255,255,255,0.7)]"
               : item.disabled
@@ -1475,10 +1572,10 @@ function StatTile({
 
 function HeroSignal({ label, value, meta }: { label: string; value: string; meta: string }) {
   return (
-    <div className="min-w-0 border-l border-white/12 pl-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/42">{label}</p>
-      <p className="mt-2 truncate text-xl font-semibold text-white">{value}</p>
-      <p className="mt-1 truncate font-mono text-xs text-[#f1c45c]">{meta}</p>
+    <div className="min-w-0 border-l border-white/12 pl-3 sm:pl-4">
+      <p className="truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-white/42 sm:text-xs sm:tracking-[0.14em]">{label}</p>
+      <p className="mt-2 truncate text-base font-semibold text-white sm:text-xl">{value}</p>
+      <p className="mt-1 truncate font-mono text-[11px] text-[#f1c45c] sm:text-xs">{meta}</p>
     </div>
   );
 }
@@ -1838,7 +1935,7 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
+      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
         variant === "primary"
           ? "bg-[#11130f] text-white hover:bg-[#26745e]"
           : "border border-stone-950/15 bg-white text-stone-700 hover:border-[#26745e]/40 hover:bg-[#eef7f2]"
@@ -1994,6 +2091,36 @@ function formatMetricValue(value: number, metric: TokenBoardMetric) {
   }
 
   return formatTokens(value);
+}
+
+function buildLeaderboardInsight(summary: TokenLeaderboardSummary, cacheHitRate: number) {
+  const leader = summary.users[0];
+  const runnerUp = summary.users[1];
+  const peak = summary.daily.reduce(
+    (best, point) => (point.tokens > best.tokens ? point : best),
+    { date: "", tokens: 0 }
+  );
+  const parts: string[] = [];
+
+  if (leader && runnerUp) {
+    parts.push(`${leader.displayName} 领先 ${runnerUp.displayName} ${formatTokens(Math.max(0, leader.tokens - runnerUp.tokens))}`);
+  } else if (leader) {
+    parts.push(`${leader.displayName} 暂列榜首`);
+  } else {
+    parts.push("当前区间还没有可展示的用户");
+  }
+
+  if (peak.date) {
+    parts.push(`${peak.date.slice(5)} 峰值 ${formatTokens(peak.tokens)}`);
+  }
+
+  parts.push(`缓存命中率 ${formatPercent(cacheHitRate)}`);
+
+  if (summary.activeUsers) {
+    parts.push(`${formatNumber(summary.activeUsers)} 位参与`);
+  }
+
+  return `${parts.join("；")}。`;
 }
 
 function formatPercent(value: number) {

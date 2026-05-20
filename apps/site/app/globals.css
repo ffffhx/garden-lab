@@ -33,6 +33,18 @@ a {
   text-decoration: none;
 }
 
+button:not(:disabled),
+summary,
+[role="button"]:not([aria-disabled="true"]),
+label:has(input[type="file"]) {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 * {
   box-sizing: border-box;
 }

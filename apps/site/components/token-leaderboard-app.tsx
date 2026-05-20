@@ -66,6 +66,7 @@ export function TokenLeaderboardApp({
   const [accountProfile, setAccountProfile] = useState<TokenAccountUsageProfile | null>(null);
   const [accountLoadState, setAccountLoadState] = useState<AccountLoadState>("idle");
   const [accountError, setAccountError] = useState("");
+  const [toast, setToast] = useState<ToastState | null>(null);
   const normalizedApiBaseUrl = normalizeApiBaseUrl(apiBaseUrl);
 
   useEffect(() => {
@@ -342,11 +343,27 @@ export function TokenLeaderboardApp({
     }
   }, [hasMessageData, isDataLoading, metric]);
 
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setToast(null), 2400);
+
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  function showToast(message: string, tone: ToastTone = "success") {
+    setToast({ id: Date.now(), message, tone });
+  }
+
   function importText(text: string, mode: "replace" | "merge" = "merge") {
     const parsed = parseTokenUsageImport(text);
 
     if (!parsed.entries.length) {
-      setStatus(parsed.errors[0] ?? "导入失败");
+      const message = parsed.errors[0] ?? "导入失败";
+      setStatus(message);
+      showToast(message, "error");
       return;
     }
 
@@ -362,6 +379,7 @@ export function TokenLeaderboardApp({
     setDataLoadState("ready");
     setDataLoadError("");
     setStatus(`已导入 ${parsed.entries.length} 条，当前 ${nextEntries.length} 条`);
+    showToast(`已导入 ${parsed.entries.length} 条`);
     setDraft("");
   }
 
@@ -384,6 +402,7 @@ export function TokenLeaderboardApp({
     link.download = `token-leaderboard-${range.toLowerCase()}.json`;
     link.click();
     URL.revokeObjectURL(href);
+    showToast("已导出本地 JSON");
   }
 
   function clearLocalData() {
@@ -395,6 +414,7 @@ export function TokenLeaderboardApp({
     setDataLoadState(initialEntries.length ? "ready" : normalizedApiBaseUrl ? "loading" : "error");
     setDataLoadError(initialEntries.length || normalizedApiBaseUrl ? "" : "本地数据已清空，暂无 fallback 数据");
     setStatus(initialEntries.length ? `初始数据 ${initialEntries.length} 条` : "已清空本地数据");
+    showToast("已清空本地数据");
     if (normalizedApiBaseUrl) {
       setReloadKey((value) => value + 1);
     }
@@ -420,15 +440,20 @@ export function TokenLeaderboardApp({
     setDataLoadState("loading");
     setDataLoadError("");
     setStatus("正在重新加载真实用户数据");
+    showToast("正在刷新榜单");
     setReloadKey((value) => value + 1);
   }
 
   async function copyCommand(command: string, label: string) {
     try {
       await navigator.clipboard.writeText(command);
-      setStatus(`已复制${label}`);
+      const message = `已复制${label}`;
+      setStatus(message);
+      showToast(message);
     } catch {
-      setStatus(`${label}复制失败，请手动复制`);
+      const message = `${label}复制失败，请手动复制`;
+      setStatus(message);
+      showToast(message, "error");
     }
   }
 
@@ -855,6 +880,7 @@ export function TokenLeaderboardApp({
           viewer={viewer}
         />
       </div>
+      <Toast toast={toast} />
     </main>
   );
 }
@@ -1402,6 +1428,28 @@ function AccountProjectList({ projects }: { projects: TokenAccountUsageProfile["
         )}
       </div>
     </section>
+  );
+}
+
+function Toast({ toast }: { toast: ToastState | null }) {
+  if (!toast) {
+    return null;
+  }
+
+  const tone =
+    toast.tone === "error"
+      ? "border-[#c05c38]/25 bg-[#fff0e9] text-[#7b2f1d] shadow-[0_24px_70px_-44px_rgba(192,92,56,0.75)]"
+      : "border-[#26745e]/25 bg-[#eaf5ef] text-[#163d33] shadow-[0_24px_70px_-44px_rgba(38,116,94,0.75)]";
+
+  return (
+    <div
+      key={toast.id}
+      role="status"
+      aria-live="polite"
+      className={`pointer-events-none fixed bottom-5 left-4 right-4 z-[80] mx-auto flex min-h-12 max-w-sm items-center justify-center rounded-2xl border px-4 py-3 text-center text-sm font-semibold backdrop-blur-xl sm:left-auto sm:right-5 sm:mx-0 ${tone}`}
+    >
+      {toast.message}
+    </div>
   );
 }
 
@@ -2261,3 +2309,9 @@ type ViewerState = {
 
 type DataLoadState = "error" | "loading" | "ready";
 type AccountLoadState = "error" | "idle" | "loading" | "ready";
+type ToastTone = "error" | "success";
+type ToastState = {
+  id: number;
+  message: string;
+  tone: ToastTone;
+};

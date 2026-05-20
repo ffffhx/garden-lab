@@ -105,7 +105,7 @@ describe("token board automation", () => {
       expect.objectContaining({
         userId: "feng",
         model: "gpt-5.5",
-        totalTokens: 1800,
+        totalTokens: 2000,
       })
     );
     expect(JSON.stringify(entries)).not.toContain("do not upload me");
@@ -164,7 +164,7 @@ describe("token board automation", () => {
       expect.objectContaining({
         model: "gpt-5.5",
         project: "token-board",
-        totalTokens: 110,
+        totalTokens: 150,
         inputTokens: 100,
         cachedInputTokens: 40,
         outputTokens: 10,

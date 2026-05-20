@@ -46,7 +46,7 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1000,200,1300,5`);
     expect(summary.users[1].deltaTokens).toBe(1);
   });
 
-  it("uses input plus output tokens as the consumption total when token details exist", () => {
+  it("uses input context plus output tokens as the consumption total when token details exist", () => {
     const entries: TokenUsageEvent[] = [
       {
         ...event("detailed", "feng", "Feng", "2026-05-14T10:00:00.000Z", 115, 1),
@@ -72,18 +72,18 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1000,200,1300,5`);
       now,
     });
 
-    expect(summary.totalTokens).toBe(310);
+    expect(summary.totalTokens).toBe(350);
     expect(summary.users[0]).toEqual(
       expect.objectContaining({
-        tokens: 310,
+        tokens: 350,
         inputTokens: 100,
         cachedInputTokens: 40,
         outputTokens: 10,
         reasoningOutputTokens: 5,
       })
     );
-    expect(summary.models[0].tokens).toBe(310);
-    expect(summary.daily.find((point) => point.date === "2026-05-14")?.tokens).toBe(310);
+    expect(summary.models[0].tokens).toBe(350);
+    expect(summary.daily.find((point) => point.date === "2026-05-14")?.tokens).toBe(350);
   });
 
   it("dedupes stable event ids before aggregation", () => {

@@ -266,7 +266,7 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
   const cachedInputTokens = toFiniteNumber(value.cachedInputTokens);
   const outputTokens = toFiniteNumber(value.outputTokens);
   const reasoningOutputTokens = toFiniteNumber(value.reasoningOutputTokens);
-  const computedTokens = inputTokens + outputTokens;
+  const computedTokens = inputTokens + cachedInputTokens + outputTokens;
   const explicitTotalTokens = toFiniteNumber(value.totalTokens);
   const totalTokens = computedTokens > 0 ? computedTokens : explicitTotalTokens;
   const userId = normalizeText(value.userId) || normalizeText(value.displayName) || "unknown";
@@ -318,11 +318,15 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
 export function getTokenConsumptionTokens(
   entry: Pick<TokenUsageEvent, "inputTokens" | "cachedInputTokens" | "outputTokens" | "totalTokens">
 ) {
-  const inputContextTokens = toFiniteNumber(entry.inputTokens);
+  const inputContextTokens = getInputContextTokens(entry);
   const outputTokens = toFiniteNumber(entry.outputTokens);
   const computedTokens = inputContextTokens + outputTokens;
 
   return computedTokens > 0 ? computedTokens : toFiniteNumber(entry.totalTokens);
+}
+
+export function getInputContextTokens(entry: Pick<TokenUsageEvent, "inputTokens" | "cachedInputTokens">) {
+  return toFiniteNumber(entry.inputTokens) + toFiniteNumber(entry.cachedInputTokens);
 }
 
 export function createDemoTokenEntries(now = new Date()): TokenUsageEvent[] {

@@ -22,7 +22,7 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1000,200,1300,5`);
         displayName: "Feng",
         tool: "Codex CLI",
         model: "gpt-5.5",
-        totalTokens: 1300,
+        totalTokens: 1200,
         messages: 5,
       }),
     ]);

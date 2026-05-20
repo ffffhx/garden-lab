@@ -266,9 +266,9 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
   const cachedInputTokens = toFiniteNumber(value.cachedInputTokens);
   const outputTokens = toFiniteNumber(value.outputTokens);
   const reasoningOutputTokens = toFiniteNumber(value.reasoningOutputTokens);
-  const computedTokens = inputTokens + cachedInputTokens + outputTokens + reasoningOutputTokens;
+  const computedTokens = inputTokens + outputTokens;
   const explicitTotalTokens = toFiniteNumber(value.totalTokens);
-  const totalTokens = explicitTotalTokens > 0 ? explicitTotalTokens : computedTokens;
+  const totalTokens = computedTokens > 0 ? computedTokens : explicitTotalTokens;
   const userId = normalizeText(value.userId) || normalizeText(value.displayName) || "unknown";
   const timestamp = normalizeDate(value.timestamp);
   const model = normalizeText(value.model) || "unknown";

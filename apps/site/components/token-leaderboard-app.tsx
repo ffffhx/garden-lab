@@ -322,11 +322,13 @@ export function TokenLeaderboardApp({
   const shareTotal = Math.max(0, summary.users.reduce((sum, user) => sum + getUserMetricValue(user, metric), 0));
   const totalInputContextTokens = summary.users.reduce((sum, user) => sum + user.inputTokens, 0);
   const totalCachedInputTokens = summary.users.reduce((sum, user) => sum + user.cachedInputTokens, 0);
+  const totalConsumptionTokens =
+    summary.users.reduce((sum, user) => sum + getTokenConsumptionTokens(user), 0) || summary.totalTokens;
   const cacheHitRate = totalInputContextTokens > 0 ? totalCachedInputTokens / totalInputContextTokens : 0;
-  const tokensPerSession = summary.totalSessions > 0 ? summary.totalTokens / summary.totalSessions : 0;
+  const tokensPerSession = summary.totalSessions > 0 ? totalConsumptionTokens / summary.totalSessions : 0;
   const costPerSession = summary.totalSessions > 0 ? summary.totalCostUsd / summary.totalSessions : 0;
   const daysInRange = Math.max(1, summary.daily.length);
-  const dailyAverageTokens = summary.totalTokens / daysInRange;
+  const dailyAverageTokens = totalConsumptionTokens / daysInRange;
   const leaderMeta = leader ? formatMetricValue(getUserMetricValue(leader, metric), metric) : "--";
   const topModelLabel = isDataLoading ? "Loading" : summary.topModel === "unknown" ? "--" : summary.topModel;
   const topToolLabel = isDataLoading ? "真实数据加载中" : summary.topTool === "unknown" ? "--" : summary.topTool;
@@ -764,7 +766,7 @@ export function TokenLeaderboardApp({
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <StatTile
                 label="总消耗 Token"
-                value={isDataLoading ? "Loading" : formatTokens(summary.totalTokens)}
+                value={isDataLoading ? "Loading" : formatTokens(totalConsumptionTokens)}
                 meta={isDataLoading ? "真实数据加载中" : "输入上下文 + 输出"}
                 tone="ink"
               />
@@ -905,6 +907,7 @@ function AccountUsagePanel({
 }) {
   const user = profile?.user ?? null;
   const inputContextTokens = user ? user.inputTokens : 0;
+  const accountConsumptionTokens = user ? getTokenConsumptionTokens(user) : 0;
   const generatedTokens = user ? user.outputTokens + user.reasoningOutputTokens : 0;
   const cacheHitRate = inputContextTokens > 0 && user ? user.cachedInputTokens / inputContextTokens : 0;
   const messagesPerSession = user?.sessions ? user.messages / user.sessions : 0;
@@ -1047,14 +1050,14 @@ function AccountUsagePanel({
             />
             <AccountStatCard
               label="总消耗 Token"
-              value={formatTokens(user.tokens)}
+              value={formatTokens(accountConsumptionTokens)}
               meta={`${formatNumber(dashboardProfile.records)} records`}
               tone="green"
               tooltip={{
                 title: "总消耗 Token",
                 description: "排行榜主口径，按输入上下文加输出计算；日志里只有 total_tokens 时才用它兜底。",
                 formula: "Σ(input_tokens + output_tokens)",
-                detail: `${formatNumber(dashboardProfile.records)} 条记录，共 ${formatTokens(user.tokens)}`,
+                detail: `${formatNumber(dashboardProfile.records)} 条记录，共 ${formatTokens(accountConsumptionTokens)}`,
               }}
             />
             <AccountStatCard
@@ -1676,6 +1679,7 @@ function SortableColumnHeader({
 function LeaderboardMobileCard({ metric, user }: { metric: TokenBoardMetric; user: TokenLeaderboardUser }) {
   const metricLabel = METRICS.find((item) => item.key === metric)?.label ?? "总消耗";
   const metricValue = formatMetricValue(getUserMetricValue(user, metric), metric);
+  const consumptionTokens = getTokenConsumptionTokens(user);
 
   return (
     <article className="rounded-2xl border border-stone-950/10 bg-white p-3 shadow-[0_14px_42px_-36px_rgba(28,25,23,0.65)]">
@@ -1696,7 +1700,7 @@ function LeaderboardMobileCard({ metric, user }: { metric: TokenBoardMetric; use
         </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-stone-950/8 bg-[#f8f2e8] p-2 text-xs">
-        <MetricMini label="总消耗" value={formatTokens(user.tokens)} />
+        <MetricMini label="总消耗" value={formatTokens(consumptionTokens)} />
         <MetricMini label="费用" value={formatUsd(user.costUsd)} />
         <MetricMini label="会话" value={formatNumber(user.sessions)} />
       </div>
@@ -1723,6 +1727,7 @@ function MetricMini({ label, value }: { label: string; value: string }) {
 }
 
 function LeaderboardRow({ user }: { user: TokenLeaderboardUser }) {
+  const consumptionTokens = getTokenConsumptionTokens(user);
   const rankTone =
     user.rank === 1
       ? "border-[#b06a2c]/30 bg-[#fff2d6] text-[#5a3419]"
@@ -1748,7 +1753,7 @@ function LeaderboardRow({ user }: { user: TokenLeaderboardUser }) {
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-right font-mono font-semibold text-stone-950">{formatTokens(user.tokens)}</td>
+      <td className="px-4 py-3 text-right font-mono font-semibold text-stone-950">{formatTokens(consumptionTokens)}</td>
       <td className="px-4 py-3 text-right font-mono text-stone-600">{formatUsd(user.costUsd)}</td>
       <td className="px-4 py-3 text-right font-mono text-stone-600">{formatNumber(user.sessions)}</td>
       <td className="px-4 py-3 text-right font-mono text-stone-600">{formatNumber(user.messages)}</td>
@@ -2127,7 +2132,7 @@ function getUserMetricValue(user: TokenLeaderboardUser, metric: TokenBoardMetric
     return user.messages;
   }
 
-  return user.tokens;
+  return getTokenConsumptionTokens(user);
 }
 
 function normalizeRemoteSummary(summary: TokenLeaderboardSummary, metric: TokenBoardMetric): TokenLeaderboardSummary {

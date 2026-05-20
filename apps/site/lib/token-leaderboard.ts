@@ -315,6 +315,16 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
   };
 }
 
+export function getTokenConsumptionTokens(
+  entry: Pick<TokenUsageEvent, "inputTokens" | "cachedInputTokens" | "outputTokens" | "totalTokens">
+) {
+  const inputContextTokens = toFiniteNumber(entry.inputTokens) + toFiniteNumber(entry.cachedInputTokens);
+  const outputTokens = toFiniteNumber(entry.outputTokens);
+  const computedTokens = inputContextTokens + outputTokens;
+
+  return computedTokens > 0 ? computedTokens : toFiniteNumber(entry.totalTokens);
+}
+
 export function createDemoTokenEntries(now = new Date()): TokenUsageEvent[] {
   const users = [
     { userId: "feng", displayName: "Feng", team: "Frontend Lab", weight: 1.05 },
@@ -341,7 +351,7 @@ export function createDemoTokenEntries(now = new Date()): TokenUsageEvent[] {
       const outputTokens = Math.round(totalTokens * (0.075 + (userIndex % 3) * 0.008));
       const cachedInputTokens = Math.round(totalTokens * (0.36 + (day % 3) * 0.05));
       const reasoningOutputTokens = Math.round(outputTokens * (0.18 + (day % 2) * 0.04));
-      const inputTokens = Math.max(0, totalTokens - outputTokens - cachedInputTokens - reasoningOutputTokens);
+      const inputTokens = Math.max(0, totalTokens - outputTokens - cachedInputTokens);
       const timestamp = new Date(
         today.getTime() - day * 24 * 60 * 60 * 1000 + (9 + ((userIndex + day) % 10)) * 60 * 60 * 1000
       );
@@ -467,6 +477,7 @@ function aggregateUsers(
   >();
 
   for (const entry of entries) {
+    const tokens = getTokenConsumptionTokens(entry);
     const user =
       users.get(entry.userId) ??
       {
@@ -492,7 +503,7 @@ function aggregateUsers(
 
     user.displayName = entry.displayName || user.displayName;
     user.team = entry.team || user.team;
-    user.tokens += entry.totalTokens;
+    user.tokens += tokens;
     user.inputTokens += entry.inputTokens;
     user.cachedInputTokens += entry.cachedInputTokens;
     user.outputTokens += entry.outputTokens;
@@ -505,8 +516,8 @@ function aggregateUsers(
     if (new Date(entry.timestamp).getTime() > new Date(user.lastReportedAt).getTime()) {
       user.lastReportedAt = entry.timestamp;
     }
-    addMapValue(user.modelTokens, entry.model, entry.totalTokens);
-    addMapValue(user.toolTokens, entry.tool || entry.source, entry.totalTokens);
+    addMapValue(user.modelTokens, entry.model, tokens);
+    addMapValue(user.toolTokens, entry.tool || entry.source, tokens);
     users.set(entry.userId, user);
   }
 
@@ -560,13 +571,14 @@ function metricValue(user: TokenLeaderboardUser, metric: TokenBoardMetric) {
 }
 
 function aggregateNamedUsage(entries: TokenUsageEvent[], key: "model" | "tool") {
-  const totalTokens = entries.reduce((sum, entry) => sum + entry.totalTokens, 0);
+  const totalTokens = entries.reduce((sum, entry) => sum + getTokenConsumptionTokens(entry), 0);
   const usage = new Map<string, { tokens: number; costUsd: number; sessions: Set<string> }>();
 
   for (const entry of entries) {
+    const tokens = getTokenConsumptionTokens(entry);
     const name = key === "model" ? entry.model : entry.tool || entry.source;
     const current = usage.get(name) ?? { tokens: 0, costUsd: 0, sessions: new Set<string>() };
-    current.tokens += entry.totalTokens;
+    current.tokens += tokens;
     current.costUsd += entry.costUsd ?? 0;
     current.sessions.add(entry.sessionId || entry.id);
     usage.set(name, current);
@@ -585,7 +597,7 @@ function aggregateNamedUsage(entries: TokenUsageEvent[], key: "model" | "tool") 
 }
 
 function aggregateProjectUsage(entries: TokenUsageEvent[]): TokenUsageProjectBreakdown[] {
-  const totalTokens = entries.reduce((sum, entry) => sum + entry.totalTokens, 0);
+  const totalTokens = entries.reduce((sum, entry) => sum + getTokenConsumptionTokens(entry), 0);
   const usage = new Map<
     string,
     {
@@ -599,6 +611,7 @@ function aggregateProjectUsage(entries: TokenUsageEvent[]): TokenUsageProjectBre
   >();
 
   for (const entry of entries) {
+    const tokens = getTokenConsumptionTokens(entry);
     const name = entry.project || "未标记项目";
     const current =
       usage.get(name) ??
@@ -611,7 +624,7 @@ function aggregateProjectUsage(entries: TokenUsageEvent[]): TokenUsageProjectBre
         lastReportedAt: entry.timestamp,
       };
 
-    current.tokens += entry.totalTokens;
+    current.tokens += tokens;
     current.costUsd += entry.costUsd ?? 0;
     current.sessions.add(entry.sessionId || entry.id);
     current.days.add(toDateKey(entry.timestamp));
@@ -664,7 +677,7 @@ function buildActivityHeatmap(entries: TokenUsageEvent[]): TokenUsageActivityCel
       continue;
     }
 
-    cell.tokens += entry.totalTokens;
+    cell.tokens += getTokenConsumptionTokens(entry);
     cell.sessions.add(entry.sessionId || entry.id);
     cell.messages += entry.messages ?? 0;
   }
@@ -683,7 +696,7 @@ function topActivityHour(entries: TokenUsageEvent[]) {
 
   for (const entry of entries) {
     const { hour } = getShanghaiWeekdayHour(entry.timestamp);
-    hours.set(hour, (hours.get(hour) ?? 0) + entry.totalTokens);
+    hours.set(hour, (hours.get(hour) ?? 0) + getTokenConsumptionTokens(entry));
   }
 
   const hour = [...hours.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
@@ -695,7 +708,7 @@ function topActivityWeekday(entries: TokenUsageEvent[]) {
 
   for (const entry of entries) {
     const { weekday } = getShanghaiWeekdayHour(entry.timestamp);
-    weekdays.set(weekday, (weekdays.get(weekday) ?? 0) + entry.totalTokens);
+    weekdays.set(weekday, (weekdays.get(weekday) ?? 0) + getTokenConsumptionTokens(entry));
   }
 
   const weekday = [...weekdays.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
@@ -726,7 +739,7 @@ function buildDailySeries(entries: TokenUsageEvent[], start: Date, end: Date) {
 
   for (const entry of entries) {
     const key = toDateKey(entry.timestamp);
-    values.set(key, (values.get(key) ?? 0) + entry.totalTokens);
+    values.set(key, (values.get(key) ?? 0) + getTokenConsumptionTokens(entry));
   }
 
   return [...values.entries()].map(([date, tokens]) => ({ date, tokens }));
@@ -736,7 +749,7 @@ function sumTokensByUser(entries: TokenUsageEvent[]) {
   const result = new Map<string, number>();
 
   for (const entry of entries) {
-    result.set(entry.userId, (result.get(entry.userId) ?? 0) + entry.totalTokens);
+    result.set(entry.userId, (result.get(entry.userId) ?? 0) + getTokenConsumptionTokens(entry));
   }
 
   return result;

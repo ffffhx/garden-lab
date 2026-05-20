@@ -149,6 +149,8 @@ npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=
 
 轻量 npx agent 默认读取本机 Codex、Claude Code、Cursor、Trae 的本地 token 记录；也可以通过 `TOKEN_BOARD_USAGE_PATHS` 或配置文件里的 `usagePaths` 补充自定义 JSON / JSONL / CSV 路径。上传内容只包含 token 数、模型、工具、项目 basename 和匿名 session hash，不上传 prompt 文本。
 
+排行榜的总消耗 Token 口径为输入上下文加输出：`inputTokens + cachedInputTokens + outputTokens`；缺少明细的历史记录才使用 `totalTokens` 兜底。
+
 ### Token Board 后端存储
 
 Token Board 后端优先使用 PostgreSQL。部署配置在 `deploy/token-board/compose.yaml`，会启动一个 `postgres:17-alpine` 容器，并把数据保存在 Compose volume `postgres-data` 里。

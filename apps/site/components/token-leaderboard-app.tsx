@@ -25,7 +25,7 @@ const ROLLING_RANGE_LABELS: Record<TokenBoardRange, string> = {
 };
 
 const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
-  { key: "tokens", label: "Tokens" },
+  { key: "tokens", label: "总消耗" },
   { key: "cost", label: "费用" },
   { key: "sessions", label: "会话" },
   { key: "messages", label: "消息" },
@@ -317,7 +317,7 @@ export function TokenLeaderboardApp({
   const topUsers = summary.users.slice(0, 8);
   const leader = summary.users[0];
   const maxDailyTokens = Math.max(1, ...summary.daily.map((point) => point.tokens));
-  const selectedMetricLabel = METRICS.find((item) => item.key === metric)?.label ?? "Tokens";
+  const selectedMetricLabel = METRICS.find((item) => item.key === metric)?.label ?? "总消耗";
   const shareTotal = Math.max(0, summary.users.reduce((sum, user) => sum + getUserMetricValue(user, metric), 0));
   const totalInputContextTokens = summary.users.reduce((sum, user) => sum + user.inputTokens + user.cachedInputTokens, 0);
   const totalCachedInputTokens = summary.users.reduce((sum, user) => sum + user.cachedInputTokens, 0);
@@ -339,7 +339,7 @@ export function TokenLeaderboardApp({
   useEffect(() => {
     if (!isDataLoading && metric === "messages" && !hasMessageData) {
       setMetric("tokens");
-      setStatus("当前上报数据暂无消息字段，已切回 Tokens 排序");
+      setStatus("当前上报数据暂无消息字段，已切回总消耗排序");
     }
   }, [hasMessageData, isDataLoading, metric]);
 
@@ -481,7 +481,7 @@ export function TokenLeaderboardApp({
             <tr>
               <th className="px-4 py-3">排名</th>
               <th className="px-4 py-3">用户</th>
-              <SortableColumnHeader active={metric === "tokens"} align="right">Tokens</SortableColumnHeader>
+              <SortableColumnHeader active={metric === "tokens"} align="right">总消耗 Token</SortableColumnHeader>
               <SortableColumnHeader active={metric === "cost"} align="right">费用</SortableColumnHeader>
               <SortableColumnHeader active={metric === "sessions"} align="right">会话</SortableColumnHeader>
               <SortableColumnHeader active={metric === "messages"} align="right" disabled={!hasMessageData}>消息</SortableColumnHeader>
@@ -762,9 +762,9 @@ export function TokenLeaderboardApp({
           <div className="min-w-0 space-y-5">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <StatTile
-                label="总 Tokens"
+                label="总消耗 Token"
                 value={isDataLoading ? "Loading" : formatTokens(summary.totalTokens)}
-                meta={isDataLoading ? "真实数据加载中" : "排行榜主口径"}
+                meta={isDataLoading ? "真实数据加载中" : "输入上下文 + 输出"}
                 tone="ink"
               />
               <StatTile
@@ -860,7 +860,7 @@ export function TokenLeaderboardApp({
                   <strong className="text-stone-900">费用是估算值</strong>：按公开模型单价计算，不等同于账号额度或实际账单。
                 </p>
                 <p>
-                  <strong className="text-stone-900">Token 主口径</strong>：排行榜使用日志里的 totalTokens；输入、缓存输入、输出和推理 token 会在个人视图单独展开。
+                  <strong className="text-stone-900">Token 主口径</strong>：总消耗 Token = 输入上下文（input + cached input）+ 输出 Token；推理 token 在个人视图单独展开，不参与主榜。
                 </p>
                 <p>
                   <strong className="text-stone-900">隐私边界</strong>：只展示 token、模型、工具、项目 basename、匿名 session，不展示 prompt 文本。
@@ -1008,7 +1008,7 @@ function AccountUsagePanel({
                 <Avatar name={user.displayName} index={user.rank || 0} />
               )}
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-white/45">我的排名（按 Token，{range}）</p>
+                <p className="text-xs font-semibold text-white/45">我的排名（按总消耗，{range}）</p>
                 <p className="mt-1 truncate font-mono text-3xl font-semibold">
                   #{dashboardProfile.rank ?? "--"}
                   <span className="ml-2 text-base text-white/42">/ {formatNumber(dashboardProfile.totalUsers)}</span>
@@ -1045,14 +1045,14 @@ function AccountUsagePanel({
               }}
             />
             <AccountStatCard
-              label="总 Token"
+              label="总消耗 Token"
               value={formatTokens(user.tokens)}
               meta={`${formatNumber(dashboardProfile.records)} records`}
               tone="green"
               tooltip={{
-                title: "总 Token",
-                description: "排行榜主口径，来自日志里的 total_tokens；缓存命中的输入会单独展示，不在这里重复相加。",
-                formula: "Σ total_tokens",
+                title: "总消耗 Token",
+                description: "排行榜主口径，按输入上下文加输出计算；日志里只有 total_tokens 时才用它兜底。",
+                formula: "Σ(input_tokens + cached_input_tokens + output_tokens)",
                 detail: `${formatNumber(dashboardProfile.records)} 条记录，共 ${formatTokens(user.tokens)}`,
               }}
             />
@@ -1136,7 +1136,7 @@ function AccountUsagePanel({
               tooltip={{
                 title: "高峰时段",
                 description: "按北京时间把记录归到 24 小时桶，取 token 累计最多的小时。",
-                formula: "argmax(hour(timestamp), Σ total_tokens)",
+                formula: "argmax(hour(timestamp), Σ(input + cached input + output))",
                 detail: `当前高峰 ${dashboardProfile.topHour}`,
               }}
             />
@@ -1148,7 +1148,7 @@ function AccountUsagePanel({
               tooltip={{
                 title: "常用模型",
                 description: "当前区间内 token 累计最多的模型。",
-                formula: "argmax(model, Σ total_tokens)",
+                formula: "argmax(model, Σ(input + cached input + output))",
                 detail: `${dashboardProfile.models.length} 个模型参与统计`,
               }}
             />
@@ -1438,15 +1438,15 @@ function Toast({ toast }: { toast: ToastState | null }) {
 
   const tone =
     toast.tone === "error"
-      ? "border-[#c05c38]/25 bg-[#fff0e9] text-[#7b2f1d] shadow-[0_24px_70px_-44px_rgba(192,92,56,0.75)]"
-      : "border-[#26745e]/25 bg-[#eaf5ef] text-[#163d33] shadow-[0_24px_70px_-44px_rgba(38,116,94,0.75)]";
+      ? "border-[#c05c38]/40 bg-[#fff0e9] text-[#7b2f1d] shadow-[0_24px_70px_-36px_rgba(192,92,56,0.8)] ring-[#c05c38]/10"
+      : "border-[#26745e]/40 bg-[#eaf5ef] text-[#163d33] shadow-[0_24px_70px_-36px_rgba(38,116,94,0.8)] ring-[#26745e]/10";
 
   return (
     <div
       key={toast.id}
       role="status"
       aria-live="polite"
-      className={`pointer-events-none fixed bottom-5 left-4 right-4 z-[80] mx-auto flex min-h-12 max-w-sm items-center justify-center rounded-2xl border px-4 py-3 text-center text-sm font-semibold backdrop-blur-xl sm:left-auto sm:right-5 sm:mx-0 ${tone}`}
+      className={`pointer-events-none fixed left-1/2 top-1/2 z-[100] flex min-h-12 w-[min(19rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border px-4 py-3 text-center text-sm font-semibold leading-5 ring-4 backdrop-blur-xl ${tone}`}
     >
       {toast.message}
     </div>
@@ -1531,8 +1531,8 @@ function EfficiencyStrip({
   tokensPerSession: number;
 }) {
   const items = [
-    { label: "日均 Tokens", value: formatTokens(dailyAverageTokens), meta: "按当前区间摊平" },
-    { label: "Tokens / 会话", value: formatTokens(tokensPerSession), meta: "单次任务体量" },
+    { label: "日均消耗", value: formatTokens(dailyAverageTokens), meta: "按当前区间摊平" },
+    { label: "消耗 / 会话", value: formatTokens(tokensPerSession), meta: "单次任务体量" },
     { label: "费用 / 会话", value: formatUsd(costPerSession), meta: "估算单次成本" },
     { label: "缓存命中率", value: formatPercent(cacheHitRate), meta: "上下文复用效率" },
   ];
@@ -1673,7 +1673,7 @@ function SortableColumnHeader({
 }
 
 function LeaderboardMobileCard({ metric, user }: { metric: TokenBoardMetric; user: TokenLeaderboardUser }) {
-  const metricLabel = METRICS.find((item) => item.key === metric)?.label ?? "Tokens";
+  const metricLabel = METRICS.find((item) => item.key === metric)?.label ?? "总消耗";
   const metricValue = formatMetricValue(getUserMetricValue(user, metric), metric);
 
   return (
@@ -1695,7 +1695,7 @@ function LeaderboardMobileCard({ metric, user }: { metric: TokenBoardMetric; use
         </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-stone-950/8 bg-[#f8f2e8] p-2 text-xs">
-        <MetricMini label="Tokens" value={formatTokens(user.tokens)} />
+        <MetricMini label="总消耗" value={formatTokens(user.tokens)} />
         <MetricMini label="费用" value={formatUsd(user.costUsd)} />
         <MetricMini label="会话" value={formatNumber(user.sessions)} />
       </div>

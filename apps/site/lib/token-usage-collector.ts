@@ -424,11 +424,14 @@ function visitJson(
 }
 
 function recordToUsageEvent(record: Record<string, unknown>, context: ExtractionContext, sequence: number) {
-  const inputTokens = numberFromFields(record, ["inputTokens", "input_tokens", "inputTokenCount", "promptTokens", "prompt_tokens"]);
-  const cachedInputTokens =
-    numberFromFields(record, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"]) +
+  const baseInputTokens = numberFromFields(record, ["inputTokens", "input_tokens", "inputTokenCount", "promptTokens", "prompt_tokens"]);
+  const additiveCachedInputTokens =
     numberFromFields(record, ["cache_read_input_tokens", "cacheReadInputTokens"]) +
     numberFromFields(record, ["cache_creation_input_tokens", "cacheCreationInputTokens"]);
+  const inputTokens = baseInputTokens + additiveCachedInputTokens;
+  const cachedInputTokens =
+    numberFromFields(record, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"]) +
+    additiveCachedInputTokens;
   const outputTokens = numberFromFields(record, ["outputTokens", "output_tokens", "outputTokenCount", "completionTokens", "completion_tokens"]);
   const reasoningOutputTokens = numberFromFields(record, [
     "reasoningOutputTokens",

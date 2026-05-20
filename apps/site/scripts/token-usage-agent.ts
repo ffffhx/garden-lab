@@ -393,14 +393,14 @@ function clientInfo() {
 
 function printHelp() {
   console.log(`Usage:
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent install
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent status
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent uninstall
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent login
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent upload
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent resync
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1 -- token-board-agent watch
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2 -- token-board-agent
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2 -- token-board-agent install
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2 -- token-board-agent status
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2 -- token-board-agent uninstall
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2 -- token-board-agent login
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2 -- token-board-agent upload
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2 -- token-board-agent resync
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2 -- token-board-agent watch
 
 Local repo equivalents:
   pnpm token:agent init

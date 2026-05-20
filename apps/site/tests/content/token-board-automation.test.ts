@@ -164,7 +164,7 @@ describe("token board automation", () => {
       expect.objectContaining({
         model: "gpt-5.5",
         project: "token-board",
-        totalTokens: 150,
+        totalTokens: 110,
         inputTokens: 100,
         cachedInputTokens: 40,
         outputTokens: 10,

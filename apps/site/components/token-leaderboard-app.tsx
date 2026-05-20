@@ -36,7 +36,7 @@ const DATA_LOAD_SLOW_MS = 10_000;
 
 const CSV_PLACEHOLDER =
   "user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages";
-const NPX_PACKAGE_URL = "https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.1";
+const NPX_PACKAGE_URL = "https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2";
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
 const NPX_STATUS_COMMAND =
@@ -768,7 +768,7 @@ export function TokenLeaderboardApp({
               <StatTile
                 label="总消耗 Token"
                 value={isDataLoading ? "Loading" : formatTokens(totalConsumptionTokens)}
-                meta={isDataLoading ? "真实数据加载中" : "输入上下文 + 输出"}
+                meta={isDataLoading ? "真实数据加载中" : "输入上下文 + 输出 Token"}
                 tone="ink"
               />
               <StatTile
@@ -864,7 +864,7 @@ export function TokenLeaderboardApp({
                   <strong className="text-stone-900">费用是估算值</strong>：按公开模型单价计算，不等同于账号额度或实际账单。
                 </p>
                 <p>
-                  <strong className="text-stone-900">Token 主口径</strong>：总消耗 Token = 输入上下文（input + cached）+ 输出 Token；推理 token 在个人视图单独展开。
+                  <strong className="text-stone-900">Token 主口径</strong>：总消耗 Token = 输入上下文（input）+ 输出 Token；缓存命中是输入上下文的子集，推理 token 在个人视图单独展开。
                 </p>
                 <p>
                   <strong className="text-stone-900">隐私边界</strong>：只展示 token、模型、工具、项目 basename、匿名 session，不展示 prompt 文本。
@@ -1052,12 +1052,12 @@ function AccountUsagePanel({
             <AccountStatCard
               label="总消耗 Token"
               value={formatTokens(accountConsumptionTokens)}
-              meta={`${formatNumber(dashboardProfile.records)} records`}
+              meta="输入上下文 + 输出 Token"
               tone="green"
               tooltip={{
                 title: "总消耗 Token",
-                description: "排行榜主口径，按输入上下文加输出计算；输入上下文包含普通输入和缓存命中输入。",
-                formula: "Σ(input_tokens + cached_input_tokens + output_tokens)",
+                description: "排行榜主口径，按输入上下文加输出计算；缓存命中输入是输入上下文里的子集。",
+                formula: "Σ(input_tokens + output_tokens)",
                 detail: `${formatNumber(dashboardProfile.records)} 条记录，共 ${formatTokens(accountConsumptionTokens)}`,
               }}
             />
@@ -1068,9 +1068,9 @@ function AccountUsagePanel({
               tone="blue"
               tooltip={{
                 title: "输入上下文",
-                description: "模型阅读过的上下文吞吐量，包含普通输入和缓存命中输入。",
-                formula: "Σ(input_tokens + cached_input_tokens)",
-                detail: `普通输入 ${formatTokens(user.inputTokens)}，缓存 ${formatTokens(user.cachedInputTokens)}`,
+                description: "模型阅读过的上下文吞吐量；其中缓存命中部分在副指标里单独标出。",
+                formula: "Σ(input_tokens)",
+                detail: `输入上下文 ${formatTokens(user.inputTokens)}，其中缓存 ${formatTokens(user.cachedInputTokens)}`,
               }}
             />
             <AccountStatCard
@@ -1141,7 +1141,7 @@ function AccountUsagePanel({
               tooltip={{
                 title: "高峰时段",
                 description: "按北京时间把记录归到 24 小时桶，取 token 累计最多的小时。",
-                formula: "argmax(hour(timestamp), Σ(input + cached + output))",
+                formula: "argmax(hour(timestamp), Σ(input + output))",
                 detail: `当前高峰 ${dashboardProfile.topHour}`,
               }}
             />
@@ -1153,7 +1153,7 @@ function AccountUsagePanel({
               tooltip={{
                 title: "常用模型",
                 description: "当前区间内 token 累计最多的模型。",
-                formula: "argmax(model, Σ(input + cached + output))",
+                formula: "argmax(model, Σ(input + output))",
                 detail: `${dashboardProfile.models.length} 个模型参与统计`,
               }}
             />

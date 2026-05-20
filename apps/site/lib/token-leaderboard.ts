@@ -263,10 +263,11 @@ export function dedupeTokenEvents(entries: TokenUsageEvent[]) {
 
 export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): TokenUsageEvent {
   const inputTokens = toFiniteNumber(value.inputTokens);
-  const cachedInputTokens = toFiniteNumber(value.cachedInputTokens);
+  const rawCachedInputTokens = toFiniteNumber(value.cachedInputTokens);
+  const cachedInputTokens = inputTokens > 0 ? Math.min(inputTokens, rawCachedInputTokens) : rawCachedInputTokens;
   const outputTokens = toFiniteNumber(value.outputTokens);
   const reasoningOutputTokens = toFiniteNumber(value.reasoningOutputTokens);
-  const computedTokens = inputTokens + cachedInputTokens + outputTokens;
+  const computedTokens = inputTokens + outputTokens;
   const explicitTotalTokens = toFiniteNumber(value.totalTokens);
   const totalTokens = computedTokens > 0 ? computedTokens : explicitTotalTokens;
   const userId = normalizeText(value.userId) || normalizeText(value.displayName) || "unknown";
@@ -316,7 +317,7 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
 }
 
 export function getTokenConsumptionTokens(
-  entry: Pick<TokenUsageEvent, "inputTokens" | "cachedInputTokens" | "outputTokens" | "totalTokens">
+  entry: Pick<TokenUsageEvent, "inputTokens" | "outputTokens"> & Partial<Pick<TokenUsageEvent, "totalTokens">>
 ) {
   const inputContextTokens = getInputContextTokens(entry);
   const outputTokens = toFiniteNumber(entry.outputTokens);
@@ -325,8 +326,8 @@ export function getTokenConsumptionTokens(
   return computedTokens > 0 ? computedTokens : toFiniteNumber(entry.totalTokens);
 }
 
-export function getInputContextTokens(entry: Pick<TokenUsageEvent, "inputTokens" | "cachedInputTokens">) {
-  return toFiniteNumber(entry.inputTokens) + toFiniteNumber(entry.cachedInputTokens);
+export function getInputContextTokens(entry: Pick<TokenUsageEvent, "inputTokens">) {
+  return toFiniteNumber(entry.inputTokens);
 }
 
 export function createDemoTokenEntries(now = new Date()): TokenUsageEvent[] {
@@ -353,9 +354,9 @@ export function createDemoTokenEntries(now = new Date()): TokenUsageEvent[] {
       const intensity = user.weight * (1 + ((day + userIndex) % 4) * 0.16);
       const totalTokens = Math.round((3_200_000 + userIndex * 510_000 + day * 47_000) * intensity);
       const outputTokens = Math.round(totalTokens * (0.075 + (userIndex % 3) * 0.008));
-      const cachedInputTokens = Math.round(totalTokens * (0.36 + (day % 3) * 0.05));
       const reasoningOutputTokens = Math.round(outputTokens * (0.18 + (day % 2) * 0.04));
-      const inputTokens = Math.max(0, totalTokens - outputTokens - cachedInputTokens);
+      const inputTokens = Math.max(0, totalTokens - outputTokens);
+      const cachedInputTokens = Math.round(inputTokens * (0.36 + (day % 3) * 0.05));
       const timestamp = new Date(
         today.getTime() - day * 24 * 60 * 60 * 1000 + (9 + ((userIndex + day) % 10)) * 60 * 60 * 1000
       );
@@ -431,6 +432,15 @@ function recordsToEvents(records: unknown[]) {
     const value = record as Record<string, unknown>;
     const timestamp = normalizeDate(readField(value, ["timestamp", "date", "bucketStart", "createdAt"]));
     const userId = normalizeText(readField(value, ["userId", "user", "username", "name"]));
+    const baseInputTokens = toFiniteNumber(
+      readField(value, ["inputTokens", "input_tokens", "promptTokens", "prompt_tokens"])
+    );
+    const additiveCachedInputTokens =
+      toFiniteNumber(readField(value, ["cache_read_input_tokens", "cacheReadInputTokens"])) +
+      toFiniteNumber(readField(value, ["cache_creation_input_tokens", "cacheCreationInputTokens"]));
+    const cachedInputTokens =
+      toFiniteNumber(readField(value, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"])) +
+      additiveCachedInputTokens;
 
     if (!userId) {
       errors.push(`第 ${index + 1} 行缺少 userId/user`);
@@ -450,8 +460,8 @@ function recordsToEvents(records: unknown[]) {
         model: normalizeText(readField(value, ["model"])),
         project: normalizeText(readField(value, ["project", "repo", "workspace"])),
         timestamp,
-        inputTokens: toFiniteNumber(readField(value, ["inputTokens", "input_tokens", "promptTokens", "prompt_tokens"])),
-        cachedInputTokens: toFiniteNumber(readField(value, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"])),
+        inputTokens: baseInputTokens + additiveCachedInputTokens,
+        cachedInputTokens,
         outputTokens: toFiniteNumber(readField(value, ["outputTokens", "output_tokens", "completionTokens", "completion_tokens"])),
         reasoningOutputTokens: toFiniteNumber(readField(value, ["reasoningOutputTokens", "reasoning_output_tokens", "reasoningTokens"])),
         totalTokens: toFiniteNumber(readField(value, ["totalTokens", "total_tokens", "tokens"])),

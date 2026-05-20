@@ -15,7 +15,7 @@ const SINCE_MS = readPositiveNumber(process.env.TOKEN_BOARD_SINCE_HOURS, 24 * 30
 const MAX_FILES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILES, 800);
 const MAX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILE_BYTES, 5 * 1024 * 1024);
 const BATCH_SIZE = 1000;
-const VERSION = "0.4.1";
+const VERSION = "0.4.2";
 const PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${VERSION}`;
 const INSTALL_DIR = path.join(os.homedir(), ".token-board-agent");
 const INSTALLED_AGENT_FILE = path.join(INSTALL_DIR, "token-board-agent.mjs");
@@ -571,11 +571,14 @@ function visitJson(value, context, entries, state, depth) {
 }
 
 function usageRecordToEvent(usage, context) {
-  const inputTokens = numberFromFields(usage, ["inputTokens", "input_tokens", "inputTokenCount", "promptTokens", "prompt_tokens"]);
-  const cachedInputTokens =
-    numberFromFields(usage, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"]) +
+  const baseInputTokens = numberFromFields(usage, ["inputTokens", "input_tokens", "inputTokenCount", "promptTokens", "prompt_tokens"]);
+  const additiveCachedInputTokens =
     numberFromFields(usage, ["cache_read_input_tokens", "cacheReadInputTokens"]) +
     numberFromFields(usage, ["cache_creation_input_tokens", "cacheCreationInputTokens"]);
+  const inputTokens = baseInputTokens + additiveCachedInputTokens;
+  const cachedInputTokens =
+    numberFromFields(usage, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"]) +
+    additiveCachedInputTokens;
   const outputTokens = numberFromFields(usage, ["outputTokens", "output_tokens", "outputTokenCount", "completionTokens", "completion_tokens"]);
   const reasoningOutputTokens = numberFromFields(usage, [
     "reasoningOutputTokens",
@@ -583,7 +586,9 @@ function usageRecordToEvent(usage, context) {
     "reasoningTokens",
   ]);
   const explicitTotal = numberFromFields(usage, ["totalTokens", "total_tokens", "totalTokenCount", "tokens"]);
-  const totalTokens = explicitTotal > 0 ? explicitTotal : inputTokens + cachedInputTokens + outputTokens + reasoningOutputTokens;
+  const computedTotal = inputTokens + outputTokens;
+  const totalTokens = computedTotal > 0 ? computedTotal : explicitTotal;
+  const idTotalTokens = explicitTotal > 0 ? explicitTotal : totalTokens;
   const timestamp = normalizeTimestamp(context.timestamp || textFromFields(usage, ["timestamp", "createdAt", "created_at", "date", "time"]));
   const model = cleanLabel(context.model || textFromFields(usage, ["model", "modelName", "model_name"]), 80) || "unknown";
   const rawProject = context.project || textFromFields(usage, ["project", "repo", "workspace", "cwd", "root", "directory"]);
@@ -603,7 +608,7 @@ function usageRecordToEvent(usage, context) {
     cachedInputTokens,
     outputTokens,
     reasoningOutputTokens,
-    totalTokens,
+    idTotalTokens,
   ].join("\n");
 
   return {

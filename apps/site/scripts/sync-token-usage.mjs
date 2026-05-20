@@ -76,9 +76,8 @@ function addUsage(bucket, usage, model) {
   const outputTokens = toNumber(usage.output_tokens);
   const reasoningOutputTokens = toNumber(usage.reasoning_output_tokens);
   const explicitTotal = toNumber(usage.total_tokens);
-  const totalTokens =
-    explicitTotal ||
-    inputTokens + cachedInputTokens + outputTokens + reasoningOutputTokens;
+  const computedTotal = inputTokens + outputTokens;
+  const totalTokens = computedTotal || explicitTotal;
 
   bucket.totalTokens += totalTokens;
   bucket.inputTokens += inputTokens;

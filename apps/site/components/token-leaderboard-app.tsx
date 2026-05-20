@@ -29,7 +29,7 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 ];
 const DATA_LOAD_SLOW_MS = 10_000;
 
-const NPX_PACKAGE_URL = "https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.3";
+const NPX_PACKAGE_URL = "https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.6";
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
 const NPX_STATUS_COMMAND =

@@ -21,6 +21,7 @@ export type TokenUsageCollectorConfig = {
   sinceHours?: number;
   maxFiles?: number;
   maxFileBytes?: number;
+  maxCodexFileBytes?: number;
 };
 
 type SourceTarget = {
@@ -45,6 +46,7 @@ type ExtractionContext = {
 const DEFAULT_SINCE_HOURS = 24 * 30;
 const DEFAULT_MAX_FILES = 800;
 const DEFAULT_MAX_FILE_BYTES = 5 * 1024 * 1024;
+const DEFAULT_MAX_CODEX_FILE_BYTES = 256 * 1024 * 1024;
 const execFileAsync = promisify(execFile);
 const TOKEN_KEYS = new Set([
   "cached_input_tokens",
@@ -85,6 +87,7 @@ export async function collectLocalTokenUsage(config: TokenUsageCollectorConfig =
   const targets = buildSourceTargets(config);
   const maxFiles = config.maxFiles ?? DEFAULT_MAX_FILES;
   const maxFileBytes = config.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
+  const maxCodexFileBytes = config.maxCodexFileBytes ?? DEFAULT_MAX_CODEX_FILE_BYTES;
   const sinceMs = Date.now() - (config.sinceHours ?? DEFAULT_SINCE_HOURS) * 60 * 60 * 1000;
   const entries: TokenUsageEvent[] = [];
 
@@ -93,8 +96,10 @@ export async function collectLocalTokenUsage(config: TokenUsageCollectorConfig =
 
     for (const targetPath of target.paths) {
       const files = await listUsageFiles(expandHome(targetPath), {
+        source: target.source,
         maxFiles: Math.max(0, maxFiles - scannedFiles),
         maxFileBytes,
+        maxCodexFileBytes,
         sinceMs,
       });
       scannedFiles += files.length;
@@ -172,6 +177,7 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
   let currentModel = context.model || "unknown";
   let currentProject = context.project;
   let sequence = 0;
+  let previousTotalUsage: Record<string, unknown> = {};
 
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.trim();
@@ -198,10 +204,23 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
     }
 
     const info = isRecord(payload.info) ? payload.info : {};
-    const usage = isRecord(info.last_token_usage) ? info.last_token_usage : undefined;
     const timestamp = typeof parsed.timestamp === "string" ? parsed.timestamp : "";
 
-    if (type !== "event_msg" || payload.type !== "token_count" || !usage || !timestamp) {
+    if (type !== "event_msg" || payload.type !== "token_count" || !timestamp) {
+      continue;
+    }
+
+    const totalUsage = isRecord(info.total_token_usage) ? info.total_token_usage : undefined;
+    const usage = totalUsage
+      ? tokenUsageDelta(totalUsage, previousTotalUsage)
+      : isRecord(info.last_token_usage)
+        ? info.last_token_usage
+        : undefined;
+    if (totalUsage) {
+      previousTotalUsage = totalUsage;
+    }
+
+    if (!usage || tokenUsageTotal(usage) <= 0) {
       continue;
     }
 
@@ -224,6 +243,18 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
   }
 
   return dedupeTokenEvents(entries);
+}
+
+function tokenUsageDelta(current: Record<string, unknown>, previous: Record<string, unknown>) {
+  const fields = ["input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens"];
+
+  return Object.fromEntries(
+    fields.map((field) => [field, Math.max(0, toNumber(current[field]) - toNumber(previous[field]))])
+  );
+}
+
+function tokenUsageTotal(record: Record<string, unknown>) {
+  return toNumber(record.input_tokens) + toNumber(record.output_tokens);
 }
 
 async function parseSqliteUsageFile(filePath: string, context: ExtractionContext) {
@@ -278,7 +309,7 @@ export function defaultSourceTargets(): SourceTarget[] {
     {
       source: "codex",
       tool: "Codex CLI",
-      paths: ["~/.codex/sessions", "~/.codex/projects"],
+      paths: ["~/.codex/sessions", "~/.codex/archived_sessions", "~/.codex/projects"],
     },
     {
       source: "claude-code",
@@ -341,12 +372,16 @@ function buildSourceTargets(config: TokenUsageCollectorConfig): SourceTarget[] {
 async function listUsageFiles(
   inputPath: string,
   {
+    source,
     maxFiles,
     maxFileBytes,
+    maxCodexFileBytes,
     sinceMs,
   }: {
+    source: string;
     maxFiles: number;
     maxFileBytes: number;
+    maxCodexFileBytes: number;
     sinceMs: number;
   }
 ) {
@@ -376,10 +411,15 @@ async function listUsageFiles(
       return;
     }
 
+    const maxBytes =
+      source === "codex" && path.extname(currentPath).toLowerCase() === ".jsonl"
+        ? maxCodexFileBytes
+        : maxFileBytes;
+
     if (
       stat.isFile() &&
       files.length < maxFiles &&
-      stat.size <= maxFileBytes &&
+      stat.size <= maxBytes &&
       stat.mtimeMs >= sinceMs &&
       isUsageFile(currentPath)
     ) {

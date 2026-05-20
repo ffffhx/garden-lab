@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { execFile, spawn } from "node:child_process";
+import { createReadStream } from "node:fs";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 
 const API_URL = (process.env.TOKEN_BOARD_API_URL || "https://8-218-149-148.anyip.dev/token-board").replace(/\/+$/, "");
@@ -14,8 +16,9 @@ const INTERVAL_MS = readPositiveNumber(process.env.TOKEN_BOARD_INTERVAL_MS, 5 * 
 const SINCE_MS = readPositiveNumber(process.env.TOKEN_BOARD_SINCE_HOURS, 24 * 30) * 60 * 60 * 1000;
 const MAX_FILES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILES, 800);
 const MAX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILE_BYTES, 5 * 1024 * 1024);
+const MAX_CODEX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_CODEX_FILE_BYTES, 256 * 1024 * 1024);
 const BATCH_SIZE = 1000;
-const VERSION = "0.4.3";
+const VERSION = "0.4.6";
 const MAX_INVALID_USAGE_WARNINGS = 5;
 const PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${VERSION}`;
 const INSTALL_DIR = path.join(os.homedir(), ".token-board-agent");
@@ -83,7 +86,7 @@ const DEFAULT_SOURCE_TARGETS = [
   {
     source: "codex",
     tool: "Codex CLI",
-    paths: [homePath(".codex", "sessions"), homePath(".codex", "projects")],
+    paths: [homePath(".codex", "sessions"), homePath(".codex", "archived_sessions"), homePath(".codex", "projects")],
   },
   {
     source: "claude-code",
@@ -168,6 +171,12 @@ async function main() {
 
   if (command === "resync") {
     await uploadOnce(await loadOrLoginConfig(), { force: true });
+    console.log(`Open leaderboard: ${LEADERBOARD_URL}`);
+    return;
+  }
+
+  if (command === "replace") {
+    await replaceRemoteUsage(await loadOrLoginConfig());
     console.log(`Open leaderboard: ${LEADERBOARD_URL}`);
     return;
   }
@@ -352,6 +361,37 @@ async function uploadOnce(config, options = {}) {
   );
 }
 
+async function replaceRemoteUsage(config) {
+  const collectedEvents = await collectLocalUsageEvents(config);
+
+  if (!collectedEvents.length) {
+    throw new Error("No token usage events collected; remote records were not changed.");
+  }
+
+  const result = { deleted: 0, accepted: 0, duplicates: 0, records: 0 };
+  let firstBatch = true;
+
+  for (const batch of chunk(collectedEvents, BATCH_SIZE)) {
+    const batchResult = firstBatch ? await postReplace(config, batch) : await postIngest(config, batch);
+    firstBatch = false;
+    result.deleted += Number(batchResult.deleted || 0);
+    result.accepted += Number(batchResult.accepted || 0);
+    result.duplicates += Number(batchResult.duplicates || 0);
+    result.records = Number(batchResult.records || result.records || 0);
+  }
+
+  await writeJson(STATE_FILE, {
+    apiUrl: API_URL,
+    userId: config.userId,
+    uploadedIds: collectedEvents.map((event) => event.id).slice(-50_000),
+    lastUploadedAt: new Date().toISOString(),
+  });
+
+  console.log(
+    `Replaced remote usage with ${collectedEvents.length} events. deleted=${result.deleted} accepted=${result.accepted} duplicates=${result.duplicates} records=${result.records}`
+  );
+}
+
 function uploadStateMatchesConfig(state, config) {
   if (!state || typeof state !== "object") {
     return false;
@@ -418,7 +458,8 @@ async function collectFiles(inputPath, target, files, minMtime, depth) {
   }
 
   if (stat.isFile()) {
-    if (stat.size <= MAX_FILE_BYTES && stat.mtimeMs >= minMtime && isUsageFile(inputPath)) {
+    const maxFileBytes = maxUsageFileBytes(inputPath, target);
+    if (stat.size <= maxFileBytes && stat.mtimeMs >= minMtime && isUsageFile(inputPath)) {
       files.push({ path: inputPath, mtimeMs: stat.mtimeMs, target });
     }
     return;
@@ -482,53 +523,96 @@ async function parseUsageFile(filePath, target, config) {
 }
 
 async function parseCodexJsonl(filePath, target, config) {
-  const text = await fs.readFile(filePath, "utf8").catch(() => "");
   const entries = [];
   let model = "unknown";
   let project = projectFromFile(filePath, target.source);
   let sequence = 0;
+  let previousTotalUsage = {};
 
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line.includes('"token_count"') && !line.includes('"model"') && !line.includes('"cwd"')) {
-      continue;
-    }
-
-    const parsed = safeJson(line);
-    const payload = parsed && typeof parsed.payload === "object" ? parsed.payload : {};
-
-    if ((parsed?.type === "turn_context" || parsed?.type === "session_meta") && typeof payload.model === "string") {
-      model = payload.model;
-    }
-
-    if ((parsed?.type === "turn_context" || parsed?.type === "session_meta") && typeof payload.cwd === "string") {
-      project = path.basename(payload.cwd);
-    }
-
-    const usage = payload?.info?.last_token_usage;
-    if (parsed?.type !== "event_msg" || payload.type !== "token_count" || !usage || !parsed.timestamp) {
-      continue;
-    }
-
-    sequence += 1;
-    const event = tryUsageRecordToEvent(usage, {
-      config,
-      source: target.source,
-      tool: target.tool,
-      filePath,
-      model,
-      project,
-      sessionId: filePath,
-      sequence,
-      timestamp: parsed.timestamp,
+  let lines;
+  try {
+    lines = createInterface({
+      input: createReadStream(filePath, { encoding: "utf8" }),
+      crlfDelay: Infinity,
     });
+  } catch {
+    return [];
+  }
 
-    if (event) {
-      entries.push(event);
+  try {
+    for await (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line.includes('"token_count"') && !line.includes('"model"') && !line.includes('"cwd"')) {
+        continue;
+      }
+
+      const parsed = safeJson(line);
+      const payload = parsed && typeof parsed.payload === "object" ? parsed.payload : {};
+
+      if ((parsed?.type === "turn_context" || parsed?.type === "session_meta") && typeof payload.model === "string") {
+        model = payload.model;
+      }
+
+      if ((parsed?.type === "turn_context" || parsed?.type === "session_meta") && typeof payload.cwd === "string") {
+        project = path.basename(payload.cwd);
+      }
+
+      if (parsed?.type !== "event_msg" || payload.type !== "token_count" || !payload?.info || !parsed.timestamp) {
+        continue;
+      }
+
+      const totalUsage = payload.info.total_token_usage;
+      const usage =
+        totalUsage && typeof totalUsage === "object"
+          ? tokenUsageDelta(totalUsage, previousTotalUsage)
+          : payload.info.last_token_usage || {};
+      if (totalUsage && typeof totalUsage === "object") {
+        previousTotalUsage = totalUsage;
+      }
+
+      if (tokenUsageTotal(usage) <= 0) {
+        continue;
+      }
+
+      sequence += 1;
+      const event = tryUsageRecordToEvent(usage, {
+        config,
+        source: target.source,
+        tool: target.tool,
+        filePath,
+        model,
+        project,
+        sessionId: filePath,
+        sequence,
+        timestamp: parsed.timestamp,
+      });
+
+      if (event) {
+        entries.push(event);
+      }
     }
+  } catch {
+    return [];
   }
 
   return entries;
+}
+
+function tokenUsageDelta(current, previous) {
+  const fields = ["input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens"];
+  return Object.fromEntries(
+    fields.map((field) => [field, Math.max(0, toNumber(current?.[field]) - toNumber(previous?.[field]))])
+  );
+}
+
+function tokenUsageTotal(usage) {
+  return toNumber(usage?.input_tokens) + toNumber(usage?.output_tokens);
+}
+
+function maxUsageFileBytes(filePath, target) {
+  return target.source === "codex" && path.extname(filePath).toLowerCase() === ".jsonl"
+    ? MAX_CODEX_FILE_BYTES
+    : MAX_FILE_BYTES;
 }
 
 function extractUsageEventsFromJson(value, context) {
@@ -653,6 +737,29 @@ async function postIngest(config, events) {
 
   if (!response.ok) {
     throw new Error(payload.error || `Upload failed with HTTP ${response.status}`);
+  }
+
+  return payload;
+}
+
+async function postReplace(config, events) {
+  const response = await fetch(`${API_URL}/api/usage/replace`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.agentToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      schemaVersion: 1,
+      client: clientInfo(),
+      events,
+    }),
+  });
+  const text = await response.text();
+  const payload = text ? JSON.parse(text) : {};
+
+  if (!response.ok) {
+    throw new Error(payload.error || `Replace failed with HTTP ${response.status}`);
   }
 
   return payload;
@@ -954,7 +1061,8 @@ function printHelp() {
   npx --yes --package ${PACKAGE_URL} -- token-board-agent login
   npx --yes --package ${PACKAGE_URL} -- token-board-agent collect
   npx --yes --package ${PACKAGE_URL} -- token-board-agent upload
-  npx --yes --package ${PACKAGE_URL} -- token-board-agent resync`);
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent resync
+  npx --yes --package ${PACKAGE_URL} -- token-board-agent replace`);
 }
 
 async function readJson(filePath) {

@@ -55,6 +55,7 @@ GET  /api/auth/logout
 POST /api/auth/device/start
 POST /api/auth/device/poll
 POST /api/usage/ingest
+POST /api/usage/replace
 GET  /api/usage/summary
 GET  /api/usage/stats
 ```
@@ -164,10 +165,18 @@ pnpm token:agent login
 
 CLI 会显示 GitHub device code，让用户去 `https://github.com/login/device` 授权。授权成功后，agent 会把服务端签发的 `agentToken` 保存到 `~/.token-board-agent.json`。
 
+默认采集源包含 Codex、Claude Code、Cursor、Trae。Codex 会读取 `~/.codex/sessions`、`~/.codex/archived_sessions` 和 `~/.codex/projects`；普通工具日志默认单文件上限是 5 MiB，Codex JSONL 会话日志默认上限是 256 MiB，可用 `TOKEN_BOARD_MAX_CODEX_FILE_BYTES` 调整。
+
 手动上传一次：
 
 ```bash
 pnpm token:agent upload
+```
+
+如果需要清掉当前登录用户的线上旧记录，并用本机当前可采集记录整体替换：
+
+```bash
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.6 -- token-board-agent replace
 ```
 
 长期运行：

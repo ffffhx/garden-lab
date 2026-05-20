@@ -13,9 +13,12 @@ import { defaultSourceTargets, extractTokenUsageEventsFromJson, parseUsageFile }
 
 describe("token board automation", () => {
   it("collects from the friend agent default coding tools", () => {
-    const tools = defaultSourceTargets().map((target) => target.tool);
+    const targets = defaultSourceTargets();
+    const tools = targets.map((target) => target.tool);
+    const codexTarget = targets.find((target) => target.source === "codex");
 
     expect(tools).toEqual(expect.arrayContaining(["Codex CLI", "Claude Code", "Cursor", "Trae"]));
+    expect(codexTarget?.paths).toEqual(expect.arrayContaining(["~/.codex/archived_sessions"]));
   });
 
   it("authenticates upload users by token hash", () => {
@@ -139,7 +142,7 @@ describe("token board automation", () => {
     expect(JSON.stringify(entries)).not.toContain("do not upload me");
   });
 
-  it("parses Codex session logs from last_token_usage only", async () => {
+  it("parses Codex session logs from cumulative token_count deltas", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "token-board-codex-"));
     const file = path.join(dir, "session.jsonl");
     const lines = [
@@ -158,11 +161,11 @@ describe("token board automation", () => {
           type: "token_count",
           info: {
             total_token_usage: {
-              input_tokens: 10_000,
-              cached_input_tokens: 4_000,
-              output_tokens: 1_000,
-              reasoning_output_tokens: 500,
-              total_tokens: 11_500,
+              input_tokens: 100,
+              cached_input_tokens: 40,
+              output_tokens: 10,
+              reasoning_output_tokens: 5,
+              total_tokens: 115,
             },
             last_token_usage: {
               input_tokens: 100,
@@ -170,6 +173,52 @@ describe("token board automation", () => {
               output_tokens: 10,
               reasoning_output_tokens: 5,
               total_tokens: 115,
+            },
+          },
+        },
+      },
+      {
+        timestamp: "2026-05-14T08:01:30.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 100,
+              cached_input_tokens: 40,
+              output_tokens: 10,
+              reasoning_output_tokens: 5,
+              total_tokens: 115,
+            },
+            last_token_usage: {
+              input_tokens: 100,
+              cached_input_tokens: 40,
+              output_tokens: 10,
+              reasoning_output_tokens: 5,
+              total_tokens: 115,
+            },
+          },
+        },
+      },
+      {
+        timestamp: "2026-05-14T08:02:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 150,
+              cached_input_tokens: 50,
+              output_tokens: 20,
+              reasoning_output_tokens: 8,
+              total_tokens: 178,
+            },
+            last_token_usage: {
+              input_tokens: 50,
+              cached_input_tokens: 10,
+              output_tokens: 10,
+              reasoning_output_tokens: 3,
+              total_tokens: 63,
             },
           },
         },
@@ -187,8 +236,10 @@ describe("token board automation", () => {
       filePath: file,
     });
 
-    expect(entries).toHaveLength(1);
-    expect(entries[0]).toEqual(
+    const sortedEntries = [...entries].sort((left, right) => left.timestamp.localeCompare(right.timestamp));
+
+    expect(sortedEntries).toHaveLength(2);
+    expect(sortedEntries[0]).toEqual(
       expect.objectContaining({
         model: "gpt-5.5",
         project: "token-board",
@@ -197,6 +248,15 @@ describe("token board automation", () => {
         cachedInputTokens: 40,
         outputTokens: 10,
         reasoningOutputTokens: 5,
+      })
+    );
+    expect(sortedEntries[1]).toEqual(
+      expect.objectContaining({
+        totalTokens: 60,
+        inputTokens: 50,
+        cachedInputTokens: 10,
+        outputTokens: 10,
+        reasoningOutputTokens: 3,
       })
     );
   });

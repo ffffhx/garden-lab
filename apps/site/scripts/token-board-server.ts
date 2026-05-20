@@ -237,6 +237,11 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
     return;
   }
 
+  if (request.method === "POST" && url.pathname === "/api/usage/replace") {
+    await handleReplace(request, response);
+    return;
+  }
+
   sendJson(request, response, 404, { error: "Not found" });
 }
 
@@ -281,6 +286,58 @@ async function handleIngest(request: IncomingMessage, response: ServerResponse) 
     duplicates: result.duplicates,
     errors: sanitized.errors,
     records: result.records,
+    user: {
+      userId: identity.userId,
+      displayName: identity.displayName,
+      team: identity.team || "GitHub",
+    },
+  });
+}
+
+async function handleReplace(request: IncomingMessage, response: ServerResponse) {
+  const identity = await authenticateIngestRequest(request);
+
+  if (!identity) {
+    sendJson(request, response, 401, { error: "Login required" });
+    return;
+  }
+
+  const body = await readJsonBody(request);
+  const rawEvents = Array.isArray((body as { events?: unknown }).events)
+    ? ((body as { events: Parameters<typeof sanitizeIngestEvents>[0] }).events)
+    : [];
+
+  if (!rawEvents.length) {
+    sendJson(request, response, 400, { error: "Body must include events[]" });
+    return;
+  }
+
+  const sanitized = sanitizeIngestEvents(rawEvents, identity, {
+    projectMode: parseProjectMode(process.env.TOKEN_BOARD_PROJECT_MODE),
+    includeModel: process.env.TOKEN_BOARD_INCLUDE_MODEL !== "false",
+    includeSource: process.env.TOKEN_BOARD_INCLUDE_SOURCE !== "false",
+    hashSessionId: process.env.TOKEN_BOARD_HASH_SESSION_ID !== "false",
+  });
+
+  if (!sanitized.entries.length && sanitized.errors.length) {
+    sendJson(request, response, 400, {
+      error: "No valid token usage events",
+      errors: sanitized.errors,
+    });
+    return;
+  }
+
+  const deleted = await usageStore().deleteEventsForUser(identity.userId);
+  const inserted = await usageStore().insertEvents(sanitized.entries);
+
+  sendJson(request, response, 200, {
+    ok: true,
+    replaced: true,
+    deleted: deleted.deleted,
+    accepted: inserted.accepted,
+    duplicates: inserted.duplicates,
+    errors: sanitized.errors,
+    records: inserted.records,
     user: {
       userId: identity.userId,
       displayName: identity.displayName,

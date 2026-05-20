@@ -18,12 +18,18 @@ export type TokenUsageStoreInsertResult = {
   records: number;
 };
 
+export type TokenUsageStoreDeleteResult = {
+  deleted: number;
+  records: number;
+};
+
 export type TokenUsageStore = {
   kind: TokenUsageStoreKind;
   label: string;
   listEvents: () => Promise<TokenUsageEvent[]>;
   countEvents: () => Promise<number>;
   insertEvents: (events: TokenUsageEvent[]) => Promise<TokenUsageStoreInsertResult>;
+  deleteEventsForUser: (userId: string) => Promise<TokenUsageStoreDeleteResult>;
   close?: () => Promise<void>;
 };
 
@@ -134,6 +140,21 @@ function createFileTokenUsageStore({
           records: merged.length,
         };
       }),
+    deleteEventsForUser: (userId) =>
+      enqueueStorageOperation(async () => {
+        const existing = (await readTokenUsageEventsFromFile(dataFile)).entries;
+        const kept = existing.filter((event) => event.userId !== userId);
+        const deleted = existing.length - kept.length;
+
+        if (deleted) {
+          await writeTokenUsageEventsToFile(dataFile, kept);
+        }
+
+        return {
+          deleted,
+          records: kept.length,
+        };
+      }),
   };
 }
 
@@ -195,7 +216,7 @@ function createPostgresTokenUsageStore({
         [maxEvents]
       );
 
-      return result.rows.map(rowToTokenUsageEvent);
+      return result.rows.flatMap((row) => rowToTokenUsageEvent(row) ?? []);
     },
     countEvents: async () => {
       const result = await pool.query<{ count: string }>(`SELECT count(*) AS count FROM ${table}`);
@@ -222,6 +243,14 @@ function createPostgresTokenUsageStore({
       return {
         accepted,
         duplicates: events.length - accepted,
+        records: await countPostgresRows(pool, table),
+      };
+    },
+    deleteEventsForUser: async (userId: string) => {
+      const result = await pool.query(`DELETE FROM ${table} WHERE user_id = $1`, [userId]);
+
+      return {
+        deleted: result.rowCount || 0,
         records: await countPostgresRows(pool, table),
       };
     },
@@ -311,7 +340,14 @@ async function countPostgresRows(pool: Pool, table: string) {
   return Number(result.rows[0]?.count || 0);
 }
 
-function rowToTokenUsageEvent(row: TokenUsageEventRow): TokenUsageEvent {
+function rowToTokenUsageEvent(row: TokenUsageEventRow): TokenUsageEvent | undefined {
+  const inputTokens = toNumber(row.input_tokens);
+  const outputTokens = toNumber(row.output_tokens);
+
+  if (inputTokens + outputTokens <= 0) {
+    return undefined;
+  }
+
   return normalizeTokenUsageEvent({
     id: row.id,
     userId: row.user_id,
@@ -322,9 +358,9 @@ function rowToTokenUsageEvent(row: TokenUsageEventRow): TokenUsageEvent {
     project: row.project || undefined,
     tool: row.tool || undefined,
     timestamp: new Date(row.reported_at).toISOString(),
-    inputTokens: toNumber(row.input_tokens),
+    inputTokens,
     cachedInputTokens: toNumber(row.cached_input_tokens),
-    outputTokens: toNumber(row.output_tokens),
+    outputTokens,
     reasoningOutputTokens: toNumber(row.reasoning_output_tokens),
     totalTokens: toNumber(row.total_tokens),
     costUsd: row.cost_usd === null ? undefined : toNumber(row.cost_usd),

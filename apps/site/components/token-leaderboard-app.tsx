@@ -3,20 +3,15 @@
 import { useEffect, useId, useMemo, useState } from "react";
 
 import {
-  TOKEN_LEADERBOARD_STORAGE_KEY,
   buildTokenLeaderboard,
-  dedupeTokenEvents,
   getInputContextTokens,
   getTokenConsumptionTokens,
-  parseTokenUsageImport,
   type TokenBoardMetric,
   type TokenBoardRange,
   type TokenAccountUsageProfile,
   type TokenLeaderboardSummary,
   type TokenLeaderboardUser,
-  type TokenUsageEvent,
 } from "@/lib/token-leaderboard";
-import { withBasePath } from "@/lib/utils/site-path";
 
 const RANGES: TokenBoardRange[] = ["1D", "7D", "30D", "90D"];
 const ROLLING_RANGE_LABELS: Record<TokenBoardRange, string> = {
@@ -34,30 +29,23 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 ];
 const DATA_LOAD_SLOW_MS = 10_000;
 
-const CSV_PLACEHOLDER =
-  "user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages";
-const NPX_PACKAGE_URL = "https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.2";
+const NPX_PACKAGE_URL = "https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.3";
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
 const NPX_STATUS_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent status`;
 
 export function TokenLeaderboardApp({
-  initialEntries,
   initialNow,
   apiBaseUrl,
 }: {
-  initialEntries: TokenUsageEvent[];
   initialNow: string;
   apiBaseUrl?: string;
 }) {
-  const [entries, setEntries] = useState(initialEntries);
   const [range, setRange] = useState<TokenBoardRange>("7D");
   const [metric, setMetric] = useState<TokenBoardMetric>("tokens");
-  const [draft, setDraft] = useState("");
   const [status, setStatus] = useState("正在加载真实用户数据");
-  const [loadedSource, setLoadedSource] = useState(initialEntries.length ? "initial" : "loading");
-  const [dataLoadState, setDataLoadState] = useState<DataLoadState>(initialEntries.length ? "ready" : "loading");
+  const [dataLoadState, setDataLoadState] = useState<DataLoadState>("loading");
   const [dataLoadError, setDataLoadError] = useState("");
   const [isLoadSlow, setIsLoadSlow] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -87,75 +75,12 @@ export function TokenLeaderboardApp({
   }, [dataLoadState, reloadKey]);
 
   useEffect(() => {
-    if (normalizedApiBaseUrl) {
-      return;
-    }
-
-    let active = true;
-
-    const localValue = window.localStorage.getItem(TOKEN_LEADERBOARD_STORAGE_KEY);
-
-    if (localValue) {
-      const parsed = parseTokenUsageImport(localValue);
-      if (parsed.entries.length) {
-        setEntries(parsed.entries);
-        setLoadedSource("local");
-        setStatus(`本地数据 ${parsed.entries.length} 条`);
-        setDataLoadState("ready");
-        setDataLoadError("");
-        return;
-      }
-    }
-
-    setDataLoadState(initialEntries.length ? "ready" : "loading");
-    setDataLoadError("");
-    setStatus(initialEntries.length ? `初始数据 ${initialEntries.length} 条` : "正在加载真实用户数据");
-
-    fetch(withBasePath("/stats/token-leaderboard.json"), { cache: "no-store" })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        return response.text();
-      })
-      .then((text) => {
-        if (!active) {
-          return;
-        }
-
-        const parsed = parseTokenUsageImport(text);
-        if (parsed.entries.length) {
-          setEntries(dedupeTokenEvents([...initialEntries, ...parsed.entries]));
-          setLoadedSource("public");
-          setStatus(`公开数据 ${parsed.entries.length} 条`);
-          setDataLoadState("ready");
-          setDataLoadError("");
-          return;
-        }
-
-        setStatus("正在等待真实用户数据");
-        setDataLoadState("error");
-        setDataLoadError("公开 fallback 文件暂无真实上报数据");
-      })
-      .catch((error) => {
-        if (active) {
-          const message = error instanceof Error ? error.message : "读取失败";
-          setStatus(`公开数据读取失败：${message}`);
-          setDataLoadState("error");
-          setDataLoadError(message);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [initialEntries, normalizedApiBaseUrl, reloadKey]);
-
-  useEffect(() => {
     if (!normalizedApiBaseUrl) {
       setRemoteSummary(null);
       setRemoteRecordCount(null);
+      setDataLoadState("error");
+      setDataLoadError("未配置 Token Board API，无法读取自动上报数据");
+      setStatus("需要连接 Token Board 后端后才能加载榜单");
       return;
     }
 
@@ -164,7 +89,6 @@ export function TokenLeaderboardApp({
 
     setRemoteSummary(null);
     setRemoteRecordCount(null);
-    setLoadedSource("server");
     setDataLoadState("loading");
     setDataLoadError("");
     setStatus("正在加载真实用户数据");
@@ -191,7 +115,6 @@ export function TokenLeaderboardApp({
 
         setRemoteSummary(normalizeRemoteSummary(summary, metric));
         setRemoteRecordCount(typeof payload.records === "number" ? payload.records : null);
-        setLoadedSource("server");
         setDataLoadState("ready");
         setDataLoadError("");
         setStatus(`后端数据 ${typeof payload.records === "number" ? payload.records : summary.users.length} 条`);
@@ -203,7 +126,6 @@ export function TokenLeaderboardApp({
 
         setRemoteSummary(null);
         setRemoteRecordCount(null);
-        setLoadedSource("error");
         setDataLoadState("error");
         const message = error instanceof Error ? error.message : "读取失败";
         setDataLoadError(message);
@@ -292,14 +214,14 @@ export function TokenLeaderboardApp({
     };
   }, [normalizedApiBaseUrl, range, viewer?.authenticated, viewer?.user?.userId]);
 
-  const localSummary = useMemo(
-    () => buildTokenLeaderboard(entries, { range, metric, now }),
-    [entries, metric, now, range]
+  const emptySummary = useMemo(
+    () => buildTokenLeaderboard([], { range, metric, now }),
+    [metric, now, range]
   );
-  const summary = remoteSummary ?? localSummary;
-  const recordCount = remoteRecordCount ?? entries.length;
-  const isDataLoading = dataLoadState === "loading" && !remoteSummary && entries.length === 0;
-  const isDataError = dataLoadState === "error" && !remoteSummary && entries.length === 0;
+  const summary = remoteSummary ?? emptySummary;
+  const recordCount = remoteRecordCount ?? 0;
+  const isDataLoading = dataLoadState === "loading" && !remoteSummary;
+  const isDataError = dataLoadState === "error" && !remoteSummary;
   const hasMessageData = summary.totalMessages > 0;
   const metricItems = METRICS.map((item) => ({
     key: item.key,
@@ -307,10 +229,10 @@ export function TokenLeaderboardApp({
     disabled: item.key === "messages" && !isDataLoading && !hasMessageData,
     disabledReason: item.key === "messages" ? "当前上报数据暂无消息字段" : undefined,
   }));
-  const sourceLabel = isDataLoading ? "loading" : isDataError ? "error" : remoteSummary ? "server" : loadedSource;
+  const sourceLabel = isDataLoading ? "loading" : isDataError ? "error" : "server";
   const statusMessage = isDataLoading
     ? isLoadSlow
-      ? "数据加载较慢，可以稍后重试或导入本地数据"
+      ? "数据加载较慢，可以稍后重试，或确认 agent 是否已上报"
       : status
     : remoteSummary
       ? `后端数据 ${recordCount} 条`
@@ -323,8 +245,7 @@ export function TokenLeaderboardApp({
   const shareTotal = Math.max(0, summary.users.reduce((sum, user) => sum + getUserMetricValue(user, metric), 0));
   const totalInputContextTokens = summary.users.reduce((sum, user) => sum + getInputContextTokens(user), 0);
   const totalCachedInputTokens = summary.users.reduce((sum, user) => sum + user.cachedInputTokens, 0);
-  const totalConsumptionTokens =
-    summary.users.reduce((sum, user) => sum + getTokenConsumptionTokens(user), 0) || summary.totalTokens;
+  const totalConsumptionTokens = summary.users.reduce((sum, user) => sum + getTokenConsumptionTokens(user), 0);
   const cacheHitRate = totalInputContextTokens > 0 ? totalCachedInputTokens / totalInputContextTokens : 0;
   const tokensPerSession = summary.totalSessions > 0 ? totalConsumptionTokens / summary.totalSessions : 0;
   const costPerSession = summary.totalSessions > 0 ? summary.totalCostUsd / summary.totalSessions : 0;
@@ -359,69 +280,6 @@ export function TokenLeaderboardApp({
 
   function showToast(message: string, tone: ToastTone = "success") {
     setToast({ id: Date.now(), message, tone });
-  }
-
-  function importText(text: string, mode: "replace" | "merge" = "merge") {
-    const parsed = parseTokenUsageImport(text);
-
-    if (!parsed.entries.length) {
-      const message = parsed.errors[0] ?? "导入失败";
-      setStatus(message);
-      showToast(message, "error");
-      return;
-    }
-
-    const nextEntries = mode === "replace" ? parsed.entries : dedupeTokenEvents([...entries, ...parsed.entries]);
-    setEntries(nextEntries);
-    setRemoteSummary(null);
-    setRemoteRecordCount(null);
-    window.localStorage.setItem(
-      TOKEN_LEADERBOARD_STORAGE_KEY,
-      JSON.stringify({ schemaVersion: 1, updatedAt: new Date().toISOString(), entries: nextEntries }, null, 2)
-    );
-    setLoadedSource("local");
-    setDataLoadState("ready");
-    setDataLoadError("");
-    setStatus(`已导入 ${parsed.entries.length} 条，当前 ${nextEntries.length} 条`);
-    showToast(`已导入 ${parsed.entries.length} 条`);
-    setDraft("");
-  }
-
-  async function importFile(file: File | undefined) {
-    if (!file) {
-      return;
-    }
-
-    importText(await file.text());
-  }
-
-  function exportJson() {
-    const blob = new Blob(
-      [JSON.stringify({ schemaVersion: 1, updatedAt: new Date().toISOString(), entries }, null, 2)],
-      { type: "application/json" }
-    );
-    const href = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = href;
-    link.download = `token-leaderboard-${range.toLowerCase()}.json`;
-    link.click();
-    URL.revokeObjectURL(href);
-    showToast("已导出本地 JSON");
-  }
-
-  function clearLocalData() {
-    window.localStorage.removeItem(TOKEN_LEADERBOARD_STORAGE_KEY);
-    setEntries(initialEntries);
-    setRemoteSummary(null);
-    setRemoteRecordCount(null);
-    setLoadedSource(initialEntries.length ? "initial" : normalizedApiBaseUrl ? "server" : "local");
-    setDataLoadState(initialEntries.length ? "ready" : normalizedApiBaseUrl ? "loading" : "error");
-    setDataLoadError(initialEntries.length || normalizedApiBaseUrl ? "" : "本地数据已清空，暂无 fallback 数据");
-    setStatus(initialEntries.length ? `初始数据 ${initialEntries.length} 条` : "已清空本地数据");
-    showToast("已清空本地数据");
-    if (normalizedApiBaseUrl) {
-      setReloadKey((value) => value + 1);
-    }
   }
 
   function loginWithGitHub() {
@@ -527,7 +385,7 @@ export function TokenLeaderboardApp({
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">加入榜单</h2>
-          <p className="mt-1 text-xs text-stone-500">安装 agent 后自动上报，公开榜单不需要登录也能看。</p>
+          <p className="mt-1 text-xs text-stone-500">安装 agent 后从本机采集 token 记录并自动上报。</p>
         </div>
         <span className="rounded-full bg-stone-950 px-2.5 py-1 font-mono text-xs text-white">{rangeRecordCountLabel}</span>
       </div>
@@ -541,10 +399,15 @@ export function TokenLeaderboardApp({
             <p className="mt-2 text-[#26745e]">
               {viewer?.authenticated
                 ? `当前账号 @${viewer.user?.githubLogin || viewer.user?.displayName}`
-                : "GitHub 登录 + npx agent"}
+                : "GitHub 登录 + npx agent，从你的电脑上报"}
             </p>
           </div>
-        ) : null}
+        ) : (
+          <div className="rounded-xl border border-[#c05c38]/25 bg-[#fff0e9] p-3 text-xs text-[#7b2f1d]">
+            <p className="font-semibold">等待 Token Board 后端</p>
+            <p className="mt-2">页面已关闭静态 JSON、本地缓存和手动导入，只会读取自动上报服务。</p>
+          </div>
+        )}
         <div className="grid gap-2">
           <button
             type="button"
@@ -576,82 +439,46 @@ export function TokenLeaderboardApp({
         <p className="min-h-5 rounded-lg bg-[#f5efe4] px-3 py-2 text-xs text-stone-600" aria-live="polite">
           {statusMessage}
         </p>
-        <details className="group rounded-xl border border-stone-950/10 bg-[#fbf7ef]">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-semibold text-stone-800 [&::-webkit-details-marker]:hidden">
-            高级导入与调试
-            <span className="font-mono text-xs text-stone-500 group-open:hidden">展开</span>
-            <span className="hidden font-mono text-xs text-stone-500 group-open:inline">收起</span>
-          </summary>
-          <div className="space-y-3 border-t border-stone-950/8 p-3">
-            {normalizedApiBaseUrl ? (
-              <div className="rounded-lg border border-[#26745e]/18 bg-white/70 p-2 text-xs text-[#163d33]">
-                <p className="font-semibold text-[#26745e]">ingest endpoint</p>
-                <p className="mt-1 break-all font-mono leading-5">{normalizedApiBaseUrl}/api/usage/ingest</p>
-                <p className="mt-2 font-semibold text-[#26745e]">agent install</p>
-                <code className="mt-1 block break-all font-mono text-[11px] leading-5">{NPX_INSTALL_COMMAND}</code>
-                <p className="mt-2 break-all text-[11px] text-[#26745e]">
-                  status: <code className="font-mono">{NPX_STATUS_COMMAND}</code>
-                </p>
-              </div>
-            ) : null}
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">CSV / JSON</span>
-              <textarea
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                placeholder={CSV_PLACEHOLDER}
-                className="mt-2 min-h-32 w-full resize-y rounded-xl border border-stone-950/12 bg-white p-3 font-mono text-xs leading-5 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#26745e] focus:bg-white focus:ring-4 focus:ring-[#26745e]/12"
-              />
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <ActionButton icon="upload" onClick={() => importText(draft)}>
-                导入
-              </ActionButton>
-              <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-stone-950/15 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:border-[#26745e]/40 hover:bg-[#eef7f2]">
-                <Icon name="file" />
-                文件
-                <input
-                  type="file"
-                  accept=".json,.csv,text/csv,application/json"
-                  className="sr-only"
-                  onChange={(event) => {
-                    void importFile(event.target.files?.[0]);
-                    event.target.value = "";
-                  }}
-                />
-              </label>
-            </div>
-            <div className="grid gap-2">
-              <ActionButton icon="download" variant="secondary" onClick={exportJson}>
-                导出本地
-              </ActionButton>
-              <ActionButton icon="refresh" variant="secondary" onClick={clearLocalData}>
-                清空本地
-              </ActionButton>
-            </div>
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">上报字段</h3>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-stone-600">
-                {[
-                  "user",
-                  "timestamp",
-                  "model",
-                  "tool",
-                  "inputTokens",
-                  "outputTokens",
-                  "cachedInputTokens",
-                  "reasoningOutputTokens",
-                  "totalTokens",
-                  "sessionId",
-                ].map((field) => (
-                  <code key={field} className="truncate rounded-md border border-stone-950/10 bg-white px-2 py-1">
-                    {field}
-                  </code>
-                ))}
-              </div>
+        <div className="rounded-xl border border-stone-950/10 bg-[#fbf7ef] p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-stone-800">上报链路</p>
+            <span className="rounded-full border border-stone-950/10 bg-white px-2 py-0.5 font-mono text-[11px] text-stone-500">
+              agent only
+            </span>
+          </div>
+          <div className="mt-3 rounded-lg border border-[#26745e]/18 bg-white/70 p-2 text-xs text-[#163d33]">
+            <p className="font-semibold text-[#26745e]">ingest endpoint</p>
+            <p className="mt-1 break-all font-mono leading-5">
+              {normalizedApiBaseUrl ? `${normalizedApiBaseUrl}/api/usage/ingest` : "Token Board API 未配置"}
+            </p>
+            <p className="mt-2 font-semibold text-[#26745e]">agent install</p>
+            <code className="mt-1 block break-all font-mono text-[11px] leading-5">{NPX_INSTALL_COMMAND}</code>
+            <p className="mt-2 break-all text-[11px] text-[#26745e]">
+              status: <code className="font-mono">{NPX_STATUS_COMMAND}</code>
+            </p>
+          </div>
+          <div className="mt-3">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">上报字段</h3>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-stone-600">
+              {[
+                "user",
+                "timestamp",
+                "model",
+                "tool",
+                "inputTokens",
+                "outputTokens",
+                "cachedInputTokens",
+                "reasoningOutputTokens",
+                "totalTokens",
+                "sessionId",
+              ].map((field) => (
+                <code key={field} className="truncate rounded-md border border-stone-950/10 bg-white px-2 py-1">
+                  {field}
+                </code>
+              ))}
             </div>
           </div>
-        </details>
+        </div>
       </div>
     </section>
   );
@@ -1495,7 +1322,7 @@ function TrustEvidenceBar({
   const evidence = loading
     ? ["正在连接后端", "不展示示例排行榜", "加载超过 10 秒会提示重试"]
     : error
-      ? [`读取失败：${error}`, "可重试或导入本地 CSV/JSON", "不展示伪数据"]
+      ? [`读取失败：${error}`, "可重试或检查 agent 上报", "不展示伪数据"]
       : [
           `更新时间 ${formatShortDate(summary.endAt)}`,
           `数据源 ${sourceLabel}`,
@@ -1515,7 +1342,7 @@ function TrustEvidenceBar({
         ))}
       </div>
       <p className="mt-2 hidden text-xs leading-5 text-white/48 sm:block">
-        {apiBaseUrl ? "本页由自动上报服务汇总。" : "当前使用静态或本地数据。"}
+        {apiBaseUrl ? "本页只读取自动上报服务。" : "Token Board API 未配置，页面不会回退到静态或本地数据。"}
         只展示 token、模型、工具、项目 basename 与匿名 session；费用为公开模型单价估算，不代表实际账单。
       </p>
     </div>
@@ -1789,7 +1616,7 @@ function MobileLeaderboardLoading({ slow }: { slow: boolean }) {
       <div>
         <p className="font-semibold text-stone-950">{slow ? "数据加载较慢" : "Loading 真实用户数据"}</p>
         <p className="mt-1 text-xs text-stone-500">
-          {slow ? "可以点击右侧数据入口里的刷新榜单，或导入本地数据。" : "数据没回来前不会展示示例排行榜"}
+          {slow ? "可以点击右侧刷新榜单，或确认本机 agent 是否已完成上报。" : "数据没回来前不会展示示例排行榜"}
         </p>
       </div>
     </div>
@@ -1805,7 +1632,7 @@ function LeaderboardLoadingRow({ slow }: { slow: boolean }) {
           <div>
             <p className="font-semibold text-stone-950">{slow ? "数据加载较慢" : "Loading 真实用户数据"}</p>
             <p className="mt-1 text-xs text-stone-500">
-              {slow ? "可以稍后重试、刷新榜单，或导入本地 CSV/JSON。" : "数据没回来前不会展示示例排行榜"}
+              {slow ? "可以稍后重试、刷新榜单，或确认本机 agent 是否已完成上报。" : "数据没回来前不会展示示例排行榜"}
             </p>
           </div>
         </div>
@@ -1844,7 +1671,7 @@ function LeaderboardErrorRow({ error, onRetry }: { error: string; onRetry: () =>
 function LeaderboardEmptyState() {
   return (
     <div className="rounded-xl border border-stone-950/8 bg-[#f8f2e8] px-4 py-8 text-center text-sm text-stone-500">
-      暂无真实用户数据，可以切换时间范围或导入本地 CSV/JSON。
+      暂无真实用户数据，可以切换时间范围或运行 agent 上报本机记录。
     </div>
   );
 }
@@ -1972,33 +1799,6 @@ function BreakdownLoadingRows() {
         </div>
       ))}
     </>
-  );
-}
-
-function ActionButton({
-  children,
-  icon,
-  variant = "primary",
-  onClick,
-}: {
-  children: string;
-  icon: "download" | "refresh" | "upload";
-  variant?: "primary" | "secondary";
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
-        variant === "primary"
-          ? "bg-[#11130f] text-white hover:bg-[#26745e]"
-          : "border border-stone-950/15 bg-white text-stone-700 hover:border-[#26745e]/40 hover:bg-[#eef7f2]"
-      }`}
-    >
-      <Icon name={icon} />
-      {children}
-    </button>
   );
 }
 

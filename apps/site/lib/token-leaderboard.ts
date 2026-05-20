@@ -1,5 +1,3 @@
-export const TOKEN_LEADERBOARD_STORAGE_KEY = "friend-token-leaderboard:v1";
-
 export type TokenBoardRange = "1D" | "7D" | "30D" | "90D";
 
 export type TokenBoardMetric = "tokens" | "cost" | "sessions" | "messages";
@@ -267,9 +265,12 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
   const cachedInputTokens = inputTokens > 0 ? Math.min(inputTokens, rawCachedInputTokens) : rawCachedInputTokens;
   const outputTokens = toFiniteNumber(value.outputTokens);
   const reasoningOutputTokens = toFiniteNumber(value.reasoningOutputTokens);
-  const computedTokens = inputTokens + outputTokens;
-  const explicitTotalTokens = toFiniteNumber(value.totalTokens);
-  const totalTokens = computedTokens > 0 ? computedTokens : explicitTotalTokens;
+  const totalTokens = inputTokens + outputTokens;
+
+  if (totalTokens <= 0) {
+    throw new Error("缺少 inputTokens/outputTokens，不能使用 totalTokens 兜底");
+  }
+
   const userId = normalizeText(value.userId) || normalizeText(value.displayName) || "unknown";
   const timestamp = normalizeDate(value.timestamp);
   const model = normalizeText(value.model) || "unknown";
@@ -317,13 +318,17 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
 }
 
 export function getTokenConsumptionTokens(
-  entry: Pick<TokenUsageEvent, "inputTokens" | "outputTokens"> & Partial<Pick<TokenUsageEvent, "totalTokens">>
+  entry: Pick<TokenUsageEvent, "inputTokens" | "outputTokens">
 ) {
   const inputContextTokens = getInputContextTokens(entry);
   const outputTokens = toFiniteNumber(entry.outputTokens);
-  const computedTokens = inputContextTokens + outputTokens;
+  const totalTokens = inputContextTokens + outputTokens;
 
-  return computedTokens > 0 ? computedTokens : toFiniteNumber(entry.totalTokens);
+  if (totalTokens <= 0) {
+    throw new Error("缺少 inputTokens/outputTokens，不能使用 totalTokens 兜底");
+  }
+
+  return totalTokens;
 }
 
 export function getInputContextTokens(entry: Pick<TokenUsageEvent, "inputTokens">) {
@@ -441,9 +446,18 @@ function recordsToEvents(records: unknown[]) {
     const cachedInputTokens =
       toFiniteNumber(readField(value, ["cachedInputTokens", "cached_input_tokens", "cachedTokens"])) +
       additiveCachedInputTokens;
+    const inputTokens = baseInputTokens + additiveCachedInputTokens;
+    const outputTokens = toFiniteNumber(
+      readField(value, ["outputTokens", "output_tokens", "completionTokens", "completion_tokens"])
+    );
 
     if (!userId) {
       errors.push(`第 ${index + 1} 行缺少 userId/user`);
+      return [];
+    }
+
+    if (inputTokens + outputTokens <= 0) {
+      errors.push(`第 ${index + 1} 行缺少 inputTokens/outputTokens，已拒绝使用 totalTokens 兜底`);
       return [];
     }
 
@@ -460,11 +474,11 @@ function recordsToEvents(records: unknown[]) {
         model: normalizeText(readField(value, ["model"])),
         project: normalizeText(readField(value, ["project", "repo", "workspace"])),
         timestamp,
-        inputTokens: baseInputTokens + additiveCachedInputTokens,
+        inputTokens,
         cachedInputTokens,
-        outputTokens: toFiniteNumber(readField(value, ["outputTokens", "output_tokens", "completionTokens", "completion_tokens"])),
+        outputTokens,
         reasoningOutputTokens: toFiniteNumber(readField(value, ["reasoningOutputTokens", "reasoning_output_tokens", "reasoningTokens"])),
-        totalTokens: toFiniteNumber(readField(value, ["totalTokens", "total_tokens", "tokens"])),
+        totalTokens: inputTokens + outputTokens,
         costUsd: rawCostUsd === undefined || rawCostUsd === "" ? undefined : toFiniteNumber(rawCostUsd),
         messages: toFiniteNumber(readField(value, ["messages", "messageCount"])),
         sessionId: normalizeText(readField(value, ["sessionId", "session", "conversationId"])),

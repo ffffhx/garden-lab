@@ -76,6 +76,34 @@ describe("token board automation", () => {
     expect(sanitized.entries[0].sessionId).not.toContain("/Users/feng");
   });
 
+  it("rejects total-only uploads instead of using totalTokens as fallback", () => {
+    const user = normalizeUploadUsers({
+      users: [
+        {
+          userId: "server-user",
+          displayName: "Server User",
+          uploadToken: "secret-token",
+        },
+      ],
+    })[0]!;
+
+    const sanitized = sanitizeIngestEvents(
+      [
+        {
+          source: "codex",
+          tool: "Codex CLI",
+          model: "gpt-5.5",
+          timestamp: new Date().toISOString(),
+          totalTokens: 1200,
+        },
+      ],
+      user
+    );
+
+    expect(sanitized.entries).toEqual([]);
+    expect(sanitized.errors[0]).toContain("不能使用 totalTokens 兜底");
+  });
+
   it("extracts aggregate usage from nested local logs without prompt text", () => {
     const entries = extractTokenUsageEventsFromJson(
       {

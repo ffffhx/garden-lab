@@ -264,6 +264,15 @@ async function handleIngest(request: IncomingMessage, response: ServerResponse) 
     includeSource: process.env.TOKEN_BOARD_INCLUDE_SOURCE !== "false",
     hashSessionId: process.env.TOKEN_BOARD_HASH_SESSION_ID !== "false",
   });
+
+  if (!sanitized.entries.length && sanitized.errors.length) {
+    sendJson(request, response, 400, {
+      error: "No valid token usage events",
+      errors: sanitized.errors,
+    });
+    return;
+  }
+
   const result = await usageStore().insertEvents(sanitized.entries);
 
   sendJson(request, response, 200, {

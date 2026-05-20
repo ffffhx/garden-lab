@@ -75,9 +75,11 @@ function addUsage(bucket, usage, model) {
   const cachedInputTokens = Math.min(inputTokens, toNumber(usage.cached_input_tokens));
   const outputTokens = toNumber(usage.output_tokens);
   const reasoningOutputTokens = toNumber(usage.reasoning_output_tokens);
-  const explicitTotal = toNumber(usage.total_tokens);
-  const computedTotal = inputTokens + outputTokens;
-  const totalTokens = computedTotal || explicitTotal;
+  const totalTokens = inputTokens + outputTokens;
+
+  if (totalTokens <= 0) {
+    throw new Error("Codex usage entry is missing input_tokens/output_tokens; total_tokens fallback is disabled.");
+  }
 
   bucket.totalTokens += totalTokens;
   bucket.inputTokens += inputTokens;

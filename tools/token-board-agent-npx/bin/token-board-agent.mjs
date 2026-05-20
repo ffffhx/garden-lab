@@ -15,7 +15,8 @@ const SINCE_MS = readPositiveNumber(process.env.TOKEN_BOARD_SINCE_HOURS, 24 * 30
 const MAX_FILES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILES, 800);
 const MAX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILE_BYTES, 5 * 1024 * 1024);
 const BATCH_SIZE = 1000;
-const VERSION = "0.4.2";
+const VERSION = "0.4.3";
+const MAX_INVALID_USAGE_WARNINGS = 5;
 const PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${VERSION}`;
 const INSTALL_DIR = path.join(os.homedir(), ".token-board-agent");
 const INSTALLED_AGENT_FILE = path.join(INSTALL_DIR, "token-board-agent.mjs");
@@ -121,6 +122,7 @@ const DEFAULT_SOURCE_TARGETS = [
     ],
   },
 ];
+let invalidUsageWarningCount = 0;
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.message : error);
@@ -509,7 +511,7 @@ async function parseCodexJsonl(filePath, target, config) {
     }
 
     sequence += 1;
-    const event = usageRecordToEvent(usage, {
+    const event = tryUsageRecordToEvent(usage, {
       config,
       source: target.source,
       tool: target.tool,
@@ -521,7 +523,7 @@ async function parseCodexJsonl(filePath, target, config) {
       timestamp: parsed.timestamp,
     });
 
-    if (event.totalTokens > 0) {
+    if (event) {
       entries.push(event);
     }
   }
@@ -554,8 +556,8 @@ function visitJson(value, context, entries, state, depth) {
 
   if (hasUsageShape(record)) {
     state.sequence += 1;
-    const event = usageRecordToEvent(record, { ...nextContext, sequence: state.sequence });
-    if (event.totalTokens > 0) {
+    const event = tryUsageRecordToEvent(record, { ...nextContext, sequence: state.sequence });
+    if (event) {
       entries.push(event);
     }
     return;
@@ -585,10 +587,12 @@ function usageRecordToEvent(usage, context) {
     "reasoning_output_tokens",
     "reasoningTokens",
   ]);
-  const explicitTotal = numberFromFields(usage, ["totalTokens", "total_tokens", "totalTokenCount", "tokens"]);
-  const computedTotal = inputTokens + outputTokens;
-  const totalTokens = computedTotal > 0 ? computedTotal : explicitTotal;
-  const idTotalTokens = explicitTotal > 0 ? explicitTotal : totalTokens;
+  const totalTokens = inputTokens + outputTokens;
+
+  if (totalTokens <= 0) {
+    throw new Error("missing input/output token fields; total_tokens fallback is disabled");
+  }
+
   const timestamp = normalizeTimestamp(context.timestamp || textFromFields(usage, ["timestamp", "createdAt", "created_at", "date", "time"]));
   const model = cleanLabel(context.model || textFromFields(usage, ["model", "modelName", "model_name"]), 80) || "unknown";
   const rawProject = context.project || textFromFields(usage, ["project", "repo", "workspace", "cwd", "root", "directory"]);
@@ -608,7 +612,7 @@ function usageRecordToEvent(usage, context) {
     cachedInputTokens,
     outputTokens,
     reasoningOutputTokens,
-    idTotalTokens,
+    totalTokens,
   ].join("\n");
 
   return {
@@ -730,15 +734,30 @@ function parseCsvUsage(text, context) {
 
   const entries = bodyRows.flatMap((row, index) => {
     const record = Object.fromEntries(headers.map((header, column) => [header.trim(), row[column] ?? ""]));
-    const event = usageRecordToEvent(record, {
+    const event = tryUsageRecordToEvent(record, {
       ...enrichContext(context, record),
       sessionId: textFromFields(record, ["sessionId", "session", "conversationId"]) || `${context.filePath}:${index}`,
       sequence: index + 1,
     });
-    return event.totalTokens > 0 ? [event] : [];
+    return event ? [event] : [];
   });
 
   return dedupe(entries);
+}
+
+function tryUsageRecordToEvent(usage, context) {
+  try {
+    return usageRecordToEvent(usage, context);
+  } catch (error) {
+    invalidUsageWarningCount += 1;
+    if (invalidUsageWarningCount <= MAX_INVALID_USAGE_WARNINGS) {
+      const reason = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `Skipped token usage record from ${context.source || "unknown"}${context.filePath ? ` (${context.filePath})` : ""}: ${reason}`
+      );
+    }
+    return null;
+  }
 }
 
 function parseCsvRows(input) {

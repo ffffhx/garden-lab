@@ -157,7 +157,8 @@ export function sanitizeIngestEvents(
         }),
       ];
     } catch (error) {
-      errors.push(error instanceof Error ? error.message : `第 ${index + 1} 条记录解析失败`);
+      const message = error instanceof Error ? error.message : "解析失败";
+      errors.push(`第 ${index + 1} 条记录${message}`);
       return [];
     }
   });

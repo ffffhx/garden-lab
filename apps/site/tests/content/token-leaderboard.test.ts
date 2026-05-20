@@ -56,14 +56,6 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1000,200,1300,5`);
         reasoningOutputTokens: 5,
         totalTokens: 115,
       },
-      {
-        ...event("fallback", "feng", "Feng", "2026-05-14T11:00:00.000Z", 200, 1),
-        inputTokens: 0,
-        cachedInputTokens: 0,
-        outputTokens: 0,
-        reasoningOutputTokens: 0,
-        totalTokens: 200,
-      },
     ];
 
     const summary = buildTokenLeaderboard(entries, {
@@ -72,18 +64,26 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1000,200,1300,5`);
       now,
     });
 
-    expect(summary.totalTokens).toBe(310);
+    expect(summary.totalTokens).toBe(110);
     expect(summary.users[0]).toEqual(
       expect.objectContaining({
-        tokens: 310,
+        tokens: 110,
         inputTokens: 100,
         cachedInputTokens: 40,
         outputTokens: 10,
         reasoningOutputTokens: 5,
       })
     );
-    expect(summary.models[0].tokens).toBe(310);
-    expect(summary.daily.find((point) => point.date === "2026-05-14")?.tokens).toBe(310);
+    expect(summary.models[0].tokens).toBe(110);
+    expect(summary.daily.find((point) => point.date === "2026-05-14")?.tokens).toBe(110);
+  });
+
+  it("rejects total-only records instead of using totalTokens as fallback", () => {
+    const parsed = parseTokenUsageImport(`user,displayName,tool,model,timestamp,totalTokens,messages
+feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1300,5`);
+
+    expect(parsed.entries).toEqual([]);
+    expect(parsed.errors).toEqual(["第 1 行缺少 inputTokens/outputTokens，已拒绝使用 totalTokens 兜底"]);
   });
 
   it("dedupes stable event ids before aggregation", () => {

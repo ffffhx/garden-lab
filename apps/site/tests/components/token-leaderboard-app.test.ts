@@ -3,7 +3,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { TokenLeaderboardApp } from "../../components/token-leaderboard-app";
-import publicLeaderboard from "../../public/stats/token-leaderboard.json";
 
 const initialNow = "2026-05-14T12:00:00.000Z";
 (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -13,7 +12,6 @@ describe("TokenLeaderboardApp", () => {
     const markup = renderToStaticMarkup(
       React.createElement(TokenLeaderboardApp, {
         apiBaseUrl: "https://example.com/token-board",
-        initialEntries: [],
         initialNow,
       })
     );
@@ -26,7 +24,18 @@ describe("TokenLeaderboardApp", () => {
     expect(markup).not.toContain("已加载示例数据");
   });
 
-  it("does not ship seed leaderboard entries in the public fallback file", () => {
-    expect(publicLeaderboard.entries).toEqual([]);
+  it("does not render static or manual import fallbacks", () => {
+    const markup = renderToStaticMarkup(
+      React.createElement(TokenLeaderboardApp, {
+        apiBaseUrl: "https://example.com/token-board",
+        initialNow,
+      })
+    );
+
+    expect(markup).toContain("agent only");
+    expect(markup).not.toContain("CSV / JSON");
+    expect(markup).not.toContain("导出本地");
+    expect(markup).not.toContain("清空本地");
+    expect(markup).not.toContain("当前使用静态或本地数据");
   });
 });

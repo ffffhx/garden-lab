@@ -28,7 +28,6 @@ export default function TokenLeaderboardPage() {
   return (
     <TokenLeaderboardApp
       apiBaseUrl={process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL}
-      initialEntries={[]}
       initialNow={INITIAL_NOW}
     />
   );

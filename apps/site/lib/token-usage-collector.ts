@@ -206,15 +206,21 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
     }
 
     sequence += 1;
-    entries.push(
-      recordToUsageEvent(usage, {
+    const event = tryRecordToUsageEvent(
+      usage,
+      {
         ...context,
         timestamp,
         model: currentModel,
         project: currentProject,
         sessionId: context.sessionId || textFromFields(payload, ["id"]) || context.filePath,
-      }, sequence)
+      },
+      sequence
     );
+
+    if (event) {
+      entries.push(event);
+    }
   }
 
   return dedupeTokenEvents(entries);
@@ -410,7 +416,10 @@ function visitJson(
 
   if (hasUsageShape(record)) {
     state.sequence += 1;
-    entries.push(recordToUsageEvent(record, nextContext, state.sequence));
+    const event = tryRecordToUsageEvent(record, nextContext, state.sequence);
+    if (event) {
+      entries.push(event);
+    }
     return;
   }
 
@@ -438,7 +447,12 @@ function recordToUsageEvent(record: Record<string, unknown>, context: Extraction
     "reasoning_output_tokens",
     "reasoningTokens",
   ]);
-  const totalTokens = numberFromFields(record, ["totalTokens", "total_tokens", "totalTokenCount", "tokens"]);
+  const totalTokens = inputTokens + outputTokens;
+
+  if (totalTokens <= 0) {
+    throw new Error("missing input/output token fields; total_tokens fallback is disabled");
+  }
+
   const timestamp = context.timestamp || new Date().toISOString();
   const model = context.model || textFromFields(record, ["model", "modelName", "model_name"]) || "unknown";
   const sessionId = context.sessionId || textFromFields(record, ["sessionId", "session_id", "conversationId", "id"]);
@@ -468,6 +482,14 @@ function recordToUsageEvent(record: Record<string, unknown>, context: Extraction
     messages: numberFromFields(record, ["messages", "messageCount", "message_count"]),
     sessionId,
   });
+}
+
+function tryRecordToUsageEvent(record: Record<string, unknown>, context: ExtractionContext, sequence: number) {
+  try {
+    return recordToUsageEvent(record, context, sequence);
+  } catch {
+    return null;
+  }
 }
 
 function enrichContext(context: ExtractionContext, record: Record<string, unknown>): ExtractionContext {

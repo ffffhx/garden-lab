@@ -106,7 +106,7 @@ NEXT_PUBLIC_TOKEN_BOARD_API_URL=http://127.0.0.1:8787 pnpm dev
 GET /api/usage/stats?range=7D&metric=tokens
 ```
 
-其中 `metric=tokens` 的主口径是总消耗 Token：`inputTokens + cachedInputTokens + outputTokens`。如果上报记录没有输入/输出明细，才使用 `totalTokens` / `total_tokens` 作为 fallback。
+其中 `metric=tokens` 的主口径是总消耗 Token：`inputTokens + outputTokens`。`cachedInputTokens` 是输入里的缓存明细，不重复相加；如果上报记录没有输入/输出明细，才使用 `totalTokens` / `total_tokens` 作为 fallback。
 
 首页 Token 用量卡片会优先读取：
 
@@ -190,7 +190,7 @@ CSV 字段兼容：
 user,displayName,team,tool,model,project,timestamp,inputTokens,cachedInputTokens,outputTokens,reasoningOutputTokens,totalTokens,messages,sessionId
 ```
 
-JSON / JSONL 支持常见字段名，比如 `input_tokens`、`output_tokens`、`total_tokens`、`cache_read_input_tokens`。排行榜会优先按 `input_tokens + cache_read_input_tokens/cache_creation_input_tokens/cached_input_tokens + output_tokens` 计算总消耗，`total_tokens` 主要用于缺少明细的兼容数据。
+JSON / JSONL 支持常见字段名，比如 `input_tokens`、`output_tokens`、`total_tokens`、`cache_read_input_tokens`。排行榜会优先按 `input_tokens + output_tokens` 计算总消耗，缓存输入字段只作为输入明细展示；`total_tokens` 主要用于缺少明细的兼容数据。
 
 ## 6. 隐私边界
 

@@ -6,6 +6,7 @@ import {
   TOKEN_LEADERBOARD_STORAGE_KEY,
   buildTokenLeaderboard,
   dedupeTokenEvents,
+  getTokenConsumptionTokens,
   parseTokenUsageImport,
   type TokenBoardMetric,
   type TokenBoardRange,
@@ -187,7 +188,7 @@ export function TokenLeaderboardApp({
           throw new Error("后端返回格式不正确");
         }
 
-        setRemoteSummary(summary);
+        setRemoteSummary(normalizeRemoteSummary(summary, metric));
         setRemoteRecordCount(typeof payload.records === "number" ? payload.records : null);
         setLoadedSource("server");
         setDataLoadState("ready");
@@ -272,7 +273,7 @@ export function TokenLeaderboardApp({
           throw new Error("后端返回格式不正确");
         }
 
-        setAccountProfile(payload.profile);
+        setAccountProfile(normalizeRemoteAccountProfile(payload.profile));
         setAccountLoadState("ready");
       })
       .catch((error) => {
@@ -319,7 +320,7 @@ export function TokenLeaderboardApp({
   const maxDailyTokens = Math.max(1, ...summary.daily.map((point) => point.tokens));
   const selectedMetricLabel = METRICS.find((item) => item.key === metric)?.label ?? "总消耗";
   const shareTotal = Math.max(0, summary.users.reduce((sum, user) => sum + getUserMetricValue(user, metric), 0));
-  const totalInputContextTokens = summary.users.reduce((sum, user) => sum + user.inputTokens + user.cachedInputTokens, 0);
+  const totalInputContextTokens = summary.users.reduce((sum, user) => sum + user.inputTokens, 0);
   const totalCachedInputTokens = summary.users.reduce((sum, user) => sum + user.cachedInputTokens, 0);
   const cacheHitRate = totalInputContextTokens > 0 ? totalCachedInputTokens / totalInputContextTokens : 0;
   const tokensPerSession = summary.totalSessions > 0 ? summary.totalTokens / summary.totalSessions : 0;
@@ -860,7 +861,7 @@ export function TokenLeaderboardApp({
                   <strong className="text-stone-900">费用是估算值</strong>：按公开模型单价计算，不等同于账号额度或实际账单。
                 </p>
                 <p>
-                  <strong className="text-stone-900">Token 主口径</strong>：总消耗 Token = 输入上下文（input + cached input）+ 输出 Token；推理 token 在个人视图单独展开，不参与主榜。
+                  <strong className="text-stone-900">Token 主口径</strong>：总消耗 Token = 输入上下文（input）+ 输出 Token；缓存输入是输入里的明细，不重复相加，推理 token 在个人视图单独展开。
                 </p>
                 <p>
                   <strong className="text-stone-900">隐私边界</strong>：只展示 token、模型、工具、项目 basename、匿名 session，不展示 prompt 文本。
@@ -903,7 +904,7 @@ function AccountUsagePanel({
   viewer: ViewerState | null;
 }) {
   const user = profile?.user ?? null;
-  const inputContextTokens = user ? user.inputTokens + user.cachedInputTokens : 0;
+  const inputContextTokens = user ? user.inputTokens : 0;
   const generatedTokens = user ? user.outputTokens + user.reasoningOutputTokens : 0;
   const cacheHitRate = inputContextTokens > 0 && user ? user.cachedInputTokens / inputContextTokens : 0;
   const messagesPerSession = user?.sessions ? user.messages / user.sessions : 0;
@@ -1052,7 +1053,7 @@ function AccountUsagePanel({
               tooltip={{
                 title: "总消耗 Token",
                 description: "排行榜主口径，按输入上下文加输出计算；日志里只有 total_tokens 时才用它兜底。",
-                formula: "Σ(input_tokens + cached_input_tokens + output_tokens)",
+                formula: "Σ(input_tokens + output_tokens)",
                 detail: `${formatNumber(dashboardProfile.records)} 条记录，共 ${formatTokens(user.tokens)}`,
               }}
             />
@@ -1063,9 +1064,9 @@ function AccountUsagePanel({
               tone="blue"
               tooltip={{
                 title: "输入上下文",
-                description: "模型阅读过的上下文吞吐量，包含普通输入和缓存命中的输入。",
-                formula: "Σ input_tokens + Σ cached_input_tokens",
-                detail: `普通输入 ${formatTokens(user.inputTokens)}，缓存 ${formatTokens(user.cachedInputTokens)}`,
+                description: "模型阅读过的上下文吞吐量；缓存命中 token 是输入里的明细，不在主口径里重复相加。",
+                formula: "Σ input_tokens",
+                detail: `输入 ${formatTokens(user.inputTokens)}，其中缓存 ${formatTokens(user.cachedInputTokens)}`,
               }}
             />
             <AccountStatCard
@@ -1136,7 +1137,7 @@ function AccountUsagePanel({
               tooltip={{
                 title: "高峰时段",
                 description: "按北京时间把记录归到 24 小时桶，取 token 累计最多的小时。",
-                formula: "argmax(hour(timestamp), Σ(input + cached input + output))",
+                formula: "argmax(hour(timestamp), Σ(input + output))",
                 detail: `当前高峰 ${dashboardProfile.topHour}`,
               }}
             />
@@ -1148,7 +1149,7 @@ function AccountUsagePanel({
               tooltip={{
                 title: "常用模型",
                 description: "当前区间内 token 累计最多的模型。",
-                formula: "argmax(model, Σ(input + cached input + output))",
+                formula: "argmax(model, Σ(input + output))",
                 detail: `${dashboardProfile.models.length} 个模型参与统计`,
               }}
             />
@@ -2127,6 +2128,38 @@ function getUserMetricValue(user: TokenLeaderboardUser, metric: TokenBoardMetric
   }
 
   return user.tokens;
+}
+
+function normalizeRemoteSummary(summary: TokenLeaderboardSummary, metric: TokenBoardMetric): TokenLeaderboardSummary {
+  const users = summary.users
+    .map((user) => ({
+      ...user,
+      tokens: getTokenConsumptionTokens(user),
+    }))
+    .sort((left, right) => getUserMetricValue(right, metric) - getUserMetricValue(left, metric) || left.displayName.localeCompare(right.displayName))
+    .map((user, index) => ({ ...user, rank: index + 1 }));
+  const totalTokens = users.reduce((sum, user) => sum + user.tokens, 0);
+
+  return {
+    ...summary,
+    totalTokens,
+    users: users.map((user) => ({
+      ...user,
+      share: totalTokens > 0 ? user.tokens / totalTokens : 0,
+    })),
+  };
+}
+
+function normalizeRemoteAccountProfile(profile: TokenAccountUsageProfile): TokenAccountUsageProfile {
+  return {
+    ...profile,
+    user: profile.user
+      ? {
+          ...profile.user,
+          tokens: getTokenConsumptionTokens(profile.user),
+        }
+      : null,
+  };
 }
 
 function formatMetricValue(value: number, metric: TokenBoardMetric) {

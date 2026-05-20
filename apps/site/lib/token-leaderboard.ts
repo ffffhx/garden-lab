@@ -318,7 +318,7 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
 export function getTokenConsumptionTokens(
   entry: Pick<TokenUsageEvent, "inputTokens" | "cachedInputTokens" | "outputTokens" | "totalTokens">
 ) {
-  const inputContextTokens = toFiniteNumber(entry.inputTokens) + toFiniteNumber(entry.cachedInputTokens);
+  const inputContextTokens = toFiniteNumber(entry.inputTokens);
   const outputTokens = toFiniteNumber(entry.outputTokens);
   const computedTokens = inputContextTokens + outputTokens;
 

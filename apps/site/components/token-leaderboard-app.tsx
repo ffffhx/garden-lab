@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 
 import {
   buildTokenLeaderboard,
@@ -34,6 +34,30 @@ const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
 const NPX_STATUS_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent status`;
+const INSTALL_GUIDE_STEPS: InstallGuideStep[] = [
+  {
+    title: "安装本机 agent",
+    eyebrow: "Step 1",
+    description: "在你平时使用 AI 编码工具的 Mac 终端里运行安装命令，首次执行会引导 GitHub 授权。",
+    command: NPX_INSTALL_COMMAND,
+    commandLabel: "安装命令",
+    note: "安装成功后会注册 macOS LaunchAgent，终端关闭也会每 5 分钟同步一次。",
+  },
+  {
+    title: "检查运行状态",
+    eyebrow: "Step 2",
+    description: "安装完成后运行 status，确认配置文件、后台任务和最近一次同步结果是否正常。",
+    command: NPX_STATUS_COMMAND,
+    commandLabel: "状态检查命令",
+    note: "如果没有看到最近同步结果，等 1-2 分钟后再检查，或确认当前系统用户就是使用 Codex 的用户。",
+  },
+  {
+    title: "回到榜单刷新",
+    eyebrow: "Step 3",
+    description: "后台任务开始同步后，回到页面刷新榜单或切换时间范围，就能看到自己的 token 记录。",
+    note: "页面只展示 token、模型、工具、项目 basename 与匿名 session，不展示 prompt 文本。",
+  },
+];
 
 export function TokenLeaderboardApp({
   initialNow,
@@ -57,6 +81,8 @@ export function TokenLeaderboardApp({
   const [accountLoadState, setAccountLoadState] = useState<AccountLoadState>("idle");
   const [accountError, setAccountError] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [installGuideOpen, setInstallGuideOpen] = useState(false);
+  const [installGuideStep, setInstallGuideStep] = useState(0);
   const normalizedApiBaseUrl = normalizeApiBaseUrl(apiBaseUrl);
 
   useEffect(() => {
@@ -252,11 +278,11 @@ export function TokenLeaderboardApp({
   const daysInRange = Math.max(1, summary.daily.length);
   const dailyAverageTokens = totalConsumptionTokens / daysInRange;
   const leaderMeta = leader ? formatMetricValue(getUserMetricValue(leader, metric), metric) : "--";
-  const topModelLabel = isDataLoading ? "Loading" : summary.topModel === "unknown" ? "--" : summary.topModel;
-  const topToolLabel = isDataLoading ? "真实数据加载中" : summary.topTool === "unknown" ? "--" : summary.topTool;
-  const recordCountLabel = isDataLoading ? "..." : formatNumber(recordCount);
+  const topModelLabel = summary.topModel === "unknown" ? "--" : summary.topModel;
+  const topToolLabel = summary.topTool === "unknown" ? "--" : summary.topTool;
+  const recordCountLabel = formatNumber(recordCount);
   const rangeRecordCount = summary.users.reduce((sum, user) => sum + user.records, 0);
-  const rangeRecordCountLabel = isDataLoading ? "..." : formatNumber(rangeRecordCount);
+  const rangeRecordCountLabel = formatNumber(rangeRecordCount);
   const insightText = isDataLoading
     ? "正在生成自动洞察"
     : buildLeaderboardInsight(summary, cacheHitRate);
@@ -278,8 +304,38 @@ export function TokenLeaderboardApp({
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    if (!installGuideOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setInstallGuideOpen(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [installGuideOpen]);
+
   function showToast(message: string, tone: ToastTone = "success") {
     setToast({ id: Date.now(), message, tone });
+  }
+
+  function openInstallGuide() {
+    setInstallGuideStep(0);
+    setInstallGuideOpen(true);
+  }
+
+  function closeInstallGuide() {
+    setInstallGuideOpen(false);
   }
 
   function loginWithGitHub() {
@@ -292,6 +348,11 @@ export function TokenLeaderboardApp({
 
   function logoutGitHub() {
     if (!normalizedApiBaseUrl) {
+      return;
+    }
+
+    const confirmed = window.confirm("确认退出当前 GitHub 账号吗？退出后将暂时看不到个人 Token 消耗。");
+    if (!confirmed) {
       return;
     }
 
@@ -323,8 +384,8 @@ export function TokenLeaderboardApp({
     <section id="token-leaderboard-rankings" className="min-w-0 overflow-hidden rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] shadow-[0_20px_70px_-60px_rgba(28,25,23,0.65)]">
       <PanelHeader
         title="排行榜"
-        meta={isDataLoading ? "loading" : `${summary.users.length} 位用户 · 当前区间 ${rangeRecordCountLabel} 条`}
-        action={isDataLoading ? "Loading" : `按${selectedMetricLabel}降序`}
+        meta={isDataLoading ? <LoadingInline label="loading" /> : `${summary.users.length} 位用户 · 当前区间 ${rangeRecordCountLabel} 条`}
+        action={isDataLoading ? <LoadingInline label="Loading" /> : `按${selectedMetricLabel}降序`}
       />
       <div className="grid gap-3 p-3 sm:hidden">
         {isDataLoading ? (
@@ -370,7 +431,9 @@ export function TokenLeaderboardApp({
     <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#f5efe4] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold">{selectedMetricLabel}份额</h2>
-        <span className="font-mono text-xs text-stone-500">{isDataLoading ? "Loading" : `${topUsers.length} 人`}</span>
+        <span className="font-mono text-xs text-stone-500">
+          {isDataLoading ? <LoadingInline label="Loading" /> : `${topUsers.length} 人`}
+        </span>
       </div>
       <div className="mt-4 space-y-3">
         {isDataLoading ? <ShareLoadingRows /> : topUsers.length ? topUsers.map((user) => (
@@ -387,7 +450,9 @@ export function TokenLeaderboardApp({
           <h2 className="text-base font-semibold">加入榜单</h2>
           <p className="mt-1 text-xs text-stone-500">安装 agent 后从本机采集 token 记录并自动上报。</p>
         </div>
-        <span className="rounded-full bg-stone-950 px-2.5 py-1 font-mono text-xs text-white">{rangeRecordCountLabel}</span>
+        <span className="rounded-full bg-stone-950 px-2.5 py-1 font-mono text-xs text-white">
+          {isDataLoading ? <LoadingInline label="同步中" tone="light" /> : rangeRecordCountLabel}
+        </span>
       </div>
       <div className="mt-4 space-y-3">
         {normalizedApiBaseUrl ? (
@@ -411,19 +476,19 @@ export function TokenLeaderboardApp({
         <div className="grid gap-2">
           <button
             type="button"
-            onClick={() => void copyCommand(NPX_INSTALL_COMMAND, "安装命令")}
+            onClick={openInstallGuide}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#11130f] px-3 text-sm font-semibold text-white transition hover:bg-[#26745e]"
           >
-            <Icon name="upload" />
-            复制安装命令
+            <Icon name="guide" />
+            使用安装指南
           </button>
           <button
             type="button"
-            onClick={() => void copyCommand(NPX_STATUS_COMMAND, "状态命令")}
+            onClick={() => void copyCommand(NPX_STATUS_COMMAND, "状态检查命令")}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-stone-950/15 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:border-[#26745e]/40 hover:bg-[#eef7f2]"
           >
             <Icon name="refresh" />
-            复制 status
+            复制状态检查命令
           </button>
           {!viewer?.authenticated && normalizedApiBaseUrl ? (
             <button
@@ -437,48 +502,8 @@ export function TokenLeaderboardApp({
           ) : null}
         </div>
         <p className="min-h-5 rounded-lg bg-[#f5efe4] px-3 py-2 text-xs text-stone-600" aria-live="polite">
-          {statusMessage}
+          {isDataLoading ? <LoadingInline label={statusMessage} /> : statusMessage}
         </p>
-        <div className="rounded-xl border border-stone-950/10 bg-[#fbf7ef] p-3">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-stone-800">上报链路</p>
-            <span className="rounded-full border border-stone-950/10 bg-white px-2 py-0.5 font-mono text-[11px] text-stone-500">
-              agent only
-            </span>
-          </div>
-          <div className="mt-3 rounded-lg border border-[#26745e]/18 bg-white/70 p-2 text-xs text-[#163d33]">
-            <p className="font-semibold text-[#26745e]">ingest endpoint</p>
-            <p className="mt-1 break-all font-mono leading-5">
-              {normalizedApiBaseUrl ? `${normalizedApiBaseUrl}/api/usage/ingest` : "Token Board API 未配置"}
-            </p>
-            <p className="mt-2 font-semibold text-[#26745e]">agent install</p>
-            <code className="mt-1 block break-all font-mono text-[11px] leading-5">{NPX_INSTALL_COMMAND}</code>
-            <p className="mt-2 break-all text-[11px] text-[#26745e]">
-              status: <code className="font-mono">{NPX_STATUS_COMMAND}</code>
-            </p>
-          </div>
-          <div className="mt-3">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">上报字段</h3>
-            <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-stone-600">
-              {[
-                "user",
-                "timestamp",
-                "model",
-                "tool",
-                "inputTokens",
-                "outputTokens",
-                "cachedInputTokens",
-                "reasoningOutputTokens",
-                "totalTokens",
-                "sessionId",
-              ].map((field) => (
-                <code key={field} className="truncate rounded-md border border-stone-950/10 bg-white px-2 py-1">
-                  {field}
-                </code>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
@@ -496,7 +521,7 @@ export function TokenLeaderboardApp({
                     Open Token Board
                   </span>
                   <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs font-semibold text-white/78">
-                    {sourceLabel}
+                    {isDataLoading ? <LoadingInline label={sourceLabel} tone="light" /> : sourceLabel}
                   </span>
                   <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 font-mono text-xs text-white/70">
                     {ROLLING_RANGE_LABELS[range]}
@@ -507,7 +532,7 @@ export function TokenLeaderboardApp({
                 </h1>
                 <p className="mt-2 text-sm leading-6 text-white/68">
                   {isDataLoading
-                    ? "正在加载真实用户数据"
+                    ? <LoadingInline label="正在加载真实用户数据" tone="light" />
                     : `${formatShortDate(summary.startAt)} - ${formatShortDate(summary.endAt)} · Asia/Shanghai`}
                 </p>
               </div>
@@ -530,11 +555,11 @@ export function TokenLeaderboardApp({
                 <div className="grid w-full gap-2 sm:grid-cols-2 xl:max-w-[32rem]">
                   <button
                     type="button"
-                    onClick={() => void copyCommand(NPX_INSTALL_COMMAND, "安装命令")}
+                    onClick={openInstallGuide}
                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#f8f1e5] px-4 text-sm font-semibold text-[#11130f] transition hover:bg-[#ffe2a8]"
                   >
-                    <Icon name="upload" />
-                    复制安装命令
+                    <Icon name="guide" />
+                    使用安装指南
                   </button>
                   {!viewer?.authenticated && normalizedApiBaseUrl ? (
                     <button
@@ -562,15 +587,19 @@ export function TokenLeaderboardApp({
             <div className="grid grid-cols-3 gap-2 border-t border-white/10 pt-4 sm:gap-3">
               <HeroSignal
                 label="当前榜首"
-                value={isDataLoading ? "Loading" : leader?.displayName ?? "--"}
-                meta={isDataLoading ? "真实数据加载中" : leaderMeta}
+                value={isDataLoading ? <LoadingInline label="Loading" tone="light" spinnerClassName="size-5" /> : leader?.displayName ?? "--"}
+                meta={isDataLoading ? <LoadingInline label="真实数据加载中" tone="light" /> : leaderMeta}
               />
               <HeroSignal
                 label="当前区间记录"
-                value={rangeRecordCountLabel}
-                meta={isDataLoading ? "Loading" : `${ROLLING_RANGE_LABELS[range]}`}
+                value={isDataLoading ? <LoadingInline label="Loading" tone="light" spinnerClassName="size-5" /> : rangeRecordCountLabel}
+                meta={isDataLoading ? <LoadingInline label="Loading" tone="light" /> : `${ROLLING_RANGE_LABELS[range]}`}
               />
-              <HeroSignal label="高频组合" value={topModelLabel} meta={topToolLabel} />
+              <HeroSignal
+                label="高频组合"
+                value={isDataLoading ? <LoadingInline label="Loading" tone="light" spinnerClassName="size-5" /> : topModelLabel}
+                meta={isDataLoading ? <LoadingInline label="真实数据加载中" tone="light" /> : topToolLabel}
+              />
             </div>
             <TrustEvidenceBar
               apiBaseUrl={normalizedApiBaseUrl}
@@ -594,26 +623,26 @@ export function TokenLeaderboardApp({
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <StatTile
                 label="总消耗 Token"
-                value={isDataLoading ? "Loading" : formatTokens(totalConsumptionTokens)}
-                meta={isDataLoading ? "真实数据加载中" : "输入上下文 + 输出 Token"}
+                value={isDataLoading ? <LoadingInline label="Loading" tone="light" spinnerClassName="size-6" /> : formatTokens(totalConsumptionTokens)}
+                meta={isDataLoading ? <LoadingInline label="真实数据加载中" tone="light" /> : "输入上下文 + 输出 Token"}
                 tone="ink"
               />
               <StatTile
                 label="活跃用户"
-                value={isDataLoading ? "Loading" : formatNumber(summary.activeUsers)}
-                meta={isDataLoading ? "真实数据加载中" : `${summary.activeUsers} 位参与`}
+                value={isDataLoading ? <LoadingInline label="Loading" spinnerClassName="size-6" /> : formatNumber(summary.activeUsers)}
+                meta={isDataLoading ? <LoadingInline label="真实数据加载中" /> : `${summary.activeUsers} 位参与`}
                 tone="mint"
               />
               <StatTile
                 label="会话"
-                value={isDataLoading ? "Loading" : formatNumber(summary.totalSessions)}
-                meta={isDataLoading ? "真实数据加载中" : "Sessions"}
+                value={isDataLoading ? <LoadingInline label="Loading" spinnerClassName="size-6" /> : formatNumber(summary.totalSessions)}
+                meta={isDataLoading ? <LoadingInline label="真实数据加载中" /> : "Sessions"}
                 tone="blue"
               />
               <StatTile
                 label="估算费用"
-                value={isDataLoading ? "Loading" : formatUsd(summary.totalCostUsd)}
-                meta={isDataLoading ? "真实数据加载中" : "非实际账单"}
+                value={isDataLoading ? <LoadingInline label="Loading" spinnerClassName="size-6" /> : formatUsd(summary.totalCostUsd)}
+                meta={isDataLoading ? <LoadingInline label="真实数据加载中" /> : "非实际账单"}
                 tone="gold"
               />
             </div>
@@ -630,7 +659,9 @@ export function TokenLeaderboardApp({
               <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-base font-semibold">Token 趋势</h2>
-                  <p className="font-mono text-xs text-stone-500">峰值 {isDataLoading ? "Loading" : formatTokens(maxDailyTokens)}</p>
+                  <p className="font-mono text-xs text-stone-500">
+                    峰值 {isDataLoading ? <LoadingInline label="Loading" /> : formatTokens(maxDailyTokens)}
+                  </p>
                 </div>
                 <div
                   className="mt-4 grid h-56 grid-cols-[repeat(auto-fit,minmax(8px,1fr))] items-end gap-1 rounded-xl border border-stone-950/8 bg-[linear-gradient(180deg,rgba(17,19,15,0.04),transparent)] px-3 pb-3 pt-5"
@@ -649,8 +680,8 @@ export function TokenLeaderboardApp({
                   ))}
                 </div>
                 <div className="mt-2 flex justify-between font-mono text-xs text-stone-500">
-                  <span>{isDataLoading ? "--" : summary.daily[0]?.date.slice(5) ?? "--"}</span>
-                  <span>{isDataLoading ? "--" : summary.daily.at(-1)?.date.slice(5) ?? "--"}</span>
+                  <span>{isDataLoading ? <LoadingSpinner className="size-3" /> : summary.daily[0]?.date.slice(5) ?? "--"}</span>
+                  <span>{isDataLoading ? <LoadingSpinner className="size-3" /> : summary.daily.at(-1)?.date.slice(5) ?? "--"}</span>
                 </div>
               </section>
 
@@ -682,10 +713,10 @@ export function TokenLeaderboardApp({
                   <strong className="text-stone-900">时间窗口</strong>：{ROLLING_RANGE_LABELS[range]}，展示时间按 Asia/Shanghai。
                 </p>
                 <p>
-                  <strong className="text-stone-900">记录数</strong>：全库/可用记录 {recordCountLabel} 条；当前区间参与排行 {rangeRecordCountLabel} 条。
+                  <strong className="text-stone-900">记录数</strong>：全库/可用记录 {isDataLoading ? <LoadingInline label="加载中" /> : recordCountLabel} 条；当前区间参与排行 {isDataLoading ? <LoadingInline label="加载中" /> : rangeRecordCountLabel} 条。
                 </p>
                 <p>
-                  <strong className="text-stone-900">更新时间</strong>：{isDataLoading ? "加载中" : formatShortDate(summary.endAt)}。
+                  <strong className="text-stone-900">更新时间</strong>：{isDataLoading ? <LoadingInline label="加载中" /> : formatShortDate(summary.endAt)}。
                 </p>
                 <p>
                   <strong className="text-stone-900">费用是估算值</strong>：按公开模型单价计算，不等同于账号额度或实际账单。
@@ -711,6 +742,16 @@ export function TokenLeaderboardApp({
           viewer={viewer}
         />
       </div>
+      <InstallGuideDialog
+        canLogin={!viewer?.authenticated && Boolean(normalizedApiBaseUrl)}
+        onClose={closeInstallGuide}
+        onCopy={(command, label) => void copyCommand(command, label)}
+        onLogin={loginWithGitHub}
+        onRefresh={retryDataLoad}
+        onStepChange={setInstallGuideStep}
+        open={installGuideOpen}
+        stepIndex={installGuideStep}
+      />
       <Toast toast={toast} />
     </main>
   );
@@ -1034,10 +1075,14 @@ function AccountEmptyState({ title, description }: { title: string; description:
 function AccountLoadingState() {
   return (
     <div className="space-y-5 px-5 py-5 sm:px-6">
-      <div className="h-24 rounded-2xl border border-white/10 bg-white/6 motion-safe:animate-pulse" />
+      <div className="flex min-h-24 items-center justify-center rounded-2xl border border-white/10 bg-white/6">
+        <LoadingInline label="正在加载个人消耗" tone="light" spinnerClassName="size-7" />
+      </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {Array.from({ length: 10 }, (_, index) => (
-          <div key={index} className="h-28 rounded-xl border border-white/10 bg-white/6 motion-safe:animate-pulse" />
+          <div key={index} className="flex h-28 items-center justify-center rounded-xl border border-white/10 bg-white/6">
+            <LoadingSpinner className="size-5" tone="light" />
+          </div>
         ))}
       </div>
     </div>
@@ -1285,6 +1330,220 @@ function Toast({ toast }: { toast: ToastState | null }) {
   );
 }
 
+function InstallGuideDialog({
+  canLogin,
+  onClose,
+  onCopy,
+  onLogin,
+  onRefresh,
+  onStepChange,
+  open,
+  stepIndex,
+}: {
+  canLogin: boolean;
+  onClose: () => void;
+  onCopy: (command: string, label: string) => void;
+  onLogin: () => void;
+  onRefresh: () => void;
+  onStepChange: (step: number) => void;
+  open: boolean;
+  stepIndex: number;
+}) {
+  if (!open) {
+    return null;
+  }
+
+  const step = INSTALL_GUIDE_STEPS[stepIndex] ?? INSTALL_GUIDE_STEPS[0];
+  const isFirstStep = stepIndex === 0;
+  const isLastStep = stepIndex === INSTALL_GUIDE_STEPS.length - 1;
+
+  function completeGuide() {
+    onClose();
+    onRefresh();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-[#11130f]/45 px-4 py-6 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="token-board-install-guide-title"
+        className="w-[min(52rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border-2 border-[#26745e]/55 bg-[#fbf7ef] shadow-[0_34px_120px_-48px_rgba(17,19,15,0.85)]"
+      >
+        <div className="border-b border-stone-950/8 px-5 pb-4 pt-5 sm:px-7">
+          <div className="flex items-center gap-2">
+            <div className="grid flex-1 grid-cols-3 gap-2">
+              {INSTALL_GUIDE_STEPS.map((item, index) => (
+                <button
+                  key={item.title}
+                  type="button"
+                  onClick={() => onStepChange(index)}
+                  className={`h-1.5 rounded-full transition ${
+                    index <= stepIndex ? "bg-[#26745e]" : "bg-stone-950/8 hover:bg-stone-950/16"
+                  }`}
+                  aria-label={`查看${item.title}`}
+                  aria-current={index === stepIndex ? "step" : undefined}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="ml-3 inline-flex size-9 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-950/8 hover:text-stone-900"
+              aria-label="关闭安装指南"
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+        </div>
+
+        <div className="px-5 py-6 sm:px-7 sm:py-7">
+          <div className="grid gap-4 sm:grid-cols-[3.5rem_minmax(0,1fr)]">
+            <div className="flex size-12 items-center justify-center rounded-2xl border border-[#26745e]/25 bg-[#eaf5ef] text-[#26745e] shadow-[0_16px_42px_-28px_rgba(38,116,94,0.8)]">
+              <Icon name={step.command ? "terminal" : "refresh"} />
+            </div>
+            <div className="min-w-0">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[#26745e]">
+                {step.eyebrow} / {INSTALL_GUIDE_STEPS.length}
+              </p>
+              <h2 id="token-board-install-guide-title" className="mt-2 text-2xl font-semibold leading-tight text-stone-950 sm:text-3xl">
+                {step.title}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-stone-600 sm:text-base">
+                {step.description}
+              </p>
+            </div>
+          </div>
+
+          {step.command ? (
+            <div className="mt-5 overflow-hidden rounded-2xl bg-[#111827] text-white shadow-[0_24px_70px_-48px_rgba(17,24,39,0.9)]">
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+                <span className="font-mono text-xs text-white/52">{step.commandLabel}</span>
+                <button
+                  type="button"
+                  onClick={() => onCopy(step.command!, step.commandLabel ?? "命令")}
+                  className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/16"
+                >
+                  <Icon name="download" />
+                  复制命令
+                </button>
+              </div>
+              <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-all px-4 py-4 font-mono text-sm leading-7 text-[#f8f1e5] sm:text-base">
+                <span className="mr-3 select-none text-[#7be3a0]">&gt;_</span>
+                {step.command}
+              </pre>
+            </div>
+          ) : (
+            <div className="mt-5 rounded-2xl border border-[#26745e]/20 bg-[#eaf5ef] p-4 text-sm leading-6 text-[#163d33]">
+              <p className="font-semibold text-[#26745e]">完成后你可以：</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {["刷新榜单", "切换时间范围", "查看个人消耗"].map((item) => (
+                  <span key={item} className="rounded-xl border border-white/70 bg-white/70 px-3 py-2 text-center font-semibold">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {canLogin && stepIndex === 0 ? (
+            <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-stone-950/10 bg-white/70 p-3 text-sm text-stone-600 sm:flex-row sm:items-center sm:justify-between">
+              <p>还没登录页面的话，可以先完成 GitHub 登录；安装命令也会在终端里引导授权。</p>
+              <button
+                type="button"
+                onClick={onLogin}
+                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-stone-950/12 bg-white px-3 font-semibold text-stone-800 transition hover:border-[#26745e]/35 hover:bg-[#eef7f2]"
+              >
+                <Icon name="github" />
+                GitHub 登录
+              </button>
+            </div>
+          ) : null}
+
+          <p className="mt-4 rounded-2xl bg-white/70 px-4 py-3 text-sm leading-6 text-stone-600">
+            {step.note}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 border-t border-stone-950/8 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold text-stone-500 transition hover:bg-stone-950/6 hover:text-stone-900"
+          >
+            跳过
+          </button>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => onStepChange(Math.max(0, stepIndex - 1))}
+              disabled={isFirstStep}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-stone-950/12 bg-white px-5 text-sm font-semibold text-stone-800 transition hover:border-[#26745e]/35 hover:bg-[#eef7f2] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-stone-950/12 disabled:hover:bg-white"
+            >
+              上一步
+            </button>
+            <button
+              type="button"
+              onClick={isLastStep ? completeGuide : () => onStepChange(Math.min(INSTALL_GUIDE_STEPS.length - 1, stepIndex + 1))}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#26745e] px-5 text-sm font-semibold text-white shadow-[0_18px_45px_-28px_rgba(38,116,94,0.9)] transition hover:bg-[#1f604f]"
+            >
+              {isLastStep ? "完成并刷新" : "下一步"}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+type LoadingTone = "dark" | "light";
+
+function LoadingSpinner({
+  className = "size-4",
+  tone = "dark",
+}: {
+  className?: string;
+  tone?: LoadingTone;
+}) {
+  const tones = {
+    dark: "border-stone-950/15 border-t-[#26745e]",
+    light: "border-white/18 border-t-[#f1c45c]",
+  };
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-block shrink-0 rounded-full border-2 motion-safe:animate-spin ${tones[tone]} ${className}`}
+    />
+  );
+}
+
+function LoadingInline({
+  className = "",
+  label,
+  spinnerClassName = "size-3.5",
+  tone = "dark",
+}: {
+  className?: string;
+  label: string;
+  spinnerClassName?: string;
+  tone?: LoadingTone;
+}) {
+  return (
+    <span role="status" className={`inline-flex min-w-0 items-center gap-1.5 align-middle ${className}`}>
+      <LoadingSpinner className={spinnerClassName} tone={tone} />
+      <span className="truncate">{label}</span>
+    </span>
+  );
+}
+
 function InsightStrip({ loading, text }: { loading: boolean; text: string }) {
   return (
     <section className="rounded-[1.15rem] border border-stone-950/10 bg-[#fffdfa] px-4 py-3 shadow-[0_18px_55px_-52px_rgba(28,25,23,0.58)]">
@@ -1293,7 +1552,7 @@ function InsightStrip({ loading, text }: { loading: boolean; text: string }) {
           自动洞察
         </span>
         <p className="text-sm leading-6 text-stone-700">
-          {loading ? "真实数据加载后会生成榜首、峰值与效率摘要。" : text}
+          {loading ? <LoadingInline label="真实数据加载后会生成榜首、峰值与效率摘要。" /> : text}
         </p>
       </div>
     </section>
@@ -1319,25 +1578,33 @@ function TrustEvidenceBar({
   sourceLabel: string;
   summary: TokenLeaderboardSummary;
 }) {
-  const evidence = loading
-    ? ["正在连接后端", "不展示示例排行榜", "加载超过 10 秒会提示重试"]
+  const evidence: Array<{ label: string; loading?: boolean }> = loading
+    ? [
+        { label: "正在连接后端", loading: true },
+        { label: "不展示示例排行榜", loading: true },
+        { label: "加载超过 10 秒会提示重试", loading: true },
+      ]
     : error
-      ? [`读取失败：${error}`, "可重试或检查 agent 上报", "不展示伪数据"]
+      ? [
+          { label: `读取失败：${error}` },
+          { label: "可重试或检查 agent 上报" },
+          { label: "不展示伪数据" },
+        ]
       : [
-          `更新时间 ${formatShortDate(summary.endAt)}`,
-          `数据源 ${sourceLabel}`,
-          `全库/可用 ${formatNumber(recordCount)}`,
-          `当前${range} ${formatNumber(rangeRecordCount)}`,
-          `活跃用户 ${formatNumber(summary.activeUsers)}`,
-          `${ROLLING_RANGE_LABELS[range]} · Asia/Shanghai`,
+          { label: `更新时间 ${formatShortDate(summary.endAt)}` },
+          { label: `数据源 ${sourceLabel}` },
+          { label: `全库/可用 ${formatNumber(recordCount)}` },
+          { label: `当前${range} ${formatNumber(rangeRecordCount)}` },
+          { label: `活跃用户 ${formatNumber(summary.activeUsers)}` },
+          { label: `${ROLLING_RANGE_LABELS[range]} · Asia/Shanghai` },
         ];
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/7 p-3">
       <div className="flex flex-wrap gap-2">
         {evidence.map((item) => (
-          <span key={item} className="rounded-full border border-white/10 bg-black/16 px-2.5 py-1 font-mono text-[11px] text-white/70">
-            {item}
+          <span key={item.label} className="rounded-full border border-white/10 bg-black/16 px-2.5 py-1 font-mono text-[11px] text-white/70">
+            {item.loading ? <LoadingInline label={item.label} tone="light" /> : item.label}
           </span>
         ))}
       </div>
@@ -1374,8 +1641,12 @@ function EfficiencyStrip({
       {items.map((item) => (
         <div key={item.label} className="rounded-xl border border-stone-950/8 bg-[#f8f2e8] px-3 py-3">
           <p className="text-xs font-semibold text-stone-500">{item.label}</p>
-          <p className="mt-2 font-mono text-xl font-semibold text-stone-950">{loading ? "Loading" : item.value}</p>
-          <p className="mt-1 truncate text-xs text-stone-500">{loading ? "真实数据加载中" : item.meta}</p>
+          <p className="mt-2 font-mono text-xl font-semibold text-stone-950">
+            {loading ? <LoadingInline label="Loading" spinnerClassName="size-5" /> : item.value}
+          </p>
+          <p className="mt-1 truncate text-xs text-stone-500">
+            {loading ? <LoadingInline label="真实数据加载中" /> : item.meta}
+          </p>
         </div>
       ))}
     </section>
@@ -1427,8 +1698,8 @@ function StatTile({
   tone,
 }: {
   label: string;
-  value: string;
-  meta: string;
+  value: ReactNode;
+  meta: ReactNode;
   tone: "ink" | "mint" | "blue" | "gold";
 }) {
   const tones = {
@@ -1444,23 +1715,23 @@ function StatTile({
         <p className="text-xs font-semibold uppercase tracking-[0.12em] opacity-65">{label}</p>
         <span className="mt-0.5 size-2 rounded-full bg-current opacity-55" />
       </div>
-      <p className="mt-5 font-mono text-3xl font-semibold leading-none sm:text-4xl">{value}</p>
-      <p className="mt-3 truncate text-xs opacity-60">{meta}</p>
+      <p className="mt-5 font-mono text-3xl font-semibold leading-none sm:text-4xl" title={typeof value === "string" ? value : undefined}>{value}</p>
+      <p className="mt-3 truncate text-xs opacity-60" title={typeof meta === "string" ? meta : undefined}>{meta}</p>
     </div>
   );
 }
 
-function HeroSignal({ label, value, meta }: { label: string; value: string; meta: string }) {
+function HeroSignal({ label, value, meta }: { label: string; value: ReactNode; meta: ReactNode }) {
   return (
     <div className="min-w-0 border-l border-white/12 pl-3 sm:pl-4">
       <p className="truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-white/42 sm:text-xs sm:tracking-[0.14em]">{label}</p>
-      <p className="mt-2 truncate text-base font-semibold text-white sm:text-xl">{value}</p>
-      <p className="mt-1 truncate font-mono text-[11px] text-[#f1c45c] sm:text-xs">{meta}</p>
+      <p className="mt-2 truncate text-base font-semibold text-white sm:text-xl" title={typeof value === "string" ? value : undefined}>{value}</p>
+      <p className="mt-1 truncate font-mono text-[11px] text-[#f1c45c] sm:text-xs" title={typeof meta === "string" ? meta : undefined}>{meta}</p>
     </div>
   );
 }
 
-function PanelHeader({ title, meta, action }: { title: string; meta: string; action: string }) {
+function PanelHeader({ title, meta, action }: { title: string; meta: ReactNode; action: ReactNode }) {
   return (
     <div className="flex flex-col gap-2 border-b border-stone-950/8 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
@@ -1612,7 +1883,7 @@ function LeaderboardRow({ user }: { user: TokenLeaderboardUser }) {
 function MobileLeaderboardLoading({ slow }: { slow: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-stone-950/8 bg-[#f8f2e8] p-6 text-center">
-      <span className="size-7 rounded-full border-2 border-stone-950/15 border-t-[#26745e] motion-safe:animate-spin" />
+      <LoadingSpinner className="size-7" />
       <div>
         <p className="font-semibold text-stone-950">{slow ? "数据加载较慢" : "Loading 真实用户数据"}</p>
         <p className="mt-1 text-xs text-stone-500">
@@ -1628,7 +1899,7 @@ function LeaderboardLoadingRow({ slow }: { slow: boolean }) {
     <tr>
       <td colSpan={7} className="px-4 py-12">
         <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-stone-950/8 bg-[#f8f2e8] p-6 text-center">
-          <span className="size-7 rounded-full border-2 border-stone-950/15 border-t-[#26745e] motion-safe:animate-spin" />
+          <LoadingSpinner className="size-7" />
           <div>
             <p className="font-semibold text-stone-950">{slow ? "数据加载较慢" : "Loading 真实用户数据"}</p>
             <p className="mt-1 text-xs text-stone-500">
@@ -1715,12 +1986,16 @@ function ShareLoadingRows() {
     <>
       {Array.from({ length: 5 }, (_, index) => (
         <div key={index} className="grid grid-cols-[2.25rem_minmax(0,1fr)_5rem] items-center gap-3">
-          <span className="size-9 rounded-xl bg-white/80 motion-safe:animate-pulse" />
+          <span className="flex size-9 items-center justify-center rounded-xl bg-white/80">
+            <LoadingSpinner className="size-4" />
+          </span>
           <div className="space-y-2">
-            <div className="h-3 w-2/3 rounded-full bg-white/85 motion-safe:animate-pulse" />
-            <div className="h-2 rounded-full bg-white/75 motion-safe:animate-pulse" />
+            <div className="h-3 w-2/3 rounded-full bg-white/85" />
+            <div className="h-2 rounded-full bg-white/75" />
           </div>
-          <div className="h-3 rounded-full bg-white/80 motion-safe:animate-pulse" />
+          <div className="flex justify-end">
+            <LoadingSpinner className="size-3.5" />
+          </div>
         </div>
       ))}
     </>
@@ -1728,19 +2003,10 @@ function ShareLoadingRows() {
 }
 
 function TrendLoadingBars() {
-  const heights = [28, 42, 35, 58, 46, 64, 38, 52, 72, 44, 60, 50, 68, 40, 56, 76, 48, 62, 54, 70, 45, 59, 66, 51];
-
   return (
-    <>
-      {heights.map((height, index) => (
-        <div key={index} className="flex h-full items-end">
-          <div
-            className="w-full rounded-t-[3px] bg-stone-950/12 motion-safe:animate-pulse"
-            style={{ height: `${height}%` }}
-          />
-        </div>
-      ))}
-    </>
+    <div className="col-span-full flex h-full items-center justify-center">
+      <LoadingInline label="趋势加载中" spinnerClassName="size-8" />
+    </div>
   );
 }
 
@@ -1761,7 +2027,9 @@ function BreakdownPanel({
     <section className="rounded-[1.25rem] border border-stone-950/10 bg-[#fffdfa] p-4 shadow-[0_18px_65px_-58px_rgba(28,25,23,0.6)]">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold">{title}</h2>
-        <span className="font-mono text-xs text-stone-500">{loading ? "Loading" : items.length}</span>
+        <span className="font-mono text-xs text-stone-500">
+          {loading ? <LoadingInline label="Loading" /> : items.length}
+        </span>
       </div>
       <div className="mt-4 space-y-3">
         {loading ? <BreakdownLoadingRows /> : items.length ? items.slice(0, 8).map((item) => (
@@ -1788,13 +2056,18 @@ function BreakdownLoadingRows() {
     <>
       {Array.from({ length: 4 }, (_, index) => (
         <div key={index} className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <div className="h-3 w-1/2 rounded-full bg-stone-950/10 motion-safe:animate-pulse" />
-            <div className="h-3 w-14 rounded-full bg-stone-950/10 motion-safe:animate-pulse" />
+          <div className="grid grid-cols-[1rem_minmax(0,1fr)_4.5rem] items-center gap-3">
+            <LoadingSpinner className="size-3.5" />
+            <div className="h-3 w-1/2 rounded-full bg-stone-950/10" />
+            <div className="flex justify-end">
+              <LoadingSpinner className="size-3.5" />
+            </div>
           </div>
           <div className="grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-3">
-            <div className="h-2 rounded-full bg-stone-950/10 motion-safe:animate-pulse" />
-            <div className="h-3 rounded-full bg-stone-950/10 motion-safe:animate-pulse" />
+            <div className="h-2 rounded-full bg-stone-950/10" />
+            <div className="flex justify-end">
+              <LoadingSpinner className="size-3" />
+            </div>
           </div>
         </div>
       ))}
@@ -1815,14 +2088,21 @@ function GitHubAuthControl({
 
   if (viewer.authenticated) {
     return (
-      <button
-        type="button"
-        onClick={onLogout}
-        className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 text-sm font-semibold text-white transition hover:bg-white/15 xl:w-auto"
-      >
-        <Icon name="github" />
-        @{viewer.user?.githubLogin || viewer.user?.displayName || "GitHub"}
-      </button>
+      <div className="flex w-full items-center gap-2 xl:w-auto">
+        <span className="inline-flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 text-sm font-semibold text-white xl:flex-none">
+          <Icon name="github" />
+          <span className="truncate">@{viewer.user?.githubLogin || viewer.user?.displayName || "GitHub"}</span>
+        </span>
+        <button
+          type="button"
+          onClick={onLogout}
+          className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#ff9b7c]/25 bg-[#ff9b7c]/10 px-3 text-sm font-semibold text-[#ffd4c6] transition hover:border-[#ff9b7c]/45 hover:bg-[#ff9b7c]/18"
+          title="退出 GitHub 登录"
+        >
+          <Icon name="logout" />
+          退出
+        </button>
+      </div>
     );
   }
 
@@ -1848,13 +2128,17 @@ function Avatar({ name, index }: { name: string; index: number }) {
   );
 }
 
-function Icon({ name }: { name: "download" | "file" | "github" | "refresh" | "upload" }) {
+function Icon({ name }: { name: "close" | "download" | "file" | "github" | "guide" | "logout" | "refresh" | "terminal" | "upload" }) {
   const paths = {
+    close: "M18 6 6 18M6 6l12 12",
     download: "M12 3v10m0 0 4-4m-4 4-4-4M5 17v2h14v-2",
     file: "M7 3h7l4 4v14H7V3Zm7 0v5h5",
     github:
       "M15 22v-3.8a3.3 3.3 0 0 0-.9-2.6c3-.3 6.1-1.5 6.1-6.7a5.2 5.2 0 0 0-1.4-3.6 4.8 4.8 0 0 0-.1-3.6s-1.1-.4-3.7 1.4a12.7 12.7 0 0 0-6.7 0C5.7 1.3 4.6 1.7 4.6 1.7a4.8 4.8 0 0 0-.1 3.6A5.2 5.2 0 0 0 3.1 9c0 5.2 3.1 6.4 6.1 6.7a3 3 0 0 0-.8 1.9c-.8.4-2.8 1-4-1.1 0 0-.7-1.3-2.1-1.4 0 0-1.3 0-.1.8 0 0 .9.4 1.5 2 0 0 .8 2.4 4.6 1.6V22",
+    guide: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15ZM8 6h8M8 10h6",
+    logout: "M10 17l5-5-5-5M15 12H3M21 19V5a2 2 0 0 0-2-2h-6M21 19a2 2 0 0 1-2 2h-6",
     refresh: "M4 12a8 8 0 0 1 13.5-5.8M20 12a8 8 0 0 1-13.5 5.8M17 3v4h4M7 21v-4H3",
+    terminal: "M4 17l6-5-6-5M12 19h8",
     upload: "M12 21V11m0 0-4 4m4-4 4 4M5 7V5h14v2",
   };
 
@@ -2109,6 +2393,15 @@ type RemoteStatsResponse =
 
 type AccountUsageResponse = {
   profile?: TokenAccountUsageProfile;
+};
+
+type InstallGuideStep = {
+  command?: string;
+  commandLabel?: string;
+  description: string;
+  eyebrow: string;
+  note: string;
+  title: string;
 };
 
 function normalizeApiBaseUrl(value: string | undefined) {

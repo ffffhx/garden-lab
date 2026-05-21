@@ -109,7 +109,7 @@ function usePrivateFeatureAccessState(enabled: boolean): PrivateFeatureAccess {
   const allowLocalPreview = useMemo(isLocalPrivateFeaturePreview, []);
   const [access, setAccess] = useState<PrivateFeatureAccess>(() => ({
     apiBaseUrl,
-    status: apiBaseUrl ? "loading" : allowLocalPreview ? "allowed" : "denied",
+    status: allowLocalPreview ? "allowed" : apiBaseUrl ? "loading" : "denied",
     viewer: allowLocalPreview ? createLocalPreviewViewer() : null,
   }));
 
@@ -118,11 +118,20 @@ function usePrivateFeatureAccessState(enabled: boolean): PrivateFeatureAccess {
       return;
     }
 
+    if (allowLocalPreview) {
+      setAccess({
+        apiBaseUrl,
+        status: "allowed",
+        viewer: createLocalPreviewViewer(),
+      });
+      return;
+    }
+
     if (!apiBaseUrl) {
       setAccess({
         apiBaseUrl,
-        status: allowLocalPreview ? "allowed" : "denied",
-        viewer: allowLocalPreview ? createLocalPreviewViewer() : null,
+        status: "denied",
+        viewer: null,
       });
       return;
     }

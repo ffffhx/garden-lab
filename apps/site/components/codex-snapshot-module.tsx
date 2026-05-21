@@ -4,12 +4,17 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 const DEFAULT_SNAPSHOT_URL = "http://127.0.0.1:4321/";
+const DEFAULT_STANDALONE_HREF = "/snapshots/viewer/";
 
 type CodexSnapshotModuleProps = {
   snapshotUrl?: string;
+  standaloneHref?: string;
 };
 
-export function CodexSnapshotModule({ snapshotUrl }: CodexSnapshotModuleProps) {
+export function CodexSnapshotModule({
+  snapshotUrl,
+  standaloneHref = DEFAULT_STANDALONE_HREF,
+}: CodexSnapshotModuleProps) {
   const viewerUrl = useMemo(() => normalizeSnapshotUrl(snapshotUrl), [snapshotUrl]);
   const [loaded, setLoaded] = useState(false);
 
@@ -29,7 +34,7 @@ export function CodexSnapshotModule({ snapshotUrl }: CodexSnapshotModuleProps) {
             </p>
           </div>
           <Link
-            href={viewerUrl}
+            href={standaloneHref}
             target="_blank"
             rel="noreferrer"
             className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold !text-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.8)] transition hover:-translate-y-0.5 hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"

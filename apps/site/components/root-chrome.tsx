@@ -60,6 +60,15 @@ function isFocusedToolRoute(pathname: string | null) {
   return normalizedPathname === "/snapshots" || normalizedPathname.startsWith("/snapshots/");
 }
 
+function isSnapshotStandaloneRoute(pathname: string | null) {
+  const normalizedPathname = normalizeAppPathname(pathname);
+
+  return (
+    normalizedPathname === "/snapshots/viewer" ||
+    normalizedPathname.startsWith("/snapshots/viewer/")
+  );
+}
+
 function isPrivateFeatureRoute(pathname: string | null) {
   const normalizedPathname = normalizeAppPathname(pathname);
 
@@ -73,6 +82,19 @@ export function RootChrome({ children, posts }: RootChromeProps) {
   const isPrivateRoute = isPrivateFeatureRoute(pathname);
 
   if (isDesktopPetRoute(pathname)) {
+    return (
+      <PrivateFeatureAccessProvider>
+        <PrivateFeatureGate
+          fallback={<PrivateFeaturePageFallback />}
+          loadingFallback={<PrivateFeaturePageFallback />}
+        >
+          {children}
+        </PrivateFeatureGate>
+      </PrivateFeatureAccessProvider>
+    );
+  }
+
+  if (isSnapshotStandaloneRoute(pathname)) {
     return (
       <PrivateFeatureAccessProvider>
         <PrivateFeatureGate

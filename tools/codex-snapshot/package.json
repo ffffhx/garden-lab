@@ -1,0 +1,24 @@
+{
+  "name": "@garden-lab/codex-snapshot",
+  "version": "0.1.0",
+  "description": "Read-only snapshots for local Codex sessions.",
+  "type": "module",
+  "bin": {
+    "codex-snapshot": "bin/codex-snapshot.mjs"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "test:smoke": "node bin/codex-snapshot.mjs --help"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.1"
+  }
+}

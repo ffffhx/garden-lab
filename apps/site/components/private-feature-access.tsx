@@ -106,10 +106,11 @@ function usePrivateFeatureAccess() {
 function usePrivateFeatureAccessState(enabled: boolean): PrivateFeatureAccess {
   const apiBaseUrl = getPrivateFeatureApiBaseUrl();
   const ownerLogins = useMemo(getPrivateFeatureOwnerLogins, []);
+  const allowLocalPreview = useMemo(isLocalPrivateFeaturePreview, []);
   const [access, setAccess] = useState<PrivateFeatureAccess>(() => ({
     apiBaseUrl,
-    status: apiBaseUrl ? "loading" : "denied",
-    viewer: null,
+    status: apiBaseUrl ? "loading" : allowLocalPreview ? "allowed" : "denied",
+    viewer: allowLocalPreview ? createLocalPreviewViewer() : null,
   }));
 
   useEffect(() => {
@@ -118,7 +119,11 @@ function usePrivateFeatureAccessState(enabled: boolean): PrivateFeatureAccess {
     }
 
     if (!apiBaseUrl) {
-      setAccess({ apiBaseUrl, status: "denied", viewer: null });
+      setAccess({
+        apiBaseUrl,
+        status: allowLocalPreview ? "allowed" : "denied",
+        viewer: allowLocalPreview ? createLocalPreviewViewer() : null,
+      });
       return;
     }
 
@@ -146,7 +151,7 @@ function usePrivateFeatureAccessState(enabled: boolean): PrivateFeatureAccess {
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, enabled, ownerLogins]);
+  }, [allowLocalPreview, apiBaseUrl, enabled, ownerLogins]);
 
   return access;
 }
@@ -166,6 +171,24 @@ function isOwnerViewer(viewer: PrivateFeatureViewer, ownerLogins: string[]) {
 
 function getPrivateFeatureApiBaseUrl() {
   return normalizeApiBaseUrl(process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL);
+}
+
+function isLocalPrivateFeaturePreview() {
+  if (process.env.NODE_ENV !== "development" || typeof window === "undefined") {
+    return false;
+  }
+
+  return ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+}
+
+function createLocalPreviewViewer(): PrivateFeatureViewer {
+  return {
+    authenticated: true,
+    user: {
+      displayName: "Local Preview",
+      githubLogin: "local-preview",
+    },
+  };
 }
 
 function getPrivateFeatureOwnerLogins() {

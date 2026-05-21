@@ -24,6 +24,7 @@ const PRIVATE_FEATURE_ROUTES = [
   "/forest-shuffle",
   "/games",
   "/pet",
+  "/snapshots",
   "/texas-holdem",
 ];
 
@@ -51,6 +52,12 @@ function isGameTableRoute(pathname: string | null) {
   const normalizedPathname = normalizeAppPathname(pathname);
 
   return normalizedPathname === "/texas-holdem" || normalizedPathname.startsWith("/texas-holdem/");
+}
+
+function isFocusedToolRoute(pathname: string | null) {
+  const normalizedPathname = normalizeAppPathname(pathname);
+
+  return normalizedPathname === "/snapshots" || normalizedPathname.startsWith("/snapshots/");
 }
 
 function isPrivateFeatureRoute(pathname: string | null) {
@@ -81,7 +88,7 @@ export function RootChrome({ children, posts }: RootChromeProps) {
   return (
     <PrivateFeatureAccessProvider>
       <WebMcpTools posts={posts} />
-      <SiteShell showPet={!isGameTableRoute(pathname)}>
+      <SiteShell showPet={!isGameTableRoute(pathname) && !isFocusedToolRoute(pathname)}>
         {isPrivateRoute ? (
           <PrivateFeatureGate
             fallback={<PrivateFeaturePageFallback />}

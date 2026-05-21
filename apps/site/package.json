@@ -56,7 +56,7 @@
     "tsx": "^4.21.0",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
-    "ws": "^8.20.0"
+    "ws": "^8.20.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.7",

@@ -3346,6 +3346,16 @@ function formatDate(value) {
 async function serve({ codexHome, claudeHome, traeHome, traeAppHome, traeRecordingsDir, host, port }) {
   const server = http.createServer(async (request, response) => {
     try {
+      setSnapshotServerCorsHeaders(request, response);
+      if (request.method === "OPTIONS") {
+        response.writeHead(204);
+        response.end();
+        return;
+      }
+      if (!isAllowedSnapshotServerRequest(request)) {
+        sendJson(response, { error: "origin is not allowed to access this local snapshot server" }, 403);
+        return;
+      }
       const url = new URL(request.url || "/", `http://${request.headers.host || `${host}:${port}`}`);
       if (url.pathname === "/") {
         send(response, 200, "text/html; charset=utf-8", renderServerApp());
@@ -3648,6 +3658,46 @@ function setCorsHeaders(response) {
   response.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
   response.setHeader("access-control-allow-headers", "content-type");
   response.setHeader("access-control-max-age", "86400");
+}
+
+function setSnapshotServerCorsHeaders(request, response) {
+  const origin = request.headers.origin || "";
+  if (!origin) {
+    response.setHeader("access-control-allow-origin", "*");
+  } else if (isAllowedSnapshotOrigin(origin)) {
+    response.setHeader("access-control-allow-origin", origin);
+    response.setHeader("vary", "Origin");
+  }
+  response.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
+  response.setHeader("access-control-allow-headers", "content-type");
+  response.setHeader("access-control-max-age", "86400");
+}
+
+function isAllowedSnapshotServerRequest(request) {
+  const origin = request.headers.origin || "";
+  return !origin || isAllowedSnapshotOrigin(origin);
+}
+
+function isAllowedSnapshotOrigin(origin) {
+  const configuredOrigins = String(process.env.SNAPSHOT_VIEWER_ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const allowedOrigins = new Set([
+    "https://ffffhx.github.io",
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+    ...configuredOrigins,
+  ]);
+  if (allowedOrigins.has(origin)) {
+    return true;
+  }
+  try {
+    const url = new URL(origin);
+    return url.protocol === "http:" && ["127.0.0.1", "localhost", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
 async function readJsonRequest(request, limitBytes) {
@@ -5825,6 +5875,23 @@ function renderSnapshot(snapshot) {
     const text = turn.kind === "tool" ? "<details class='tool-details' open><summary>" + label + "</summary><pre>" + esc(turn.text) + "</pre></details>" : (turn.html || renderText(turn.text)) + renderImages(turn.images || []);
     return "<article class='turn " + esc(role) + "'><div class='message-card'><div class='body'>" + text + "</div></div></article>";
   }).join("") || "<div class='meta'>No shareable user or assistant messages found.</div>";
+  postSnapshotState(snapshot);
+}
+
+function postSnapshotState(snapshot) {
+  if (!window.parent || window.parent === window) {
+    return;
+  }
+  const options = activeOptions();
+  window.parent.postMessage({
+    type: "codex-snapshot:state",
+    version: 1,
+    selected: state.selected,
+    title: snapshot.title || state.selected,
+    engineLabel: snapshot.engineLabel || "Codex",
+    redacted: Boolean(snapshot.redacted),
+    options: Object.fromEntries(options.entries()),
+  }, "*");
 }
 
 async function publishSelectedSession() {

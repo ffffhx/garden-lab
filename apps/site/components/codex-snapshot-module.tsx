@@ -1,12 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const DEFAULT_SNAPSHOT_URL = "http://127.0.0.1:4321/";
 const DEFAULT_STANDALONE_HREF = "/snapshots/viewer/";
 
 type ConnectionState = "checking" | "ready" | "unavailable";
+type SyncState = "idle" | "syncing" | "done" | "error";
+
+type ActiveSnapshot = {
+  selected: string;
+  title: string;
+  engineLabel: string;
+  redacted: boolean;
+  options: Record<string, string>;
+};
 
 type CodexSnapshotModuleProps = {
   snapshotUrl?: string;
@@ -21,6 +30,10 @@ export function CodexSnapshotModule({
   const [connection, setConnection] = useState<ConnectionState>("checking");
   const [frameLoaded, setFrameLoaded] = useState(false);
   const [checkVersion, setCheckVersion] = useState(0);
+  const [activeSnapshot, setActiveSnapshot] = useState<ActiveSnapshot | null>(null);
+  const [syncState, setSyncState] = useState<SyncState>("idle");
+  const [syncMessage, setSyncMessage] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
   const isReady = connection === "ready";
 
   useEffect(() => {
@@ -28,6 +41,10 @@ export function CodexSnapshotModule({
 
     setConnection("checking");
     setFrameLoaded(false);
+    setActiveSnapshot(null);
+    setSyncState("idle");
+    setSyncMessage("");
+    setShareUrl("");
 
     pingSnapshotUrl(viewerUrl).then((ok) => {
       if (!isActive) {
@@ -42,6 +59,68 @@ export function CodexSnapshotModule({
     };
   }, [viewerUrl, checkVersion]);
 
+  useEffect(() => {
+    const viewerOrigin = readOrigin(viewerUrl);
+
+    function handleSnapshotMessage(event: MessageEvent) {
+      if (viewerOrigin && event.origin !== viewerOrigin) {
+        return;
+      }
+      const nextSnapshot = parseSnapshotBridgeMessage(event.data);
+      if (!nextSnapshot) {
+        return;
+      }
+      setActiveSnapshot(nextSnapshot);
+      setSyncState("idle");
+      setSyncMessage("");
+      setShareUrl("");
+    }
+
+    window.addEventListener("message", handleSnapshotMessage);
+    return () => window.removeEventListener("message", handleSnapshotMessage);
+  }, [viewerUrl]);
+
+  const handleSync = useCallback(async () => {
+    if (!activeSnapshot) {
+      setSyncState("error");
+      setSyncMessage("请先在下方选择一条会话");
+      return;
+    }
+
+    setSyncState("syncing");
+    setSyncMessage("正在同步到云端...");
+    setShareUrl("");
+
+    try {
+      const params = new URLSearchParams(activeSnapshot.options);
+      params.set("id", activeSnapshot.selected);
+      params.set("redact", "1");
+
+      const publishUrl = new URL("/api/publish", viewerUrl);
+      publishUrl.search = params.toString();
+
+      const response = await fetch(publishUrl.toString(), {
+        method: "POST",
+        cache: "no-store",
+      });
+      const result = (await response.json().catch(() => ({}))) as { error?: string; url?: string };
+      if (!response.ok) {
+        throw new Error(result.error || "同步失败");
+      }
+      if (!result.url) {
+        throw new Error("云端没有返回分享链接");
+      }
+
+      setShareUrl(result.url);
+      setSyncState("done");
+      setSyncMessage("已同步，分享链接已复制");
+      await navigator.clipboard?.writeText(result.url).catch(() => undefined);
+    } catch (error) {
+      setSyncState("error");
+      setSyncMessage(error instanceof Error ? error.message : String(error));
+    }
+  }, [activeSnapshot, viewerUrl]);
+
   const statusLabel =
     connection === "ready"
       ? "本机服务已连接"
@@ -54,6 +133,8 @@ export function CodexSnapshotModule({
       : connection === "checking"
         ? "bg-amber-300"
         : "bg-rose-300";
+  const canSync = isReady && Boolean(activeSnapshot) && syncState !== "syncing";
+  const syncButtonLabel = syncState === "syncing" ? "同步中..." : "同步";
 
   return (
     <main className="space-y-6">
@@ -71,6 +152,21 @@ export function CodexSnapshotModule({
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={!canSync}
+              title={
+                !isReady
+                  ? "需要先连接本机 Snapshot 服务"
+                  : activeSnapshot
+                    ? `同步「${activeSnapshot.title}」`
+                    : "请先在下方选择一条会话"
+              }
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#1d6f78] px-5 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(29,111,120,0.8)] transition hover:-translate-y-0.5 hover:bg-[#165a62] focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:translate-y-0"
+            >
+              {syncButtonLabel}
+            </button>
             <Link
               href="/snapshots/share/"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-950/12 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-950/25 hover:text-slate-950 focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/15"
@@ -105,6 +201,30 @@ export function CodexSnapshotModule({
               >
                 重新检测
               </button>
+            ) : null}
+            {activeSnapshot ? (
+              <span className="min-w-0 truncate text-xs text-slate-400">
+                当前：{activeSnapshot.title}
+              </span>
+            ) : null}
+            {syncMessage ? (
+              <span
+                className={`min-w-0 truncate text-xs font-semibold ${
+                  syncState === "error" ? "text-rose-200" : "text-emerald-200"
+                }`}
+              >
+                {syncMessage}
+              </span>
+            ) : null}
+            {shareUrl ? (
+              <a
+                href={shareUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="min-w-0 truncate text-xs font-semibold text-sky-200 underline decoration-white/30 underline-offset-4 hover:text-white"
+              >
+                打开分享链接
+              </a>
             ) : null}
           </div>
         </div>
@@ -192,4 +312,44 @@ async function pingSnapshotUrl(url: string) {
   } finally {
     window.clearTimeout(timeout);
   }
+}
+
+function readOrigin(url: string) {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "";
+  }
+}
+
+function parseSnapshotBridgeMessage(data: unknown): ActiveSnapshot | null {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+  const message = data as Record<string, unknown>;
+  if (message.type !== "codex-snapshot:state" || message.version !== 1) {
+    return null;
+  }
+  const selected = typeof message.selected === "string" ? message.selected : "";
+  if (!selected) {
+    return null;
+  }
+  const rawOptions = message.options;
+  const options: Record<string, string> = {};
+  if (rawOptions && typeof rawOptions === "object") {
+    for (const [key, value] of Object.entries(rawOptions as Record<string, unknown>)) {
+      if (typeof value === "string") {
+        options[key] = value;
+      }
+    }
+  }
+
+  return {
+    selected,
+    title: typeof message.title === "string" && message.title ? message.title : selected,
+    engineLabel:
+      typeof message.engineLabel === "string" && message.engineLabel ? message.engineLabel : "Codex",
+    redacted: Boolean(message.redacted),
+    options,
+  };
 }

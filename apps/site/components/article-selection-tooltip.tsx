@@ -22,7 +22,7 @@ type SelectionExplanation = {
   }>;
 };
 
-type TooltipStatus = "loading" | "ready" | "error";
+type TooltipStatus = "prompt" | "loading" | "ready" | "error";
 
 type TooltipState = {
   anchorBottom: number;
@@ -318,15 +318,14 @@ export function ArticleSelectionTooltip({
         context,
         key,
         selectedText,
-        status: "loading",
+        status: "prompt",
         ...position,
       };
 
       latestKeyRef.current = key;
       setTooltip(nextTooltip);
-      void explainSelection(nextTooltip);
     },
-    [closeTooltip, explainSelection, slug]
+    [closeTooltip, slug]
   );
 
   useEffect(() => {
@@ -413,7 +412,9 @@ export function ArticleSelectionTooltip({
     tooltip?.top,
   ]);
 
-  const retry = (event: MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>) => {
+  const requestExplanation = (
+    event: MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>
+  ) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -483,6 +484,21 @@ export function ArticleSelectionTooltip({
             </button>
           </div>
 
+          {tooltip.status === "prompt" ? (
+            <div className="article-ai-tooltip__prompt">
+              <p>用 Kimi 搜索并结合上下文解释这个词？</p>
+              <div className="article-ai-tooltip__actions">
+                <button
+                  className="article-ai-tooltip__primary-action"
+                  onClick={requestExplanation}
+                  type="button"
+                >
+                  搜索解释
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           {tooltip.status === "loading" ? (
             <div className="article-ai-tooltip__loading">
               <span className="article-ai-tooltip__pulse" />
@@ -495,7 +511,7 @@ export function ArticleSelectionTooltip({
               <p>{tooltip.error}</p>
               <button
                 className="article-ai-tooltip__retry"
-                onClick={retry}
+                onClick={requestExplanation}
                 type="button"
               >
                 重试

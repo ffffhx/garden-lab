@@ -95,6 +95,18 @@ function isNodeInside(container: HTMLElement, node: Node) {
   return container === node || container.contains(node);
 }
 
+function isEventInsideTooltip(event: Event, tooltip: HTMLElement | null) {
+  if (!tooltip) {
+    return false;
+  }
+
+  if (event.target instanceof Node && tooltip.contains(event.target)) {
+    return true;
+  }
+
+  return event.composedPath().includes(tooltip);
+}
+
 function getSelectionRect(range: Range) {
   const rect = range.getBoundingClientRect();
 
@@ -175,6 +187,7 @@ export function ArticleSelectionTooltip({
   const cacheRef = useRef(new Map<string, SelectionExplanation>());
   const containerRef = useRef<HTMLDivElement | null>(null);
   const latestKeyRef = useRef("");
+  const suppressSelectionCaptureRef = useRef(false);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
@@ -182,6 +195,7 @@ export function ArticleSelectionTooltip({
     abortRef.current?.abort();
     abortRef.current = null;
     latestKeyRef.current = "";
+    suppressSelectionCaptureRef.current = false;
     if (options?.clearSelection) {
       window.getSelection()?.removeAllRanges();
     }
@@ -330,6 +344,14 @@ export function ArticleSelectionTooltip({
 
   useEffect(() => {
     const handleSelectionComplete = (event: Event) => {
+      if (
+        suppressSelectionCaptureRef.current ||
+        isEventInsideTooltip(event, tooltipRef.current)
+      ) {
+        suppressSelectionCaptureRef.current = false;
+        return;
+      }
+
       window.setTimeout(() => captureSelection(event), 0);
     };
     const handleScrollOrResize = (event: Event) => {
@@ -442,6 +464,13 @@ export function ArticleSelectionTooltip({
     closeTooltip({ clearSelection: true });
   };
 
+  const stopTooltipInteraction = (
+    event: MouseEvent<HTMLDivElement> | TouchEvent<HTMLDivElement>
+  ) => {
+    suppressSelectionCaptureRef.current = true;
+    event.stopPropagation();
+  };
+
   return (
     <div className="article-selection-layer" ref={containerRef}>
       {children}
@@ -452,11 +481,11 @@ export function ArticleSelectionTooltip({
           data-placement={tooltip.placement}
           ref={tooltipRef}
           role="status"
-          onClick={(event) => event.stopPropagation()}
-          onMouseDown={(event) => event.stopPropagation()}
-          onMouseUp={(event) => event.stopPropagation()}
-          onTouchEnd={(event) => event.stopPropagation()}
-          onTouchStart={(event) => event.stopPropagation()}
+          onClick={stopTooltipInteraction}
+          onMouseDown={stopTooltipInteraction}
+          onMouseUp={stopTooltipInteraction}
+          onTouchEnd={stopTooltipInteraction}
+          onTouchStart={stopTooltipInteraction}
           style={{
             left: tooltip.left,
             top: tooltip.top,

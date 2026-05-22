@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">本地 Snapshot 工具架构</title>
+  <desc id="desc">Codex、Claude Code、Trae 本地记录经过归一化后进入 snapshot viewer 和站点私有模块</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#266071"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#f4f0e7"/>
+  <text x="72" y="90" font-family="Arial, 'PingFang SC', sans-serif" font-size="38" font-weight="800" fill="#16191f">本地 Snapshot 工具架构</text>
+  <text x="72" y="130" font-family="Arial, 'PingFang SC', sans-serif" font-size="19" fill="#667085">数据从本机读取，站点只提供私有入口和 iframe 壳层</text>
+  <g transform="translate(80 202)">
+    <rect width="240" height="98" rx="18" fill="#15202e"/>
+    <text x="120" y="43" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="24" font-weight="800" fill="#fff">Codex</text>
+    <text x="120" y="72" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="16" fill="#cbd5e1">sessions / archived</text>
+  </g>
+  <g transform="translate(80 332)">
+    <rect width="240" height="98" rx="18" fill="#283348"/>
+    <text x="120" y="43" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="24" font-weight="800" fill="#fff">Claude Code</text>
+    <text x="120" y="72" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="16" fill="#cbd5e1">projects / sessions</text>
+  </g>
+  <g transform="translate(80 462)">
+    <rect width="240" height="98" rx="18" fill="#374151"/>
+    <text x="120" y="43" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="24" font-weight="800" fill="#fff">Trae</text>
+    <text x="120" y="72" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="16" fill="#cbd5e1">recorder / memory</text>
+  </g>
+  <g transform="translate(444 258)">
+    <rect width="284" height="248" rx="24" fill="#eef9f6" stroke="#83c5b7" stroke-width="3"/>
+    <text x="142" y="58" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="28" font-weight="800" fill="#155e75">归一化层</text>
+    <text x="142" y="108" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#34585f">summary</text>
+    <text x="142" y="146" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#34585f">snapshot</text>
+    <text x="142" y="184" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#34585f">turns[]</text>
+    <text x="142" y="222" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#34585f">redact + markdown</text>
+  </g>
+  <g transform="translate(856 218)">
+    <rect width="260" height="128" rx="20" fill="#fffdf8" stroke="#cfd8df" stroke-width="3"/>
+    <text x="130" y="54" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="24" font-weight="800" fill="#172033">本地 Viewer</text>
+    <text x="130" y="88" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="17" fill="#667085">127.0.0.1:4321</text>
+  </g>
+  <g transform="translate(856 424)">
+    <rect width="260" height="128" rx="20" fill="#fff8e7" stroke="#d5a850" stroke-width="3"/>
+    <text x="130" y="54" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="24" font-weight="800" fill="#7a4d12">博客私有模块</text>
+    <text x="130" y="88" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="17" fill="#604c2e">/snapshots/viewer</text>
+  </g>
+  <path d="M330 251H430" stroke="#266071" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M330 381H430" stroke="#266071" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M330 511H430" stroke="#266071" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M740 350C790 330 806 298 846 282" stroke="#266071" stroke-width="5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M740 414C790 438 806 472 846 488" stroke="#266071" stroke-width="5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="382" y="608" width="436" height="48" rx="24" fill="#ffffff" stroke="#cfd8df"/>
+  <text x="600" y="639" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" font-weight="700" fill="#364152">线上模块不携带会话数据，只有本机服务能读本机历史</text>
+</svg>

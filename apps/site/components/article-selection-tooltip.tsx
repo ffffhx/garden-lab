@@ -48,13 +48,26 @@ const TOOLTIP_VERTICAL_SPACE = 224;
 function getSelectionExplainEndpoint() {
   const configured = process.env.NEXT_PUBLIC_SELECTION_EXPLAIN_API_URL?.trim();
 
-  if (!configured) {
+  if (configured) {
+    const endpoint = configured.replace(/\/+$/, "");
+
+    if (
+      endpoint.endsWith("/explain-selection") ||
+      endpoint.endsWith("/api/explain-selection")
+    ) {
+      return endpoint;
+    }
+
+    return `${endpoint}/explain-selection`;
+  }
+
+  const tokenBoardApi = process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL?.trim();
+
+  if (!tokenBoardApi) {
     return "";
   }
 
-  return configured.endsWith("/explain-selection")
-    ? configured
-    : `${configured.replace(/\/+$/, "")}/explain-selection`;
+  return `${tokenBoardApi.replace(/\/+$/, "")}/api/explain-selection`;
 }
 
 function normalizeSelectedText(text: string) {
@@ -151,7 +164,7 @@ export function ArticleSelectionTooltip({
 
         if (!endpoint) {
           throw new Error(
-            "缺少 NEXT_PUBLIC_SELECTION_EXPLAIN_API_URL，暂时不能请求 Kimi 解释。"
+            "缺少 AI 解释服务地址，暂时不能请求 Kimi 解释。"
           );
         }
 

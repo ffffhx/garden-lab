@@ -8,11 +8,24 @@
 ## 本地启动
 
 ```bash
+# 终端 1
+KIMI_API_KEY=你的_key pnpm token:server
+
+# 终端 2
+NEXT_PUBLIC_TOKEN_BOARD_API_URL=http://127.0.0.1:8787 pnpm dev
+```
+
+前端会优先使用 `NEXT_PUBLIC_SELECTION_EXPLAIN_API_URL`，没有配置时自动退回到 `NEXT_PUBLIC_TOKEN_BOARD_API_URL/api/explain-selection`。如果你只想单独启动解释服务，也可以运行：
+
+```bash
+# 终端 1
 KIMI_API_KEY=你的_key pnpm selection:server
+
+# 终端 2
 NEXT_PUBLIC_SELECTION_EXPLAIN_API_URL=http://127.0.0.1:8791 pnpm dev
 ```
 
-如果你使用官方文档里的环境变量名，也可以配置 `MOONSHOT_API_KEY`。
+如果你使用 Moonshot 官方文档里的环境变量名，也可以配置 `MOONSHOT_API_KEY`。
 
 默认模型是 `kimi-k2.5`。如果你想切换模型，可以配置 `KIMI_MODEL`。
 
@@ -31,21 +44,27 @@ TOKEN_BOARD_AUTH_SECRET=和-token-board-服务一致的密钥
 
 ## 部署配置
 
-把 `apps/site/scripts/selection-explainer-server.ts` 部署成一个长期运行的 Node 服务，并配置：
+推荐把解释接口挂在现有 Token Board 服务上。后端配置：
 
 ```bash
 KIMI_API_KEY=你的_key
-SELECTION_EXPLAIN_ALLOWED_ORIGINS=https://你的博客域名
 SELECTION_EXPLAIN_ALLOWED_GITHUB_LOGINS=ffffhx
-TOKEN_BOARD_AUTH_SECRET=和-token-board-服务一致的密钥
 ```
 
-构建静态博客时配置：
+静态博客只需要已有的 Token Board 地址：
 
 ```bash
+NEXT_PUBLIC_TOKEN_BOARD_API_URL=https://你的-token-board-服务域名
+```
+
+如果需要单独部署 `apps/site/scripts/selection-explainer-server.ts`，再额外配置：
+
+```bash
+SELECTION_EXPLAIN_ALLOWED_ORIGINS=https://你的博客域名
+TOKEN_BOARD_AUTH_SECRET=和-token-board-服务一致的密钥
 NEXT_PUBLIC_SELECTION_EXPLAIN_API_URL=https://你的解释服务域名
 ```
 
-解释服务必须部署在能收到 `token_board_session` cookie 的域名下，通常和 Token Board API 使用同一个主域或同一个反向代理入口。未登录或账号不在白名单时，tooltip 会显示拒绝信息。
+解释接口必须部署在能收到 `token_board_session` cookie 的域名下，通常和 Token Board API 使用同一个主域或同一个反向代理入口。未登录或账号不在白名单时，tooltip 会显示拒绝信息。
 
 如果只想本地自用，不配置公网解释服务也可以；页面会显示缺少解释服务地址。

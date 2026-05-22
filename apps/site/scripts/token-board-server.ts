@@ -37,6 +37,11 @@ import {
   type TokenUsageStore,
 } from "../lib/token-board-storage";
 import {
+  explainSelectionWithKimi,
+  parseSelectionExplainPayload,
+  SelectionExplainServiceError,
+} from "../lib/selection-explainer";
+import {
   createSnapshotShareStore,
   type SnapshotShareRecord,
   type SnapshotShareStore,
@@ -52,6 +57,8 @@ const MAX_EVENTS = Number(process.env.TOKEN_BOARD_MAX_EVENTS || 100_000);
 const SNAPSHOT_SHARE_DATA_FILE =
   process.env.SNAPSHOT_SHARE_DATA_FILE || path.join(process.cwd(), ".token-board", "snapshot-shares.json");
 const MAX_SNAPSHOT_SHARE_BODY_BYTES = Number(process.env.SNAPSHOT_SHARE_MAX_BODY_BYTES || 24 * 1024 * 1024);
+const MAX_SELECTION_EXPLAIN_BODY_BYTES = Number(process.env.SELECTION_EXPLAIN_MAX_BODY_BYTES || 16 * 1024);
+const DEFAULT_SELECTION_EXPLAIN_ALLOWED_GITHUB_LOGINS = ["ffffhx"];
 const SESSION_COOKIE_NAME = "token_board_session";
 const WEB_SESSION_TTL_SECONDS = Number(process.env.TOKEN_BOARD_WEB_SESSION_TTL_SECONDS || 30 * 24 * 60 * 60);
 const AGENT_SESSION_TTL_SECONDS = Number(process.env.TOKEN_BOARD_AGENT_SESSION_TTL_SECONDS || 180 * 24 * 60 * 60);
@@ -139,6 +146,22 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
       storage: shareStore().kind,
       generatedAt: new Date().toISOString(),
     });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/explain-selection/health") {
+    sendJson(request, response, 200, {
+      ok: true,
+      authRequired: true,
+      allowedGithubLogins: selectionExplainAllowedGithubLogins(),
+      keyConfigured: Boolean(process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY),
+      generatedAt: new Date().toISOString(),
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/explain-selection") {
+    await handleSelectionExplain(request, response);
     return;
   }
 
@@ -283,6 +306,64 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
   }
 
   sendJson(request, response, 404, { error: "Not found" });
+}
+
+async function handleSelectionExplain(request: IncomingMessage, response: ServerResponse) {
+  const identity = readWebIdentity(request);
+
+  if (!identity) {
+    sendJson(request, response, 401, {
+      error: "请先用作者 GitHub 账号登录后再使用 AI 解释。",
+    });
+    return;
+  }
+
+  if (!isGithubIdentityAllowed(identity, selectionExplainAllowedGithubLogins())) {
+    sendJson(request, response, 403, {
+      error: "当前 GitHub 账号不在选词 AI 解释白名单中。",
+    });
+    return;
+  }
+
+  let body: unknown;
+
+  try {
+    body = await readJsonBody(request, MAX_SELECTION_EXPLAIN_BODY_BYTES);
+  } catch (error) {
+    sendJson(request, response, 400, {
+      error: error instanceof Error ? error.message : "请求体不正确。",
+    });
+    return;
+  }
+
+  const parsed = parseSelectionExplainPayload(body);
+
+  if (!parsed.ok) {
+    sendJson(request, response, 400, {
+      error: parsed.error,
+    });
+    return;
+  }
+
+  try {
+    const explanation = await explainSelectionWithKimi(parsed.data);
+
+    sendJson(request, response, 200, {
+      explanation,
+    });
+  } catch (error) {
+    if (error instanceof SelectionExplainServiceError) {
+      sendJson(request, response, error.status, {
+        code: error.code,
+        error: error.message,
+      });
+      return;
+    }
+
+    sendJson(request, response, 500, {
+      error: "AI 解释暂时不可用，请稍后再试。",
+    });
+  }
 }
 
 async function handleIngest(request: IncomingMessage, response: ServerResponse) {
@@ -869,6 +950,19 @@ function allowedGithubLogins() {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function selectionExplainAllowedGithubLogins() {
+  const logins = (
+    process.env.SELECTION_EXPLAIN_ALLOWED_GITHUB_LOGINS ||
+    process.env.TOKEN_BOARD_ALLOWED_GITHUB_LOGINS ||
+    ""
+  )
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return logins.length ? logins : DEFAULT_SELECTION_EXPLAIN_ALLOWED_GITHUB_LOGINS;
 }
 
 function allowedReturnOrigins(request: IncomingMessage) {

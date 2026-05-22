@@ -6,6 +6,7 @@ import {
   type TouchEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -24,6 +25,8 @@ type SelectionExplanation = {
 type TooltipStatus = "loading" | "ready" | "error";
 
 type TooltipState = {
+  anchorBottom: number;
+  anchorTop: number;
   context: string;
   error?: string;
   explanation?: SelectionExplanation;
@@ -42,8 +45,10 @@ type ArticleSelectionTooltipProps = {
 };
 
 const MAX_SELECTION_CHARS = 80;
-const TOOLTIP_WIDTH = 368;
-const TOOLTIP_VERTICAL_SPACE = 224;
+const TOOLTIP_MAX_WIDTH_REM = 23;
+const TOOLTIP_GUTTER_REM = 0.5;
+const TOOLTIP_MAX_HEIGHT_PX = 560;
+const TOOLTIP_OFFSET_PX = 12;
 
 function getSelectionExplainEndpoint() {
   const configured = process.env.NEXT_PUBLIC_SELECTION_EXPLAIN_API_URL?.trim();
@@ -76,6 +81,14 @@ function normalizeSelectedText(text: string) {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function getRootFontSize() {
+  const parsed = Number.parseFloat(
+    window.getComputedStyle(document.documentElement).fontSize
+  );
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 16;
 }
 
 function isNodeInside(container: HTMLElement, node: Node) {
@@ -113,17 +126,43 @@ function getBlockContext(range: Range, container: HTMLElement) {
 
 function buildTooltipPosition(rect: DOMRect) {
   const viewportWidth = window.innerWidth;
-  const left = clamp(
-    rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2,
-    8,
-    Math.max(8, viewportWidth - TOOLTIP_WIDTH - 8)
+  const viewportHeight = window.innerHeight;
+  const rootFontSize = getRootFontSize();
+  const gutter = TOOLTIP_GUTTER_REM * rootFontSize;
+  const tooltipWidth = Math.min(
+    TOOLTIP_MAX_WIDTH_REM * rootFontSize,
+    Math.max(240, viewportWidth - gutter * 2)
   );
-  const hasRoomAbove = rect.top > TOOLTIP_VERTICAL_SPACE;
+  const tooltipHeight = Math.min(
+    TOOLTIP_MAX_HEIGHT_PX,
+    Math.max(240, viewportHeight - gutter * 2)
+  );
+  const left = clamp(
+    rect.left + rect.width / 2 - tooltipWidth / 2,
+    gutter,
+    Math.max(gutter, viewportWidth - tooltipWidth - gutter)
+  );
+  const spaceAbove = rect.top - gutter;
+  const spaceBelow = viewportHeight - rect.bottom - gutter;
+  const placement =
+    spaceAbove >= Math.min(tooltipHeight, spaceBelow)
+      ? ("top" as const)
+      : ("bottom" as const);
+  const preferredTop =
+    placement === "top"
+      ? rect.top - tooltipHeight - TOOLTIP_OFFSET_PX
+      : rect.bottom + TOOLTIP_OFFSET_PX;
 
   return {
+    anchorBottom: rect.bottom,
+    anchorTop: rect.top,
     left,
-    placement: hasRoomAbove ? ("top" as const) : ("bottom" as const),
-    top: hasRoomAbove ? rect.top - 12 : rect.bottom + 12,
+    placement,
+    top: clamp(
+      preferredTop,
+      gutter,
+      Math.max(gutter, viewportHeight - tooltipHeight - gutter)
+    ),
   };
 }
 
@@ -139,10 +178,13 @@ export function ArticleSelectionTooltip({
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
-  const closeTooltip = useCallback(() => {
+  const closeTooltip = useCallback((options?: { clearSelection?: boolean }) => {
     abortRef.current?.abort();
     abortRef.current = null;
     latestKeyRef.current = "";
+    if (options?.clearSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
     setTooltip(null);
   }, []);
 
@@ -302,9 +344,15 @@ export function ArticleSelectionTooltip({
 
       closeTooltip();
     };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeTooltip({ clearSelection: true });
+      }
+    };
 
     document.addEventListener("mouseup", handleSelectionComplete);
     document.addEventListener("keyup", handleSelectionComplete);
+    document.addEventListener("keydown", handleEscape);
     document.addEventListener("touchend", handleSelectionComplete);
     window.addEventListener("resize", handleScrollOrResize);
     window.addEventListener("scroll", handleScrollOrResize, true);
@@ -313,14 +361,61 @@ export function ArticleSelectionTooltip({
       abortRef.current?.abort();
       document.removeEventListener("mouseup", handleSelectionComplete);
       document.removeEventListener("keyup", handleSelectionComplete);
+      document.removeEventListener("keydown", handleEscape);
       document.removeEventListener("touchend", handleSelectionComplete);
       window.removeEventListener("resize", handleScrollOrResize);
       window.removeEventListener("scroll", handleScrollOrResize, true);
     };
   }, [captureSelection, closeTooltip]);
 
+  useLayoutEffect(() => {
+    const node = tooltipRef.current;
+
+    if (!node || !tooltip) {
+      return;
+    }
+
+    const rect = node.getBoundingClientRect();
+    const rootFontSize = getRootFontSize();
+    const gutter = TOOLTIP_GUTTER_REM * rootFontSize;
+    const preferredTop =
+      tooltip.placement === "top"
+        ? tooltip.anchorTop - rect.height - TOOLTIP_OFFSET_PX
+        : tooltip.anchorBottom + TOOLTIP_OFFSET_PX;
+    const nextTop = clamp(
+      preferredTop,
+      gutter,
+      Math.max(gutter, window.innerHeight - rect.height - gutter)
+    );
+
+    if (Math.abs(nextTop - tooltip.top) < 1) {
+      return;
+    }
+
+    setTooltip((current) => {
+      if (!current || current.key !== tooltip.key) {
+        return current;
+      }
+
+      return {
+        ...current,
+        top: nextTop,
+      };
+    });
+  }, [
+    tooltip?.anchorBottom,
+    tooltip?.anchorTop,
+    tooltip?.error,
+    tooltip?.explanation,
+    tooltip?.key,
+    tooltip?.placement,
+    tooltip?.status,
+    tooltip?.top,
+  ]);
+
   const retry = (event: MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>) => {
     event.preventDefault();
+    event.stopPropagation();
 
     if (!tooltip) {
       return;
@@ -338,6 +433,14 @@ export function ArticleSelectionTooltip({
     void explainSelection(nextTooltip);
   };
 
+  const closeFromButton = (
+    event: MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    closeTooltip({ clearSelection: true });
+  };
+
   return (
     <div className="article-selection-layer" ref={containerRef}>
       {children}
@@ -348,6 +451,11 @@ export function ArticleSelectionTooltip({
           data-placement={tooltip.placement}
           ref={tooltipRef}
           role="status"
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onMouseUp={(event) => event.stopPropagation()}
+          onTouchEnd={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
           style={{
             left: tooltip.left,
             top: tooltip.top,
@@ -363,7 +471,12 @@ export function ArticleSelectionTooltip({
             <button
               aria-label="关闭解释"
               className="article-ai-tooltip__icon-button"
-              onClick={closeTooltip}
+              onClick={closeFromButton}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              onTouchStart={closeFromButton}
               type="button"
             >
               ×

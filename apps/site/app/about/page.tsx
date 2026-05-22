@@ -21,7 +21,7 @@ export default function AboutPage() {
             <p className="text-sm text-slate-500">{formatDate(page.date)}</p>
           ) : null}
         </div>
-        <ArticleBody html={page.contentHtml} />
+        <ArticleBody html={page.contentHtml} slug="about" title={page.title} />
       </article>
     </main>
   );

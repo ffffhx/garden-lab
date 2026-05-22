@@ -77,7 +77,7 @@ export default async function PostPage({ params }: PostPageProps) {
           <BlogPetFeedBadge post={post} />
         </div>
         <div className="mt-10">
-          <ArticleBody html={post.contentHtml} />
+          <ArticleBody html={post.contentHtml} slug={post.slug} title={post.title} />
         </div>
       </article>
       <div className="xl:sticky xl:top-24 xl:h-fit">

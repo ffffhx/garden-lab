@@ -16,6 +16,7 @@
     "token:migrate-json": "tsx scripts/token-board-server.ts migrate-json",
     "token:agent": "tsx scripts/token-usage-agent.ts",
     "token:agent:watch": "tsx scripts/token-usage-agent.ts watch",
+    "selection:server": "tsx scripts/selection-explainer-server.ts",
     "prepare:public": "pnpm run farm:build && pnpm run sync:assets && pnpm run sync:pet",
     "prebuild": "pnpm run prepare:public",
     "build": "next build",

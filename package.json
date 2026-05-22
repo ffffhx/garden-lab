@@ -20,6 +20,7 @@
     "holdem:server": "pnpm --filter @garden-lab/site holdem:server",
     "holdem:public-proxy": "pnpm --filter @garden-lab/site holdem:public-proxy",
     "token:server": "pnpm --filter @garden-lab/site token:server",
+    "selection:server": "pnpm --filter @garden-lab/site selection:server",
     "token:migrate-json": "pnpm --filter @garden-lab/site token:migrate-json",
     "token:agent": "pnpm --filter @garden-lab/site token:agent",
     "token:agent:watch": "pnpm --filter @garden-lab/site token:agent:watch",

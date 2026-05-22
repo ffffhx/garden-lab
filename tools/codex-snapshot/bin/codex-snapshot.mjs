@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createReadStream } from "node:fs";
+import { createReadStream, readFileSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { appendFile, mkdir, readdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
@@ -346,6 +346,7 @@ async function publishSnapshot(snapshot, { apiUrl, token, siteUrl, expiresInDays
     process.env.SNAPSHOT_SHARE_TOKEN ||
     process.env.TOKEN_BOARD_AGENT_TOKEN ||
     process.env.TOKEN_BOARD_UPLOAD_TOKEN ||
+    readDefaultShareToken() ||
     "";
   const normalizedSiteUrl = normalizeUrl(siteUrl || process.env.SNAPSHOT_SHARE_SITE_URL || DEFAULT_SNAPSHOT_SHARE_SITE_URL);
 
@@ -353,7 +354,7 @@ async function publishSnapshot(snapshot, { apiUrl, token, siteUrl, expiresInDays
     throw new Error("Missing share API URL. Set SNAPSHOT_SHARE_API_URL or pass --api-url.");
   }
   if (!shareToken) {
-    throw new Error("Missing share API token. Set SNAPSHOT_SHARE_TOKEN, TOKEN_BOARD_AGENT_TOKEN, TOKEN_BOARD_UPLOAD_TOKEN, or pass --share-token.");
+    throw new Error("Missing share API token. Set SNAPSHOT_SHARE_TOKEN, TOKEN_BOARD_AGENT_TOKEN, TOKEN_BOARD_UPLOAD_TOKEN, pass --share-token, or create ~/.token-board-agent.json.");
   }
 
   const response = await fetch(`${normalizedApiUrl}/api/snapshots`, {
@@ -386,6 +387,16 @@ async function publishSnapshot(snapshot, { apiUrl, token, siteUrl, expiresInDays
   }
 
   return payload;
+}
+
+function readDefaultShareToken() {
+  const filePath = process.env.TOKEN_BOARD_AGENT_FILE || path.join(os.homedir(), ".token-board-agent.json");
+  try {
+    const payload = JSON.parse(readFileSync(filePath, "utf8"));
+    return payload.agentToken || payload.token || payload.uploadToken || "";
+  } catch {
+    return "";
+  }
 }
 
 function prepareSnapshotForCloud(snapshot) {

@@ -12,10 +12,35 @@ pnpm snapshot preview <session-id>
 pnpm snapshot export <session-id> --html --output snapshot.html
 pnpm snapshot export <session-id> --md --output snapshot.md
 pnpm snapshot serve --port 4321
+pnpm snapshot:daemon
 pnpm snapshot record-trae --port 4732
 ```
 
 The default Codex home is `$CODEX_HOME` or `~/.codex`.
+
+## macOS LaunchAgent
+
+Install the local snapshot viewer as a macOS user LaunchAgent:
+
+```bash
+pnpm snapshot:install-daemon
+```
+
+After installation, macOS starts `pnpm snapshot:daemon` when you log in and keeps
+`http://127.0.0.1:4321/` available for the website's private snapshot module and
+cloud sync button.
+
+Useful maintenance commands:
+
+```bash
+pnpm snapshot:daemon:status
+pnpm snapshot:daemon:logs
+pnpm snapshot:uninstall-daemon
+```
+
+Cloud publish reads the API token from `SNAPSHOT_SHARE_TOKEN`,
+`TOKEN_BOARD_AGENT_TOKEN`, `TOKEN_BOARD_UPLOAD_TOKEN`, or
+`~/.token-board-agent.json`. The LaunchAgent plist does not store the token.
 
 ## Trae Local Recorder
 

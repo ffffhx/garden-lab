@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Computer Use 捕获支线</title>
+  <desc id="desc">Renderer、主进程、worker 和 Codex Computer Use 服务之间的截图捕获链路</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#2d6f7c"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#f5f1e8"/>
+  <text x="72" y="88" font-family="Arial, 'PingFang SC', sans-serif" font-size="38" font-weight="800" fill="#16191f">Computer Use 捕获支线</text>
+  <text x="72" y="128" font-family="Arial, 'PingFang SC', sans-serif" font-size="19" fill="#667085">截图和辅助功能文本由后台服务完成，Electron 主要负责请求和接收更新</text>
+  <g transform="translate(72 214)">
+    <rect width="210" height="180" rx="24" fill="#fff8e7" stroke="#d5a850" stroke-width="3"/>
+    <text x="105" y="60" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="25" font-weight="800" fill="#7a4d12">Renderer</text>
+    <text x="105" y="104" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#604c2e">收到 appshot-shortcut</text>
+    <text x="105" y="140" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#604c2e">请求 start capture</text>
+  </g>
+  <g transform="translate(350 214)">
+    <rect width="210" height="180" rx="24" fill="#eef1fb" stroke="#8d9ed0" stroke-width="3"/>
+    <text x="105" y="60" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="25" font-weight="800" fill="#243a73">Main IPC</text>
+    <text x="105" y="104" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="16" fill="#3c4d79">computer-use</text>
+    <text x="105" y="140" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#3c4d79">创建 worker</text>
+  </g>
+  <g transform="translate(628 214)">
+    <rect width="210" height="180" rx="24" fill="#e8f8f3" stroke="#76b7a8" stroke-width="3"/>
+    <text x="105" y="60" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="25" font-weight="800" fill="#155e75">Worker</text>
+    <text x="105" y="104" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#335b62">Apple Events</text>
+    <text x="105" y="140" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#335b62">校验图片文件</text>
+  </g>
+  <g transform="translate(906 214)">
+    <rect width="210" height="180" rx="24" fill="#172033"/>
+    <text x="105" y="56" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="24" font-weight="800" fill="#ffffff">CUA Service</text>
+    <text x="105" y="100" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#cbd5e1">ScreenCaptureKit</text>
+    <text x="105" y="136" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#cbd5e1">Accessibility</text>
+  </g>
+  <path d="M294 304H338" stroke="#2d6f7c" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M572 304H616" stroke="#2d6f7c" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M850 304H894" stroke="#2d6f7c" stroke-width="5" marker-end="url(#arrow)"/>
+  <g transform="translate(118 484)">
+    <rect width="964" height="126" rx="24" fill="#ffffff" stroke="#ced7df"/>
+    <text x="34" y="48" font-family="Arial, 'PingFang SC', sans-serif" font-size="22" font-weight="800" fill="#172033">返回的增量更新</text>
+    <text x="34" y="88" font-family="Arial, 'PingFang SC', sans-serif" font-size="19" fill="#536170">metadata / axText / screenshot / completed / failed，其中 screenshot 会被转换为 data URL 返回 renderer</text>
+  </g>
+  <path d="M1012 394C1012 450 948 450 948 484" stroke="#2d6f7c" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+  <text x="600" y="682" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="20" font-weight="700" fill="#334155">图片读取被限制在 CUAService 的临时目录，并限制类型与大小</text>
+</svg>

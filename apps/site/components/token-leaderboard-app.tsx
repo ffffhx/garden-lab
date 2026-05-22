@@ -408,12 +408,12 @@ export function TokenLeaderboardApp({
         )}
       </div>
       <div className="hidden overflow-x-auto sm:block">
-        <table className={`w-full border-collapse text-left text-sm ${showDailyLeaderboardTrend ? "min-w-[960px]" : "min-w-[780px]"}`}>
+        <table className={`w-full border-collapse text-left text-sm ${showDailyLeaderboardTrend ? "min-w-[1040px]" : "min-w-[780px]"}`}>
           <thead className="bg-[#f3ede0] text-xs font-semibold uppercase tracking-[0.08em] text-stone-500">
             <tr>
               <th className="px-4 py-3">排名</th>
               <th className="px-4 py-3">用户</th>
-              {showDailyLeaderboardTrend ? <th className="w-44 px-4 py-3">每日用量</th> : null}
+              {showDailyLeaderboardTrend ? <th className="w-[18rem] min-w-[18rem] max-w-[18rem] px-4 py-3">每日用量</th> : null}
               <SortableColumnHeader active={metric === "tokens"} align="right">总消耗 Token</SortableColumnHeader>
               <SortableColumnHeader active={metric === "cost"} align="right">费用</SortableColumnHeader>
               <SortableColumnHeader active={metric === "sessions"} align="right">会话</SortableColumnHeader>
@@ -1857,10 +1857,12 @@ function MetricMini({ label, value }: { label: string; value: string }) {
 
 function DailyUsageSparkline({
   daily,
+  fixedWidth = false,
   label,
   metaClassName = "text-stone-400",
 }: {
   daily: TokenLeaderboardUser["daily"];
+  fixedWidth?: boolean;
   label: string;
   metaClassName?: string;
 }) {
@@ -1896,17 +1898,21 @@ function DailyUsageSparkline({
   const title = peak.date
     ? `${label}：${firstDate} - ${lastDate}，峰值 ${peak.date.slice(5)} ${formatTokens(peak.tokens)}，合计 ${formatTokens(totalTokens)}`
     : `${label}：暂无每日用量`;
+  const activeSummary = activePoint
+    ? `${activePoint.date.slice(5)} ${formatTokens(activePoint.tokens)}`
+    : `峰值 ${formatTokens(peak.tokens)}`;
+  const exactActiveLabel = activePoint ? `${formatNumber(activePoint.tokens)} tokens` : "";
 
   return (
-    <div aria-label={title} className="min-w-0">
+    <div aria-label={title} className={`min-w-0 ${fixedWidth ? "w-[16rem] min-w-[16rem] max-w-[16rem]" : ""}`}>
       <div className="flex items-center justify-between gap-2">
         <p className={`truncate text-[11px] font-semibold ${metaClassName}`}>每日用量</p>
-        <p className={`shrink-0 font-mono text-[11px] ${metaClassName}`}>
-          {activePoint ? `${activePoint.date.slice(5)} ${formatTokens(activePoint.tokens)}` : `峰值 ${formatTokens(peak.tokens)}`}
+        <p className={`min-w-0 max-w-[9rem] truncate text-right font-mono text-[11px] ${metaClassName}`} title={activeSummary}>
+          {activeSummary}
         </p>
       </div>
       <div
-        className={`mt-1 min-h-12 rounded-lg border px-2.5 py-1.5 transition ${
+        className={`mt-1 h-12 overflow-hidden rounded-lg border px-2.5 py-1.5 transition-colors ${
           activePoint
             ? "border-[#26745e]/25 bg-[#fffdfa] shadow-[0_12px_34px_-28px_rgba(38,116,94,0.75)]"
             : "border-transparent bg-transparent"
@@ -1916,8 +1922,8 @@ function DailyUsageSparkline({
         {activePoint ? (
           <>
             <p className="font-mono text-[10px] font-semibold text-[#26745e]">{activePoint.date}</p>
-            <p className="mt-0.5 whitespace-nowrap font-mono text-xs font-semibold text-stone-950">
-              {formatNumber(activePoint.tokens)} tokens
+            <p className="mt-0.5 truncate whitespace-nowrap font-mono text-xs font-semibold text-stone-950" title={exactActiveLabel}>
+              {exactActiveLabel}
             </p>
           </>
         ) : (
@@ -2045,8 +2051,8 @@ function LeaderboardRow({ showDailyTrend, user }: { showDailyTrend: boolean; use
         </div>
       </td>
       {showDailyTrend ? (
-        <td className="px-4 py-3">
-          <DailyUsageSparkline daily={daily} label={`${user.displayName} 每日用量`} />
+        <td className="w-[18rem] min-w-[18rem] max-w-[18rem] px-4 py-3">
+          <DailyUsageSparkline fixedWidth daily={daily} label={`${user.displayName} 每日用量`} />
         </td>
       ) : null}
       <td className="px-4 py-3 text-right font-mono font-semibold text-stone-950">{formatTokens(consumptionTokens)}</td>

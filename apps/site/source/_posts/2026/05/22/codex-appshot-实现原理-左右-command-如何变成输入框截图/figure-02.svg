@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">bare-modifier-monitor 的职责</title>
+  <desc id="desc">原生 helper 如何把裸修饰键状态转成 stdout 事件</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#2d6f7c"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#f6f3eb"/>
+  <text x="72" y="88" font-family="Arial, 'PingFang SC', sans-serif" font-size="38" font-weight="800" fill="#16191f">bare-modifier-monitor 的职责</text>
+  <text x="72" y="128" font-family="Arial, 'PingFang SC', sans-serif" font-size="19" fill="#667085">它不截图，只把 macOS 裸修饰键状态翻译成 ready / down / up</text>
+  <g transform="translate(92 220)">
+    <rect width="260" height="310" rx="24" fill="#172033"/>
+    <text x="130" y="64" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="28" font-weight="800" fill="#ffffff">macOS 事件</text>
+    <text x="130" y="122" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="20" fill="#9cc7d1">flagsChanged</text>
+    <text x="130" y="170" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="19" fill="#cbd5e1">左 Command mask</text>
+    <text x="130" y="214" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="19" fill="#cbd5e1">右 Command mask</text>
+    <text x="130" y="258" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="19" fill="#cbd5e1">keyCode 辅助判断</text>
+  </g>
+  <g transform="translate(470 198)">
+    <rect width="260" height="354" rx="26" fill="#e8f8f3" stroke="#76b7a8" stroke-width="3"/>
+    <text x="130" y="66" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="27" font-weight="800" fill="#155e75">Swift helper</text>
+    <text x="130" y="118" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="18" fill="#335b62">BareModifierKey</text>
+    <text x="130" y="158" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="18" fill="#335b62">MonitorSession</text>
+    <rect x="44" y="196" width="172" height="42" rx="21" fill="#ffffff" stroke="#9fd1c8"/>
+    <text x="130" y="224" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" font-weight="700" fill="#155e75">DoubleCommand?</text>
+    <text x="130" y="284" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="18" fill="#335b62">满足条件就输出事件</text>
+  </g>
+  <g transform="translate(848 220)">
+    <rect width="260" height="310" rx="24" fill="#fff8e7" stroke="#d5a850" stroke-width="3"/>
+    <text x="130" y="64" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="28" font-weight="800" fill="#7a4d12">stdout</text>
+    <text x="130" y="122" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="22" fill="#604c2e">ready</text>
+    <text x="130" y="170" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="22" fill="#604c2e">down</text>
+    <text x="130" y="218" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="22" fill="#604c2e">up</text>
+    <text x="130" y="266" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="18" fill="#604c2e">permission-denied</text>
+  </g>
+  <path d="M364 376H456" stroke="#2d6f7c" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M742 376H834" stroke="#2d6f7c" stroke-width="5" marker-end="url(#arrow)"/>
+  <rect x="254" y="628" width="692" height="54" rx="27" fill="#ffffff" stroke="#ced7df"/>
+  <text x="600" y="662" text-anchor="middle" font-family="Arial, 'PingFang SC', sans-serif" font-size="20" font-weight="700" fill="#334155">helper 的输出越窄，Electron 主进程越容易保持跨平台产品逻辑</text>
+</svg>

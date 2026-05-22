@@ -70,14 +70,22 @@ export function CodexSnapshotModule({
               本地只读会话审阅台，挂在站点里但数据仍从你的机器读取。
             </p>
           </div>
-          <Link
-            href={standaloneHref}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold !text-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.8)] transition hover:-translate-y-0.5 hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
-          >
-            打开独立窗口
-          </Link>
+          <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
+            <Link
+              href="/snapshots/share/"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-950/12 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-950/25 hover:text-slate-950 focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/15"
+            >
+              云端分享页
+            </Link>
+            <Link
+              href={standaloneHref}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold !text-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.8)] transition hover:-translate-y-0.5 hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
+            >
+              打开独立窗口
+            </Link>
+          </div>
         </div>
 
         <div className="border-b border-slate-900/10 bg-slate-950 px-5 py-3 text-sm text-slate-200">

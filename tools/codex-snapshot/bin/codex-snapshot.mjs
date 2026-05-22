@@ -22,6 +22,8 @@ const TOOL_OUTPUT_PREVIEW_CHARS = 24000;
 const MAX_INLINE_IMAGE_CHARS = 5_000_000;
 const DEFAULT_TRAE_RECORDER_PORT = 4732;
 const MAX_TRAE_CAPTURE_POST_BYTES = 64 * 1024 * 1024;
+const DEFAULT_SNAPSHOT_SHARE_API_URL = "http://127.0.0.1:8787";
+const DEFAULT_SNAPSHOT_SHARE_SITE_URL = "https://ffffhx.github.io/garden-lab";
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const execFileAsync = promisify(execFile);
 
@@ -132,6 +134,37 @@ async function main() {
     return;
   }
 
+  if (parsed.command === "publish") {
+    const ref = parsed.positionals[0];
+    if (!ref) {
+      throw new Error("publish requires a session id or JSONL path");
+    }
+    if (parsed.options.noRedact && !parsed.options.allowUnredacted) {
+      throw new Error("publish refuses --no-redact unless --allow-unredacted is also set");
+    }
+    const snapshot = await loadSnapshot(ref, {
+      codexHome,
+      claudeHome,
+      traeHome,
+      traeAppHome,
+      traeRecordingsDir,
+      includeTools: parsed.options.includeTools,
+      includeToolOutput: parsed.options.includeToolOutput,
+      redact: !parsed.options.noRedact,
+    });
+    applySafetyChecksOption(snapshot, Boolean(parsed.options.withSafety));
+    const result = await publishSnapshot(snapshot, {
+      apiUrl: parsed.options.apiUrl,
+      token: parsed.options.shareToken,
+      siteUrl: parsed.options.siteUrl,
+      expiresInDays: parsed.options.expiresInDays,
+    });
+    console.log(`Published ${snapshot.engineLabel || "Codex"} snapshot: ${snapshot.title}`);
+    console.log(`Share id: ${result.id}`);
+    console.log(`URL: ${result.url}`);
+    return;
+  }
+
   if (parsed.command === "serve") {
     const port = parsed.options.port || 4321;
     const host = parsed.options.host || "127.0.0.1";
@@ -170,6 +203,12 @@ function parseArgs(args) {
     noRedact: false,
     output: "",
     port: 0,
+    apiUrl: "",
+    siteUrl: "",
+    shareToken: "",
+    expiresInDays: 0,
+    allowUnredacted: false,
+    withSafety: false,
     source: "codex",
     claudeHome: "",
     traeAppHome: "",
@@ -219,11 +258,19 @@ function parseArgs(args) {
       options.recordSensitiveContext = true;
       continue;
     }
+    if (arg === "--allow-unredacted") {
+      options.allowUnredacted = true;
+      continue;
+    }
+    if (arg === "--with-safety") {
+      options.withSafety = true;
+      continue;
+    }
     if (arg === "--live-only") {
       options.includeArchived = false;
       continue;
     }
-    if (arg === "--codex-home" || arg === "--claude-home" || arg === "--trae-home" || arg === "--trae-app-home" || arg === "--trae-recordings-dir" || arg === "--cwd" || arg === "--limit" || arg === "--output" || arg === "-o" || arg === "--port" || arg === "--host" || arg === "--source") {
+    if (arg === "--codex-home" || arg === "--claude-home" || arg === "--trae-home" || arg === "--trae-app-home" || arg === "--trae-recordings-dir" || arg === "--cwd" || arg === "--limit" || arg === "--output" || arg === "-o" || arg === "--port" || arg === "--host" || arg === "--source" || arg === "--api-url" || arg === "--site-url" || arg === "--share-token" || arg === "--expires-in-days") {
       const value = args[index + 1];
       if (!value) {
         throw new Error(`${arg} requires a value`);
@@ -253,6 +300,14 @@ function parseArgs(args) {
           throw new Error("--source must be codex, claude, trae, or all");
         }
         options.source = value;
+      } else if (arg === "--api-url") {
+        options.apiUrl = value;
+      } else if (arg === "--site-url") {
+        options.siteUrl = value;
+      } else if (arg === "--share-token") {
+        options.shareToken = value;
+      } else if (arg === "--expires-in-days") {
+        options.expiresInDays = readPositiveInteger(value, "--expires-in-days");
       }
       index += 1;
       continue;
@@ -276,6 +331,103 @@ function readPositiveInteger(value, label) {
     throw new Error(`${label} must be a positive integer`);
   }
   return parsed;
+}
+
+async function publishSnapshot(snapshot, { apiUrl, token, siteUrl, expiresInDays }) {
+  const normalizedApiUrl = normalizeUrl(
+    apiUrl ||
+      process.env.SNAPSHOT_SHARE_API_URL ||
+      process.env.TOKEN_BOARD_API_URL ||
+      process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL ||
+      DEFAULT_SNAPSHOT_SHARE_API_URL
+  );
+  const shareToken =
+    token ||
+    process.env.SNAPSHOT_SHARE_TOKEN ||
+    process.env.TOKEN_BOARD_AGENT_TOKEN ||
+    process.env.TOKEN_BOARD_UPLOAD_TOKEN ||
+    "";
+  const normalizedSiteUrl = normalizeUrl(siteUrl || process.env.SNAPSHOT_SHARE_SITE_URL || DEFAULT_SNAPSHOT_SHARE_SITE_URL);
+
+  if (!normalizedApiUrl) {
+    throw new Error("Missing share API URL. Set SNAPSHOT_SHARE_API_URL or pass --api-url.");
+  }
+  if (!shareToken) {
+    throw new Error("Missing share API token. Set SNAPSHOT_SHARE_TOKEN, TOKEN_BOARD_AGENT_TOKEN, TOKEN_BOARD_UPLOAD_TOKEN, or pass --share-token.");
+  }
+
+  const response = await fetch(`${normalizedApiUrl}/api/snapshots`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${shareToken}`,
+      "Content-Type": "application/json",
+      "User-Agent": `codex-snapshot/${VERSION}`,
+    },
+    body: JSON.stringify({
+      snapshot: prepareSnapshotForCloud(snapshot),
+      siteUrl: normalizedSiteUrl,
+      expiresInDays: expiresInDays || undefined,
+    }),
+  });
+  const text = await response.text();
+  let payload;
+
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    payload = { error: text };
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.error || `Publish failed with HTTP ${response.status}`);
+  }
+  if (!payload?.id || !payload?.url) {
+    throw new Error("Publish response did not include a share id and URL");
+  }
+
+  return payload;
+}
+
+function prepareSnapshotForCloud(snapshot) {
+  const copy = JSON.parse(JSON.stringify(snapshot));
+  delete copy.cwd;
+  delete copy.filePath;
+  delete copy.displayFilePath;
+  copy.cloudShared = true;
+  copy.cloudSharedAt = new Date().toISOString();
+  return removePrivatePathFields(copy);
+}
+
+function removePrivatePathFields(value) {
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map(removePrivatePathFields);
+  }
+  for (const key of ["cwd", "filePath", "displayFilePath"]) {
+    delete value[key];
+  }
+  for (const [key, item] of Object.entries(value)) {
+    if (key === "images") {
+      continue;
+    }
+    value[key] = removePrivatePathFields(item);
+  }
+  return value;
+}
+
+function normalizeUrl(value) {
+  const trimmed = String(value || "").trim().replace(/\/+$/, "");
+  if (!trimmed) {
+    return "";
+  }
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString().replace(/\/+$/, "") : "";
+  } catch {
+    return "";
+  }
 }
 
 async function listSessions({ codexHome, claudeHome, traeHome, traeAppHome, traeRecordingsDir, limit, cwd, includeArchived, source = "codex", completeOnly = false }) {
@@ -3238,6 +3390,36 @@ async function serve({ codexHome, claudeHome, traeHome, traeAppHome, traeRecordi
         sendJson(response, snapshot);
         return;
       }
+      if (url.pathname === "/api/publish") {
+        const id = url.searchParams.get("id");
+        if (!id) {
+          sendJson(response, { error: "missing id" }, 400);
+          return;
+        }
+        if (url.searchParams.get("redact") === "0") {
+          sendJson(response, { error: "Cloud publish requires Redact enabled in the local viewer." }, 400);
+          return;
+        }
+        const snapshot = await loadSnapshot(id, {
+          codexHome,
+          claudeHome,
+          traeHome,
+          traeAppHome,
+          traeRecordingsDir,
+          includeTools: url.searchParams.get("includeTools") === "1" || url.searchParams.get("includeToolOutput") === "1",
+          includeToolOutput: url.searchParams.get("includeToolOutput") === "1",
+          redact: true,
+        });
+        applySafetyChecksOption(snapshot, url.searchParams.get("safety") === "1");
+        const result = await publishSnapshot(snapshot, {
+          apiUrl: "",
+          token: "",
+          siteUrl: "",
+          expiresInDays: 0,
+        });
+        sendJson(response, result);
+        return;
+      }
       if (url.pathname === "/export") {
         const id = url.searchParams.get("id");
         const format = url.searchParams.get("format") === "md" ? "md" : "html";
@@ -5044,6 +5226,23 @@ button:disabled {
 .risk em { color: var(--muted); font-style: normal; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
 .exports { display: flex; flex-wrap: wrap; gap: 10px; }
 .exports a { display: inline-flex; align-items: center; }
+.publish-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  max-width: min(680px, 100%);
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font: 800 12px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.publish-status a {
+  color: #155e75;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.publish-status.error {
+  color: var(--red);
+}
 .turns {
   display: grid;
   gap: 46px;
@@ -5619,13 +5818,46 @@ function renderSnapshot(snapshot) {
   }).join("") : "<div class='risk'><b>OK</b><span>No common high-risk patterns detected</span><em>Still review before sharing.</em></div>";
   $("risks").innerHTML = snapshot.safetyChecks === false ? "" : notices + risks;
   const options = activeOptions();
-  $("exports").innerHTML = "<a href='/export?" + options.toString() + "&format=html'>Export HTML</a><a href='/export?" + options.toString() + "&format=md'>Export Markdown</a>";
+  $("exports").innerHTML = "<a href='/export?" + options.toString() + "&format=html'>Export HTML</a><a href='/export?" + options.toString() + "&format=md'>Export Markdown</a><button type='button' data-publish-cloud='1'>Publish Cloud</button><span id='publishStatus' class='publish-status'></span>";
   $("turns").innerHTML = snapshot.turns.map((turn) => {
     const role = turn.kind === "tool" ? "tool" : turn.role;
     const label = "Tool" + (turn.name ? " / " + esc(turn.name) : "");
     const text = turn.kind === "tool" ? "<details class='tool-details' open><summary>" + label + "</summary><pre>" + esc(turn.text) + "</pre></details>" : (turn.html || renderText(turn.text)) + renderImages(turn.images || []);
     return "<article class='turn " + esc(role) + "'><div class='message-card'><div class='body'>" + text + "</div></div></article>";
   }).join("") || "<div class='meta'>No shareable user or assistant messages found.</div>";
+}
+
+async function publishSelectedSession() {
+  if (!state.selected) {
+    return;
+  }
+  const status = $("publishStatus");
+  const button = document.querySelector("[data-publish-cloud]");
+  if (button) button.disabled = true;
+  if (status) {
+    status.textContent = "Publishing...";
+    status.classList.remove("error");
+  }
+  try {
+    const options = activeOptions();
+    options.set("redact", "1");
+    const response = await fetch("/api/publish?" + options.toString(), { method: "POST" });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Publish failed");
+    }
+    if (status) {
+      status.innerHTML = "<a href='" + esc(result.url) + "' target='_blank' rel='noreferrer'>" + esc(result.url) + "</a>";
+    }
+    await navigator.clipboard?.writeText(result.url).catch(() => undefined);
+  } catch (error) {
+    if (status) {
+      status.textContent = error instanceof Error ? error.message : String(error);
+      status.classList.add("error");
+    }
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 function formatRiskTurns(risk) {
@@ -5679,6 +5911,11 @@ $("sessions").addEventListener("click", async (event) => {
 });
 $("filter").addEventListener("input", renderSessions);
 $("reload").addEventListener("click", loadSessions);
+$("exports").addEventListener("click", (event) => {
+  if (event.target.closest("[data-publish-cloud]")) {
+    publishSelectedSession();
+  }
+});
 for (const id of ["includeTools", "includeToolOutput", "redact"]) {
   $(id).addEventListener("change", () => state.selected && selectSession(state.selected));
 }
@@ -5696,6 +5933,7 @@ Usage:
   codex-snapshot list [--json] [--limit N] [--cwd DIR]
   codex-snapshot preview <session-id|path> [--json] [--include-tools] [--include-tool-output]
   codex-snapshot export <session-id|path> [--html|--md] [--output FILE] [--include-tools] [--include-tool-output]
+  codex-snapshot publish <session-id|path> [--api-url URL] [--share-token TOKEN] [--site-url URL]
   codex-snapshot serve [--host 127.0.0.1] [--port 4321]
   codex-snapshot record-trae [--host 127.0.0.1] [--port 4732]
 
@@ -5711,6 +5949,12 @@ Options:
   --include-tools          Include tool calls in previews and exports
   --include-tool-output    Include tool output as well as tool calls
   --no-redact              Disable automatic redaction
+  --allow-unredacted       For publish only: allow publishing a --no-redact snapshot
+  --with-safety            For publish only: include local safety review rows in the cloud snapshot
+  --api-url URL            For publish only: cloud API base. Defaults to $SNAPSHOT_SHARE_API_URL, $TOKEN_BOARD_API_URL, or http://127.0.0.1:8787
+  --site-url URL           For publish only: public site base used to print the share link
+  --share-token TOKEN      For publish only: API token. Defaults to $SNAPSHOT_SHARE_TOKEN, $TOKEN_BOARD_AGENT_TOKEN, or $TOKEN_BOARD_UPLOAD_TOKEN
+  --expires-in-days N      For publish only: ask the server to expire the share after N days
   --live-only              Ignore archived_sessions when listing
   --record-sensitive-context
                            For record-trae only: persist captured request/response headers as local recorder context
@@ -5719,6 +5963,7 @@ Options:
 Examples:
   codex-snapshot list --limit 20
   codex-snapshot export 019e457b --html -o snapshot.html
+  codex-snapshot publish 019e457b --api-url https://8-218-149-148.anyip.dev/token-board
   codex-snapshot serve --port 4321
   codex-snapshot record-trae --port 4732`);
 }

@@ -60,6 +60,12 @@ function isFocusedToolRoute(pathname: string | null) {
   return normalizedPathname === "/snapshots" || normalizedPathname.startsWith("/snapshots/");
 }
 
+function isSnapshotShareRoute(pathname: string | null) {
+  const normalizedPathname = normalizeAppPathname(pathname);
+
+  return normalizedPathname === "/snapshots/share" || normalizedPathname.startsWith("/snapshots/share/");
+}
+
 function isSnapshotStandaloneRoute(pathname: string | null) {
   const normalizedPathname = normalizeAppPathname(pathname);
 
@@ -70,6 +76,10 @@ function isSnapshotStandaloneRoute(pathname: string | null) {
 }
 
 function isPrivateFeatureRoute(pathname: string | null) {
+  if (isSnapshotShareRoute(pathname)) {
+    return false;
+  }
+
   const normalizedPathname = normalizeAppPathname(pathname);
 
   return PRIVATE_FEATURE_ROUTES.some(

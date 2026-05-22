@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { randomBytes } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
@@ -35,6 +36,11 @@ import {
   importTokenUsageEventsFromJsonFile,
   type TokenUsageStore,
 } from "../lib/token-board-storage";
+import {
+  createSnapshotShareStore,
+  type SnapshotShareRecord,
+  type SnapshotShareStore,
+} from "../lib/snapshot-share-storage";
 import { buildTokenUsageSnapshotFromEvents } from "../lib/content/token-usage";
 
 const PORT = Number(process.env.TOKEN_BOARD_PORT || 8787);
@@ -43,14 +49,19 @@ const DATA_FILE = process.env.TOKEN_BOARD_DATA_FILE || path.join(process.cwd(), 
 const USERS_FILE = process.env.TOKEN_BOARD_USERS_FILE || path.join(process.cwd(), ".token-board", "users.json");
 const MAX_BODY_BYTES = Number(process.env.TOKEN_BOARD_MAX_BODY_BYTES || 4 * 1024 * 1024);
 const MAX_EVENTS = Number(process.env.TOKEN_BOARD_MAX_EVENTS || 100_000);
+const SNAPSHOT_SHARE_DATA_FILE =
+  process.env.SNAPSHOT_SHARE_DATA_FILE || path.join(process.cwd(), ".token-board", "snapshot-shares.json");
+const MAX_SNAPSHOT_SHARE_BODY_BYTES = Number(process.env.SNAPSHOT_SHARE_MAX_BODY_BYTES || 24 * 1024 * 1024);
 const SESSION_COOKIE_NAME = "token_board_session";
 const WEB_SESSION_TTL_SECONDS = Number(process.env.TOKEN_BOARD_WEB_SESSION_TTL_SECONDS || 30 * 24 * 60 * 60);
 const AGENT_SESSION_TTL_SECONDS = Number(process.env.TOKEN_BOARD_AGENT_SESSION_TTL_SECONDS || 180 * 24 * 60 * 60);
 const OAUTH_STATE_TTL_SECONDS = 15 * 60;
 let tokenUsageStore: TokenUsageStore | undefined;
+let snapshotShareStore: SnapshotShareStore | undefined;
 
 async function main() {
   tokenUsageStore = await openTokenUsageStore();
+  snapshotShareStore = await openSnapshotShareStore();
 
   if (process.env.TOKEN_BOARD_MIGRATE_JSON_ON_START === "true") {
     const result = await importTokenUsageEventsFromJsonFile(tokenUsageStore, DATA_FILE);
@@ -70,6 +81,7 @@ async function main() {
   server.listen(PORT, HOST, () => {
     console.log(`token-board server listening on http://${HOST}:${PORT}`);
     console.log(`storage: ${tokenUsageStore?.kind} (${tokenUsageStore?.label})`);
+    console.log(`snapshot shares: ${snapshotShareStore?.kind} (${snapshotShareStore?.label})`);
   });
 }
 
@@ -106,14 +118,42 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
   if (request.method === "GET" && url.pathname === "/api/usage/health") {
     const users = await loadUploadUsers();
     const records = await usageStore().countEvents();
+    const snapshotShares = await shareStore().countShares();
     sendJson(request, response, 200, {
       ok: true,
       users: users.length,
       records,
+      snapshotShares,
       storage: usageStore().kind,
+      snapshotShareStorage: shareStore().kind,
       githubAuth: Boolean(process.env.GITHUB_CLIENT_ID),
       generatedAt: new Date().toISOString(),
     });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/snapshots/health") {
+    sendJson(request, response, 200, {
+      ok: true,
+      shares: await shareStore().countShares(),
+      storage: shareStore().kind,
+      generatedAt: new Date().toISOString(),
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/snapshots") {
+    await handleSnapshotSharePublish(request, response);
+    return;
+  }
+
+  if (request.method === "GET" && snapshotShareIdFromPath(url.pathname)) {
+    await handleSnapshotShareGet(request, response, snapshotShareIdFromPath(url.pathname) || "");
+    return;
+  }
+
+  if (request.method === "DELETE" && snapshotShareIdFromPath(url.pathname)) {
+    await handleSnapshotShareDelete(request, response, snapshotShareIdFromPath(url.pathname) || "");
     return;
   }
 
@@ -346,6 +386,113 @@ async function handleReplace(request: IncomingMessage, response: ServerResponse)
   });
 }
 
+async function handleSnapshotSharePublish(request: IncomingMessage, response: ServerResponse) {
+  const identity = await authenticateIngestRequest(request);
+
+  if (!identity) {
+    sendJson(request, response, 401, { error: "Login required" });
+    return;
+  }
+
+  const body = (await readJsonBody(request, MAX_SNAPSHOT_SHARE_BODY_BYTES)) as {
+    snapshot?: unknown;
+    expiresInDays?: unknown;
+    siteUrl?: unknown;
+  };
+  const snapshot = normalizeSnapshotPayloadForShare(body.snapshot ?? body);
+
+  if (!snapshot.redacted && process.env.SNAPSHOT_SHARE_ALLOW_UNREDACTED !== "true") {
+    sendJson(request, response, 400, {
+      error: "Refusing to publish an unredacted snapshot. Re-run without --no-redact, or set SNAPSHOT_SHARE_ALLOW_UNREDACTED=true on the server.",
+    });
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const expiresAt = expiryFromDays(body.expiresInDays);
+  const record: SnapshotShareRecord = {
+    id: createSnapshotShareId(),
+    title: snapshot.title,
+    engine: snapshot.engine,
+    engineLabel: snapshot.engineLabel,
+    sourceRef: snapshot.ref,
+    createdAt: now,
+    updatedAt: now,
+    expiresAt,
+    redacted: snapshot.redacted,
+    turnCount: snapshot.turnCount,
+    publisher: {
+      userId: identity.userId,
+      displayName: identity.displayName,
+      team: identity.team,
+    },
+    snapshot: snapshot.payload,
+  };
+
+  await shareStore().putShare(record);
+
+  sendJson(request, response, 200, {
+    ok: true,
+    id: record.id,
+    title: record.title,
+    turnCount: record.turnCount,
+    redacted: record.redacted,
+    expiresAt: record.expiresAt || null,
+    url: snapshotShareUrl(record.id, body.siteUrl),
+  });
+}
+
+async function handleSnapshotShareGet(
+  request: IncomingMessage,
+  response: ServerResponse,
+  id: string
+) {
+  const record = await shareStore().getShare(id);
+
+  if (!record) {
+    sendJson(request, response, 404, { error: "Snapshot share not found" });
+    return;
+  }
+
+  sendJson(request, response, 200, {
+    schemaVersion: 1,
+    share: {
+      id: record.id,
+      title: record.title,
+      engine: record.engine,
+      engineLabel: record.engineLabel,
+      sourceRef: record.sourceRef,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+      expiresAt: record.expiresAt || null,
+      redacted: record.redacted,
+      turnCount: record.turnCount,
+    },
+    snapshot: record.snapshot,
+  });
+}
+
+async function handleSnapshotShareDelete(
+  request: IncomingMessage,
+  response: ServerResponse,
+  id: string
+) {
+  const identity = await authenticateIngestRequest(request);
+
+  if (!identity) {
+    sendJson(request, response, 401, { error: "Login required" });
+    return;
+  }
+
+  const deleted = await shareStore().deleteShare(id);
+
+  sendJson(request, response, deleted ? 200 : 404, {
+    ok: deleted,
+    deleted,
+    id,
+  });
+}
+
 async function handleGithubStart(request: IncomingMessage, response: ServerResponse, url: URL) {
   const clientId = requireEnv("GITHUB_CLIENT_ID");
   const returnTo = sanitizeReturnTo(url.searchParams.get("returnTo"), allowedReturnOrigins(request), "/token-leaderboard/");
@@ -490,7 +637,7 @@ async function loadUploadUsers(): Promise<TokenBoardUploadUser[]> {
   }
 }
 
-async function readJsonBody(request: IncomingMessage) {
+async function readJsonBody(request: IncomingMessage, maxBytes = MAX_BODY_BYTES) {
   const chunks: Buffer[] = [];
   let size = 0;
 
@@ -498,7 +645,7 @@ async function readJsonBody(request: IncomingMessage) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     size += buffer.length;
 
-    if (size > MAX_BODY_BYTES) {
+    if (size > maxBytes) {
       throw new Error("Request body is too large");
     }
 
@@ -506,6 +653,128 @@ async function readJsonBody(request: IncomingMessage) {
   }
 
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
+}
+
+function snapshotShareIdFromPath(pathname: string) {
+  const match = pathname.match(/^\/api\/snapshots\/([^/]+)$/);
+  return match?.[1] ? decodeURIComponent(match[1]) : "";
+}
+
+function createSnapshotShareId() {
+  return `snap_${randomBytes(18).toString("base64url")}`;
+}
+
+function normalizeSnapshotPayloadForShare(value: unknown) {
+  if (!value || typeof value !== "object") {
+    throw new Error("Body must include a snapshot object");
+  }
+
+  const payload = removePrivateSnapshotFields(JSON.parse(JSON.stringify(value))) as Record<string, unknown>;
+  const turns = Array.isArray(payload.turns) ? payload.turns : [];
+  const title = sanitizeSnapshotText(payload.title, 180) || "Untitled snapshot";
+  const engine = sanitizeSnapshotText(payload.engine, 80) || "codex";
+  const engineLabel = sanitizeSnapshotText(payload.engineLabel, 80) || "Codex";
+  const ref = sanitizeSnapshotText(payload.ref, 240) || undefined;
+
+  if (!turns.length) {
+    throw new Error("Snapshot has no shareable turns");
+  }
+
+  sanitizeTurnHtml(payload);
+
+  return {
+    title,
+    engine,
+    engineLabel,
+    ref,
+    redacted: payload.redacted !== false,
+    turnCount: turns.length,
+    payload,
+  };
+}
+
+function removePrivateSnapshotFields(value: unknown): unknown {
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(removePrivateSnapshotFields);
+  }
+
+  const record = value as Record<string, unknown>;
+  delete record.cwd;
+  delete record.filePath;
+  delete record.displayFilePath;
+
+  for (const [key, item] of Object.entries(record)) {
+    if (key === "images") {
+      continue;
+    }
+    record[key] = removePrivateSnapshotFields(item);
+  }
+
+  return record;
+}
+
+function sanitizeTurnHtml(snapshot: Record<string, unknown>) {
+  const turns = Array.isArray(snapshot.turns) ? snapshot.turns : [];
+
+  for (const turn of turns) {
+    if (!turn || typeof turn !== "object") {
+      continue;
+    }
+
+    const record = turn as Record<string, unknown>;
+    if (typeof record.html === "string") {
+      record.html = sanitizePublishedHtml(record.html);
+    }
+  }
+}
+
+function sanitizePublishedHtml(value: string) {
+  return value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<(?:iframe|object|embed)\b[^>]*>[\s\S]*?<\/(?:iframe|object|embed)>/gi, "")
+    .replace(/\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+}
+
+function expiryFromDays(value: unknown) {
+  const days = Number(value);
+
+  if (!Number.isFinite(days) || days <= 0) {
+    return undefined;
+  }
+
+  const maxDays = Math.min(days, 365);
+  return new Date(Date.now() + maxDays * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function snapshotShareUrl(id: string, rawSiteUrl: unknown) {
+  const siteUrl = sanitizeSnapshotUrl(rawSiteUrl) || sanitizeSnapshotUrl(process.env.SNAPSHOT_SHARE_SITE_URL) || "https://ffffhx.github.io/garden-lab";
+  return `${siteUrl.replace(/\/+$/, "")}/snapshots/share/?id=${encodeURIComponent(id)}`;
+}
+
+function sanitizeSnapshotText(value: unknown, maxLength: number) {
+  return typeof value === "string"
+    ? value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, maxLength)
+    : "";
+}
+
+function sanitizeSnapshotUrl(value: unknown) {
+  const text = sanitizeSnapshotText(value, 400).replace(/\/+$/, "");
+
+  if (!text) {
+    return "";
+  }
+
+  try {
+    const url = new URL(text);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString().replace(/\/+$/, "") : "";
+  } catch {
+    return "";
+  }
 }
 
 async function exchangeGithubCode(code: string, redirectUri: string) {
@@ -643,12 +912,29 @@ async function openTokenUsageStore() {
   });
 }
 
+async function openSnapshotShareStore() {
+  return createSnapshotShareStore({
+    dataFile: SNAPSHOT_SHARE_DATA_FILE,
+    databaseUrl: normalizeOptionalText(process.env.TOKEN_BOARD_DATABASE_URL) || normalizeOptionalText(process.env.DATABASE_URL),
+    postgresSchema: normalizeOptionalText(process.env.TOKEN_BOARD_POSTGRES_SCHEMA) || "token_board",
+    postgresSsl: process.env.TOKEN_BOARD_DATABASE_SSL === "true" ? { rejectUnauthorized: process.env.TOKEN_BOARD_DATABASE_SSL_REJECT_UNAUTHORIZED !== "false" } : undefined,
+  });
+}
+
 function usageStore() {
   if (!tokenUsageStore) {
     throw new Error("Token usage store is not initialized");
   }
 
   return tokenUsageStore;
+}
+
+function shareStore() {
+  if (!snapshotShareStore) {
+    throw new Error("Snapshot share store is not initialized");
+  }
+
+  return snapshotShareStore;
 }
 
 function applyCors(request: IncomingMessage, response: ServerResponse) {
@@ -661,7 +947,7 @@ function applyCors(request: IncomingMessage, response: ServerResponse) {
 
   response.setHeader("Access-Control-Allow-Origin", allowOrigin);
   response.setHeader("Access-Control-Allow-Credentials", "true");
-  response.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  response.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   response.setHeader("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Token-Board-Token");
   response.setHeader("Vary", "Origin");
 }

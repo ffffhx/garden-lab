@@ -2,6 +2,11 @@ export type TokenBoardRange = "1D" | "7D" | "30D" | "90D";
 
 export type TokenBoardMetric = "tokens" | "cost" | "sessions" | "messages";
 
+export type TokenDailyUsagePoint = {
+  date: string;
+  tokens: number;
+};
+
 export type TokenUsageEvent = {
   id: string;
   userId: string;
@@ -42,6 +47,7 @@ export type TokenLeaderboardUser = {
   topTool: string;
   share: number;
   deltaTokens: number | null;
+  daily: TokenDailyUsagePoint[];
 };
 
 export type TokenLeaderboardSummary = {
@@ -55,7 +61,7 @@ export type TokenLeaderboardSummary = {
   activeUsers: number;
   topModel: string;
   topTool: string;
-  daily: Array<{ date: string; tokens: number }>;
+  daily: TokenDailyUsagePoint[];
   models: Array<{ name: string; tokens: number; costUsd: number; share: number }>;
   tools: Array<{ name: string; tokens: number; sessions: number; share: number }>;
   users: TokenLeaderboardUser[];
@@ -143,8 +149,9 @@ export function buildTokenLeaderboard(
     const timestamp = new Date(entry.timestamp).getTime();
     return timestamp >= previousStart.getTime() && timestamp < start.getTime();
   });
+  const dailyByUser = buildDailySeriesByUser(currentEntries, start, end);
   const previousTokensByUser = sumTokensByUser(previousEntries);
-  const users = rankUsers(aggregateUsers(currentEntries, previousTokensByUser), metric);
+  const users = rankUsers(aggregateUsers(currentEntries, previousTokensByUser, dailyByUser), metric);
   const totalTokens = users.reduce((sum, user) => sum + user.tokens, 0);
   const totalCostUsd = users.reduce((sum, user) => sum + user.costUsd, 0);
   const totalSessions = users.reduce((sum, user) => sum + user.sessions, 0);
@@ -491,11 +498,12 @@ function recordsToEvents(records: unknown[]) {
 
 function aggregateUsers(
   entries: TokenUsageEvent[],
-  previousTokensByUser: Map<string, number>
+  previousTokensByUser: Map<string, number>,
+  dailyByUser: Map<string, TokenDailyUsagePoint[]>
 ): TokenLeaderboardUser[] {
   const users = new Map<
     string,
-    Omit<TokenLeaderboardUser, "rank" | "share" | "deltaTokens" | "topModel" | "topTool"> & {
+    Omit<TokenLeaderboardUser, "rank" | "share" | "deltaTokens" | "topModel" | "topTool" | "daily"> & {
       modelTokens: Map<string, number>;
       toolTokens: Map<string, number>;
       days: Set<string>;
@@ -572,6 +580,7 @@ function aggregateUsers(
       topTool: topMapEntry(user.toolTokens),
       share: 0,
       deltaTokens: previousTokens > 0 ? (user.tokens - previousTokens) / previousTokens : null,
+      daily: dailyByUser.get(user.userId) ?? [],
     };
   });
 }
@@ -756,13 +765,12 @@ function getShanghaiWeekdayHour(value: string) {
   };
 }
 
-function buildDailySeries(entries: TokenUsageEvent[], start: Date, end: Date) {
+function buildDailySeries(entries: TokenUsageEvent[], start: Date, end: Date): TokenDailyUsagePoint[] {
+  const dateKeys = buildDailySeriesDateKeys(start, end);
   const values = new Map<string, number>();
-  const startDay = startOfUtcDay(start);
-  const endDay = startOfUtcDay(end);
 
-  for (let time = startDay.getTime(); time <= endDay.getTime(); time += 24 * 60 * 60 * 1000) {
-    values.set(toDateKey(new Date(time).toISOString()), 0);
+  for (const date of dateKeys) {
+    values.set(date, 0);
   }
 
   for (const entry of entries) {
@@ -771,6 +779,46 @@ function buildDailySeries(entries: TokenUsageEvent[], start: Date, end: Date) {
   }
 
   return [...values.entries()].map(([date, tokens]) => ({ date, tokens }));
+}
+
+function buildDailySeriesByUser(
+  entries: TokenUsageEvent[],
+  start: Date,
+  end: Date
+): Map<string, TokenDailyUsagePoint[]> {
+  const dateKeys = buildDailySeriesDateKeys(start, end);
+  const valuesByUser = new Map<string, Map<string, number>>();
+
+  for (const entry of entries) {
+    let values = valuesByUser.get(entry.userId);
+
+    if (!values) {
+      values = new Map(dateKeys.map((date) => [date, 0]));
+      valuesByUser.set(entry.userId, values);
+    }
+
+    const key = toDateKey(entry.timestamp);
+    values.set(key, (values.get(key) ?? 0) + getTokenConsumptionTokens(entry));
+  }
+
+  return new Map(
+    [...valuesByUser.entries()].map(([userId, values]) => [
+      userId,
+      dateKeys.map((date) => ({ date, tokens: values.get(date) ?? 0 })),
+    ])
+  );
+}
+
+function buildDailySeriesDateKeys(start: Date, end: Date) {
+  const keys: string[] = [];
+  const startDay = startOfUtcDay(start);
+  const endDay = startOfUtcDay(end);
+
+  for (let time = startDay.getTime(); time <= endDay.getTime(); time += 24 * 60 * 60 * 1000) {
+    keys.push(toDateKey(new Date(time).toISOString()));
+  }
+
+  return keys;
 }
 
 function sumTokensByUser(entries: TokenUsageEvent[]) {

@@ -266,6 +266,8 @@ export function TokenLeaderboardApp({
 
   const topUsers = summary.users.slice(0, 8);
   const leader = summary.users[0];
+  const showDailyLeaderboardTrend = range !== "1D";
+  const leaderboardColumnCount = showDailyLeaderboardTrend ? 8 : 7;
   const maxDailyTokens = Math.max(1, ...summary.daily.map((point) => point.tokens));
   const selectedMetricLabel = METRICS.find((item) => item.key === metric)?.label ?? "总消耗";
   const shareTotal = Math.max(0, summary.users.reduce((sum, user) => sum + getUserMetricValue(user, metric), 0));
@@ -393,17 +395,25 @@ export function TokenLeaderboardApp({
         ) : isDataError ? (
           <LeaderboardErrorState error={dataLoadError} onRetry={retryDataLoad} />
         ) : summary.users.length ? (
-          topUsers.map((user) => <LeaderboardMobileCard key={user.userId} metric={metric} user={user} />)
+          topUsers.map((user) => (
+            <LeaderboardMobileCard
+              key={user.userId}
+              metric={metric}
+              showDailyTrend={showDailyLeaderboardTrend}
+              user={user}
+            />
+          ))
         ) : (
           <LeaderboardEmptyState />
         )}
       </div>
       <div className="hidden overflow-x-auto sm:block">
-        <table className="w-full min-w-[780px] border-collapse text-left text-sm">
+        <table className={`w-full border-collapse text-left text-sm ${showDailyLeaderboardTrend ? "min-w-[960px]" : "min-w-[780px]"}`}>
           <thead className="bg-[#f3ede0] text-xs font-semibold uppercase tracking-[0.08em] text-stone-500">
             <tr>
               <th className="px-4 py-3">排名</th>
               <th className="px-4 py-3">用户</th>
+              {showDailyLeaderboardTrend ? <th className="w-44 px-4 py-3">每日用量</th> : null}
               <SortableColumnHeader active={metric === "tokens"} align="right">总消耗 Token</SortableColumnHeader>
               <SortableColumnHeader active={metric === "cost"} align="right">费用</SortableColumnHeader>
               <SortableColumnHeader active={metric === "sessions"} align="right">会话</SortableColumnHeader>
@@ -413,13 +423,15 @@ export function TokenLeaderboardApp({
           </thead>
           <tbody className="divide-y divide-stone-950/8">
             {isDataLoading ? (
-              <LeaderboardLoadingRow slow={isLoadSlow} />
+              <LeaderboardLoadingRow columnCount={leaderboardColumnCount} slow={isLoadSlow} />
             ) : isDataError ? (
-              <LeaderboardErrorRow error={dataLoadError} onRetry={retryDataLoad} />
+              <LeaderboardErrorRow columnCount={leaderboardColumnCount} error={dataLoadError} onRetry={retryDataLoad} />
             ) : summary.users.length ? (
-              summary.users.map((user) => <LeaderboardRow key={user.userId} user={user} />)
+              summary.users.map((user) => (
+                <LeaderboardRow key={user.userId} showDailyTrend={showDailyLeaderboardTrend} user={user} />
+              ))
             ) : (
-              <LeaderboardEmptyRow />
+              <LeaderboardEmptyRow columnCount={leaderboardColumnCount} />
             )}
           </tbody>
         </table>
@@ -1775,10 +1787,19 @@ function SortableColumnHeader({
   );
 }
 
-function LeaderboardMobileCard({ metric, user }: { metric: TokenBoardMetric; user: TokenLeaderboardUser }) {
+function LeaderboardMobileCard({
+  metric,
+  showDailyTrend,
+  user,
+}: {
+  metric: TokenBoardMetric;
+  showDailyTrend: boolean;
+  user: TokenLeaderboardUser;
+}) {
   const metricLabel = METRICS.find((item) => item.key === metric)?.label ?? "总消耗";
   const metricValue = formatMetricValue(getUserMetricValue(user, metric), metric);
   const consumptionTokens = getTokenConsumptionTokens(user);
+  const daily = normalizeDailyUsageSeries(user.daily);
 
   return (
     <article className="rounded-2xl border border-stone-950/10 bg-white p-3 shadow-[0_14px_42px_-36px_rgba(28,25,23,0.65)]">
@@ -1803,6 +1824,15 @@ function LeaderboardMobileCard({ metric, user }: { metric: TokenBoardMetric; use
         <MetricMini label="费用" value={formatUsd(user.costUsd)} />
         <MetricMini label="会话" value={formatNumber(user.sessions)} />
       </div>
+      {showDailyTrend ? (
+        <div className="mt-3 rounded-xl border border-stone-950/8 bg-[#fffdfa] px-3 py-2">
+          <DailyUsageSparkline
+            daily={daily}
+            label={`${user.displayName} 每日用量`}
+            metaClassName="text-stone-500"
+          />
+        </div>
+      ) : null}
       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-stone-500">
         <span className="rounded-md border border-stone-950/10 bg-[#f5efe4] px-2 py-1 font-semibold text-stone-700">
           {user.topModel}
@@ -1825,8 +1855,170 @@ function MetricMini({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LeaderboardRow({ user }: { user: TokenLeaderboardUser }) {
+function DailyUsageSparkline({
+  daily,
+  label,
+  metaClassName = "text-stone-400",
+}: {
+  daily: TokenLeaderboardUser["daily"];
+  label: string;
+  metaClassName?: string;
+}) {
+  const gradientId = sanitizeSvgId(useId());
+  const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
+  const normalizedDaily = normalizeDailyUsageSeries(daily);
+  const width = 160;
+  const height = 46;
+  const paddingX = 4;
+  const paddingY = 5;
+  const maxTokens = Math.max(1, ...normalizedDaily.map((point) => point.tokens));
+  const totalTokens = normalizedDaily.reduce((sum, point) => sum + point.tokens, 0);
+  const peak = normalizedDaily.reduce(
+    (best, point) => (point.tokens > best.tokens ? point : best),
+    { date: "", tokens: 0 }
+  );
+  const points = normalizedDaily.map((point, index) => {
+    const x =
+      normalizedDaily.length <= 1
+        ? width / 2
+        : paddingX + (index * (width - paddingX * 2)) / (normalizedDaily.length - 1);
+    const y = height - paddingY - (point.tokens / maxTokens) * (height - paddingY * 2);
+
+    return { ...point, x, y };
+  });
+  const activePoint = hoveredPointIndex === null ? null : points[hoveredPointIndex] ?? null;
+  const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
+  const areaPath = points.length
+    ? `${path} L ${points.at(-1)?.x.toFixed(2)} ${height - paddingY} L ${points[0].x.toFixed(2)} ${height - paddingY} Z`
+    : "";
+  const firstDate = normalizedDaily[0]?.date.slice(5) ?? "--";
+  const lastDate = normalizedDaily.at(-1)?.date.slice(5) ?? "--";
+  const title = peak.date
+    ? `${label}：${firstDate} - ${lastDate}，峰值 ${peak.date.slice(5)} ${formatTokens(peak.tokens)}，合计 ${formatTokens(totalTokens)}`
+    : `${label}：暂无每日用量`;
+
+  return (
+    <div aria-label={title} className="min-w-0">
+      <div className="flex items-center justify-between gap-2">
+        <p className={`truncate text-[11px] font-semibold ${metaClassName}`}>每日用量</p>
+        <p className={`shrink-0 font-mono text-[11px] ${metaClassName}`}>
+          {activePoint ? `${activePoint.date.slice(5)} ${formatTokens(activePoint.tokens)}` : `峰值 ${formatTokens(peak.tokens)}`}
+        </p>
+      </div>
+      <div
+        className={`mt-1 min-h-12 rounded-lg border px-2.5 py-1.5 transition ${
+          activePoint
+            ? "border-[#26745e]/25 bg-[#fffdfa] shadow-[0_12px_34px_-28px_rgba(38,116,94,0.75)]"
+            : "border-transparent bg-transparent"
+        }`}
+        role={activePoint ? "tooltip" : undefined}
+      >
+        {activePoint ? (
+          <>
+            <p className="font-mono text-[10px] font-semibold text-[#26745e]">{activePoint.date}</p>
+            <p className="mt-0.5 whitespace-nowrap font-mono text-xs font-semibold text-stone-950">
+              {formatNumber(activePoint.tokens)} tokens
+            </p>
+          </>
+        ) : (
+          <span className="sr-only">悬停每日折线查看当天具体用量</span>
+        )}
+      </div>
+      <div
+        className="relative h-12"
+        onMouseLeave={() => setHoveredPointIndex(null)}
+      >
+        <svg
+          aria-label={label}
+          className="h-full w-full overflow-visible"
+          preserveAspectRatio="none"
+          role="img"
+          viewBox={`0 0 ${width} ${height}`}
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#26745e" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#26745e" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+          <line x1={paddingX} x2={width - paddingX} y1={height - paddingY} y2={height - paddingY} stroke="#e2d6c5" strokeWidth="1" />
+          {areaPath ? (
+            <path d={areaPath} fill={`url(#${gradientId})`} />
+          ) : null}
+          {path ? (
+            <path
+              d={path}
+              fill="none"
+              stroke="#26745e"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3"
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : null}
+          {activePoint ? (
+            <line
+              x1={activePoint.x}
+              x2={activePoint.x}
+              y1={paddingY}
+              y2={height - paddingY}
+              stroke="#26745e"
+              strokeDasharray="3 3"
+              strokeOpacity="0.5"
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : null}
+          {points.map((point, index) => (
+            <circle
+              key={`${point.date}:dot`}
+              cx={point.x}
+              cy={point.y}
+              fill={hoveredPointIndex === index ? "#26745e" : index === points.length - 1 ? "#c05c38" : "#fffdfa"}
+              r={hoveredPointIndex === index ? 3.5 : index === points.length - 1 ? 3 : 2}
+              stroke="#26745e"
+              strokeWidth="1.75"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          {points.map((point, index) => {
+            const left = index === 0 ? 0 : (points[index - 1].x + point.x) / 2;
+            const right = index === points.length - 1 ? width : (point.x + points[index + 1].x) / 2;
+            const exactLabel = `${point.date} ${formatNumber(point.tokens)} tokens`;
+
+            return (
+              <rect
+                key={`${point.date}:hit`}
+                aria-label={exactLabel}
+                className="cursor-crosshair outline-none"
+                data-daily-usage-point={point.date}
+                fill="transparent"
+                height={height}
+                onClick={() => setHoveredPointIndex(index)}
+                onMouseEnter={() => setHoveredPointIndex(index)}
+                onMouseMove={() => setHoveredPointIndex(index)}
+                pointerEvents="all"
+                width={Math.max(8, right - left)}
+                x={left}
+                y={0}
+              >
+                <title>{exactLabel}</title>
+              </rect>
+            );
+          })}
+        </svg>
+      </div>
+      <div className={`mt-1 flex justify-between font-mono text-[10px] ${metaClassName}`}>
+        <span>{firstDate}</span>
+        <span>{lastDate}</span>
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardRow({ showDailyTrend, user }: { showDailyTrend: boolean; user: TokenLeaderboardUser }) {
   const consumptionTokens = getTokenConsumptionTokens(user);
+  const daily = normalizeDailyUsageSeries(user.daily);
   const rankTone =
     user.rank === 1
       ? "border-[#b06a2c]/30 bg-[#fff2d6] text-[#5a3419]"
@@ -1852,6 +2044,11 @@ function LeaderboardRow({ user }: { user: TokenLeaderboardUser }) {
           </div>
         </div>
       </td>
+      {showDailyTrend ? (
+        <td className="px-4 py-3">
+          <DailyUsageSparkline daily={daily} label={`${user.displayName} 每日用量`} />
+        </td>
+      ) : null}
       <td className="px-4 py-3 text-right font-mono font-semibold text-stone-950">{formatTokens(consumptionTokens)}</td>
       <td className="px-4 py-3 text-right font-mono text-stone-600">{formatUsd(user.costUsd)}</td>
       <td className="px-4 py-3 text-right font-mono text-stone-600">{formatNumber(user.sessions)}</td>
@@ -1894,10 +2091,10 @@ function MobileLeaderboardLoading({ slow }: { slow: boolean }) {
   );
 }
 
-function LeaderboardLoadingRow({ slow }: { slow: boolean }) {
+function LeaderboardLoadingRow({ columnCount, slow }: { columnCount: number; slow: boolean }) {
   return (
     <tr>
-      <td colSpan={7} className="px-4 py-12">
+      <td colSpan={columnCount} className="px-4 py-12">
         <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-stone-950/8 bg-[#f8f2e8] p-6 text-center">
           <LoadingSpinner className="size-7" />
           <div>
@@ -1929,10 +2126,10 @@ function LeaderboardErrorState({ error, onRetry }: { error: string; onRetry: () 
   );
 }
 
-function LeaderboardErrorRow({ error, onRetry }: { error: string; onRetry: () => void }) {
+function LeaderboardErrorRow({ columnCount, error, onRetry }: { columnCount: number; error: string; onRetry: () => void }) {
   return (
     <tr>
-      <td colSpan={7} className="px-4 py-10">
+      <td colSpan={columnCount} className="px-4 py-10">
         <LeaderboardErrorState error={error} onRetry={onRetry} />
       </td>
     </tr>
@@ -1947,10 +2144,10 @@ function LeaderboardEmptyState() {
   );
 }
 
-function LeaderboardEmptyRow() {
+function LeaderboardEmptyRow({ columnCount }: { columnCount: number }) {
   return (
     <tr>
-      <td colSpan={7} className="px-4 py-10 text-center text-sm text-stone-500">
+      <td colSpan={columnCount} className="px-4 py-10 text-center text-sm text-stone-500">
         暂无真实用户数据
       </td>
     </tr>
@@ -2204,6 +2401,28 @@ function formatUsd(value: number) {
   }).format(value);
 }
 
+function normalizeDailyUsageSeries(value: unknown): TokenLeaderboardUser["daily"] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((point) => {
+    if (!point || typeof point !== "object") {
+      return [];
+    }
+
+    const item = point as { date?: unknown; tokens?: unknown };
+    const date = typeof item.date === "string" ? item.date : "";
+    const tokens = typeof item.tokens === "number" && Number.isFinite(item.tokens) ? Math.max(0, item.tokens) : 0;
+
+    return date ? [{ date, tokens }] : [];
+  });
+}
+
+function sanitizeSvgId(value: string) {
+  return `spark-${value.replace(/[^a-zA-Z0-9_-]/g, "") || "daily"}`;
+}
+
 function getUserMetricValue(user: TokenLeaderboardUser, metric: TokenBoardMetric) {
   if (metric === "cost") {
     return user.costUsd;
@@ -2224,6 +2443,7 @@ function normalizeRemoteSummary(summary: TokenLeaderboardSummary, metric: TokenB
   const users = summary.users
     .map((user) => ({
       ...user,
+      daily: normalizeDailyUsageSeries(user.daily),
       tokens: getTokenConsumptionTokens(user),
     }))
     .sort((left, right) => getUserMetricValue(right, metric) - getUserMetricValue(left, metric) || left.displayName.localeCompare(right.displayName))
@@ -2243,9 +2463,11 @@ function normalizeRemoteSummary(summary: TokenLeaderboardSummary, metric: TokenB
 function normalizeRemoteAccountProfile(profile: TokenAccountUsageProfile): TokenAccountUsageProfile {
   return {
     ...profile,
+    daily: normalizeDailyUsageSeries(profile.daily),
     user: profile.user
       ? {
           ...profile.user,
+          daily: normalizeDailyUsageSeries(profile.user.daily),
           tokens: getTokenConsumptionTokens(profile.user),
         }
       : null,

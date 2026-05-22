@@ -44,6 +44,10 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1000,200,1300,5`);
     expect(summary.totalTokens).toBe(28_000);
     expect(summary.users.map((user) => user.userId)).toEqual(["kai", "ava"]);
     expect(summary.users[1].deltaTokens).toBe(1);
+    expect(summary.users[0].daily).toEqual([
+      { date: "2026-05-13", tokens: 0 },
+      { date: "2026-05-14", tokens: 18_000 },
+    ]);
   });
 
   it("uses input plus output tokens as the consumption total without double-counting cache hits", () => {

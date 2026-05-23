@@ -89,6 +89,7 @@ function isPrivateFeatureRoute(pathname: string | null) {
 
 export function RootChrome({ children, posts }: RootChromeProps) {
   const pathname = usePathname();
+  const normalizedPathname = normalizeAppPathname(pathname);
   const isPrivateRoute = isPrivateFeatureRoute(pathname);
 
   if (isDesktopPetRoute(pathname)) {
@@ -120,7 +121,10 @@ export function RootChrome({ children, posts }: RootChromeProps) {
   return (
     <PrivateFeatureAccessProvider>
       <WebMcpTools posts={posts} />
-      <SiteShell showPet={!isGameTableRoute(pathname) && !isFocusedToolRoute(pathname)}>
+      <SiteShell
+        currentPathname={normalizedPathname}
+        showPet={!isGameTableRoute(pathname) && !isFocusedToolRoute(pathname)}
+      >
         {isPrivateRoute ? (
           <PrivateFeatureGate
             fallback={<PrivateFeaturePageFallback />}

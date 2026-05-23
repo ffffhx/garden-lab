@@ -23,4 +23,15 @@ describe("SiteHeader", () => {
     expect(markup).not.toContain(">桌宠</a>");
     expect(markup).toContain('href="/token-leaderboard"');
   });
+
+  it("highlights the token leaderboard link on the token leaderboard page", () => {
+    const markup = renderToStaticMarkup(
+      createElement(SiteHeader, { currentPathname: "/token-leaderboard" })
+    );
+
+    expect(markup).toContain('href="/token-leaderboard"');
+    expect(markup).toContain('aria-current="page"');
+    expect(markup).toContain("bg-slate-950");
+    expect(markup).toContain("!text-white");
+  });
 });

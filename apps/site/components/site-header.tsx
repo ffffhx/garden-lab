@@ -3,7 +3,8 @@ import Link from "next/link";
 
 import { PrivateFeatureGate } from "@/components/private-feature-access";
 import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
-import { withBasePath } from "@/lib/utils/site-path";
+import { cn } from "@/lib/utils/cn";
+import { normalizeBasePath, withBasePath } from "@/lib/utils/site-path";
 
 const NAV_LINKS = [
   { href: "/", label: "首页" },
@@ -24,17 +25,71 @@ const NAV_LINKS = [
   { href: "/about", label: "关于" },
 ];
 
-function NavLink({ item, mobile = false }: { item: (typeof NAV_LINKS)[number]; mobile?: boolean }) {
+type NavItem = (typeof NAV_LINKS)[number];
+
+type SiteHeaderProps = {
+  currentPathname?: string | null;
+};
+
+function normalizeNavPathname(pathname: string | null | undefined) {
+  const basePath = normalizeBasePath(process.env.NEXT_PUBLIC_BASE_PATH);
+  let normalizedPathname = pathname || "/";
+
+  normalizedPathname = normalizedPathname.split(/[?#]/)[0] || "/";
+
+  if (
+    basePath &&
+    (normalizedPathname === basePath || normalizedPathname.startsWith(`${basePath}/`))
+  ) {
+    normalizedPathname = normalizedPathname.slice(basePath.length) || "/";
+  }
+
+  if (!normalizedPathname.startsWith("/")) {
+    normalizedPathname = `/${normalizedPathname}`;
+  }
+
+  return normalizedPathname.replace(/\/+$/, "") || "/";
+}
+
+function isActiveNavItem(item: NavItem, currentPathname: string | null | undefined) {
+  if (!currentPathname) {
+    return false;
+  }
+
+  const itemPathname = normalizeNavPathname(item.href);
+  const activePathname = normalizeNavPathname(currentPathname);
+
+  if (itemPathname === "/") {
+    return activePathname === "/";
+  }
+
+  return activePathname === itemPathname || activePathname.startsWith(`${itemPathname}/`);
+}
+
+function NavLink({
+  item,
+  mobile = false,
+  currentPathname,
+}: {
+  item: NavItem;
+  mobile?: boolean;
+  currentPathname?: string | null;
+}) {
+  const active = isActiveNavItem(item, currentPathname);
   const link = (
     <Link
       key={item.href}
       href={item.href}
       prefetch={false}
-      className={
+      aria-current={active ? "page" : undefined}
+      className={cn(
         mobile
-          ? "inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-slate-700 transition hover:bg-amber-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30"
-          : "rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-amber-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30"
-      }
+          ? "inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30"
+          : "rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30",
+        active
+          ? "bg-slate-950 font-semibold !text-white shadow-[0_10px_28px_-22px_rgba(15,23,42,0.85)]"
+          : "text-slate-700 hover:bg-amber-100 hover:text-slate-950"
+      )}
     >
       {item.label}
     </Link>
@@ -43,7 +98,7 @@ function NavLink({ item, mobile = false }: { item: (typeof NAV_LINKS)[number]; m
   return item.private ? <PrivateFeatureGate>{link}</PrivateFeatureGate> : link;
 }
 
-export function SiteHeader() {
+export function SiteHeader({ currentPathname }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-900/10 bg-[#fffdf7]/82 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -61,7 +116,7 @@ export function SiteHeader() {
         <div className="hidden flex-col gap-3 lg:flex lg:items-end">
           <nav className="flex flex-wrap items-center gap-1 rounded-full border border-slate-900/10 bg-white/65 p-1 shadow-[0_18px_60px_-48px_rgba(15,23,42,0.45)]">
             {NAV_LINKS.map((item) => (
-              <NavLink key={item.href} item={item} />
+              <NavLink key={item.href} item={item} currentPathname={currentPathname} />
             ))}
           </nav>
           <form
@@ -99,7 +154,12 @@ export function SiteHeader() {
           <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-slate-900/10 bg-[#fffdf7]/96 p-3 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.65)] backdrop-blur-xl">
             <nav className="grid grid-cols-2 gap-1">
               {NAV_LINKS.map((item) => (
-                <NavLink key={item.href} item={item} mobile />
+                <NavLink
+                  key={item.href}
+                  item={item}
+                  mobile
+                  currentPathname={currentPathname}
+                />
               ))}
             </nav>
             <form

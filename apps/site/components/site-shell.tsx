@@ -8,13 +8,15 @@ import { SiteHeader } from "@/components/site-header";
 export function SiteShell({
   children,
   showPet = true,
+  currentPathname,
 }: {
   children: ReactNode;
   showPet?: boolean;
+  currentPathname?: string | null;
 }) {
   return (
     <div className="site-grain min-h-screen">
-      <SiteHeader />
+      <SiteHeader currentPathname={currentPathname} />
       <div className="mx-auto flex min-h-[calc(100vh-9rem)] w-full max-w-7xl flex-col px-4 pb-16 pt-7 sm:px-6 lg:px-8">
         {children}
       </div>

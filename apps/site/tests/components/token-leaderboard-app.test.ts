@@ -2,7 +2,7 @@ import * as React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { TokenLeaderboardApp } from "../../components/token-leaderboard-app";
+import { DailyTokenTrendChart, TokenLeaderboardApp } from "../../components/token-leaderboard-app";
 
 const initialNow = "2026-05-14T12:00:00.000Z";
 (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -45,5 +45,25 @@ describe("TokenLeaderboardApp", () => {
     expect(markup).not.toContain("导出本地");
     expect(markup).not.toContain("清空本地");
     expect(markup).not.toContain("当前使用静态或本地数据");
+    expect(markup).not.toContain("消息");
+  });
+
+  it("renders readable hover data for the token trend chart", () => {
+    const markup = renderToStaticMarkup(
+      React.createElement(DailyTokenTrendChart, {
+        daily: [
+          { date: "2026-05-16", tokens: 388_007_536 },
+          { date: "2026-05-17", tokens: 91_875_795 },
+        ],
+        loading: false,
+        maxDailyTokens: 388_007_536,
+      })
+    );
+
+    expect(markup).toContain('data-token-trend-point="2026-05-16"');
+    expect(markup).toContain('data-token-trend-tooltip="2026-05-16"');
+    expect(markup).toContain('role="tooltip"');
+    expect(markup).toContain("2026-05-16");
+    expect(markup).toContain("388,007,536 tokens");
   });
 });

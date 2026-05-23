@@ -25,7 +25,6 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
   { key: "tokens", label: "总消耗" },
   { key: "cost", label: "费用" },
   { key: "sessions", label: "会话" },
-  { key: "messages", label: "消息" },
 ];
 const DATA_LOAD_SLOW_MS = 10_000;
 
@@ -248,13 +247,7 @@ export function TokenLeaderboardApp({
   const recordCount = remoteRecordCount ?? 0;
   const isDataLoading = dataLoadState === "loading" && !remoteSummary;
   const isDataError = dataLoadState === "error" && !remoteSummary;
-  const hasMessageData = summary.totalMessages > 0;
-  const metricItems = METRICS.map((item) => ({
-    key: item.key,
-    label: item.label,
-    disabled: item.key === "messages" && !isDataLoading && !hasMessageData,
-    disabledReason: item.key === "messages" ? "当前上报数据暂无消息字段" : undefined,
-  }));
+  const metricItems = METRICS.map((item) => ({ key: item.key, label: item.label }));
   const sourceLabel = isDataLoading ? "loading" : isDataError ? "error" : "server";
   const statusMessage = isDataLoading
     ? isLoadSlow
@@ -267,7 +260,7 @@ export function TokenLeaderboardApp({
   const topUsers = summary.users.slice(0, 8);
   const leader = summary.users[0];
   const showDailyLeaderboardTrend = range !== "1D";
-  const leaderboardColumnCount = showDailyLeaderboardTrend ? 8 : 7;
+  const leaderboardColumnCount = showDailyLeaderboardTrend ? 7 : 6;
   const maxDailyTokens = Math.max(1, ...summary.daily.map((point) => point.tokens));
   const selectedMetricLabel = METRICS.find((item) => item.key === metric)?.label ?? "总消耗";
   const shareTotal = Math.max(0, summary.users.reduce((sum, user) => sum + getUserMetricValue(user, metric), 0));
@@ -288,13 +281,6 @@ export function TokenLeaderboardApp({
   const insightText = isDataLoading
     ? "正在生成自动洞察"
     : buildLeaderboardInsight(summary, cacheHitRate);
-
-  useEffect(() => {
-    if (!isDataLoading && metric === "messages" && !hasMessageData) {
-      setMetric("tokens");
-      setStatus("当前上报数据暂无消息字段，已切回总消耗排序");
-    }
-  }, [hasMessageData, isDataLoading, metric]);
 
   useEffect(() => {
     if (!toast) {
@@ -408,7 +394,7 @@ export function TokenLeaderboardApp({
         )}
       </div>
       <div className="hidden overflow-x-auto sm:block">
-        <table className={`w-full border-collapse text-left text-sm ${showDailyLeaderboardTrend ? "min-w-[1040px]" : "min-w-[780px]"}`}>
+        <table className={`w-full border-collapse text-left text-sm ${showDailyLeaderboardTrend ? "min-w-[960px]" : "min-w-[720px]"}`}>
           <thead className="bg-[#f3ede0] text-xs font-semibold uppercase tracking-[0.08em] text-stone-500">
             <tr>
               <th className="px-4 py-3">排名</th>
@@ -417,7 +403,6 @@ export function TokenLeaderboardApp({
               <SortableColumnHeader active={metric === "tokens"} align="right">总消耗 Token</SortableColumnHeader>
               <SortableColumnHeader active={metric === "cost"} align="right">费用</SortableColumnHeader>
               <SortableColumnHeader active={metric === "sessions"} align="right">会话</SortableColumnHeader>
-              <SortableColumnHeader active={metric === "messages"} align="right" disabled={!hasMessageData}>消息</SortableColumnHeader>
               <th className="px-4 py-3">常用模型</th>
             </tr>
           </thead>
@@ -679,17 +664,11 @@ export function TokenLeaderboardApp({
                   className="mt-4 grid h-56 grid-cols-[repeat(auto-fit,minmax(8px,1fr))] items-end gap-1 rounded-xl border border-stone-950/8 bg-[linear-gradient(180deg,rgba(17,19,15,0.04),transparent)] px-3 pb-3 pt-5"
                   aria-label="Token 趋势"
                 >
-                  {isDataLoading ? <TrendLoadingBars /> : summary.daily.map((point, index) => (
-                    <div key={point.date} className="flex h-full items-end">
-                      <div
-                        className={`w-full rounded-t-[3px] transition duration-200 hover:translate-y-[-2px] ${
-                          index === summary.daily.length - 1 ? "bg-[#c05c38]" : "bg-[#172018] hover:bg-[#26745e]"
-                        }`}
-                        title={`${point.date} ${formatTokens(point.tokens)}`}
-                        style={{ height: `${Math.max(3, (point.tokens / maxDailyTokens) * 100)}%` }}
-                      />
-                    </div>
-                  ))}
+                  <DailyTokenTrendChart
+                    daily={summary.daily}
+                    loading={isDataLoading}
+                    maxDailyTokens={maxDailyTokens}
+                  />
                 </div>
                 <div className="mt-2 flex justify-between font-mono text-xs text-stone-500">
                   <span>{isDataLoading ? <LoadingSpinner className="size-3" /> : summary.daily[0]?.date.slice(5) ?? "--"}</span>
@@ -791,7 +770,7 @@ function AccountUsagePanel({
   const accountConsumptionTokens = user ? getTokenConsumptionTokens(user) : 0;
   const generatedTokens = user ? user.outputTokens + user.reasoningOutputTokens : 0;
   const cacheHitRate = inputContextTokens > 0 && user ? user.cachedInputTokens / inputContextTokens : 0;
-  const messagesPerSession = user?.sessions ? user.messages / user.sessions : 0;
+  const accountTokensPerSession = user?.sessions ? accountConsumptionTokens / user.sessions : 0;
   const dashboardProfile = profile && user ? profile : null;
 
   if (apiEnabled && viewer && !viewer.authenticated) {
@@ -992,25 +971,13 @@ function AccountUsagePanel({
             <AccountStatCard
               label="会话数"
               value={formatNumber(user.sessions)}
-              meta={`${formatDecimal(messagesPerSession)} msg/session`}
+              meta={`${formatTokens(accountTokensPerSession)} token/session`}
               tone="blue"
               tooltip={{
                 title: "会话数",
                 description: "按匿名 sessionId 聚合的会话数量；没有 sessionId 时用事件 ID 兜底。",
                 formula: "count(distinct session_id || event_id)",
-                detail: `${formatNumber(user.messages)} 条消息 / ${formatNumber(user.sessions)} 个会话`,
-              }}
-            />
-            <AccountStatCard
-              label="总消息数"
-              value={formatNumber(user.messages)}
-              meta="messages"
-              tone="ink"
-              tooltip={{
-                title: "总消息数",
-                description: "日志里上报的 messages/message_count 累计值；没有上报的来源会记为 0。",
-                formula: "Σ messages",
-                detail: `当前区间 ${formatNumber(user.messages)} 条`,
+                detail: `${formatTokens(accountConsumptionTokens)} / ${formatNumber(user.sessions)} 个会话`,
               }}
             />
             <AccountStatCard
@@ -1091,7 +1058,7 @@ function AccountLoadingState() {
         <LoadingInline label="正在加载个人消耗" tone="light" spinnerClassName="size-7" />
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {Array.from({ length: 10 }, (_, index) => (
+        {Array.from({ length: 9 }, (_, index) => (
           <div key={index} className="flex h-28 items-center justify-center rounded-xl border border-white/10 bg-white/6">
             <LoadingSpinner className="size-5" tone="light" />
           </div>
@@ -1677,7 +1644,12 @@ function SegmentedControl({
   label: string;
 }) {
   return (
-    <div className="grid w-full grid-cols-4 rounded-xl border border-white/15 bg-white/10 p-1" role="radiogroup" aria-label={label}>
+    <div
+      className="grid w-full rounded-xl border border-white/15 bg-white/10 p-1"
+      role="radiogroup"
+      aria-label={label}
+      style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+    >
       {items.map((item) => (
         <button
           key={item.key}
@@ -1743,6 +1715,115 @@ function HeroSignal({ label, value, meta }: { label: string; value: ReactNode; m
   );
 }
 
+export function DailyTokenTrendChart({
+  daily,
+  loading,
+  maxDailyTokens,
+}: {
+  daily: TokenLeaderboardSummary["daily"];
+  loading: boolean;
+  maxDailyTokens: number;
+}) {
+  if (loading) {
+    return <TrendLoadingBars />;
+  }
+
+  return (
+    <>
+      {daily.map((point, index) => (
+        <DailyTokenTrendBar
+          key={point.date}
+          dailyLength={daily.length}
+          index={index}
+          maxDailyTokens={maxDailyTokens}
+          point={point}
+        />
+      ))}
+    </>
+  );
+}
+
+function DailyTokenTrendBar({
+  dailyLength,
+  index,
+  maxDailyTokens,
+  point,
+}: {
+  dailyLength: number;
+  index: number;
+  maxDailyTokens: number;
+  point: TokenLeaderboardSummary["daily"][number];
+}) {
+  const tooltipId = useId();
+  const safeMaxTokens = Math.max(1, maxDailyTokens);
+  const barHeightPercent = Math.max(3, (point.tokens / safeMaxTokens) * 100);
+  const barHeight = `${barHeightPercent}%`;
+  const tooltipBottom = `calc(${Math.min(barHeightPercent, 70).toFixed(2)}% + 0.55rem)`;
+  const isLatest = index === dailyLength - 1;
+  const exactTokens = `${formatNumber(point.tokens)} tokens`;
+  const exactLabel = `${point.date} ${exactTokens}`;
+  const tooltipAlignClass =
+    dailyLength === 1
+      ? "left-1/2 -translate-x-1/2 text-center"
+      : index === 0
+        ? "left-0 translate-x-0 text-left"
+        : isLatest
+          ? "right-0 translate-x-0 text-right"
+          : "left-1/2 -translate-x-1/2 text-center";
+  const tooltipArrowClass =
+    dailyLength === 1
+      ? "left-1/2 -translate-x-1/2"
+      : index === 0
+        ? "left-3"
+        : isLatest
+          ? "right-3"
+          : "left-1/2 -translate-x-1/2";
+
+  return (
+    <div className="relative flex h-full min-w-0 items-end">
+      <button
+        type="button"
+        aria-describedby={tooltipId}
+        aria-label={exactLabel}
+        className="group/trend relative flex h-full w-full cursor-crosshair appearance-none items-end rounded-t-[3px] border-0 bg-transparent p-0 text-inherit outline-none focus-visible:ring-2 focus-visible:ring-[#26745e]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fffdfa]"
+        data-token-trend-point={point.date}
+      >
+        <span
+          aria-hidden="true"
+          className={`block w-full rounded-t-[3px] transition duration-200 group-hover/trend:translate-y-[-2px] group-focus-visible/trend:translate-y-[-2px] ${
+            isLatest
+              ? "bg-[#c05c38] group-hover/trend:bg-[#d16a45] group-focus-visible/trend:bg-[#d16a45]"
+              : "bg-[#172018] group-hover/trend:bg-[#26745e] group-focus-visible/trend:bg-[#26745e]"
+          }`}
+          style={{ height: barHeight }}
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-0 left-1/2 z-10 -translate-x-1/2 border-l border-dashed border-[#26745e]/45 opacity-0 transition group-hover/trend:opacity-100 group-focus-visible/trend:opacity-100"
+          style={{ height: barHeight }}
+        />
+        <span
+          id={tooltipId}
+          role="tooltip"
+          className={`pointer-events-none absolute z-30 min-w-[7.5rem] max-w-[10rem] rounded-xl border border-[#26745e]/18 bg-[#fffdfa]/98 px-3 py-2 text-stone-950 opacity-0 shadow-[0_18px_45px_-26px_rgba(38,116,94,0.75)] backdrop-blur transition duration-150 group-hover/trend:translate-y-[-0.2rem] group-hover/trend:opacity-100 group-focus-visible/trend:translate-y-[-0.2rem] group-focus-visible/trend:opacity-100 ${tooltipAlignClass}`}
+          data-token-trend-tooltip={point.date}
+          style={{ bottom: tooltipBottom }}
+        >
+          <span className="block font-mono text-[10px] font-semibold text-[#26745e]">{point.date}</span>
+          <span className="mt-1 block truncate font-mono text-sm font-semibold leading-none">{formatTokens(point.tokens)}</span>
+          <span className="mt-1 block truncate font-mono text-[10px] text-stone-500" title={exactTokens}>
+            {exactTokens}
+          </span>
+          <span
+            aria-hidden="true"
+            className={`absolute top-full size-2 rotate-45 border-b border-r border-[#26745e]/18 bg-[#fffdfa] ${tooltipArrowClass}`}
+          />
+        </span>
+      </button>
+    </div>
+  );
+}
+
 function PanelHeader({ title, meta, action }: { title: string; meta: ReactNode; action: ReactNode }) {
   return (
     <div className="flex flex-col gap-2 border-b border-stone-950/8 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1761,12 +1842,10 @@ function SortableColumnHeader({
   active,
   align = "left",
   children,
-  disabled = false,
 }: {
   active: boolean;
   align?: "left" | "right";
   children: string;
-  disabled?: boolean;
 }) {
   return (
     <th className={`px-4 py-3 ${align === "right" ? "text-right" : ""}`}>
@@ -1774,11 +1853,9 @@ function SortableColumnHeader({
         className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${
           active
             ? "bg-[#11130f] text-[#f8f1e5]"
-            : disabled
-              ? "text-stone-400"
-              : "text-stone-500"
+            : "text-stone-500"
         }`}
-        title={disabled ? "当前上报数据暂无消息字段" : active ? "当前按此列降序排列" : undefined}
+        title={active ? "当前按此列降序排列" : undefined}
       >
         {children}
         {active ? <span aria-hidden="true">↓</span> : null}
@@ -2058,7 +2135,6 @@ function LeaderboardRow({ showDailyTrend, user }: { showDailyTrend: boolean; use
       <td className="px-4 py-3 text-right font-mono font-semibold text-stone-950">{formatTokens(consumptionTokens)}</td>
       <td className="px-4 py-3 text-right font-mono text-stone-600">{formatUsd(user.costUsd)}</td>
       <td className="px-4 py-3 text-right font-mono text-stone-600">{formatNumber(user.sessions)}</td>
-      <td className="px-4 py-3 text-right font-mono text-stone-600">{formatNumber(user.messages)}</td>
       <td className="px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-md border border-stone-950/10 bg-[#f5efe4] px-2 py-1 text-xs font-semibold text-stone-700">

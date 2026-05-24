@@ -28,12 +28,14 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 ];
 const DATA_LOAD_SLOW_MS = 10_000;
 
-const TOKEN_BOARD_AGENT_VERSION = "0.4.7";
+const TOKEN_BOARD_AGENT_VERSION = "0.4.8";
 const NPX_PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${TOKEN_BOARD_AGENT_VERSION}`;
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
 const NPX_STATUS_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent status`;
+const NPX_UNINSTALL_COMMAND =
+  `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent uninstall`;
 export const INSTALL_GUIDES: Record<InstallGuidePlatform, InstallGuideConfig> = {
   macos: {
     description: "适合在 macOS 上使用 Codex、Claude Code、Cursor 或 Trae 的朋友。",
@@ -61,6 +63,14 @@ export const INSTALL_GUIDES: Record<InstallGuidePlatform, InstallGuideConfig> = 
         description: "后台任务开始同步后，回到页面刷新榜单或切换时间范围，就能看到自己的 token 记录。",
         note: "页面只展示 token、模型、工具、项目 basename 与匿名 session，不展示 prompt 文本。",
       },
+      {
+        title: "卸载后台同步",
+        eyebrow: "Step 4",
+        description: "以后不想继续同步时，在同一个 macOS 用户的终端里运行卸载命令。",
+        command: NPX_UNINSTALL_COMMAND,
+        commandLabel: "macOS 卸载命令",
+        note: "卸载会移除 LaunchAgent 和本机安装脚本，保留授权配置与上传状态；重新安装后可继续使用。",
+      },
     ],
   },
   windows: {
@@ -73,7 +83,7 @@ export const INSTALL_GUIDES: Record<InstallGuidePlatform, InstallGuideConfig> = 
         description: "在 PowerShell 里运行安装命令，首次执行会引导 GitHub 授权，并注册 Windows 任务计划程序。",
         command: NPX_INSTALL_COMMAND,
         commandLabel: "Windows PowerShell 安装命令",
-        note: "安装成功后会创建名为 TokenBoardAgent 的 Task Scheduler 任务，每 5 分钟同步一次；关闭 PowerShell 也不影响后台上传。",
+        note: "安装成功后会创建名为 TokenBoardAgent 的隐藏 Task Scheduler 任务，每 5 分钟同步一次；关闭 PowerShell 也不影响后台上传。",
       },
       {
         title: "检查任务状态",
@@ -88,6 +98,14 @@ export const INSTALL_GUIDES: Record<InstallGuidePlatform, InstallGuideConfig> = 
         eyebrow: "Step 3",
         description: "任务开始同步后，回到页面刷新榜单或切换时间范围，就能看到自己的 token 记录。",
         note: "Windows 模式会读取 %APPDATA% 下的 Cursor / Trae 数据，也会读取用户目录下的 Codex / Claude Code 记录。",
+      },
+      {
+        title: "卸载后台同步",
+        eyebrow: "Step 4",
+        description: "以后不想继续同步时，在 PowerShell 里运行卸载命令。",
+        command: NPX_UNINSTALL_COMMAND,
+        commandLabel: "Windows PowerShell 卸载命令",
+        note: "卸载会删除 TokenBoardAgent 任务、本机隐藏启动器和安装脚本，保留授权配置与上传状态；重新安装后可继续使用。",
       },
     ],
   },
@@ -1409,7 +1427,7 @@ function InstallGuideDialog({
       >
         <div className="shrink-0 border-b border-stone-950/8 px-5 pb-4 pt-5 sm:px-7">
           <div className="flex items-center gap-2">
-            <div className="grid flex-1 grid-cols-3 gap-2">
+            <div className="grid flex-1 grid-cols-4 gap-2">
               {steps.map((item, index) => (
                 <button
                   key={item.title}

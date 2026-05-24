@@ -18,7 +18,7 @@ const MAX_FILES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILES, 800);
 const MAX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILE_BYTES, 5 * 1024 * 1024);
 const MAX_CODEX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_CODEX_FILE_BYTES, 256 * 1024 * 1024);
 const BATCH_SIZE = 1000;
-const VERSION = "0.4.7";
+const VERSION = "0.4.8";
 const MAX_INVALID_USAGE_WARNINGS = 5;
 const PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${VERSION}`;
 const INSTALL_DIR = path.join(os.homedir(), ".token-board-agent");
@@ -27,6 +27,7 @@ const LAUNCH_AGENT_LABEL = "dev.ffffhx.token-board-agent";
 const LAUNCH_AGENT_PLIST = path.join(os.homedir(), "Library", "LaunchAgents", `${LAUNCH_AGENT_LABEL}.plist`);
 const WINDOWS_TASK_NAME = "TokenBoardAgent";
 const WINDOWS_WRAPPER_FILE = path.join(INSTALL_DIR, "token-board-agent-upload.cmd");
+const WINDOWS_LAUNCHER_FILE = path.join(INSTALL_DIR, "token-board-agent-upload.vbs");
 const LOG_FILE = path.join(INSTALL_DIR, "agent.log");
 const ERROR_LOG_FILE = path.join(INSTALL_DIR, "agent.err.log");
 const TOKEN_KEYS = new Set([
@@ -247,6 +248,7 @@ async function installWindowsTask() {
 
   await installAgentScript();
   await fs.writeFile(WINDOWS_WRAPPER_FILE, windowsTaskWrapper(), { mode: 0o755 });
+  await fs.writeFile(WINDOWS_LAUNCHER_FILE, windowsHiddenLauncher(), { mode: 0o644 });
 
   const minutes = Math.max(1, Math.round(INTERVAL_MS / 60_000));
   await runSchtasks([
@@ -265,6 +267,7 @@ async function installWindowsTask() {
 
   console.log("Token board background sync installed.");
   console.log(`Windows Task Scheduler task: ${WINDOWS_TASK_NAME}`);
+  console.log(`Hidden launcher: ${WINDOWS_LAUNCHER_FILE}`);
   console.log(`Wrapper: ${WINDOWS_WRAPPER_FILE}`);
   console.log(`Logs: ${LOG_FILE}`);
 }
@@ -287,6 +290,7 @@ async function uninstallWindowsTask() {
   ensureWindowsTaskScheduler();
 
   await runSchtasks(["/Delete", "/TN", WINDOWS_TASK_NAME, "/F"], { allowFailure: true });
+  await fs.rm(WINDOWS_LAUNCHER_FILE, { force: true });
   await fs.rm(WINDOWS_WRAPPER_FILE, { force: true });
   await fs.rm(INSTALLED_AGENT_FILE, { force: true });
   console.log("Token board background sync uninstalled.");
@@ -326,6 +330,7 @@ async function printLaunchAgentStatus() {
 
 async function printWindowsTaskStatus() {
   ensureWindowsTaskScheduler();
+  const launcherExists = await fileExists(WINDOWS_LAUNCHER_FILE);
   const wrapperExists = await fileExists(WINDOWS_WRAPPER_FILE);
   const installedScriptExists = await fileExists(INSTALLED_AGENT_FILE);
   const config = await readAgentConfig();
@@ -334,6 +339,7 @@ async function printWindowsTaskStatus() {
   const uploadedIds = stateMatches && Array.isArray(state.uploadedIds) ? state.uploadedIds.length : 0;
 
   console.log(`Task Scheduler task: ${WINDOWS_TASK_NAME}`);
+  console.log(`Hidden launcher: ${launcherExists ? WINDOWS_LAUNCHER_FILE : "not installed"}`);
   console.log(`Wrapper: ${wrapperExists ? WINDOWS_WRAPPER_FILE : "not installed"}`);
   console.log(`Installed script: ${installedScriptExists ? INSTALLED_AGENT_FILE : "not installed"}`);
   console.log(`Logs: ${LOG_FILE}`);
@@ -1292,9 +1298,26 @@ function windowsTaskWrapper() {
   ].join("\r\n");
 }
 
+function windowsHiddenLauncher() {
+  return [
+    'Set shell = CreateObject("WScript.Shell")',
+    `exitCode = shell.Run(${vbsString(windowsCmdRunCommand())}, 0, True)`,
+    "WScript.Quit exitCode",
+    "",
+  ].join("\r\n");
+}
+
 function windowsTaskRunCommand() {
-  const comspec = process.env.ComSpec || "C:\\Windows\\System32\\cmd.exe";
+  return `"${escapeCmdPath(windowsSystemPath("wscript.exe"))}" //B //Nologo "${escapeCmdPath(WINDOWS_LAUNCHER_FILE)}"`;
+}
+
+function windowsCmdRunCommand() {
+  const comspec = process.env.ComSpec || windowsSystemPath("cmd.exe");
   return `"${escapeCmdPath(comspec)}" /d /c ""${escapeCmdPath(WINDOWS_WRAPPER_FILE)}""`;
+}
+
+function windowsSystemPath(fileName) {
+  return path.join(process.env.SystemRoot || "C:\\Windows", "System32", fileName);
 }
 
 function runLaunchctl(args, options = {}) {
@@ -1371,4 +1394,8 @@ function escapeCmdValue(value) {
 
 function escapeCmdPath(value) {
   return String(value).replace(/"/g, "");
+}
+
+function vbsString(value) {
+  return `"${String(value).replace(/"/g, '""')}"`;
 }

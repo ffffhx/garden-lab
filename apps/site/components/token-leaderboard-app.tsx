@@ -661,7 +661,7 @@ export function TokenLeaderboardApp({
                   </p>
                 </div>
                 <div
-                  className="mt-4 grid h-56 grid-cols-[repeat(auto-fit,minmax(8px,1fr))] items-end gap-1 rounded-xl border border-stone-950/8 bg-[linear-gradient(180deg,rgba(17,19,15,0.04),transparent)] px-3 pb-3 pt-5"
+                  className="mt-4 grid h-64 grid-cols-[repeat(auto-fit,minmax(8px,1fr))] items-end gap-1 rounded-xl border border-stone-950/8 bg-[linear-gradient(180deg,rgba(17,19,15,0.04),transparent)] px-3 pb-3 pt-5"
                   aria-label="Token 趋势"
                 >
                   <DailyTokenTrendChart
@@ -1758,7 +1758,6 @@ function DailyTokenTrendBar({
   const safeMaxTokens = Math.max(1, maxDailyTokens);
   const barHeightPercent = Math.max(3, (point.tokens / safeMaxTokens) * 100);
   const barHeight = `${barHeightPercent}%`;
-  const tooltipBottom = `calc(${Math.min(barHeightPercent, 70).toFixed(2)}% + 0.55rem)`;
   const isLatest = index === dailyLength - 1;
   const exactTokens = `${formatNumber(point.tokens)} tokens`;
   const exactLabel = `${point.date} ${exactTokens}`;
@@ -1785,7 +1784,7 @@ function DailyTokenTrendBar({
         type="button"
         aria-describedby={tooltipId}
         aria-label={exactLabel}
-        className="group/trend relative flex h-full w-full cursor-crosshair appearance-none items-end rounded-t-[3px] border-0 bg-transparent p-0 text-inherit outline-none focus-visible:ring-2 focus-visible:ring-[#26745e]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fffdfa]"
+        className="group/trend relative flex h-full w-full cursor-crosshair appearance-none items-end rounded-t-[3px] border-0 bg-transparent px-0 pb-0 pt-20 text-inherit outline-none focus-visible:ring-2 focus-visible:ring-[#26745e]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fffdfa]"
         data-token-trend-point={point.date}
       >
         <span
@@ -1805,9 +1804,9 @@ function DailyTokenTrendBar({
         <span
           id={tooltipId}
           role="tooltip"
-          className={`pointer-events-none absolute z-30 min-w-[7.5rem] max-w-[10rem] rounded-xl border border-[#26745e]/18 bg-[#fffdfa]/98 px-3 py-2 text-stone-950 opacity-0 shadow-[0_18px_45px_-26px_rgba(38,116,94,0.75)] backdrop-blur transition duration-150 group-hover/trend:translate-y-[-0.2rem] group-hover/trend:opacity-100 group-focus-visible/trend:translate-y-[-0.2rem] group-focus-visible/trend:opacity-100 ${tooltipAlignClass}`}
+          className={`pointer-events-none absolute top-2 z-30 min-w-[7.5rem] max-w-[10rem] rounded-xl border border-[#26745e]/18 bg-[#fffdfa]/98 px-3 py-2 text-stone-950 opacity-0 shadow-[0_18px_45px_-26px_rgba(38,116,94,0.75)] backdrop-blur transition duration-150 group-hover/trend:translate-y-[-0.2rem] group-hover/trend:opacity-100 group-focus-visible/trend:translate-y-[-0.2rem] group-focus-visible/trend:opacity-100 ${tooltipAlignClass}`}
+          data-token-trend-tooltip-placement="top-rail"
           data-token-trend-tooltip={point.date}
-          style={{ bottom: tooltipBottom }}
         >
           <span className="block font-mono text-[10px] font-semibold text-[#26745e]">{point.date}</span>
           <span className="mt-1 block truncate font-mono text-sm font-semibold leading-none">{formatTokens(point.tokens)}</span>

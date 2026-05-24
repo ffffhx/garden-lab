@@ -62,6 +62,7 @@ describe("TokenLeaderboardApp", () => {
 
     expect(markup).toContain('data-token-trend-point="2026-05-16"');
     expect(markup).toContain('data-token-trend-tooltip="2026-05-16"');
+    expect(markup).toContain('data-token-trend-tooltip-placement="top-rail"');
     expect(markup).toContain('role="tooltip"');
     expect(markup).toContain("2026-05-16");
     expect(markup).toContain("388,007,536 tokens");

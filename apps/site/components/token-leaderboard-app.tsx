@@ -28,35 +28,70 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 ];
 const DATA_LOAD_SLOW_MS = 10_000;
 
-const NPX_PACKAGE_URL = "https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.6";
+const TOKEN_BOARD_AGENT_VERSION = "0.4.7";
+const NPX_PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${TOKEN_BOARD_AGENT_VERSION}`;
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
 const NPX_STATUS_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent status`;
-const INSTALL_GUIDE_STEPS: InstallGuideStep[] = [
-  {
-    title: "安装本机 agent",
-    eyebrow: "Step 1",
-    description: "在你平时使用 AI 编码工具的 Mac 终端里运行安装命令，首次执行会引导 GitHub 授权。",
-    command: NPX_INSTALL_COMMAND,
-    commandLabel: "安装命令",
-    note: "安装成功后会注册 macOS LaunchAgent，终端关闭也会每 5 分钟同步一次。",
+export const INSTALL_GUIDES: Record<InstallGuidePlatform, InstallGuideConfig> = {
+  macos: {
+    description: "适合在 macOS 上使用 Codex、Claude Code、Cursor 或 Trae 的朋友。",
+    label: "macOS",
+    steps: [
+      {
+        title: "安装本机 agent",
+        eyebrow: "Step 1",
+        description: "在你平时使用 AI 编码工具的 Mac 终端里运行安装命令，首次执行会引导 GitHub 授权。",
+        command: NPX_INSTALL_COMMAND,
+        commandLabel: "macOS 安装命令",
+        note: "安装成功后会注册 macOS LaunchAgent，终端关闭也会每 5 分钟同步一次。",
+      },
+      {
+        title: "检查运行状态",
+        eyebrow: "Step 2",
+        description: "安装完成后运行 status，确认配置文件、LaunchAgent 和最近一次同步结果是否正常。",
+        command: NPX_STATUS_COMMAND,
+        commandLabel: "macOS 状态检查命令",
+        note: "如果没有看到最近同步结果，等 1-2 分钟后再检查，或确认当前系统用户就是使用 Codex 的用户。",
+      },
+      {
+        title: "回到榜单刷新",
+        eyebrow: "Step 3",
+        description: "后台任务开始同步后，回到页面刷新榜单或切换时间范围，就能看到自己的 token 记录。",
+        note: "页面只展示 token、模型、工具、项目 basename 与匿名 session，不展示 prompt 文本。",
+      },
+    ],
   },
-  {
-    title: "检查运行状态",
-    eyebrow: "Step 2",
-    description: "安装完成后运行 status，确认配置文件、后台任务和最近一次同步结果是否正常。",
-    command: NPX_STATUS_COMMAND,
-    commandLabel: "状态检查命令",
-    note: "如果没有看到最近同步结果，等 1-2 分钟后再检查，或确认当前系统用户就是使用 Codex 的用户。",
+  windows: {
+    description: "适合在 Windows PowerShell 里使用 Cursor、Trae 或 Codex CLI 的朋友。",
+    label: "Windows",
+    steps: [
+      {
+        title: "安装 Windows 后台任务",
+        eyebrow: "Step 1",
+        description: "在 PowerShell 里运行安装命令，首次执行会引导 GitHub 授权，并注册 Windows 任务计划程序。",
+        command: NPX_INSTALL_COMMAND,
+        commandLabel: "Windows PowerShell 安装命令",
+        note: "安装成功后会创建名为 TokenBoardAgent 的 Task Scheduler 任务，每 5 分钟同步一次；关闭 PowerShell 也不影响后台上传。",
+      },
+      {
+        title: "检查任务状态",
+        eyebrow: "Step 2",
+        description: "安装完成后运行 status，确认配置文件、Task Scheduler 任务和最近一次同步结果是否正常。",
+        command: NPX_STATUS_COMMAND,
+        commandLabel: "Windows PowerShell 状态检查命令",
+        note: "如果公司策略禁用了任务计划程序，可以临时运行 token-board-agent watch 作为前台同步模式。",
+      },
+      {
+        title: "回到榜单刷新",
+        eyebrow: "Step 3",
+        description: "任务开始同步后，回到页面刷新榜单或切换时间范围，就能看到自己的 token 记录。",
+        note: "Windows 模式会读取 %APPDATA% 下的 Cursor / Trae 数据，也会读取用户目录下的 Codex / Claude Code 记录。",
+      },
+    ],
   },
-  {
-    title: "回到榜单刷新",
-    eyebrow: "Step 3",
-    description: "后台任务开始同步后，回到页面刷新榜单或切换时间范围，就能看到自己的 token 记录。",
-    note: "页面只展示 token、模型、工具、项目 basename 与匿名 session，不展示 prompt 文本。",
-  },
-];
+};
 
 export function TokenLeaderboardApp({
   initialNow,
@@ -81,11 +116,13 @@ export function TokenLeaderboardApp({
   const [accountError, setAccountError] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
   const [installGuideOpen, setInstallGuideOpen] = useState(false);
+  const [installGuidePlatform, setInstallGuidePlatform] = useState<InstallGuidePlatform>("macos");
   const [installGuideStep, setInstallGuideStep] = useState(0);
   const normalizedApiBaseUrl = normalizeApiBaseUrl(apiBaseUrl);
 
   useEffect(() => {
     setNow(new Date());
+    setInstallGuidePlatform(detectInstallGuidePlatform());
   }, []);
 
   useEffect(() => {
@@ -318,12 +355,18 @@ export function TokenLeaderboardApp({
   }
 
   function openInstallGuide() {
+    setInstallGuidePlatform(detectInstallGuidePlatform());
     setInstallGuideStep(0);
     setInstallGuideOpen(true);
   }
 
   function closeInstallGuide() {
     setInstallGuideOpen(false);
+  }
+
+  function changeInstallGuidePlatform(platform: InstallGuidePlatform) {
+    setInstallGuidePlatform(platform);
+    setInstallGuideStep(0);
   }
 
   function loginWithGitHub() {
@@ -738,9 +781,11 @@ export function TokenLeaderboardApp({
         onClose={closeInstallGuide}
         onCopy={(command, label) => void copyCommand(command, label)}
         onLogin={loginWithGitHub}
+        onPlatformChange={changeInstallGuidePlatform}
         onRefresh={retryDataLoad}
         onStepChange={setInstallGuideStep}
         open={installGuideOpen}
+        platform={installGuidePlatform}
         stepIndex={installGuideStep}
       />
       <Toast toast={toast} />
@@ -1314,27 +1359,33 @@ function InstallGuideDialog({
   onClose,
   onCopy,
   onLogin,
+  onPlatformChange,
   onRefresh,
   onStepChange,
   open,
+  platform,
   stepIndex,
 }: {
   canLogin: boolean;
   onClose: () => void;
   onCopy: (command: string, label: string) => void;
   onLogin: () => void;
+  onPlatformChange: (platform: InstallGuidePlatform) => void;
   onRefresh: () => void;
   onStepChange: (step: number) => void;
   open: boolean;
+  platform: InstallGuidePlatform;
   stepIndex: number;
 }) {
   if (!open) {
     return null;
   }
 
-  const step = INSTALL_GUIDE_STEPS[stepIndex] ?? INSTALL_GUIDE_STEPS[0];
+  const guide = INSTALL_GUIDES[platform] ?? INSTALL_GUIDES.macos;
+  const steps = guide.steps;
+  const step = steps[stepIndex] ?? steps[0];
   const isFirstStep = stepIndex === 0;
-  const isLastStep = stepIndex === INSTALL_GUIDE_STEPS.length - 1;
+  const isLastStep = stepIndex === steps.length - 1;
 
   function completeGuide() {
     onClose();
@@ -1359,7 +1410,7 @@ function InstallGuideDialog({
         <div className="border-b border-stone-950/8 px-5 pb-4 pt-5 sm:px-7">
           <div className="flex items-center gap-2">
             <div className="grid flex-1 grid-cols-3 gap-2">
-              {INSTALL_GUIDE_STEPS.map((item, index) => (
+              {steps.map((item, index) => (
                 <button
                   key={item.title}
                   type="button"
@@ -1384,13 +1435,39 @@ function InstallGuideDialog({
         </div>
 
         <div className="px-5 py-6 sm:px-7 sm:py-7">
+          <div className="mb-5 rounded-2xl border border-stone-950/10 bg-white/70 p-2">
+            <div className="grid grid-cols-2 gap-1" role="radiogroup" aria-label="选择安装系统">
+              {(Object.keys(INSTALL_GUIDES) as InstallGuidePlatform[]).map((item) => {
+                const selected = item === platform;
+
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => onPlatformChange(item)}
+                    className={`min-h-10 rounded-xl px-3 text-sm font-semibold transition ${
+                      selected
+                        ? "bg-[#11130f] text-[#f8f1e5] shadow-[0_14px_36px_-28px_rgba(17,19,15,0.8)]"
+                        : "text-stone-500 hover:bg-stone-950/6 hover:text-stone-900"
+                    }`}
+                  >
+                    {INSTALL_GUIDES[item].label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 px-2 text-xs leading-5 text-stone-500">{guide.description}</p>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-[3.5rem_minmax(0,1fr)]">
             <div className="flex size-12 items-center justify-center rounded-2xl border border-[#26745e]/25 bg-[#eaf5ef] text-[#26745e] shadow-[0_16px_42px_-28px_rgba(38,116,94,0.8)]">
               <Icon name={step.command ? "terminal" : "refresh"} />
             </div>
             <div className="min-w-0">
               <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[#26745e]">
-                {step.eyebrow} / {INSTALL_GUIDE_STEPS.length}
+                {step.eyebrow} / {steps.length}
               </p>
               <h2 id="token-board-install-guide-title" className="mt-2 text-2xl font-semibold leading-tight text-stone-950 sm:text-3xl">
                 {step.title}
@@ -1470,7 +1547,7 @@ function InstallGuideDialog({
             </button>
             <button
               type="button"
-              onClick={isLastStep ? completeGuide : () => onStepChange(Math.min(INSTALL_GUIDE_STEPS.length - 1, stepIndex + 1))}
+              onClick={isLastStep ? completeGuide : () => onStepChange(Math.min(steps.length - 1, stepIndex + 1))}
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#26745e] px-5 text-sm font-semibold text-white shadow-[0_18px_45px_-28px_rgba(38,116,94,0.9)] transition hover:bg-[#1f604f]"
             >
               {isLastStep ? "完成并刷新" : "下一步"}
@@ -2707,8 +2784,31 @@ type InstallGuideStep = {
   title: string;
 };
 
+type InstallGuidePlatform = "macos" | "windows";
+
+type InstallGuideConfig = {
+  description: string;
+  label: string;
+  steps: InstallGuideStep[];
+};
+
 function normalizeApiBaseUrl(value: string | undefined) {
   return value?.trim().replace(/\/+$/, "") || "";
+}
+
+function detectInstallGuidePlatform(): InstallGuidePlatform {
+  if (typeof navigator === "undefined") {
+    return "macos";
+  }
+
+  const browserNavigator = navigator as Navigator & { userAgentData?: { platform?: string } };
+  const platform = [
+    browserNavigator.userAgentData?.platform,
+    browserNavigator.platform,
+    browserNavigator.userAgent,
+  ].join(" ");
+
+  return /win/i.test(platform) ? "windows" : "macos";
 }
 
 function isTokenLeaderboardSummary(value: unknown): value is TokenLeaderboardSummary {

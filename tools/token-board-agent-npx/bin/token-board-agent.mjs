@@ -18,13 +18,15 @@ const MAX_FILES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILES, 800);
 const MAX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILE_BYTES, 5 * 1024 * 1024);
 const MAX_CODEX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_CODEX_FILE_BYTES, 256 * 1024 * 1024);
 const BATCH_SIZE = 1000;
-const VERSION = "0.4.6";
+const VERSION = "0.4.7";
 const MAX_INVALID_USAGE_WARNINGS = 5;
 const PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${VERSION}`;
 const INSTALL_DIR = path.join(os.homedir(), ".token-board-agent");
 const INSTALLED_AGENT_FILE = path.join(INSTALL_DIR, "token-board-agent.mjs");
 const LAUNCH_AGENT_LABEL = "dev.ffffhx.token-board-agent";
 const LAUNCH_AGENT_PLIST = path.join(os.homedir(), "Library", "LaunchAgents", `${LAUNCH_AGENT_LABEL}.plist`);
+const WINDOWS_TASK_NAME = "TokenBoardAgent";
+const WINDOWS_WRAPPER_FILE = path.join(INSTALL_DIR, "token-board-agent-upload.cmd");
 const LOG_FILE = path.join(INSTALL_DIR, "agent.log");
 const ERROR_LOG_FILE = path.join(INSTALL_DIR, "agent.err.log");
 const TOKEN_KEYS = new Set([
@@ -147,19 +149,32 @@ async function main() {
   }
 
   if (command === "install") {
-    ensureMacosLaunchd();
-    await loadOrLoginConfig();
-    await installLaunchAgent();
+    if (process.platform === "win32") {
+      await loadOrLoginConfig();
+      await installWindowsTask();
+    } else {
+      ensureMacosLaunchd();
+      await loadOrLoginConfig();
+      await installLaunchAgent();
+    }
     return;
   }
 
   if (command === "uninstall") {
-    await uninstallLaunchAgent();
+    if (process.platform === "win32") {
+      await uninstallWindowsTask();
+    } else {
+      await uninstallLaunchAgent();
+    }
     return;
   }
 
   if (command === "status") {
-    await printLaunchAgentStatus();
+    if (process.platform === "win32") {
+      await printWindowsTaskStatus();
+    } else {
+      await printLaunchAgentStatus();
+    }
     return;
   }
 
@@ -207,10 +222,8 @@ async function main() {
 async function installLaunchAgent() {
   ensureMacosLaunchd();
 
-  await fs.mkdir(INSTALL_DIR, { recursive: true });
+  await installAgentScript();
   await fs.mkdir(path.dirname(LAUNCH_AGENT_PLIST), { recursive: true });
-  await fs.copyFile(fileURLToPath(import.meta.url), INSTALLED_AGENT_FILE);
-  await fs.chmod(INSTALLED_AGENT_FILE, 0o755);
   await fs.writeFile(LAUNCH_AGENT_PLIST, launchAgentPlist(), { mode: 0o644 });
 
   if (process.env.TOKEN_BOARD_AGENT_SKIP_LAUNCHCTL === "1") {
@@ -229,6 +242,33 @@ async function installLaunchAgent() {
   console.log(`Logs: ${LOG_FILE}`);
 }
 
+async function installWindowsTask() {
+  ensureWindowsTaskScheduler();
+
+  await installAgentScript();
+  await fs.writeFile(WINDOWS_WRAPPER_FILE, windowsTaskWrapper(), { mode: 0o755 });
+
+  const minutes = Math.max(1, Math.round(INTERVAL_MS / 60_000));
+  await runSchtasks([
+    "/Create",
+    "/TN",
+    WINDOWS_TASK_NAME,
+    "/SC",
+    "MINUTE",
+    "/MO",
+    String(minutes),
+    "/TR",
+    windowsTaskRunCommand(),
+    "/F",
+  ]);
+  await runSchtasks(["/Run", "/TN", WINDOWS_TASK_NAME], { allowFailure: true });
+
+  console.log("Token board background sync installed.");
+  console.log(`Windows Task Scheduler task: ${WINDOWS_TASK_NAME}`);
+  console.log(`Wrapper: ${WINDOWS_WRAPPER_FILE}`);
+  console.log(`Logs: ${LOG_FILE}`);
+}
+
 async function uninstallLaunchAgent() {
   ensureMacosLaunchd();
 
@@ -239,6 +279,18 @@ async function uninstallLaunchAgent() {
   await fs.rm(LAUNCH_AGENT_PLIST, { force: true });
   await fs.rm(INSTALLED_AGENT_FILE, { force: true });
   console.log("Token board background sync uninstalled.");
+  console.log(`Kept auth config: ${CONFIG_FILE}`);
+  console.log(`Kept upload state: ${STATE_FILE}`);
+}
+
+async function uninstallWindowsTask() {
+  ensureWindowsTaskScheduler();
+
+  await runSchtasks(["/Delete", "/TN", WINDOWS_TASK_NAME, "/F"], { allowFailure: true });
+  await fs.rm(WINDOWS_WRAPPER_FILE, { force: true });
+  await fs.rm(INSTALLED_AGENT_FILE, { force: true });
+  console.log("Token board background sync uninstalled.");
+  console.log(`Removed Windows Task Scheduler task: ${WINDOWS_TASK_NAME}`);
   console.log(`Kept auth config: ${CONFIG_FILE}`);
   console.log(`Kept upload state: ${STATE_FILE}`);
 }
@@ -270,6 +322,38 @@ async function printLaunchAgentStatus() {
   } else {
     console.log("launchd status: not loaded");
   }
+}
+
+async function printWindowsTaskStatus() {
+  ensureWindowsTaskScheduler();
+  const wrapperExists = await fileExists(WINDOWS_WRAPPER_FILE);
+  const installedScriptExists = await fileExists(INSTALLED_AGENT_FILE);
+  const config = await readAgentConfig();
+  const state = await readJson(STATE_FILE);
+  const stateMatches = uploadStateMatchesConfig(state, config);
+  const uploadedIds = stateMatches && Array.isArray(state.uploadedIds) ? state.uploadedIds.length : 0;
+
+  console.log(`Task Scheduler task: ${WINDOWS_TASK_NAME}`);
+  console.log(`Wrapper: ${wrapperExists ? WINDOWS_WRAPPER_FILE : "not installed"}`);
+  console.log(`Installed script: ${installedScriptExists ? INSTALLED_AGENT_FILE : "not installed"}`);
+  console.log(`Logs: ${LOG_FILE}`);
+  console.log(`Upload state: ${STATE_FILE}`);
+  console.log(`Last uploaded: ${stateMatches && state.lastUploadedAt ? state.lastUploadedAt : "never"}`);
+  console.log(`Tracked uploaded IDs: ${uploadedIds}`);
+
+  const result = await runSchtasks(["/Query", "/TN", WINDOWS_TASK_NAME, "/V", "/FO", "LIST"], { allowFailure: true });
+  if (result.code === 0) {
+    console.log("Task Scheduler status: installed");
+    console.log(result.stdout.split(/\r?\n/).slice(0, 24).join("\n"));
+  } else {
+    console.log("Task Scheduler status: not installed");
+  }
+}
+
+async function installAgentScript() {
+  await fs.mkdir(INSTALL_DIR, { recursive: true });
+  await fs.copyFile(fileURLToPath(import.meta.url), INSTALLED_AGENT_FILE);
+  await fs.chmod(INSTALLED_AGENT_FILE, 0o755).catch(() => {});
 }
 
 async function loadOrLoginConfig() {
@@ -1136,7 +1220,13 @@ function sleep(ms) {
 
 function ensureMacosLaunchd() {
   if (process.platform !== "darwin") {
-    throw new Error("Background install currently supports macOS LaunchAgent only. Use `watch` on this platform.");
+    throw new Error("Background install currently supports macOS LaunchAgent and Windows Task Scheduler only. Use `watch` on this platform.");
+  }
+}
+
+function ensureWindowsTaskScheduler() {
+  if (process.platform !== "win32") {
+    throw new Error("Windows Task Scheduler mode only runs on Windows.");
   }
 }
 
@@ -1183,6 +1273,30 @@ function launchctlDomain() {
   return `gui/${process.getuid()}`;
 }
 
+function windowsTaskWrapper() {
+  return [
+    "@echo off",
+    "setlocal",
+    `set "TOKEN_BOARD_API_URL=${escapeCmdValue(API_URL)}"`,
+    `set "TOKEN_BOARD_LEADERBOARD_URL=${escapeCmdValue(LEADERBOARD_URL)}"`,
+    `set "TOKEN_BOARD_AGENT_CONFIG=${escapeCmdValue(CONFIG_FILE)}"`,
+    `set "TOKEN_BOARD_AGENT_STATE_FILE=${escapeCmdValue(STATE_FILE)}"`,
+    `set "TOKEN_BOARD_INTERVAL_MS=${escapeCmdValue(String(INTERVAL_MS))}"`,
+    `set "TOKEN_BOARD_MAX_FILES=${escapeCmdValue(String(MAX_FILES))}"`,
+    `set "TOKEN_BOARD_MAX_FILE_BYTES=${escapeCmdValue(String(MAX_FILE_BYTES))}"`,
+    `set "TOKEN_BOARD_MAX_CODEX_FILE_BYTES=${escapeCmdValue(String(MAX_CODEX_FILE_BYTES))}"`,
+    `"${escapeCmdPath(process.execPath)}" "${escapeCmdPath(INSTALLED_AGENT_FILE)}" upload >> "${escapeCmdPath(LOG_FILE)}" 2>> "${escapeCmdPath(ERROR_LOG_FILE)}"`,
+    "set EXIT_CODE=%ERRORLEVEL%",
+    "endlocal & exit /b %EXIT_CODE%",
+    "",
+  ].join("\r\n");
+}
+
+function windowsTaskRunCommand() {
+  const comspec = process.env.ComSpec || "C:\\Windows\\System32\\cmd.exe";
+  return `"${escapeCmdPath(comspec)}" /d /c ""${escapeCmdPath(WINDOWS_WRAPPER_FILE)}""`;
+}
+
 function runLaunchctl(args, options = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn("launchctl", args, { stdio: ["ignore", "pipe", "pipe"] });
@@ -1212,6 +1326,27 @@ function runLaunchctl(args, options = {}) {
   });
 }
 
+function runSchtasks(args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = execFile("schtasks.exe", args, { windowsHide: true }, (error, stdout = "", stderr = "") => {
+      if (!error || options.allowFailure) {
+        resolve({ code: error && typeof error.code === "number" ? error.code : 0, stdout, stderr });
+        return;
+      }
+
+      reject(new Error(stderr.trim() || stdout.trim() || `schtasks ${args.join(" ")} failed`));
+    });
+
+    child.on("error", (error) => {
+      if (options.allowFailure) {
+        resolve({ code: 1, stdout: "", stderr: error.message });
+      } else {
+        reject(error);
+      }
+    });
+  });
+}
+
 async function fileExists(filePath) {
   try {
     await fs.access(filePath);
@@ -1228,4 +1363,12 @@ function escapeXml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+function escapeCmdValue(value) {
+  return String(value).replace(/\r?\n/g, " ").replace(/%/g, "%%");
+}
+
+function escapeCmdPath(value) {
+  return String(value).replace(/"/g, "");
 }

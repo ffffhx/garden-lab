@@ -2,7 +2,7 @@ import * as React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { DailyTokenTrendChart, TokenLeaderboardApp } from "../../components/token-leaderboard-app";
+import { DailyTokenTrendChart, INSTALL_GUIDES, TokenLeaderboardApp } from "../../components/token-leaderboard-app";
 
 const initialNow = "2026-05-14T12:00:00.000Z";
 (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -66,5 +66,12 @@ describe("TokenLeaderboardApp", () => {
     expect(markup).toContain('role="tooltip"');
     expect(markup).toContain("2026-05-16");
     expect(markup).toContain("388,007,536 tokens");
+  });
+
+  it("defines separate macOS and Windows install guides", () => {
+    expect(INSTALL_GUIDES.macos.steps[0].note).toContain("LaunchAgent");
+    expect(INSTALL_GUIDES.windows.steps[0].note).toContain("TokenBoardAgent");
+    expect(INSTALL_GUIDES.windows.steps[1].description).toContain("Task Scheduler");
+    expect(INSTALL_GUIDES.windows.steps[0].command).toContain("token-board-agent install");
   });
 });

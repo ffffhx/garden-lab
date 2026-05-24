@@ -1405,9 +1405,9 @@ function InstallGuideDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="token-board-install-guide-title"
-        className="w-[min(52rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border-2 border-[#26745e]/55 bg-[#fbf7ef] shadow-[0_34px_120px_-48px_rgba(17,19,15,0.85)]"
+        className="flex h-[min(42rem,calc(100vh-2rem))] w-[min(52rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border-2 border-[#26745e]/55 bg-[#fbf7ef] shadow-[0_34px_120px_-48px_rgba(17,19,15,0.85)]"
       >
-        <div className="border-b border-stone-950/8 px-5 pb-4 pt-5 sm:px-7">
+        <div className="shrink-0 border-b border-stone-950/8 px-5 pb-4 pt-5 sm:px-7">
           <div className="flex items-center gap-2">
             <div className="grid flex-1 grid-cols-3 gap-2">
               {steps.map((item, index) => (
@@ -1434,7 +1434,7 @@ function InstallGuideDialog({
           </div>
         </div>
 
-        <div className="px-5 py-6 sm:px-7 sm:py-7">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-7 sm:py-7">
           <div className="mb-5 rounded-2xl border border-stone-950/10 bg-white/70 p-2">
             <div className="grid grid-cols-2 gap-1" role="radiogroup" aria-label="选择安装系统">
               {(Object.keys(INSTALL_GUIDES) as InstallGuidePlatform[]).map((item) => {
@@ -1528,7 +1528,7 @@ function InstallGuideDialog({
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-stone-950/8 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+        <div className="flex shrink-0 flex-col gap-3 border-t border-stone-950/8 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
           <button
             type="button"
             onClick={onClose}

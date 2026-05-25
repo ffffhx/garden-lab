@@ -1414,7 +1414,11 @@ function AccountProjectList({ projects }: { projects: TokenAccountUsageProfile["
                     {formatNumber(project.activeDays)}d · {formatNumber(project.models)} models
                   </p>
                 </div>
-                <p className="shrink-0 font-mono text-sm font-semibold text-[#ffe2a8]">{formatUsd(project.costUsd)}</p>
+                <div className="shrink-0 text-right">
+                  <p className="font-mono text-sm font-semibold text-[#bdf5cc]" title={formatTokens(project.tokens)}>
+                    {formatTokens(project.tokens)}
+                  </p>
+                </div>
               </div>
               <div className="mt-3 grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3">
                 <div className="h-2 overflow-hidden rounded-full bg-white/10">
@@ -1423,7 +1427,7 @@ function AccountProjectList({ projects }: { projects: TokenAccountUsageProfile["
                     style={{ width: `${Math.max(2, project.share * 100)}%` }}
                   />
                 </div>
-                <p className="text-right font-mono text-xs text-white/56">{formatTokens(project.tokens)}</p>
+                <p className="text-right font-mono text-xs text-white/42">{formatUsd(project.costUsd)}</p>
               </div>
             </div>
           ))

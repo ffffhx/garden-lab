@@ -27,6 +27,7 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
   { key: "sessions", label: "会话" },
 ];
 const DATA_LOAD_SLOW_MS = 10_000;
+const TOAST_DISMISS_MS = 1_800;
 
 const TOKEN_BOARD_AGENT_VERSION = "0.4.11";
 const NPX_PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${TOKEN_BOARD_AGENT_VERSION}`;
@@ -40,6 +41,12 @@ export const INSTALL_GUIDES: Record<InstallGuidePlatform, InstallGuideConfig> = 
   macos: {
     description: "适合在 macOS 上使用 Codex、Claude Code、Cursor 或 Trae 的朋友。",
     label: "macOS",
+    uninstall: {
+      command: NPX_UNINSTALL_COMMAND,
+      commandLabel: "macOS 卸载命令",
+      description: "以后不想继续同步时，在同一个 macOS 用户的终端里运行卸载命令。",
+      note: "卸载会移除 LaunchAgent 和本机安装脚本，保留授权配置与上传状态；重新安装后可继续使用。",
+    },
     steps: [
       {
         title: "安装本机 agent",
@@ -63,19 +70,17 @@ export const INSTALL_GUIDES: Record<InstallGuidePlatform, InstallGuideConfig> = 
         description: "后台任务开始同步后，回到页面刷新榜单或切换时间范围，就能看到自己的 token 记录。",
         note: "页面只展示 token、模型、工具、项目 basename 与会话短标题，不展示完整 prompt 文本。",
       },
-      {
-        title: "卸载后台同步",
-        eyebrow: "Step 4",
-        description: "以后不想继续同步时，在同一个 macOS 用户的终端里运行卸载命令。",
-        command: NPX_UNINSTALL_COMMAND,
-        commandLabel: "macOS 卸载命令",
-        note: "卸载会移除 LaunchAgent 和本机安装脚本，保留授权配置与上传状态；重新安装后可继续使用。",
-      },
     ],
   },
   windows: {
     description: "适合在 Windows PowerShell 里使用 Cursor、Trae 或 Codex CLI 的朋友。",
     label: "Windows",
+    uninstall: {
+      command: NPX_UNINSTALL_COMMAND,
+      commandLabel: "Windows PowerShell 卸载命令",
+      description: "以后不想继续同步时，在 PowerShell 里运行卸载命令。",
+      note: "卸载会删除 TokenBoardAgent 任务、本机隐藏启动器和安装脚本，保留授权配置与上传状态；重新安装后可继续使用。",
+    },
     steps: [
       {
         title: "安装 Windows 后台任务",
@@ -98,14 +103,6 @@ export const INSTALL_GUIDES: Record<InstallGuidePlatform, InstallGuideConfig> = 
         eyebrow: "Step 3",
         description: "任务开始同步后，回到页面刷新榜单或切换时间范围，就能看到自己的 token 记录。",
         note: "Windows 模式会读取 %APPDATA% 下的 Cursor / Trae 数据，也会读取用户目录下的 Codex / Claude Code 记录。",
-      },
-      {
-        title: "卸载后台同步",
-        eyebrow: "Step 4",
-        description: "以后不想继续同步时，在 PowerShell 里运行卸载命令。",
-        command: NPX_UNINSTALL_COMMAND,
-        commandLabel: "Windows PowerShell 卸载命令",
-        note: "卸载会删除 TokenBoardAgent 任务、本机隐藏启动器和安装脚本，保留授权配置与上传状态；重新安装后可继续使用。",
       },
     ],
   },
@@ -342,7 +339,7 @@ export function TokenLeaderboardApp({
       return;
     }
 
-    const timer = window.setTimeout(() => setToast(null), 2400);
+    const timer = window.setTimeout(() => setToast(null), TOAST_DISMISS_MS);
 
     return () => window.clearTimeout(timer);
   }, [toast]);
@@ -1553,7 +1550,7 @@ function Toast({ toast }: { toast: ToastState | null }) {
       key={toast.id}
       role="status"
       aria-live="polite"
-      className={`pointer-events-none fixed left-1/2 top-1/2 z-[100] flex min-h-12 w-[min(19rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border px-4 py-3 text-center text-sm font-semibold leading-5 ring-4 backdrop-blur-xl ${tone}`}
+      className={`pointer-events-none fixed left-1/2 top-1/2 z-[100] flex min-h-12 min-w-[11rem] max-w-[min(15rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border px-4 py-3 text-center text-sm font-semibold leading-5 ring-4 backdrop-blur-xl ${tone}`}
     >
       {toast.message}
     </div>
@@ -1615,7 +1612,7 @@ function InstallGuideDialog({
       >
         <div className="shrink-0 border-b border-stone-950/8 px-5 pb-4 pt-5 sm:px-7">
           <div className="flex items-center gap-2">
-            <div className="grid flex-1 grid-cols-4 gap-2">
+            <div className="grid flex-1 grid-cols-3 gap-2">
               {steps.map((item, index) => (
                 <button
                   key={item.title}
@@ -1732,6 +1729,30 @@ function InstallGuideDialog({
           <p className="mt-4 rounded-2xl bg-white/70 px-4 py-3 text-sm leading-6 text-stone-600">
             {step.note}
           </p>
+
+          {isLastStep ? (
+            <div className="mt-4 rounded-2xl border border-stone-950/10 bg-white/70 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-stone-950">以后不想同步时</p>
+                  <p className="mt-1 text-xs leading-5 text-stone-500">{guide.uninstall.description}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onCopy(guide.uninstall.command, guide.uninstall.commandLabel)}
+                  className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-stone-950/10 bg-white px-3 text-xs font-semibold text-stone-800 transition hover:border-[#26745e]/35 hover:bg-[#eef7f2]"
+                >
+                  <Icon name="download" />
+                  复制卸载命令
+                </button>
+              </div>
+              <pre className="mt-3 max-h-24 overflow-auto whitespace-pre-wrap break-all rounded-xl bg-[#111827] px-3 py-3 font-mono text-xs leading-5 text-[#f8f1e5]">
+                <span className="mr-2 select-none text-[#7be3a0]">&gt;_</span>
+                {guide.uninstall.command}
+              </pre>
+              <p className="mt-3 text-xs leading-5 text-stone-500">{guide.uninstall.note}</p>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex shrink-0 flex-col gap-3 border-t border-stone-950/8 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
@@ -2334,18 +2355,6 @@ function DailyUsageSparkline({
               vectorEffect="non-scaling-stroke"
             />
           ) : null}
-          {points.map((point, index) => (
-            <circle
-              key={`${point.date}:dot`}
-              cx={point.x}
-              cy={point.y}
-              fill={hoveredPointIndex === index ? "#26745e" : index === points.length - 1 ? "#c05c38" : "#fffdfa"}
-              r={hoveredPointIndex === index ? 3.5 : index === points.length - 1 ? 3 : 2}
-              stroke="#26745e"
-              strokeWidth="1.75"
-              vectorEffect="non-scaling-stroke"
-            />
-          ))}
           {points.map((point, index) => {
             const left = index === 0 ? 0 : (points[index - 1].x + point.x) / 2;
             const right = index === points.length - 1 ? width : (point.x + points[index + 1].x) / 2;
@@ -2372,6 +2381,25 @@ function DailyUsageSparkline({
             );
           })}
         </svg>
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          {points.map((point, index) => {
+            const isHovered = hoveredPointIndex === index;
+            const isLatest = index === points.length - 1;
+            const dotSize = isHovered ? "size-[9px]" : isLatest ? "size-2" : "size-[7px]";
+            const dotFill = isHovered ? "bg-[#26745e]" : isLatest ? "bg-[#c05c38]" : "bg-[#fffdfa]";
+
+            return (
+              <span
+                key={`${point.date}:dot`}
+                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#26745e] ${dotSize} ${dotFill}`}
+                style={{
+                  left: `${(point.x / width) * 100}%`,
+                  top: `${(point.y / height) * 100}%`,
+                }}
+              />
+            );
+          })}
+        </div>
       </div>
       <div className={`mt-1 flex justify-between font-mono text-[10px] ${metaClassName}`}>
         <span>{firstDate}</span>
@@ -3043,12 +3071,20 @@ type InstallGuideStep = {
   title: string;
 };
 
+type InstallGuideUninstall = {
+  command: string;
+  commandLabel: string;
+  description: string;
+  note: string;
+};
+
 type InstallGuidePlatform = "macos" | "windows";
 
 type InstallGuideConfig = {
   description: string;
   label: string;
   steps: InstallGuideStep[];
+  uninstall: InstallGuideUninstall;
 };
 
 function normalizeApiBaseUrl(value: string | undefined) {

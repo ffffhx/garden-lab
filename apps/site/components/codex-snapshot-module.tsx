@@ -137,17 +137,17 @@ export function CodexSnapshotModule({
   const syncButtonLabel = syncState === "syncing" ? "同步中..." : "同步";
 
   return (
-    <main className="space-y-6">
-      <section className="overflow-hidden rounded-[2rem] border border-slate-900/10 bg-white/86 shadow-[0_32px_120px_-68px_rgba(15,23,42,0.65)]">
-        <div className="flex flex-col gap-5 border-b border-slate-900/10 bg-[#fffdf7]/90 p-6 sm:p-7 lg:flex-row lg:items-end lg:justify-between">
+    <main className="flex min-h-0 w-full flex-1 flex-col">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.5rem] border border-slate-900/10 bg-white/86 shadow-[0_32px_120px_-68px_rgba(15,23,42,0.65)]">
+        <div className="flex flex-col gap-3 border-b border-slate-900/10 bg-[#fffdf7]/90 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#1d6f78]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1d6f78]">
               Private Module
             </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
               Codex Snapshots
             </h1>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-slate-700">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
               本地只读会话审阅台，挂在站点里但数据仍从你的机器读取。
             </p>
           </div>
@@ -163,13 +163,13 @@ export function CodexSnapshotModule({
                     ? `同步「${activeSnapshot.title}」`
                     : "请先在下方选择一条会话"
               }
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#1d6f78] px-5 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(29,111,120,0.8)] transition hover:-translate-y-0.5 hover:bg-[#165a62] focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:translate-y-0"
+              className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#1d6f78] px-4 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(29,111,120,0.8)] transition hover:-translate-y-0.5 hover:bg-[#165a62] focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:translate-y-0"
             >
               {syncButtonLabel}
             </button>
             <Link
               href="/snapshots/share/"
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-950/12 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-950/25 hover:text-slate-950 focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/15"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-slate-950/12 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-950/25 hover:text-slate-950 focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/15"
             >
               云端分享页
             </Link>
@@ -177,14 +177,14 @@ export function CodexSnapshotModule({
               href={standaloneHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold !text-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.8)] transition hover:-translate-y-0.5 hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
+              className="inline-flex min-h-10 items-center justify-center rounded-full bg-slate-950 px-4 text-sm font-semibold !text-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.8)] transition hover:-translate-y-0.5 hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
             >
               打开独立窗口
             </Link>
           </div>
         </div>
 
-        <div className="border-b border-slate-900/10 bg-slate-950 px-5 py-3 text-sm text-slate-200">
+        <div className="border-b border-slate-900/10 bg-slate-950 px-4 py-2 text-sm text-slate-200">
           <div className="flex min-w-0 flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-2 font-semibold">
               <span className={`size-2 rounded-full ${statusDot}`} aria-hidden="true" />
@@ -229,9 +229,9 @@ export function CodexSnapshotModule({
           </div>
         </div>
 
-        <div className="relative bg-[#f4f0e7]">
+        <div className="relative min-h-0 flex-1 bg-[#f4f0e7]">
           {connection === "unavailable" ? (
-            <div className="grid min-h-[680px] place-items-center px-6 py-12">
+            <div className="grid min-h-full place-items-center px-6 py-12">
               <div className="max-w-2xl rounded-[1.25rem] border border-slate-900/10 bg-[#fffdf7]/92 p-6 text-slate-800 shadow-[0_24px_90px_-64px_rgba(15,23,42,0.65)]">
                 <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#1d6f78]">
                   Local Data Boundary
@@ -281,7 +281,7 @@ export function CodexSnapshotModule({
             <iframe
               title="Codex Snapshot Viewer"
               src={viewerUrl}
-              className="h-[calc(100vh-18rem)] min-h-[680px] w-full border-0 bg-[#f4f0e7]"
+              className="h-full min-h-0 w-full border-0 bg-[#f4f0e7]"
               onLoad={() => setFrameLoaded(true)}
             />
           ) : null}

@@ -69,14 +69,14 @@ describe("TokenLeaderboardApp", () => {
   });
 
   it("defines separate macOS and Windows install guides", () => {
-    expect(INSTALL_GUIDES.macos.steps).toHaveLength(4);
-    expect(INSTALL_GUIDES.windows.steps).toHaveLength(4);
+    expect(INSTALL_GUIDES.macos.steps).toHaveLength(3);
+    expect(INSTALL_GUIDES.windows.steps).toHaveLength(3);
     expect(INSTALL_GUIDES.macos.steps[0].note).toContain("LaunchAgent");
     expect(INSTALL_GUIDES.windows.steps[0].note).toContain("TokenBoardAgent");
     expect(INSTALL_GUIDES.windows.steps[1].description).toContain("Task Scheduler");
     expect(INSTALL_GUIDES.windows.steps[0].command).toContain("token-board-agent install");
-    expect(INSTALL_GUIDES.macos.steps[3].command).toContain("token-board-agent uninstall");
-    expect(INSTALL_GUIDES.windows.steps[3].note).toContain("TokenBoardAgent");
+    expect(INSTALL_GUIDES.macos.uninstall.command).toContain("token-board-agent uninstall");
+    expect(INSTALL_GUIDES.windows.uninstall.note).toContain("TokenBoardAgent");
   });
 
   it("renders session detail rows sorted by token usage", () => {

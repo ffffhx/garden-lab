@@ -156,6 +156,7 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1300,5`);
         {
           ...event("big-a", "github:1", "Feng", "2026-05-13T10:00:00.000Z", 10_000, 2, 0.1),
           sessionId: "session-big",
+          sessionTitle: "修复 Token Board session 标题",
           model: "gpt-5.5",
           tool: "Codex CLI",
           project: "board",
@@ -163,6 +164,7 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1300,5`);
         {
           ...event("big-b", "github:1", "Feng", "2026-05-14T11:00:00.000Z", 7_000, 3, 0.07),
           sessionId: "session-big",
+          sessionTitle: "修复 Token Board session 标题",
           model: "gpt-5.4",
           tool: "Cursor",
           project: "api",
@@ -175,6 +177,7 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1300,5`);
     expect(profile.sessions[0]).toEqual(
       expect.objectContaining({
         id: "session-big",
+        title: "修复 Token Board session 标题",
         tokens: 17_000,
         model: "gpt-5.5",
         tool: "Codex CLI",

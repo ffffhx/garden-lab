@@ -104,6 +104,7 @@ describe("TokenLeaderboardApp", () => {
           },
           {
             id: "session-big",
+            title: "修复 Token Board session 标题",
             tokens: 17_000,
             inputTokens: 15_000,
             cachedInputTokens: 3_000,
@@ -127,6 +128,7 @@ describe("TokenLeaderboardApp", () => {
 
     expect(markup).toContain("Session 明细");
     expect(markup).toContain("按 token 降序");
+    expect(markup).toContain("修复 Token Board session 标题");
     expect(markup.indexOf("session-big")).toBeLessThan(markup.indexOf("session-small"));
     expect(markup).toContain("17K");
     expect(markup).toContain("gpt-5.5");

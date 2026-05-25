@@ -18,7 +18,8 @@ const MAX_FILES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILES, 800);
 const MAX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_FILE_BYTES, 5 * 1024 * 1024);
 const MAX_CODEX_FILE_BYTES = readPositiveNumber(process.env.TOKEN_BOARD_MAX_CODEX_FILE_BYTES, 256 * 1024 * 1024);
 const BATCH_SIZE = 1000;
-const VERSION = "0.4.8";
+const VERSION = "0.4.9";
+const SESSION_TITLE_MAX_LENGTH = 80;
 const MAX_INVALID_USAGE_WARNINGS = 5;
 const PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${VERSION}`;
 const INSTALL_DIR = path.join(os.homedir(), ".token-board-agent");
@@ -616,6 +617,7 @@ async function parseCodexJsonl(filePath, target, config) {
   const entries = [];
   let model = "unknown";
   let project = projectFromFile(filePath, target.source);
+  let sessionTitle = "";
   let sequence = 0;
   let previousTotalUsage = {};
 
@@ -632,12 +634,22 @@ async function parseCodexJsonl(filePath, target, config) {
   try {
     for await (const rawLine of lines) {
       const line = rawLine.trim();
-      if (!line.includes('"token_count"') && !line.includes('"model"') && !line.includes('"cwd"')) {
+      if (
+        !line.includes('"token_count"') &&
+        !line.includes('"model"') &&
+        !line.includes('"cwd"') &&
+        !line.includes('"user_message"') &&
+        !line.includes('"title"')
+      ) {
         continue;
       }
 
       const parsed = safeJson(line);
       const payload = parsed && typeof parsed.payload === "object" ? parsed.payload : {};
+
+      if (config.includeSessionTitle !== false && !sessionTitle) {
+        sessionTitle = extractSessionTitle(parsed);
+      }
 
       if ((parsed?.type === "turn_context" || parsed?.type === "session_meta") && typeof payload.model === "string") {
         model = payload.model;
@@ -673,6 +685,7 @@ async function parseCodexJsonl(filePath, target, config) {
         model,
         project,
         sessionId: filePath,
+        sessionTitle,
         sequence,
         timestamp: parsed.timestamp,
       });
@@ -686,6 +699,40 @@ async function parseCodexJsonl(filePath, target, config) {
   }
 
   return entries;
+}
+
+function extractSessionTitle(record) {
+  const payload = record && typeof record.payload === "object" ? record.payload : {};
+  const payloadType = typeof payload.type === "string" ? payload.type : "";
+  if (record?.type === "event_msg" && payloadType === "user_message") {
+    return cleanSessionTitle(textFromMessageLike(payload.message) || textFromMessageLike(payload.text_elements));
+  }
+
+  const explicitTitle =
+    textFromFields(payload, ["sessionTitle", "session_title", "conversationTitle", "title"]) ||
+    textFromFields(record || {}, ["sessionTitle", "session_title", "conversationTitle", "title"]);
+
+  if (explicitTitle) {
+    return cleanSessionTitle(explicitTitle);
+  }
+
+  return "";
+}
+
+function textFromMessageLike(value) {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(textFromMessageLike).filter(Boolean).join(" ");
+  }
+
+  if (value && typeof value === "object") {
+    return textFromFields(value, ["text", "content", "message", "input_text"]) || textFromMessageLike(value.text_elements);
+  }
+
+  return "";
 }
 
 function tokenUsageDelta(current, previous) {
@@ -774,6 +821,12 @@ function usageRecordToEvent(usage, context) {
   const rawSessionId =
     context.sessionId || textFromFields(usage, ["sessionId", "session_id", "conversationId", "conversation_id", "requestId", "id"]) || context.filePath;
   const sessionId = rawSessionId ? `session:${sha256(rawSessionId).slice(0, 16)}` : "";
+  const sessionTitle =
+    context.config.includeSessionTitle === false
+      ? ""
+      : cleanSessionTitle(
+          context.sessionTitle || textFromFields(usage, ["sessionTitle", "session_title", "conversationTitle"])
+        );
   const base = [
     context.config.userId,
     timestamp,
@@ -806,6 +859,7 @@ function usageRecordToEvent(usage, context) {
     reasoningOutputTokens,
     totalTokens,
     messages: numberFromFields(usage, ["messages", "messageCount", "message_count"]),
+    sessionTitle,
   };
 }
 
@@ -1018,6 +1072,8 @@ function enrichContext(context, record) {
     sessionId:
       textFromFields(record, ["sessionId", "session_id", "conversationId", "conversation_id", "requestId", "id"]) ||
       context.sessionId,
+    sessionTitle:
+      context.sessionTitle || textFromFields(record, ["sessionTitle", "session_title", "conversationTitle"]),
   };
 }
 
@@ -1072,6 +1128,23 @@ function cleanLabel(value, maxLength) {
     : "";
 }
 
+function cleanSessionTitle(value) {
+  const text = cleanLabel(value, 120)
+    .replace(/```[\s\S]*$/g, "")
+    .replace(/^#+\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const lower = text.toLowerCase();
+
+  if (!text || lower === "none" || lower === "auto" || lower === "unknown" || lower === "n/a") {
+    return "";
+  }
+
+  return text.length > SESSION_TITLE_MAX_LENGTH
+    ? `${text.slice(0, SESSION_TITLE_MAX_LENGTH - 3)}...`
+    : text;
+}
+
 function projectBasename(value) {
   const text = cleanLabel(value, 240);
   return text ? cleanLabel(path.basename(text.replace(/\\/g, "/")), 80) : undefined;
@@ -1120,6 +1193,8 @@ async function readAgentConfig() {
     displayName: cleanLabel(config.displayName, 80) || cleanLabel(config.githubLogin, 80) || username,
     team: cleanLabel(config.team, 80) || "GitHub",
     usagePaths: readStringArray(config.usagePaths) || [],
+    includeSessionTitle:
+      process.env.TOKEN_BOARD_INCLUDE_SESSION_TITLE === "false" ? false : config.includeSessionTitle !== false,
   };
 }
 

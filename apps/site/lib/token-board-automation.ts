@@ -23,6 +23,7 @@ export type TokenBoardPrivacyOptions = {
   includeModel?: boolean;
   includeSource?: boolean;
   hashSessionId?: boolean;
+  includeSessionTitle?: boolean;
   maxEventAgeDays?: number;
 };
 
@@ -131,6 +132,8 @@ export function sanitizeIngestEvents(
             : "";
       const source = options.includeSource === false ? "local-agent" : sanitizeLabel(normalized.source, 60) || "local-agent";
       const model = options.includeModel === false ? "hidden" : sanitizeLabel(normalized.model, 80) || "unknown";
+      const sessionTitle =
+        options.includeSessionTitle === false ? "" : sanitizeSessionTitle(normalized.sessionTitle);
       const stableId = stableTokenEventId({
         ...normalized,
         userId: user.userId,
@@ -138,6 +141,7 @@ export function sanitizeIngestEvents(
         team: user.team || "Friends",
         project,
         sessionId,
+        sessionTitle,
         source,
         model,
       });
@@ -154,6 +158,7 @@ export function sanitizeIngestEvents(
           model,
           project,
           sessionId,
+          sessionTitle,
         }),
       ];
     } catch (error) {
@@ -250,6 +255,21 @@ function sanitizeLabel(value: unknown, maxLength: number) {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, maxLength);
+}
+
+function sanitizeSessionTitle(value: unknown) {
+  const text = sanitizeLabel(value, 120)
+    .replace(/^#+\s*/, "")
+    .replace(/```.*$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const lower = text.toLowerCase();
+
+  if (!text || lower === "none" || lower === "auto" || lower === "unknown" || lower === "n/a") {
+    return "";
+  }
+
+  return text.length > 80 ? `${text.slice(0, 77)}...` : text;
 }
 
 function sha256(value: string) {

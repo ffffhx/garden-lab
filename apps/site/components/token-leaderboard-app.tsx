@@ -28,7 +28,7 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 ];
 const DATA_LOAD_SLOW_MS = 10_000;
 
-const TOKEN_BOARD_AGENT_VERSION = "0.4.8";
+const TOKEN_BOARD_AGENT_VERSION = "0.4.9";
 const NPX_PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${TOKEN_BOARD_AGENT_VERSION}`;
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
@@ -61,7 +61,7 @@ export const INSTALL_GUIDES: Record<InstallGuidePlatform, InstallGuideConfig> = 
         title: "回到榜单刷新",
         eyebrow: "Step 3",
         description: "后台任务开始同步后，回到页面刷新榜单或切换时间范围，就能看到自己的 token 记录。",
-        note: "页面只展示 token、模型、工具、项目 basename 与匿名 session，不展示 prompt 文本。",
+        note: "页面只展示 token、模型、工具、项目 basename 与会话短标题，不展示完整 prompt 文本。",
       },
       {
         title: "卸载后台同步",
@@ -777,7 +777,7 @@ export function TokenLeaderboardApp({
                   <strong className="text-stone-900">Token 主口径</strong>：总消耗 Token = 输入上下文（input）+ 输出 Token；缓存命中是输入上下文的子集，推理 token 在个人视图单独展开。
                 </p>
                 <p>
-                  <strong className="text-stone-900">隐私边界</strong>：只展示 token、模型、工具、项目 basename、匿名 session，不展示 prompt 文本。
+                  <strong className="text-stone-900">隐私边界</strong>：只展示 token、模型、工具、项目 basename 与会话短标题，不展示完整 prompt 文本。
                 </p>
               </div>
             </section>
@@ -1361,7 +1361,7 @@ export function AccountSessionList({ sessions }: { sessions: TokenAccountUsagePr
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold">Session 明细</h3>
-          <p className="mt-1 text-xs leading-5 text-white/42">按匿名 session 聚合，不展示 prompt 文本</p>
+          <p className="mt-1 text-xs leading-5 text-white/42">按 session 聚合，优先展示本地提取的短标题</p>
         </div>
         <span className="w-fit rounded-full border border-white/10 bg-black/16 px-3 py-1 font-mono text-xs text-white/52">
           {formatNumber(sortedSessions.length)} sessions · 按 token 降序
@@ -1373,7 +1373,7 @@ export function AccountSessionList({ sessions }: { sessions: TokenAccountUsagePr
           <table className="w-full min-w-[58rem] table-fixed border-separate border-spacing-0 text-left text-sm">
             <thead className="text-xs text-white/38">
               <tr>
-                <th className="w-[12rem] border-b border-white/10 px-3 py-2 font-semibold">Session</th>
+                <th className="w-[16rem] border-b border-white/10 px-3 py-2 font-semibold">Session</th>
                 <th className="w-[10rem] border-b border-white/10 px-3 py-2 text-right font-semibold" aria-sort="descending">
                   总 token ↓
                 </th>
@@ -1385,16 +1385,24 @@ export function AccountSessionList({ sessions }: { sessions: TokenAccountUsagePr
               </tr>
             </thead>
             <tbody>
-              {sortedSessions.map((session) => (
-                <tr key={session.id} className="group">
-                  <td className="border-b border-white/8 px-3 py-3 align-top">
-                    <p className="truncate font-mono text-xs text-[#bdf5cc]" title={session.id}>
-                      {formatSessionLabel(session.id)}
-                    </p>
-                    <p className="mt-1 text-xs text-white/36">
-                      {formatNumber(session.records)} records · {formatUsd(session.costUsd)}
-                    </p>
-                  </td>
+              {sortedSessions.map((session) => {
+                const hasTitle = Boolean(session.title);
+                const title = session.title || formatSessionLabel(session.id);
+
+                return (
+                  <tr key={session.id} className="group">
+                    <td className="border-b border-white/8 px-3 py-3 align-top">
+                      <p
+                        className={`truncate text-sm font-semibold ${hasTitle ? "text-[#dffbe8]" : "font-mono text-xs text-[#bdf5cc]"}`}
+                        title={hasTitle ? session.title : session.id}
+                      >
+                        {title}
+                      </p>
+                      <p className="mt-1 text-xs text-white/36">
+                        {formatNumber(session.records)} records · {formatUsd(session.costUsd)}
+                        {hasTitle ? ` · ${formatSessionLabel(session.id)}` : ""}
+                      </p>
+                    </td>
                   <td className="border-b border-white/8 px-3 py-3 text-right align-top">
                     <p className="font-mono text-base font-semibold text-[#ffe2a8]">{formatTokens(session.tokens)}</p>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -1420,7 +1428,8 @@ export function AccountSessionList({ sessions }: { sessions: TokenAccountUsagePr
                     {formatShortDate(session.endAt)}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1776,7 +1785,7 @@ function TrustEvidenceBar({
       </div>
       <p className="mt-2 hidden text-xs leading-5 text-white/48 sm:block">
         {apiBaseUrl ? "本页只读取自动上报服务。" : "Token Board API 未配置，页面不会回退到静态或本地数据。"}
-        只展示 token、模型、工具、项目 basename 与匿名 session；费用为公开模型单价估算，不代表实际账单。
+        只展示 token、模型、工具、项目 basename 与会话短标题；费用为公开模型单价估算，不代表实际账单。
       </p>
     </div>
   );
@@ -2746,6 +2755,7 @@ function normalizeRemoteAccountProfile(profile: TokenAccountUsageProfile): Token
 function normalizeRemoteSession(session: TokenAccountUsageProfile["sessions"][number]): TokenAccountUsageProfile["sessions"][number] {
   return {
     ...session,
+    title: typeof session.title === "string" && session.title.trim() ? session.title.trim() : undefined,
     tokens: Number.isFinite(session.tokens) ? session.tokens : 0,
     inputTokens: Number.isFinite(session.inputTokens) ? session.inputTokens : 0,
     cachedInputTokens: Number.isFinite(session.cachedInputTokens) ? session.cachedInputTokens : 0,

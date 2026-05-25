@@ -197,9 +197,11 @@ function createPostgresTokenUsageStore({
           cost_usd DOUBLE PRECISION,
           messages INTEGER NOT NULL DEFAULT 0,
           session_id TEXT,
+          session_title TEXT,
           created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
       `);
+      await pool.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS session_title TEXT`);
       await pool.query(`CREATE INDEX IF NOT EXISTS usage_events_reported_at_idx ON ${table} (reported_at DESC)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS usage_events_user_reported_at_idx ON ${table} (user_id, reported_at DESC)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS usage_events_model_idx ON ${table} (model)`);
@@ -298,6 +300,7 @@ function buildInsertQuery(table: string, events: TokenUsageEvent[]) {
     "cost_usd",
     "messages",
     "session_id",
+    "session_title",
   ];
   const values: Array<string | number | null> = [];
   const rows = events.map((event, eventIndex) => {
@@ -319,7 +322,8 @@ function buildInsertQuery(table: string, events: TokenUsageEvent[]) {
       event.totalTokens,
       event.costUsd ?? null,
       event.messages ?? 0,
-      event.sessionId || null
+      event.sessionId || null,
+      event.sessionTitle || null
     );
 
     return `(${columns.map((_, columnIndex) => `$${base + columnIndex + 1}`).join(", ")})`;
@@ -329,7 +333,10 @@ function buildInsertQuery(table: string, events: TokenUsageEvent[]) {
     text: `
       INSERT INTO ${table} (${columns.map(sqlIdentifier).join(", ")})
       VALUES ${rows.join(", ")}
-      ON CONFLICT (id) DO NOTHING
+      ON CONFLICT (id) DO UPDATE
+      SET "session_title" = COALESCE(NULLIF(EXCLUDED."session_title", ''), ${table}."session_title")
+      WHERE NULLIF(EXCLUDED."session_title", '') IS NOT NULL
+        AND COALESCE(${table}."session_title", '') <> EXCLUDED."session_title"
     `,
     values,
   };
@@ -366,6 +373,7 @@ function rowToTokenUsageEvent(row: TokenUsageEventRow): TokenUsageEvent | undefi
     costUsd: row.cost_usd === null ? undefined : toNumber(row.cost_usd),
     messages: toNumber(row.messages),
     sessionId: row.session_id || undefined,
+    sessionTitle: row.session_title || undefined,
   });
 }
 
@@ -423,4 +431,5 @@ type TokenUsageEventRow = {
   cost_usd: string | number | null;
   messages: string | number | null;
   session_id: string | null;
+  session_title: string | null;
 };

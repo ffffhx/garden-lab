@@ -41,6 +41,7 @@ type ExtractionContext = {
   model?: string;
   project?: string;
   sessionId?: string;
+  sessionTitle?: string;
 };
 
 const DEFAULT_SINCE_HOURS = 24 * 30;
@@ -176,13 +177,20 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
   const entries: TokenUsageEvent[] = [];
   let currentModel = context.model || "unknown";
   let currentProject = context.project;
+  let sessionTitle = context.sessionTitle || "";
   let sequence = 0;
   let previousTotalUsage: Record<string, unknown> = {};
 
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.trim();
 
-    if (!line.includes('"token_count"') && !line.includes('"model"') && !line.includes('"cwd"')) {
+    if (
+      !line.includes('"token_count"') &&
+      !line.includes('"model"') &&
+      !line.includes('"cwd"') &&
+      !line.includes('"user_message"') &&
+      !line.includes('"title"')
+    ) {
       continue;
     }
 
@@ -194,6 +202,8 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
 
     const payload = isRecord(parsed.payload) ? parsed.payload : {};
     const type = typeof parsed.type === "string" ? parsed.type : "";
+
+    sessionTitle ||= extractSessionTitle(parsed);
 
     if ((type === "turn_context" || type === "session_meta") && typeof payload.model === "string") {
       currentModel = payload.model;
@@ -233,6 +243,7 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
         model: currentModel,
         project: currentProject,
         sessionId: context.sessionId || textFromFields(payload, ["id"]) || context.filePath,
+        sessionTitle,
       },
       sequence
     );
@@ -243,6 +254,63 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
   }
 
   return dedupeTokenEvents(entries);
+}
+
+function extractSessionTitle(record: Record<string, unknown>) {
+  const payload = isRecord(record.payload) ? record.payload : {};
+  const payloadType = typeof payload.type === "string" ? payload.type : "";
+  if (record.type === "event_msg" && payloadType === "user_message") {
+    return sanitizeSessionTitle(textFromMessageLike(payload.message) || textFromMessageLike(payload.text_elements));
+  }
+
+  const explicitTitle =
+    textFromFields(payload, ["sessionTitle", "session_title", "conversationTitle", "title"]) ||
+    textFromFields(record, ["sessionTitle", "session_title", "conversationTitle", "title"]);
+
+  if (explicitTitle) {
+    return sanitizeSessionTitle(explicitTitle);
+  }
+
+  return "";
+}
+
+function textFromMessageLike(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(textFromMessageLike).filter(Boolean).join(" ");
+  }
+
+  if (isRecord(value)) {
+    return (
+      textFromFields(value, ["text", "content", "message", "input_text"]) ||
+      textFromMessageLike(value.text_elements)
+    );
+  }
+
+  return "";
+}
+
+function sanitizeSessionTitle(value: unknown) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const text = value
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/```[\s\S]*$/g, "")
+    .replace(/^#+\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const lower = text.toLowerCase();
+
+  if (!text || lower === "none" || lower === "auto" || lower === "unknown" || lower === "n/a") {
+    return "";
+  }
+
+  return text.length > 80 ? `${text.slice(0, 77)}...` : text;
 }
 
 function tokenUsageDelta(current: Record<string, unknown>, previous: Record<string, unknown>) {
@@ -497,6 +565,8 @@ function recordToUsageEvent(record: Record<string, unknown>, context: Extraction
   const model = context.model || textFromFields(record, ["model", "modelName", "model_name"]) || "unknown";
   const sessionId = context.sessionId || textFromFields(record, ["sessionId", "session_id", "conversationId", "id"]);
   const project = context.project || textFromFields(record, ["project", "repo", "workspace", "cwd"]);
+  const sessionTitle =
+    context.sessionTitle || textFromFields(record, ["sessionTitle", "session_title", "conversationTitle"]);
 
   return normalizeTokenUsageEvent({
     id: stableCollectorId(context, timestamp, model, sessionId, sequence, {
@@ -521,6 +591,7 @@ function recordToUsageEvent(record: Record<string, unknown>, context: Extraction
     totalTokens,
     messages: numberFromFields(record, ["messages", "messageCount", "message_count"]),
     sessionId,
+    sessionTitle: sanitizeSessionTitle(sessionTitle),
   });
 }
 
@@ -541,6 +612,8 @@ function enrichContext(context: ExtractionContext, record: Record<string, unknow
     sessionId:
       context.sessionId ||
       textFromFields(record, ["sessionId", "session_id", "conversationId", "conversation_id", "requestId", "id"]),
+    sessionTitle:
+      context.sessionTitle || textFromFields(record, ["sessionTitle", "session_title", "conversationTitle"]),
   };
 }
 
@@ -555,6 +628,7 @@ function applyContext(entries: TokenUsageEvent[], context: ExtractionContext) {
       tool: entry.tool === "manual" ? context.tool : entry.tool,
       project: entry.project || context.project,
       sessionId: entry.sessionId || context.sessionId,
+      sessionTitle: entry.sessionTitle || context.sessionTitle,
     })
   );
 }

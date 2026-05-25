@@ -25,6 +25,7 @@ export type TokenUsageEvent = {
   costUsd?: number;
   messages?: number;
   sessionId?: string;
+  sessionTitle?: string;
 };
 
 export type TokenLeaderboardUser = {
@@ -80,6 +81,7 @@ export type TokenUsageProjectBreakdown = {
 
 export type TokenUsageSessionBreakdown = {
   id: string;
+  title?: string;
   tokens: number;
   inputTokens: number;
   cachedInputTokens: number;
@@ -305,6 +307,7 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
   const model = normalizeText(value.model) || "unknown";
   const source = normalizeText(value.source) || "manual";
   const sessionId = normalizeText(value.sessionId);
+  const sessionTitle = normalizeText(value.sessionTitle).slice(0, 120);
   const id =
     normalizeText(value.id) ||
     [
@@ -343,6 +346,7 @@ export function normalizeTokenUsageEvent(value: Partial<TokenUsageEvent>): Token
           }),
     messages: toFiniteNumber(value.messages),
     sessionId,
+    sessionTitle,
   };
 }
 
@@ -511,6 +515,7 @@ function recordsToEvents(records: unknown[]) {
         costUsd: rawCostUsd === undefined || rawCostUsd === "" ? undefined : toFiniteNumber(rawCostUsd),
         messages: toFiniteNumber(readField(value, ["messages", "messageCount"])),
         sessionId: normalizeText(readField(value, ["sessionId", "session", "conversationId"])),
+        sessionTitle: normalizeText(readField(value, ["sessionTitle", "session_title", "conversationTitle"])),
       }),
     ];
   });
@@ -724,6 +729,7 @@ function aggregateSessionUsage(entries: TokenUsageEvent[]): TokenUsageSessionBre
       modelTokens: Map<string, number>;
       toolTokens: Map<string, number>;
       projectTokens: Map<string, number>;
+      titleTokens: Map<string, number>;
       startAt: string;
       endAt: string;
     }
@@ -746,6 +752,7 @@ function aggregateSessionUsage(entries: TokenUsageEvent[]): TokenUsageSessionBre
         modelTokens: new Map<string, number>(),
         toolTokens: new Map<string, number>(),
         projectTokens: new Map<string, number>(),
+        titleTokens: new Map<string, number>(),
         startAt: entry.timestamp,
         endAt: entry.timestamp,
       };
@@ -761,6 +768,9 @@ function aggregateSessionUsage(entries: TokenUsageEvent[]): TokenUsageSessionBre
     addMapValue(current.modelTokens, entry.model || "unknown", tokens);
     addMapValue(current.toolTokens, entry.tool || entry.source || "unknown", tokens);
     addMapValue(current.projectTokens, entry.project || "未标记项目", tokens);
+    if (entry.sessionTitle) {
+      addMapValue(current.titleTokens, entry.sessionTitle, tokens);
+    }
 
     const timestamp = new Date(entry.timestamp).getTime();
     if (timestamp < new Date(current.startAt).getTime()) {
@@ -776,6 +786,7 @@ function aggregateSessionUsage(entries: TokenUsageEvent[]): TokenUsageSessionBre
   return [...usage.entries()]
     .map(([id, value]) => ({
       id,
+      title: topOptionalMapEntry(value.titleTokens),
       tokens: value.tokens,
       inputTokens: value.inputTokens,
       cachedInputTokens: value.cachedInputTokens,
@@ -1012,6 +1023,10 @@ function addMapValue(map: Map<string, number>, key: string, value: number) {
 
 function topMapEntry(map: Map<string, number>) {
   return [...map.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "unknown";
+}
+
+function topOptionalMapEntry(map: Map<string, number>) {
+  return [...map.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
 }
 
 function readField(record: Record<string, unknown>, names: string[]) {

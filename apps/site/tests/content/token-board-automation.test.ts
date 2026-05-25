@@ -58,6 +58,7 @@ describe("token board automation", () => {
           model: "gpt-5.5",
           project: "/Users/feng/private/repo-name",
           sessionId: "/Users/feng/private/session.jsonl",
+          sessionTitle: "Fix Token Board session labels",
           timestamp: new Date().toISOString(),
           inputTokens: 1000,
           outputTokens: 200,
@@ -73,6 +74,7 @@ describe("token board automation", () => {
         userId: "server-user",
         displayName: "Server User",
         project: "repo-name",
+        sessionTitle: "Fix Token Board session labels",
       })
     );
     expect(sanitized.entries[0].sessionId).toMatch(/^session:/);
@@ -152,6 +154,14 @@ describe("token board automation", () => {
         payload: {
           cwd: "/Users/feng/work/token-board",
           model: "gpt-5.5",
+        },
+      },
+      {
+        timestamp: "2026-05-14T08:00:10.000Z",
+        type: "event_msg",
+        payload: {
+          type: "user_message",
+          message: "帮我修复 Session 明细里看不懂的 hash 标题",
         },
       },
       {
@@ -243,6 +253,7 @@ describe("token board automation", () => {
       expect.objectContaining({
         model: "gpt-5.5",
         project: "token-board",
+        sessionTitle: "帮我修复 Session 明细里看不懂的 hash 标题",
         totalTokens: 110,
         inputTokens: 100,
         cachedInputTokens: 40,

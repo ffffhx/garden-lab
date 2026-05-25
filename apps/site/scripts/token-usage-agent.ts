@@ -185,6 +185,10 @@ export async function loadAgentConfig(): Promise<AgentConfig> {
         "TOKEN_BOARD_HASH_SESSION_ID",
         readNestedBoolean(fileConfig, "privacy", "hashSessionId", true)
       ),
+      includeSessionTitle: readBooleanEnv(
+        "TOKEN_BOARD_INCLUDE_SESSION_TITLE",
+        readNestedBoolean(fileConfig, "privacy", "includeSessionTitle", true)
+      ),
       maxEventAgeDays: readNumberEnv(
         "TOKEN_BOARD_MAX_EVENT_AGE_DAYS",
         readNestedNumber(fileConfig, "privacy", "maxEventAgeDays", 120)
@@ -393,15 +397,15 @@ function clientInfo() {
 
 function printHelp() {
   console.log(`Usage:
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent install
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent status
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent uninstall
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent login
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent upload
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent resync
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent replace
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent watch
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent install
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent status
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent uninstall
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent login
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent upload
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent resync
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent replace
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent watch
 
 Local repo equivalents:
   pnpm token:agent init

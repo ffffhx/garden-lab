@@ -4852,7 +4852,7 @@ body {
     linear-gradient(var(--grid-soft) 1px, transparent 1px),
     #f8f4eb;
   background-size: 24px 24px;
-  padding: 22px 20px 30px;
+  padding: 12px 16px 24px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -4905,7 +4905,7 @@ body {
 .viewer {
   min-width: 0;
   min-height: 0;
-  padding: 26px clamp(22px, 2.4vw, 42px) 42px;
+  padding: 14px clamp(18px, 2vw, 34px) 34px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -4915,8 +4915,8 @@ body {
   position: sticky;
   top: -1px;
   z-index: 6;
-  margin: -22px -20px 0;
-  padding: 22px 20px 16px;
+  margin: -12px -16px 0;
+  padding: 12px 16px 10px;
   background:
     linear-gradient(90deg, var(--grid-strong) 1px, transparent 1px),
     linear-gradient(var(--grid-soft) 1px, transparent 1px),
@@ -4925,22 +4925,22 @@ body {
   box-shadow: 0 14px 28px -28px rgba(22, 25, 31, 0.8);
 }
 .eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 4px;
   color: var(--blue);
-  font: 800 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 800 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
   text-transform: uppercase;
 }
 h1, h2 { margin: 0; letter-spacing: 0; }
 h1 { font-size: 48px; line-height: 0.95; }
 .sidebar h1 {
   color: rgba(22, 25, 31, 0.72);
-  font: 900 26px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 900 22px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
-h2 { font-size: 34px; line-height: 1.08; overflow-wrap: anywhere; }
-.toolbar { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 20px; }
+h2 { font-size: 28px; line-height: 1.04; overflow-wrap: anywhere; }
+.toolbar { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
 input[type="search"] {
   min-width: 0;
-  height: 46px;
+  height: 38px;
   border: 1px solid var(--line);
   background: var(--panel);
   padding: 0 14px;
@@ -4953,7 +4953,7 @@ input[type="search"]:focus {
   box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.13);
 }
 button, .exports a {
-  min-height: 46px;
+  min-height: 38px;
   border: 1px solid var(--ink);
   background: var(--ink);
   color: white;
@@ -5013,12 +5013,12 @@ button:disabled {
 }
 .sessions {
   display: grid;
-  gap: 18px;
-  margin-top: 20px;
+  gap: 16px;
+  margin-top: 16px;
 }
 .source-switcher {
   position: sticky;
-  top: 146px;
+  top: 104px;
   z-index: 5;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -5202,11 +5202,11 @@ button:disabled {
   z-index: 4;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: start;
-  border-bottom: 3px solid var(--ink);
-  margin: -26px clamp(-42px, -2.4vw, -22px) 24px;
-  padding: 12px clamp(22px, 2.4vw, 42px) 16px;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 2px solid var(--ink);
+  margin: -14px clamp(-34px, -2vw, -18px) 14px;
+  padding: 8px clamp(18px, 2vw, 34px) 10px;
   background:
     linear-gradient(90deg, rgba(22, 25, 31, 0.026) 1px, transparent 1px),
     linear-gradient(rgba(22, 25, 31, 0.022) 1px, transparent 1px),
@@ -5220,7 +5220,7 @@ button:disabled {
   right: 0;
   bottom: 100%;
   left: 0;
-  height: 96px;
+  height: 36px;
   background:
     linear-gradient(90deg, rgba(22, 25, 31, 0.026) 1px, transparent 1px),
     linear-gradient(rgba(22, 25, 31, 0.022) 1px, transparent 1px),
@@ -5234,19 +5234,19 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 38px;
+  min-height: 32px;
   border: 1px solid var(--line);
   background: rgba(255, 253, 248, 0.88);
-  padding: 0 11px;
-  font: 800 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  padding: 0 10px;
+  font: 800 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
   user-select: none;
 }
-.meta, .risks, .exports { margin-top: 14px; }
+.meta, .risks, .exports { margin-top: 10px; }
 .risks:empty { display: none; }
 .meta {
   border: 1px solid var(--line);
   background: var(--panel-wash);
-  padding: 13px 14px;
+  padding: 9px 12px;
   color: var(--muted);
   font: 800 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
   overflow-wrap: anywhere;
@@ -5306,9 +5306,9 @@ button:disabled {
 }
 .turns {
   display: grid;
-  gap: 46px;
+  gap: 38px;
   width: min(1600px, 100%);
-  margin: 34px auto 0;
+  margin: 24px auto 0;
 }
 .turn {
   display: flex;

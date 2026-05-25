@@ -138,16 +138,13 @@ export function CodexSnapshotModule({
 
   return (
     <main className="flex min-h-0 w-full flex-1 flex-col">
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.5rem] border border-slate-900/10 bg-white/86 shadow-[0_32px_120px_-68px_rgba(15,23,42,0.65)]">
-        <div className="flex flex-col gap-3 border-b border-slate-900/10 bg-[#fffdf7]/90 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1d6f78]">
-              Private Module
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.25rem] border border-slate-900/10 bg-white/86 shadow-[0_32px_120px_-68px_rgba(15,23,42,0.65)]">
+        <div className="flex flex-col gap-2 border-b border-slate-900/10 bg-[#fffdf7]/90 px-4 py-2.5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
               Codex Snapshots
             </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
+            <p className="text-xs leading-5 text-slate-600">
               本地只读会话审阅台，挂在站点里但数据仍从你的机器读取。
             </p>
           </div>
@@ -163,13 +160,13 @@ export function CodexSnapshotModule({
                     ? `同步「${activeSnapshot.title}」`
                     : "请先在下方选择一条会话"
               }
-              className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#1d6f78] px-4 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(29,111,120,0.8)] transition hover:-translate-y-0.5 hover:bg-[#165a62] focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:translate-y-0"
+              className="inline-flex min-h-8 items-center justify-center rounded-full bg-[#1d6f78] px-3 text-xs font-semibold text-white shadow-[0_18px_40px_-24px_rgba(29,111,120,0.8)] transition hover:-translate-y-0.5 hover:bg-[#165a62] focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:translate-y-0"
             >
               {syncButtonLabel}
             </button>
             <Link
               href="/snapshots/share/"
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-slate-950/12 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-950/25 hover:text-slate-950 focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/15"
+              className="inline-flex min-h-8 items-center justify-center rounded-full border border-slate-950/12 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-950/25 hover:text-slate-950 focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/15"
             >
               云端分享页
             </Link>
@@ -177,20 +174,20 @@ export function CodexSnapshotModule({
               href={standaloneHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-10 items-center justify-center rounded-full bg-slate-950 px-4 text-sm font-semibold !text-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.8)] transition hover:-translate-y-0.5 hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
+              className="inline-flex min-h-8 items-center justify-center rounded-full bg-slate-950 px-3 text-xs font-semibold !text-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.8)] transition hover:-translate-y-0.5 hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
             >
               打开独立窗口
             </Link>
           </div>
         </div>
 
-        <div className="border-b border-slate-900/10 bg-slate-950 px-4 py-2 text-sm text-slate-200">
-          <div className="flex min-w-0 flex-wrap items-center gap-3">
+        <div className="border-b border-slate-900/10 bg-slate-950 px-4 py-1.5 text-xs text-slate-200">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-2 font-semibold">
               <span className={`size-2 rounded-full ${statusDot}`} aria-hidden="true" />
               {statusLabel}
             </span>
-            <code className="min-w-0 truncate rounded-full border border-white/10 bg-white/8 px-3 py-1 font-mono text-xs text-slate-300">
+            <code className="min-w-0 truncate rounded-full border border-white/10 bg-white/8 px-2.5 py-0.5 font-mono text-[11px] text-slate-300">
               {viewerUrl}
             </code>
             {connection === "unavailable" ? (

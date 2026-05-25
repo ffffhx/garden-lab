@@ -148,6 +148,15 @@ describe("token board automation", () => {
     expect(JSON.stringify(config)).not.toContain("private");
   });
 
+  it("does not treat old client metadata as a config upload", () => {
+    expect(
+      sanitizeTokenBoardUserConfig(undefined, {
+        name: "token-board-agent",
+        version: "0.4.6",
+      })
+    ).toBeNull();
+  });
+
   it("reads Codex config and model cache for the current user config", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "token-board-config-"));
     await fs.writeFile(

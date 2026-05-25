@@ -182,7 +182,11 @@ export function sanitizeTokenBoardUserConfig(
   value: unknown,
   client: TokenBoardIngestPayload["client"] = {}
 ): TokenBoardUserConfig | null {
-  const record = isRecord(value) ? value : {};
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const record = value;
   const agentRecord = isRecord(record.agent) ? record.agent : {};
   const codexRecord = isRecord(record.codex) ? record.codex : {};
   const agent = compactObject({

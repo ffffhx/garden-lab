@@ -137,8 +137,54 @@ feng,Feng,Codex CLI,gpt-5.5,2026-05-14T10:00:00.000Z,1300,5`);
     expect(profile.user?.tokens).toBe(28_000);
     expect(profile.records).toBe(2);
     expect(profile.projects[0]).toEqual(expect.objectContaining({ name: "board", tokens: 28_000 }));
+    expect(profile.sessions).toHaveLength(2);
+    expect(profile.sessions[0]).toEqual(expect.objectContaining({ id: "feng-now", tokens: 20_000 }));
     expect(profile.heatmap).toHaveLength(168);
     expect(profile.topHour).toBe("18:00");
+  });
+
+  it("aggregates account usage by session and sorts sessions by tokens descending", () => {
+    const profile = buildTokenAccountUsageProfile(
+      [
+        {
+          ...event("small", "github:1", "Feng", "2026-05-14T09:00:00.000Z", 5_000, 1, 0.05),
+          sessionId: "session-small",
+          model: "gpt-5.4-mini",
+          tool: "Cursor",
+          project: "notes",
+        },
+        {
+          ...event("big-a", "github:1", "Feng", "2026-05-13T10:00:00.000Z", 10_000, 2, 0.1),
+          sessionId: "session-big",
+          model: "gpt-5.5",
+          tool: "Codex CLI",
+          project: "board",
+        },
+        {
+          ...event("big-b", "github:1", "Feng", "2026-05-14T11:00:00.000Z", 7_000, 3, 0.07),
+          sessionId: "session-big",
+          model: "gpt-5.4",
+          tool: "Cursor",
+          project: "api",
+        },
+      ],
+      { userId: "github:1", range: "7D", now }
+    );
+
+    expect(profile.sessions).toHaveLength(2);
+    expect(profile.sessions[0]).toEqual(
+      expect.objectContaining({
+        id: "session-big",
+        tokens: 17_000,
+        model: "gpt-5.5",
+        tool: "Codex CLI",
+        project: "board",
+        records: 2,
+        startAt: "2026-05-13T10:00:00.000Z",
+        endAt: "2026-05-14T11:00:00.000Z",
+      })
+    );
+    expect(profile.sessions[1]).toEqual(expect.objectContaining({ id: "session-small", tokens: 5_000 }));
   });
 });
 

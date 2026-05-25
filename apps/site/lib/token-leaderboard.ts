@@ -78,6 +78,26 @@ export type TokenUsageProjectBreakdown = {
   lastReportedAt: string;
 };
 
+export type TokenUsageSessionBreakdown = {
+  id: string;
+  tokens: number;
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  reasoningOutputTokens: number;
+  costUsd: number;
+  messages: number;
+  records: number;
+  model: string;
+  tool: string;
+  project: string;
+  models: number;
+  tools: number;
+  projects: number;
+  startAt: string;
+  endAt: string;
+};
+
 export type TokenUsageActivityCell = {
   weekday: number;
   hour: number;
@@ -101,6 +121,7 @@ export type TokenAccountUsageProfile = {
   models: TokenLeaderboardSummary["models"];
   tools: TokenLeaderboardSummary["tools"];
   projects: TokenUsageProjectBreakdown[];
+  sessions: TokenUsageSessionBreakdown[];
   heatmap: TokenUsageActivityCell[];
   topHour: string;
   topWeekday: string;
@@ -231,6 +252,7 @@ export function buildTokenAccountUsageProfile(
     models: accountSummary.models,
     tools: accountSummary.tools,
     projects: aggregateProjectUsage(accountEntries),
+    sessions: aggregateSessionUsage(accountEntries),
     heatmap: buildActivityHeatmap(accountEntries),
     topHour: topActivityHour(accountEntries),
     topWeekday: topActivityWeekday(accountEntries),
@@ -685,6 +707,93 @@ function aggregateProjectUsage(entries: TokenUsageEvent[]): TokenUsageProjectBre
     }))
     .sort((a, b) => b.tokens - a.tokens)
     .slice(0, 18);
+}
+
+function aggregateSessionUsage(entries: TokenUsageEvent[]): TokenUsageSessionBreakdown[] {
+  const usage = new Map<
+    string,
+    {
+      tokens: number;
+      inputTokens: number;
+      cachedInputTokens: number;
+      outputTokens: number;
+      reasoningOutputTokens: number;
+      costUsd: number;
+      messages: number;
+      records: number;
+      modelTokens: Map<string, number>;
+      toolTokens: Map<string, number>;
+      projectTokens: Map<string, number>;
+      startAt: string;
+      endAt: string;
+    }
+  >();
+
+  for (const entry of entries) {
+    const tokens = getTokenConsumptionTokens(entry);
+    const sessionId = entry.sessionId || entry.id;
+    const current =
+      usage.get(sessionId) ??
+      {
+        tokens: 0,
+        inputTokens: 0,
+        cachedInputTokens: 0,
+        outputTokens: 0,
+        reasoningOutputTokens: 0,
+        costUsd: 0,
+        messages: 0,
+        records: 0,
+        modelTokens: new Map<string, number>(),
+        toolTokens: new Map<string, number>(),
+        projectTokens: new Map<string, number>(),
+        startAt: entry.timestamp,
+        endAt: entry.timestamp,
+      };
+
+    current.tokens += tokens;
+    current.inputTokens += entry.inputTokens;
+    current.cachedInputTokens += entry.cachedInputTokens;
+    current.outputTokens += entry.outputTokens;
+    current.reasoningOutputTokens += entry.reasoningOutputTokens;
+    current.costUsd += entry.costUsd ?? 0;
+    current.messages += entry.messages ?? 0;
+    current.records += 1;
+    addMapValue(current.modelTokens, entry.model || "unknown", tokens);
+    addMapValue(current.toolTokens, entry.tool || entry.source || "unknown", tokens);
+    addMapValue(current.projectTokens, entry.project || "未标记项目", tokens);
+
+    const timestamp = new Date(entry.timestamp).getTime();
+    if (timestamp < new Date(current.startAt).getTime()) {
+      current.startAt = entry.timestamp;
+    }
+    if (timestamp > new Date(current.endAt).getTime()) {
+      current.endAt = entry.timestamp;
+    }
+
+    usage.set(sessionId, current);
+  }
+
+  return [...usage.entries()]
+    .map(([id, value]) => ({
+      id,
+      tokens: value.tokens,
+      inputTokens: value.inputTokens,
+      cachedInputTokens: value.cachedInputTokens,
+      outputTokens: value.outputTokens,
+      reasoningOutputTokens: value.reasoningOutputTokens,
+      costUsd: value.costUsd,
+      messages: value.messages,
+      records: value.records,
+      model: topMapEntry(value.modelTokens),
+      tool: topMapEntry(value.toolTokens),
+      project: topMapEntry(value.projectTokens),
+      models: value.modelTokens.size,
+      tools: value.toolTokens.size,
+      projects: value.projectTokens.size,
+      startAt: value.startAt,
+      endAt: value.endAt,
+    }))
+    .sort((a, b) => b.tokens - a.tokens);
 }
 
 function buildActivityHeatmap(entries: TokenUsageEvent[]): TokenUsageActivityCell[] {

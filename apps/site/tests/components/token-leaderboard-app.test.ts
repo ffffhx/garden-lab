@@ -2,7 +2,7 @@ import * as React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { DailyTokenTrendChart, INSTALL_GUIDES, TokenLeaderboardApp } from "../../components/token-leaderboard-app";
+import { AccountSessionList, DailyTokenTrendChart, INSTALL_GUIDES, TokenLeaderboardApp } from "../../components/token-leaderboard-app";
 
 const initialNow = "2026-05-14T12:00:00.000Z";
 (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -77,5 +77,64 @@ describe("TokenLeaderboardApp", () => {
     expect(INSTALL_GUIDES.windows.steps[0].command).toContain("token-board-agent install");
     expect(INSTALL_GUIDES.macos.steps[3].command).toContain("token-board-agent uninstall");
     expect(INSTALL_GUIDES.windows.steps[3].note).toContain("TokenBoardAgent");
+  });
+
+  it("renders session detail rows sorted by token usage", () => {
+    const markup = renderToStaticMarkup(
+      React.createElement(AccountSessionList, {
+        sessions: [
+          {
+            id: "session-small",
+            tokens: 5_000,
+            inputTokens: 4_000,
+            cachedInputTokens: 500,
+            outputTokens: 1_000,
+            reasoningOutputTokens: 0,
+            costUsd: 0.05,
+            messages: 1,
+            records: 1,
+            model: "gpt-5.4-mini",
+            tool: "Cursor",
+            project: "notes",
+            models: 1,
+            tools: 1,
+            projects: 1,
+            startAt: "2026-05-14T09:00:00.000Z",
+            endAt: "2026-05-14T09:02:00.000Z",
+          },
+          {
+            id: "session-big",
+            tokens: 17_000,
+            inputTokens: 15_000,
+            cachedInputTokens: 3_000,
+            outputTokens: 2_000,
+            reasoningOutputTokens: 0,
+            costUsd: 0.17,
+            messages: 5,
+            records: 2,
+            model: "gpt-5.5",
+            tool: "Codex CLI",
+            project: "garden-lab",
+            models: 2,
+            tools: 1,
+            projects: 1,
+            startAt: "2026-05-13T10:00:00.000Z",
+            endAt: "2026-05-14T11:00:00.000Z",
+          },
+        ],
+      })
+    );
+
+    expect(markup).toContain("Session 明细");
+    expect(markup).toContain("按 token 降序");
+    expect(markup.indexOf("session-big")).toBeLessThan(markup.indexOf("session-small"));
+    expect(markup).toContain("17K");
+    expect(markup).toContain("gpt-5.5");
+    expect(markup).toContain("Codex CLI");
+    expect(markup).toContain("garden-lab");
+    expect(markup).toContain("开始时间");
+    expect(markup).toContain("结束时间");
+    expect(markup).toContain("2026-05-13T10:00:00.000Z");
+    expect(markup).toContain("2026-05-14T11:00:00.000Z");
   });
 });

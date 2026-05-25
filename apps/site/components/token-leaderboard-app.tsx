@@ -1099,6 +1099,8 @@ function AccountUsagePanel({
             />
             <AccountProjectList projects={dashboardProfile.projects} />
           </div>
+
+          <AccountSessionList sessions={dashboardProfile.sessions} />
         </div>
       )}
     </section>
@@ -1347,6 +1349,96 @@ function AccountProjectList({ projects }: { projects: TokenAccountUsageProfile["
         )}
       </div>
     </section>
+  );
+}
+
+export function AccountSessionList({ sessions }: { sessions: TokenAccountUsageProfile["sessions"] }) {
+  const sortedSessions = [...sessions].sort((a, b) => b.tokens - a.tokens);
+  const maxTokens = Math.max(1, ...sortedSessions.map((session) => session.tokens));
+
+  return (
+    <section className="rounded-2xl border border-white/10 bg-white/6 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold">Session 明细</h3>
+          <p className="mt-1 text-xs leading-5 text-white/42">按匿名 session 聚合，不展示 prompt 文本</p>
+        </div>
+        <span className="w-fit rounded-full border border-white/10 bg-black/16 px-3 py-1 font-mono text-xs text-white/52">
+          {formatNumber(sortedSessions.length)} sessions · 按 token 降序
+        </span>
+      </div>
+
+      {sortedSessions.length ? (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[58rem] table-fixed border-separate border-spacing-0 text-left text-sm">
+            <thead className="text-xs text-white/38">
+              <tr>
+                <th className="w-[12rem] border-b border-white/10 px-3 py-2 font-semibold">Session</th>
+                <th className="w-[10rem] border-b border-white/10 px-3 py-2 text-right font-semibold" aria-sort="descending">
+                  总 token ↓
+                </th>
+                <th className="w-[12rem] border-b border-white/10 px-3 py-2 font-semibold">模型</th>
+                <th className="w-[10rem] border-b border-white/10 px-3 py-2 font-semibold">工具</th>
+                <th className="w-[11rem] border-b border-white/10 px-3 py-2 font-semibold">项目</th>
+                <th className="w-[9rem] border-b border-white/10 px-3 py-2 font-semibold">开始时间</th>
+                <th className="w-[9rem] border-b border-white/10 px-3 py-2 font-semibold">结束时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedSessions.map((session) => (
+                <tr key={session.id} className="group">
+                  <td className="border-b border-white/8 px-3 py-3 align-top">
+                    <p className="truncate font-mono text-xs text-[#bdf5cc]" title={session.id}>
+                      {formatSessionLabel(session.id)}
+                    </p>
+                    <p className="mt-1 text-xs text-white/36">
+                      {formatNumber(session.records)} records · {formatUsd(session.costUsd)}
+                    </p>
+                  </td>
+                  <td className="border-b border-white/8 px-3 py-3 text-right align-top">
+                    <p className="font-mono text-base font-semibold text-[#ffe2a8]">{formatTokens(session.tokens)}</p>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-[#7be3a0]"
+                        style={{ width: `${Math.max(2, (session.tokens / maxTokens) * 100)}%` }}
+                      />
+                    </div>
+                  </td>
+                  <td className="border-b border-white/8 px-3 py-3 align-top">
+                    <SessionDimension value={session.model} count={session.models} label="models" />
+                  </td>
+                  <td className="border-b border-white/8 px-3 py-3 align-top">
+                    <SessionDimension value={session.tool} count={session.tools} label="tools" />
+                  </td>
+                  <td className="border-b border-white/8 px-3 py-3 align-top">
+                    <SessionDimension value={session.project} count={session.projects} label="projects" />
+                  </td>
+                  <td className="border-b border-white/8 px-3 py-3 align-top font-mono text-xs text-white/62" title={session.startAt}>
+                    {formatShortDate(session.startAt)}
+                  </td>
+                  <td className="border-b border-white/8 px-3 py-3 align-top font-mono text-xs text-white/62" title={session.endAt}>
+                    {formatShortDate(session.endAt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="mt-4 rounded-xl border border-white/10 bg-black/16 px-3 py-4 text-center text-sm text-white/45">暂无 session 数据</p>
+      )}
+    </section>
+  );
+}
+
+function SessionDimension({ count, label, value }: { count: number; label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-sm font-medium text-white/82" title={value}>
+        {value || "unknown"}
+      </p>
+      {count > 1 ? <p className="mt-1 text-xs text-white/36">+{formatNumber(count - 1)} {label}</p> : null}
+    </div>
   );
 }
 
@@ -2640,6 +2732,7 @@ function normalizeRemoteAccountProfile(profile: TokenAccountUsageProfile): Token
   return {
     ...profile,
     daily: normalizeDailyUsageSeries(profile.daily),
+    sessions: Array.isArray(profile.sessions) ? profile.sessions.map(normalizeRemoteSession) : [],
     user: profile.user
       ? {
           ...profile.user,
@@ -2647,6 +2740,23 @@ function normalizeRemoteAccountProfile(profile: TokenAccountUsageProfile): Token
           tokens: getTokenConsumptionTokens(profile.user),
         }
       : null,
+  };
+}
+
+function normalizeRemoteSession(session: TokenAccountUsageProfile["sessions"][number]): TokenAccountUsageProfile["sessions"][number] {
+  return {
+    ...session,
+    tokens: Number.isFinite(session.tokens) ? session.tokens : 0,
+    inputTokens: Number.isFinite(session.inputTokens) ? session.inputTokens : 0,
+    cachedInputTokens: Number.isFinite(session.cachedInputTokens) ? session.cachedInputTokens : 0,
+    outputTokens: Number.isFinite(session.outputTokens) ? session.outputTokens : 0,
+    reasoningOutputTokens: Number.isFinite(session.reasoningOutputTokens) ? session.reasoningOutputTokens : 0,
+    costUsd: Number.isFinite(session.costUsd) ? session.costUsd : 0,
+    messages: Number.isFinite(session.messages) ? session.messages : 0,
+    records: Number.isFinite(session.records) ? session.records : 0,
+    models: Number.isFinite(session.models) ? session.models : 0,
+    tools: Number.isFinite(session.tools) ? session.tools : 0,
+    projects: Number.isFinite(session.projects) ? session.projects : 0,
   };
 }
 
@@ -2757,6 +2867,12 @@ function formatShortDate(value: string) {
   }).format(new Date(value));
 }
 
+function formatSessionLabel(value: string) {
+  const sessionId = value.replace(/^session:/, "") || "unknown";
+
+  return sessionId.length > 22 ? `${sessionId.slice(0, 10)}…${sessionId.slice(-8)}` : sessionId;
+}
+
 function formatRelativeTime(value: string) {
   const timestamp = new Date(value).getTime();
   const diffMs = Date.now() - timestamp;
@@ -2839,14 +2955,17 @@ function isTokenLeaderboardSummary(value: unknown): value is TokenLeaderboardSum
 }
 
 function isTokenAccountUsageProfile(value: unknown): value is TokenAccountUsageProfile {
+  const profile = value as Partial<TokenAccountUsageProfile>;
+
   return (
     Boolean(value) &&
     typeof value === "object" &&
-    Array.isArray((value as TokenAccountUsageProfile).daily) &&
-    Array.isArray((value as TokenAccountUsageProfile).models) &&
-    Array.isArray((value as TokenAccountUsageProfile).tools) &&
-    Array.isArray((value as TokenAccountUsageProfile).projects) &&
-    Array.isArray((value as TokenAccountUsageProfile).heatmap)
+    Array.isArray(profile.daily) &&
+    Array.isArray(profile.models) &&
+    Array.isArray(profile.tools) &&
+    Array.isArray(profile.projects) &&
+    Array.isArray(profile.heatmap) &&
+    (profile.sessions === undefined || Array.isArray(profile.sessions))
   );
 }
 

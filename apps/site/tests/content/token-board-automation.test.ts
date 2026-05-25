@@ -8,8 +8,14 @@ import {
   hashUploadToken,
   normalizeUploadUsers,
   sanitizeIngestEvents,
+  sanitizeTokenBoardUserConfig,
 } from "@/lib/token-board-automation";
-import { defaultSourceTargets, extractTokenUsageEventsFromJson, parseUsageFile } from "@/lib/token-usage-collector";
+import {
+  collectTokenBoardUserConfig,
+  defaultSourceTargets,
+  extractTokenUsageEventsFromJson,
+  parseUsageFile,
+} from "@/lib/token-usage-collector";
 
 describe("token board automation", () => {
   it("collects from the friend agent default coding tools", () => {
@@ -107,6 +113,96 @@ describe("token board automation", () => {
 
     expect(sanitized.entries).toEqual([]);
     expect(sanitized.errors[0]).toContain("不能使用 totalTokens 兜底");
+  });
+
+  it("keeps only safe Codex config fields from agent uploads", () => {
+    const config = sanitizeTokenBoardUserConfig(
+      {
+        updatedAt: "2026-05-25T12:00:00.000Z",
+        agent: { platform: "darwin" },
+        codex: {
+          model: "gpt-5.5",
+          model_context_window: "250_000",
+          model_auto_compact_token_limit: "200000",
+          model_reasoning_effort: "medium",
+          notify: "/Users/feng/private/script.sh",
+        },
+      },
+      { name: "token-board-agent", version: "0.4.11", hostId: "private-host" }
+    );
+
+    expect(config).toEqual({
+      updatedAt: "2026-05-25T12:00:00.000Z",
+      agent: {
+        name: "token-board-agent",
+        version: "0.4.11",
+        platform: "macOS",
+      },
+      codex: {
+        model: "gpt-5.5",
+        modelReasoningEffort: "medium",
+        modelContextWindow: 250_000,
+        modelAutoCompactTokenLimit: 200_000,
+      },
+    });
+    expect(JSON.stringify(config)).not.toContain("private");
+  });
+
+  it("reads Codex config and model cache for the current user config", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "token-board-config-"));
+    await fs.writeFile(
+      path.join(dir, "config.toml"),
+      [
+        'model = "gpt-5.5"',
+        "model_context_window = 250_000",
+        "model_auto_compact_token_limit = 200_000",
+        'model_reasoning_effort = "medium"',
+        'notify = "/Users/feng/private/script.sh"',
+        "",
+        "[projects.\"/Users/feng/private\"]",
+        'trust_level = "trusted"',
+      ].join("\n")
+    );
+    await fs.writeFile(
+      path.join(dir, "models_cache.json"),
+      JSON.stringify({
+        models: [
+          {
+            id: "gpt-5.5",
+            context_window: 272_000,
+            max_context_window: 272_000,
+            effective_context_window_percent: 95,
+          },
+        ],
+      })
+    );
+
+    const config = await collectTokenBoardUserConfig({
+      agentName: "token-board-agent",
+      agentVersion: "0.4.11",
+      codexHome: dir,
+      platform: "win32",
+    });
+
+    expect(config).toEqual(
+      expect.objectContaining({
+        agent: {
+          name: "token-board-agent",
+          version: "0.4.11",
+          platform: "Windows",
+        },
+        codex: expect.objectContaining({
+          model: "gpt-5.5",
+          modelContextWindow: 250_000,
+          modelAutoCompactTokenLimit: 200_000,
+          modelReasoningEffort: "medium",
+          modelCacheContextWindow: 272_000,
+          modelMaxContextWindow: 272_000,
+          effectiveContextWindowPercent: 95,
+        }),
+      })
+    );
+    expect(JSON.stringify(config)).not.toContain("/Users/feng/private");
   });
 
   it("extracts aggregate usage from nested local logs without prompt text", () => {
@@ -253,7 +349,7 @@ describe("token board automation", () => {
       expect.objectContaining({
         model: "gpt-5.5",
         project: "token-board",
-        sessionTitle: "帮我修复 Session 明细里看不懂的 hash 标题",
+        sessionTitle: "修复 Session 明细标题",
         totalTokens: 110,
         inputTokens: 100,
         cachedInputTokens: 40,
@@ -270,5 +366,143 @@ describe("token board automation", () => {
         reasoningOutputTokens: 3,
       })
     );
+  });
+
+  it("compacts Codex user-message session titles into sidebar-style task titles", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "token-board-codex-title-"));
+    const file = path.join(dir, "session.jsonl");
+    const lines = [
+      {
+        timestamp: "2026-05-14T08:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "user_message",
+          message: "现在在token榜，token榜应该高亮",
+        },
+      },
+      {
+        timestamp: "2026-05-14T08:01:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 100,
+              cached_input_tokens: 0,
+              output_tokens: 10,
+              reasoning_output_tokens: 0,
+              total_tokens: 110,
+            },
+          },
+        },
+      },
+    ];
+
+    await fs.writeFile(file, `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`);
+
+    const entries = await parseUsageFile(file, {
+      source: "codex",
+      tool: "Codex CLI",
+      userId: "feng",
+      displayName: "Feng",
+      filePath: file,
+    });
+
+    expect(entries[0]).toEqual(expect.objectContaining({ sessionTitle: "高亮 token榜" }));
+  });
+
+  it("uses Codex title-index titles before prompt-derived fallbacks", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "token-board-codex-index-title-"));
+    const file = path.join(dir, "session.jsonl");
+    const lines = [
+      {
+        timestamp: "2026-05-14T08:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "user_message",
+          message: "现在在token榜，token榜应该高亮",
+        },
+      },
+      {
+        timestamp: "2026-05-14T08:01:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 100,
+              cached_input_tokens: 0,
+              output_tokens: 10,
+              reasoning_output_tokens: 0,
+              total_tokens: 110,
+            },
+          },
+        },
+      },
+    ];
+
+    await fs.writeFile(file, `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`);
+
+    const entries = await parseUsageFile(file, {
+      source: "codex",
+      tool: "Codex CLI",
+      userId: "feng",
+      displayName: "Feng",
+      filePath: file,
+      sessionTitle: "Codex 侧边栏标题",
+    });
+
+    expect(entries[0]).toEqual(expect.objectContaining({ sessionTitle: "Codex 侧边栏标题" }));
+  });
+
+  it("prefers explicit Codex session titles over compacted prompt fallbacks", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "token-board-codex-explicit-title-"));
+    const file = path.join(dir, "session.jsonl");
+    const lines = [
+      {
+        timestamp: "2026-05-14T08:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "user_message",
+          message: "现在在token榜，token榜应该高亮",
+        },
+      },
+      {
+        timestamp: "2026-05-14T08:00:10.000Z",
+        type: "event_msg",
+        payload: {
+          type: "session_title",
+          conversation_title: "高亮 token榜",
+        },
+      },
+      {
+        timestamp: "2026-05-14T08:01:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 100,
+              cached_input_tokens: 0,
+              output_tokens: 10,
+              reasoning_output_tokens: 0,
+              total_tokens: 110,
+            },
+          },
+        },
+      },
+    ];
+
+    await fs.writeFile(file, `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`);
+
+    const entries = await parseUsageFile(file, {
+      source: "codex",
+      tool: "Codex CLI",
+      userId: "feng",
+      displayName: "Feng",
+      filePath: file,
+    });
+
+    expect(entries[0]).toEqual(expect.objectContaining({ sessionTitle: "高亮 token榜" }));
   });
 });

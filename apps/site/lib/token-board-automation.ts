@@ -6,6 +6,7 @@ import {
   normalizeTokenUsageEvent,
   type TokenBoardMetric,
   type TokenBoardRange,
+  type TokenBoardUserConfig,
   type TokenUsageEvent,
 } from "./token-leaderboard";
 
@@ -33,7 +34,9 @@ export type TokenBoardIngestPayload = {
     name?: string;
     version?: string;
     hostId?: string;
+    platform?: string;
   };
+  userConfig?: Partial<TokenBoardUserConfig>;
   events?: Array<Partial<TokenUsageEvent>>;
 };
 
@@ -175,6 +178,45 @@ export function mergeTokenEvents(existing: TokenUsageEvent[], incoming: TokenUsa
   return dedupeTokenEvents([...incoming, ...existing]).slice(0, maxEvents);
 }
 
+export function sanitizeTokenBoardUserConfig(
+  value: unknown,
+  client: TokenBoardIngestPayload["client"] = {}
+): TokenBoardUserConfig | null {
+  const record = isRecord(value) ? value : {};
+  const agentRecord = isRecord(record.agent) ? record.agent : {};
+  const codexRecord = isRecord(record.codex) ? record.codex : {};
+  const agent = compactObject({
+    name: sanitizeLabel(agentRecord.name ?? client?.name, 60) || undefined,
+    version: sanitizeLabel(agentRecord.version ?? client?.version, 40) || undefined,
+    platform: sanitizePlatform(agentRecord.platform ?? client?.platform),
+  });
+  const codex = compactObject({
+    model: sanitizeLabel(codexRecord.model, 80) || undefined,
+    modelReasoningEffort: sanitizeLabel(codexRecord.modelReasoningEffort ?? codexRecord.model_reasoning_effort, 40) || undefined,
+    modelContextWindow: sanitizePositiveInteger(codexRecord.modelContextWindow ?? codexRecord.model_context_window),
+    modelAutoCompactTokenLimit: sanitizePositiveInteger(
+      codexRecord.modelAutoCompactTokenLimit ?? codexRecord.model_auto_compact_token_limit
+    ),
+    modelCacheContextWindow: sanitizePositiveInteger(codexRecord.modelCacheContextWindow ?? codexRecord.model_cache_context_window),
+    modelMaxContextWindow: sanitizePositiveInteger(codexRecord.modelMaxContextWindow ?? codexRecord.model_max_context_window),
+    effectiveContextWindowPercent: sanitizePercent(
+      codexRecord.effectiveContextWindowPercent ?? codexRecord.effective_context_window_percent
+    ),
+  });
+  const hasAgent = Boolean(agent.name || agent.version || agent.platform);
+  const hasCodex = Object.values(codex).some((item) => item !== undefined);
+
+  if (!hasAgent && !hasCodex) {
+    return null;
+  }
+
+  return {
+    updatedAt: sanitizeIsoDate(record.updatedAt) || new Date().toISOString(),
+    ...(hasAgent ? { agent } : {}),
+    ...(hasCodex ? { codex } : {}),
+  };
+}
+
 export function sanitizeProjectName(value: unknown, mode: TokenBoardPrivacyOptions["projectMode"] = "basename") {
   const text = sanitizeLabel(value, 240);
 
@@ -191,11 +233,13 @@ export function sanitizeProjectName(value: unknown, mode: TokenBoardPrivacyOptio
 
 export function createIngestPayload(
   events: TokenUsageEvent[],
-  client: TokenBoardIngestPayload["client"] = { name: "token-usage-agent" }
+  client: TokenBoardIngestPayload["client"] = { name: "token-usage-agent" },
+  userConfig?: TokenBoardUserConfig | null
 ): TokenBoardIngestPayload {
   return {
     schemaVersion: 1,
     client,
+    ...(userConfig ? { userConfig } : {}),
     events,
   };
 }
@@ -270,6 +314,54 @@ function sanitizeSessionTitle(value: unknown) {
   }
 
   return text.length > 80 ? `${text.slice(0, 77)}...` : text;
+}
+
+function sanitizePositiveInteger(value: unknown) {
+  const number = typeof value === "string" ? Number(value.replace(/_/g, "")) : Number(value);
+
+  return Number.isFinite(number) && number > 0 ? Math.round(number) : undefined;
+}
+
+function sanitizePercent(value: unknown) {
+  const number = typeof value === "string" ? Number(value.replace(/%$/, "")) : Number(value);
+
+  return Number.isFinite(number) && number >= 0 && number <= 100 ? number : undefined;
+}
+
+function sanitizeIsoDate(value: unknown) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const time = new Date(value).getTime();
+
+  return Number.isFinite(time) ? new Date(time).toISOString() : "";
+}
+
+function sanitizePlatform(value: unknown) {
+  const text = sanitizeLabel(value, 40).toLowerCase();
+
+  if (text === "darwin" || text === "macos" || text === "mac") {
+    return "macOS";
+  }
+
+  if (text === "win32" || text === "windows" || text === "win") {
+    return "Windows";
+  }
+
+  if (text === "linux") {
+    return "Linux";
+  }
+
+  return text || undefined;
+}
+
+function compactObject<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== "")) as Partial<T>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
 function sha256(value: string) {

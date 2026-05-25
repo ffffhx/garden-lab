@@ -9,6 +9,7 @@ import {
   dedupeTokenEvents,
   normalizeTokenUsageEvent,
   parseTokenUsageImport,
+  type TokenBoardUserConfig,
   type TokenUsageEvent,
 } from "./token-leaderboard";
 
@@ -86,6 +87,7 @@ const SQLITE_USAGE_NEEDLES = [
 
 export async function collectLocalTokenUsage(config: TokenUsageCollectorConfig = {}) {
   const targets = buildSourceTargets(config);
+  const codexTitleIndex = await readCodexTitleIndex(targets);
   const maxFiles = config.maxFiles ?? DEFAULT_MAX_FILES;
   const maxFileBytes = config.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
   const maxCodexFileBytes = config.maxCodexFileBytes ?? DEFAULT_MAX_CODEX_FILE_BYTES;
@@ -116,6 +118,7 @@ export async function collectLocalTokenUsage(config: TokenUsageCollectorConfig =
             team: config.team,
             project: path.basename(path.dirname(filePath)),
             sessionId: path.basename(filePath),
+            sessionTitle: target.source === "codex" ? codexTitleIndex.get(sessionIdFromPath(filePath)) : undefined,
           }))
         );
       }
@@ -123,6 +126,257 @@ export async function collectLocalTokenUsage(config: TokenUsageCollectorConfig =
   }
 
   return dedupeTokenEvents(entries);
+}
+
+export async function collectTokenBoardUserConfig({
+  agentName = "token-usage-agent",
+  agentVersion = "dev",
+  codexHome = process.env.CODEX_HOME || path.join(os.homedir(), ".codex"),
+  platform = os.platform(),
+}: {
+  agentName?: string;
+  agentVersion?: string;
+  codexHome?: string;
+  platform?: string;
+} = {}): Promise<TokenBoardUserConfig | null> {
+  const codex = await readCodexConfigSummary(codexHome);
+  const hasCodex = Object.values(codex).some((value) => value !== undefined && value !== "");
+
+  return {
+    updatedAt: new Date().toISOString(),
+    agent: {
+      name: agentName,
+      version: agentVersion,
+      platform: normalizePlatform(platform),
+    },
+    ...(hasCodex ? { codex } : {}),
+  };
+}
+
+async function readCodexConfigSummary(codexHome: string): Promise<NonNullable<TokenBoardUserConfig["codex"]>> {
+  const topLevelConfig = await readCodexTopLevelConfig(path.join(codexHome, "config.toml"));
+  const model = normalizeTextField(topLevelConfig.model);
+  const modelCache = await readCodexModelCacheSummary(path.join(codexHome, "models_cache.json"), model);
+
+  return {
+    model: model || undefined,
+    modelReasoningEffort: normalizeTextField(topLevelConfig.model_reasoning_effort) || undefined,
+    modelContextWindow: positiveInteger(topLevelConfig.model_context_window),
+    modelAutoCompactTokenLimit: positiveInteger(topLevelConfig.model_auto_compact_token_limit),
+    ...modelCache,
+  };
+}
+
+async function readCodexTopLevelConfig(filePath: string) {
+  let text = "";
+
+  try {
+    text = await fs.readFile(filePath, "utf8");
+  } catch {
+    return {} as Record<string, unknown>;
+  }
+
+  const result: Record<string, unknown> = {};
+  let inSection = false;
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = stripTomlComment(rawLine).trim();
+
+    if (!line) {
+      continue;
+    }
+
+    if (line.startsWith("[")) {
+      inSection = true;
+      continue;
+    }
+
+    if (inSection) {
+      continue;
+    }
+
+    const match = line.match(/^([A-Za-z0-9_-]+)\s*=\s*(.+)$/);
+    if (match) {
+      result[match[1]] = parseTomlScalar(match[2]);
+    }
+  }
+
+  return result;
+}
+
+async function readCodexModelCacheSummary(
+  filePath: string,
+  model: string
+): Promise<Pick<
+  NonNullable<TokenBoardUserConfig["codex"]>,
+  "effectiveContextWindowPercent" | "modelCacheContextWindow" | "modelMaxContextWindow"
+>> {
+  if (!model) {
+    return {};
+  }
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(await fs.readFile(filePath, "utf8"));
+  } catch {
+    return {};
+  }
+
+  if (!isRecord(parsed) || !Array.isArray(parsed.models)) {
+    return {};
+  }
+
+  const modelRecord = parsed.models.find((item) => isRecord(item) && modelMatchesCacheEntry(item, model));
+
+  if (!isRecord(modelRecord)) {
+    return {};
+  }
+
+  return {
+    modelCacheContextWindow: positiveInteger(modelRecord.context_window),
+    modelMaxContextWindow: positiveInteger(modelRecord.max_context_window),
+    effectiveContextWindowPercent: percentNumber(modelRecord.effective_context_window_percent),
+  };
+}
+
+async function readCodexTitleIndex(targets: SourceTarget[]) {
+  const codexHomes = new Set<string>([path.resolve(process.env.CODEX_HOME || path.join(os.homedir(), ".codex"))]);
+
+  for (const target of targets) {
+    if (target.source !== "codex") {
+      continue;
+    }
+
+    for (const targetPath of target.paths) {
+      const home = inferCodexHome(expandHome(targetPath));
+      if (home) {
+        codexHomes.add(home);
+      }
+    }
+  }
+
+  const titles = new Map<string, string>();
+  for (const codexHome of codexHomes) {
+    const indexPath = path.join(codexHome, "session_index.jsonl");
+    let raw = "";
+    try {
+      raw = await fs.readFile(indexPath, "utf8");
+    } catch {
+      continue;
+    }
+
+    for (const line of raw.split(/\r?\n/)) {
+      const parsed = safeJsonParse(line);
+      if (!isRecord(parsed)) {
+        continue;
+      }
+
+      const id = normalizeTextField(parsed.id);
+      const title = sanitizeSessionTitle(
+        normalizeTextField(parsed.thread_name) ||
+          normalizeTextField(parsed.threadName) ||
+          normalizeTextField(parsed.title)
+      );
+      if (id && title) {
+        titles.set(id, title);
+      }
+    }
+  }
+
+  return titles;
+}
+
+function inferCodexHome(targetPath: string) {
+  const parts = path.resolve(targetPath).split(path.sep);
+  const dotCodexIndex = parts.lastIndexOf(".codex");
+  if (dotCodexIndex >= 0) {
+    return parts.slice(0, dotCodexIndex + 1).join(path.sep) || path.sep;
+  }
+
+  const base = path.basename(targetPath);
+  if (base === "sessions" || base === "archived_sessions" || base === "projects") {
+    return path.dirname(targetPath);
+  }
+
+  return "";
+}
+
+function sessionIdFromPath(filePath: string) {
+  const base = path.basename(filePath, ".jsonl");
+  const match = base.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+  return match ? match[1] : base.replace(/^rollout-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-/, "");
+}
+
+function normalizeTextField(value: unknown) {
+  return typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "";
+}
+
+function stripTomlComment(line: string) {
+  let quoted = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const previous = line[index - 1];
+
+    if (char === '"' && previous !== "\\") {
+      quoted = !quoted;
+    }
+
+    if (!quoted && char === "#") {
+      return line.slice(0, index);
+    }
+  }
+
+  return line;
+}
+
+function parseTomlScalar(value: string) {
+  const trimmed = value.trim();
+
+  if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    return trimmed.slice(1, -1).replace(/\\"/g, '"');
+  }
+
+  if (/^-?\d[\d_]*(?:\.\d[\d_]*)?$/.test(trimmed)) {
+    return Number(trimmed.replace(/_/g, ""));
+  }
+
+  if (trimmed === "true" || trimmed === "false") {
+    return trimmed === "true";
+  }
+
+  return trimmed;
+}
+
+function modelMatchesCacheEntry(record: Record<string, unknown>, model: string) {
+  return [record.id, record.model, record.slug, record.name].some((value) => normalizeTextField(value) === model);
+}
+
+function positiveInteger(value: unknown) {
+  const number = typeof value === "string" ? Number(value.replace(/_/g, "")) : Number(value);
+
+  return Number.isFinite(number) && number > 0 ? Math.round(number) : undefined;
+}
+
+function percentNumber(value: unknown) {
+  const number = typeof value === "string" ? Number(value.replace(/%$/, "")) : Number(value);
+
+  return Number.isFinite(number) && number >= 0 && number <= 100 ? number : undefined;
+}
+
+function normalizePlatform(value: string) {
+  const platform = value.toLowerCase();
+
+  if (platform === "darwin") {
+    return "macOS";
+  }
+
+  if (platform === "win32") {
+    return "Windows";
+  }
+
+  return value;
 }
 
 export function extractTokenUsageEventsFromJson(value: unknown, context: ExtractionContext) {
@@ -189,7 +443,7 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
       !line.includes('"model"') &&
       !line.includes('"cwd"') &&
       !line.includes('"user_message"') &&
-      !line.includes('"title"')
+      !hasTitleNeedle(line)
     ) {
       continue;
     }
@@ -203,7 +457,10 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
     const payload = isRecord(parsed.payload) ? parsed.payload : {};
     const type = typeof parsed.type === "string" ? parsed.type : "";
 
-    sessionTitle ||= extractSessionTitle(parsed);
+    const extractedTitle = extractSessionTitle(parsed);
+    if (extractedTitle && (!sessionTitle || hasExplicitSessionTitle(parsed))) {
+      sessionTitle = extractedTitle;
+    }
 
     if ((type === "turn_context" || type === "session_meta") && typeof payload.model === "string") {
       currentModel = payload.model;
@@ -259,19 +516,37 @@ function parseCodexSessionJsonl(text: string, context: ExtractionContext) {
 function extractSessionTitle(record: Record<string, unknown>) {
   const payload = isRecord(record.payload) ? record.payload : {};
   const payloadType = typeof payload.type === "string" ? payload.type : "";
-  if (record.type === "event_msg" && payloadType === "user_message") {
-    return sanitizeSessionTitle(textFromMessageLike(payload.message) || textFromMessageLike(payload.text_elements));
-  }
-
   const explicitTitle =
-    textFromFields(payload, ["sessionTitle", "session_title", "conversationTitle", "title"]) ||
-    textFromFields(record, ["sessionTitle", "session_title", "conversationTitle", "title"]);
+    textFromFields(payload, ["sessionTitle", "session_title", "conversationTitle", "conversation_title", "title"]) ||
+    textFromFields(record, ["sessionTitle", "session_title", "conversationTitle", "conversation_title", "title"]);
 
   if (explicitTitle) {
     return sanitizeSessionTitle(explicitTitle);
   }
 
+  if (record.type === "event_msg" && payloadType === "user_message") {
+    return summarizeSessionTitleFromMessage(textFromMessageLike(payload.message) || textFromMessageLike(payload.text_elements));
+  }
+
   return "";
+}
+
+function hasTitleNeedle(line: string) {
+  return (
+    line.includes('"title"') ||
+    line.includes('"sessionTitle"') ||
+    line.includes('"session_title"') ||
+    line.includes('"conversationTitle"') ||
+    line.includes('"conversation_title"')
+  );
+}
+
+function hasExplicitSessionTitle(record: Record<string, unknown>) {
+  const payload = isRecord(record.payload) ? record.payload : {};
+  return Boolean(
+    textFromFields(payload, ["sessionTitle", "session_title", "conversationTitle", "conversation_title", "title"]) ||
+      textFromFields(record, ["sessionTitle", "session_title", "conversationTitle", "conversation_title", "title"])
+  );
 }
 
 function textFromMessageLike(value: unknown): string {
@@ -298,12 +573,94 @@ function sanitizeSessionTitle(value: unknown) {
     return "";
   }
 
-  const text = value
+  return finalizeSessionTitle(value);
+}
+
+function summarizeSessionTitleFromMessage(value: string) {
+  const text = prepareSessionTitleText(value);
+  if (!text) {
+    return "";
+  }
+
+  const clauses = text
+    .split(/[，,。！？!?；;\n]/)
+    .map((clause) => stripRequestPrefix(clause))
+    .filter(Boolean);
+  const clause = [...clauses].reverse().find(hasTitleAction) || stripRequestPrefix(text);
+  const compactTitle = compactRequestClause(clause);
+
+  return finalizeSessionTitle(compactTitle || text);
+}
+
+function prepareSessionTitleText(value: string) {
+  return value
     .replace(/[\u0000-\u001f\u007f]/g, " ")
     .replace(/```[\s\S]*$/g, "")
     .replace(/^#+\s*/, "")
+    .replace(/\btoken\s*榜\b/gi, "token榜")
+    .replace(/\bToken\s*Board\b/g, "Token Board")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function compactRequestClause(value: string) {
+  const clause = stripRequestPrefix(value)
+    .replace(/[吗呢吧呀啊？?。！!]*$/g, "")
+    .trim();
+
+  if (!clause) {
+    return "";
+  }
+
+  const changeTarget = clause.match(/^(?:把|将)?(.{1,32}?)(?:改成|改为|换成|调整为|更新为).+$/);
+  if (changeTarget?.[1]) {
+    return formatActionObject("修改", cleanTitleObject(changeTarget[1]));
+  }
+
+  const objectBeforeAction = clause.match(/^(.{1,32}?)(?:应该|需要|要|得|可以|需|应|必须)?(?:被)?(高亮|置顶|展开|收起|隐藏|显示|删除|移除|新增|添加|修复|优化|调整|更新)(?:一下|下|起来|出来|掉)?$/);
+  if (objectBeforeAction?.[1] && objectBeforeAction[2]) {
+    return formatActionObject(objectBeforeAction[2], cleanTitleObject(objectBeforeAction[1]));
+  }
+
+  const actionBeforeObject = clause.match(/^(修复|检查|查看|推荐|移除|新增|添加|更新|优化|调整|实现|支持|修改|删除|高亮|置顶|展开|收起|隐藏|显示)(.+)$/);
+  if (actionBeforeObject?.[1] && actionBeforeObject[2]) {
+    return formatActionObject(actionBeforeObject[1], cleanTitleObject(actionBeforeObject[2]));
+  }
+
+  return clause;
+}
+
+function hasTitleAction(value: string) {
+  return /(高亮|置顶|展开|收起|隐藏|显示|删除|移除|新增|添加|修复|优化|调整|更新|修改|改成|改为|换成|查看|检查|推荐|实现|支持)/.test(value);
+}
+
+function stripRequestPrefix(value: string) {
+  return value
+    .trim()
+    .replace(/^(?:请|麻烦|帮我|帮忙|帮|可以|能不能|能否|能|现在在|我想|想要|想|把|将|这个|这里|一下)\s*/g, "")
+    .trim();
+}
+
+function cleanTitleObject(value: string) {
+  return value
+    .replace(/^(?:这个|那个|这里的|当前的|本地的|我的|一下)\s*/g, "")
+    .replace(/的/g, "")
+    .replace(/里看不懂.*$/g, "标题")
+    .replace(/(?:一下|下|问题|逻辑|功能|文案|样式)$/g, "")
+    .replace(/[吗呢吧呀啊？?。！!]*$/g, "")
+    .trim();
+}
+
+function formatActionObject(action: string, object: string) {
+  if (!action || !object) {
+    return action || object;
+  }
+
+  return /^[A-Za-z0-9]/.test(object) ? `${action} ${object}` : `${action}${object}`;
+}
+
+function finalizeSessionTitle(value: string) {
+  const text = prepareSessionTitleText(value);
   const lower = text.toLowerCase();
 
   if (!text || lower === "none" || lower === "auto" || lower === "unknown" || lower === "n/a") {

@@ -23,6 +23,7 @@ import {
   isTokenBoardRange,
   normalizeUploadUsers,
   sanitizeIngestEvents,
+  sanitizeTokenBoardUserConfig,
   type TokenBoardUploadUser,
 } from "../lib/token-board-automation";
 import {
@@ -241,12 +242,14 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
 
     const range = parseRange(url.searchParams.get("range"));
     const now = parseNow(url.searchParams.get("now"));
-    const events = await usageStore().listEvents();
+    const store = usageStore();
+    const events = await store.listEvents();
     const profile = buildTokenAccountUsageProfile(events, {
       userId: identity.userId,
       range,
       now,
     });
+    const userConfig = await store.getUserConfig(identity.userId);
 
     sendJson(request, response, 200, {
       schemaVersion: 1,
@@ -255,7 +258,10 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
       totalRecords: events.length,
       generatedAt: new Date().toISOString(),
       user: identity,
-      profile,
+      profile: {
+        ...profile,
+        config: userConfig,
+      },
     });
     return;
   }
@@ -375,23 +381,26 @@ async function handleIngest(request: IncomingMessage, response: ServerResponse) 
   }
 
   const body = await readJsonBody(request);
+  const userConfig = extractUserConfigFromIngestBody(body);
   const rawEvents = Array.isArray((body as { events?: unknown }).events)
     ? ((body as { events: Parameters<typeof sanitizeIngestEvents>[0] }).events)
     : [];
 
-  if (!rawEvents.length) {
-    sendJson(request, response, 400, { error: "Body must include events[]" });
+  if (!rawEvents.length && !userConfig) {
+    sendJson(request, response, 400, { error: "Body must include events[] or userConfig" });
     return;
   }
 
-  const sanitized = sanitizeIngestEvents(rawEvents, identity, {
-    projectMode: parseProjectMode(process.env.TOKEN_BOARD_PROJECT_MODE),
-    includeModel: process.env.TOKEN_BOARD_INCLUDE_MODEL !== "false",
-    includeSource: process.env.TOKEN_BOARD_INCLUDE_SOURCE !== "false",
-    hashSessionId: process.env.TOKEN_BOARD_HASH_SESSION_ID !== "false",
-  });
+  const sanitized = rawEvents.length
+    ? sanitizeIngestEvents(rawEvents, identity, {
+        projectMode: parseProjectMode(process.env.TOKEN_BOARD_PROJECT_MODE),
+        includeModel: process.env.TOKEN_BOARD_INCLUDE_MODEL !== "false",
+        includeSource: process.env.TOKEN_BOARD_INCLUDE_SOURCE !== "false",
+        hashSessionId: process.env.TOKEN_BOARD_HASH_SESSION_ID !== "false",
+      })
+    : { entries: [], errors: [] };
 
-  if (!sanitized.entries.length && sanitized.errors.length) {
+  if (!sanitized.entries.length && sanitized.errors.length && !userConfig) {
     sendJson(request, response, 400, {
       error: "No valid token usage events",
       errors: sanitized.errors,
@@ -399,7 +408,11 @@ async function handleIngest(request: IncomingMessage, response: ServerResponse) 
     return;
   }
 
-  const result = await usageStore().insertEvents(sanitized.entries);
+  const store = usageStore();
+  if (userConfig) {
+    await store.upsertUserConfig(identity.userId, userConfig);
+  }
+  const result = await store.insertEvents(sanitized.entries);
 
   sendJson(request, response, 200, {
     ok: true,
@@ -407,6 +420,7 @@ async function handleIngest(request: IncomingMessage, response: ServerResponse) 
     duplicates: result.duplicates,
     errors: sanitized.errors,
     records: result.records,
+    configUpdated: Boolean(userConfig),
     user: {
       userId: identity.userId,
       displayName: identity.displayName,
@@ -424,23 +438,26 @@ async function handleReplace(request: IncomingMessage, response: ServerResponse)
   }
 
   const body = await readJsonBody(request);
+  const userConfig = extractUserConfigFromIngestBody(body);
   const rawEvents = Array.isArray((body as { events?: unknown }).events)
     ? ((body as { events: Parameters<typeof sanitizeIngestEvents>[0] }).events)
     : [];
 
-  if (!rawEvents.length) {
-    sendJson(request, response, 400, { error: "Body must include events[]" });
+  if (!rawEvents.length && !userConfig) {
+    sendJson(request, response, 400, { error: "Body must include events[] or userConfig" });
     return;
   }
 
-  const sanitized = sanitizeIngestEvents(rawEvents, identity, {
-    projectMode: parseProjectMode(process.env.TOKEN_BOARD_PROJECT_MODE),
-    includeModel: process.env.TOKEN_BOARD_INCLUDE_MODEL !== "false",
-    includeSource: process.env.TOKEN_BOARD_INCLUDE_SOURCE !== "false",
-    hashSessionId: process.env.TOKEN_BOARD_HASH_SESSION_ID !== "false",
-  });
+  const sanitized = rawEvents.length
+    ? sanitizeIngestEvents(rawEvents, identity, {
+        projectMode: parseProjectMode(process.env.TOKEN_BOARD_PROJECT_MODE),
+        includeModel: process.env.TOKEN_BOARD_INCLUDE_MODEL !== "false",
+        includeSource: process.env.TOKEN_BOARD_INCLUDE_SOURCE !== "false",
+        hashSessionId: process.env.TOKEN_BOARD_HASH_SESSION_ID !== "false",
+      })
+    : { entries: [], errors: [] };
 
-  if (!sanitized.entries.length && sanitized.errors.length) {
+  if (!sanitized.entries.length && sanitized.errors.length && !userConfig) {
     sendJson(request, response, 400, {
       error: "No valid token usage events",
       errors: sanitized.errors,
@@ -448,8 +465,12 @@ async function handleReplace(request: IncomingMessage, response: ServerResponse)
     return;
   }
 
-  const deleted = await usageStore().deleteEventsForUser(identity.userId);
-  const inserted = await usageStore().insertEvents(sanitized.entries);
+  const store = usageStore();
+  if (userConfig) {
+    await store.upsertUserConfig(identity.userId, userConfig);
+  }
+  const deleted = sanitized.entries.length ? await store.deleteEventsForUser(identity.userId) : { deleted: 0, records: await store.countEvents() };
+  const inserted = await store.insertEvents(sanitized.entries);
 
   sendJson(request, response, 200, {
     ok: true,
@@ -458,6 +479,7 @@ async function handleReplace(request: IncomingMessage, response: ServerResponse)
     accepted: inserted.accepted,
     duplicates: inserted.duplicates,
     errors: sanitized.errors,
+    configUpdated: Boolean(userConfig),
     records: inserted.records,
     user: {
       userId: identity.userId,
@@ -465,6 +487,20 @@ async function handleReplace(request: IncomingMessage, response: ServerResponse)
       team: identity.team || "GitHub",
     },
   });
+}
+
+function extractUserConfigFromIngestBody(body: unknown) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return null;
+  }
+
+  const record = body as Record<string, unknown>;
+  const client =
+    record.client && typeof record.client === "object" && !Array.isArray(record.client)
+      ? (record.client as Parameters<typeof sanitizeTokenBoardUserConfig>[1])
+      : {};
+
+  return sanitizeTokenBoardUserConfig(record.userConfig ?? record.config, client);
 }
 
 async function handleSnapshotSharePublish(request: IncomingMessage, response: ServerResponse) {

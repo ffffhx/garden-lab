@@ -100,6 +100,24 @@ export type TokenUsageSessionBreakdown = {
   endAt: string;
 };
 
+export type TokenBoardUserConfig = {
+  updatedAt: string;
+  agent?: {
+    name?: string;
+    version?: string;
+    platform?: string;
+  };
+  codex?: {
+    model?: string;
+    modelReasoningEffort?: string;
+    modelContextWindow?: number;
+    modelAutoCompactTokenLimit?: number;
+    modelCacheContextWindow?: number;
+    modelMaxContextWindow?: number;
+    effectiveContextWindowPercent?: number;
+  };
+};
+
 export type TokenUsageActivityCell = {
   weekday: number;
   hour: number;
@@ -127,6 +145,7 @@ export type TokenAccountUsageProfile = {
   heatmap: TokenUsageActivityCell[];
   topHour: string;
   topWeekday: string;
+  config: TokenBoardUserConfig | null;
 };
 
 const RANGE_DAYS: Record<TokenBoardRange, number> = {
@@ -258,6 +277,7 @@ export function buildTokenAccountUsageProfile(
     heatmap: buildActivityHeatmap(accountEntries),
     topHour: topActivityHour(accountEntries),
     topWeekday: topActivityWeekday(accountEntries),
+    config: null,
   };
 }
 

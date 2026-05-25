@@ -28,6 +28,30 @@ describe("token board storage", () => {
     expect(remaining).toHaveLength(1);
     expect(remaining[0].userId).toBe("github:2");
   });
+
+  it("stores current user config separately from usage events in file storage", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "token-board-storage-"));
+    const store = await createTokenUsageStore({
+      dataFile: path.join(dir, "usage-events.json"),
+      maxEvents: 100,
+    });
+    const config = {
+      updatedAt: "2026-05-25T12:00:00.000Z",
+      agent: { name: "token-board-agent", version: "0.4.11", platform: "macOS" },
+      codex: {
+        model: "gpt-5.5",
+        modelContextWindow: 250_000,
+        modelAutoCompactTokenLimit: 200_000,
+      },
+    };
+
+    await store.upsertUserConfig("github:1", config);
+    await store.insertEvents([usageEvent({ id: "usage:a", userId: "github:1" })]);
+
+    expect(await store.getUserConfig("github:1")).toEqual(config);
+    expect(await store.getUserConfig("github:missing")).toBeNull();
+    expect(await store.listEvents()).toHaveLength(1);
+  });
 });
 
 function usageEvent(overrides: Partial<TokenUsageEvent>): TokenUsageEvent {

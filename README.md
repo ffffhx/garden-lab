@@ -124,7 +124,7 @@ CODEX_HOME=/Users/你的用户名/.codex
 朋友不需要 clone 仓库。首次安装后台同步时，在自己的 macOS 终端或 Windows PowerShell 里执行：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent install
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent install
 ```
 
 这条命令会先引导 GitHub Device Login，授权成功后在 macOS 上安装 LaunchAgent，在 Windows 上安装隐藏的 Task Scheduler 任务。之后终端关闭也会每 5 分钟读取本机 AI 编码工具 token 记录并上传到排行榜后端。
@@ -132,25 +132,25 @@ npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=
 查看后台同步状态：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent status
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent status
 ```
 
 如果后端数据被清空或迁移，且页面只显示最近少量记录，可以强制重传最近 30 天可采集到的记录：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent resync
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent resync
 ```
 
 如果需要把自己线上的旧记录清掉，并用本机当前能采集到的记录整体替换：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent replace
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent replace
 ```
 
 卸载后台同步：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent uninstall
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent uninstall
 ```
 
 轻量 npx agent 默认读取本机 Codex、Claude Code、Cursor、Trae 的本地 token 记录；Codex 会覆盖 `~/.codex/sessions`、`~/.codex/archived_sessions` 和 `~/.codex/projects`，并允许 Codex JSONL 会话日志最大到 256 MiB。也可以通过 `TOKEN_BOARD_USAGE_PATHS` 或配置文件里的 `usagePaths` 补充自定义 JSON / JSONL / CSV 路径。上传内容只包含 token 数、模型、工具、项目 basename 和匿名 session hash，不上传 prompt 文本。

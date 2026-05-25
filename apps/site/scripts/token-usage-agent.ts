@@ -8,7 +8,12 @@ import {
   type TokenBoardPrivacyOptions,
   type TokenBoardUploadUser,
 } from "../lib/token-board-automation";
-import { collectLocalTokenUsage, type TokenUsageCollectorConfig } from "../lib/token-usage-collector";
+import {
+  collectLocalTokenUsage,
+  collectTokenBoardUserConfig,
+  type TokenUsageCollectorConfig,
+} from "../lib/token-usage-collector";
+import type { TokenBoardUserConfig } from "../lib/token-leaderboard";
 
 type AgentConfig = TokenUsageCollectorConfig & {
   apiUrl: string;
@@ -64,7 +69,8 @@ async function main() {
 
   if (command === "collect") {
     const events = await collectAndSanitize(config);
-    console.log(JSON.stringify(createIngestPayload(events, clientInfo()), null, 2));
+    const userConfig = await collectCurrentUserConfig();
+    console.log(JSON.stringify(createIngestPayload(events, clientInfo(), userConfig), null, 2));
     return;
   }
 
@@ -88,8 +94,12 @@ export async function uploadOnce(config: AgentConfig, options: { force?: boolean
   const stateMatches = uploadStateMatchesConfig(state, config);
   const uploadedIds = force || !stateMatches ? new Set<string>() : new Set(state.uploadedIds || []);
   const events = (await collectAndSanitize(config)).filter((event) => !uploadedIds.has(event.id));
+  const userConfig = await collectCurrentUserConfig();
 
   if (!events.length) {
+    if (userConfig) {
+      await postIngest(config, [], userConfig);
+    }
     console.log(force ? "No token usage events collected for resync." : "No new token usage events to upload.");
     return { accepted: 0, duplicates: 0, records: 0 };
   }
@@ -98,7 +108,7 @@ export async function uploadOnce(config: AgentConfig, options: { force?: boolean
   const result = { accepted: 0, duplicates: 0, records: 0 };
 
   for (const batch of batches) {
-    const batchResult = await postIngest(config, batch);
+    const batchResult = await postIngest(config, batch, userConfig);
     result.accepted += batchResult.accepted;
     result.duplicates += batchResult.duplicates;
     result.records = batchResult.records;
@@ -237,7 +247,11 @@ async function watch(config: AgentConfig) {
   }
 }
 
-async function postIngest(config: AgentConfig, events: Awaited<ReturnType<typeof collectAndSanitize>>) {
+async function postIngest(
+  config: AgentConfig,
+  events: Awaited<ReturnType<typeof collectAndSanitize>>,
+  userConfig?: TokenBoardUserConfig | null
+) {
   const bearerToken = config.agentToken || config.uploadToken;
 
   if (!bearerToken) {
@@ -250,7 +264,7 @@ async function postIngest(config: AgentConfig, events: Awaited<ReturnType<typeof
       Authorization: `Bearer ${bearerToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(createIngestPayload(events, clientInfo())),
+    body: JSON.stringify(createIngestPayload(events, clientInfo(), userConfig)),
   });
   const text = await response.text();
   const payload = text ? JSON.parse(text) : {};
@@ -392,20 +406,28 @@ function clientInfo() {
     name: "token-usage-agent",
     version: AGENT_VERSION,
     hostId: os.hostname(),
+    platform: os.platform(),
   };
+}
+
+function collectCurrentUserConfig() {
+  return collectTokenBoardUserConfig({
+    agentName: "token-usage-agent",
+    agentVersion: AGENT_VERSION,
+  });
 }
 
 function printHelp() {
   console.log(`Usage:
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent install
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent status
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent uninstall
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent login
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent upload
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent resync
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent replace
-  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.9 -- token-board-agent watch
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent install
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent status
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent uninstall
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent login
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent upload
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent resync
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent replace
+  npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent watch
 
 Local repo equivalents:
   pnpm token:agent init

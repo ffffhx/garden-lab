@@ -28,7 +28,7 @@ const METRICS: Array<{ key: TokenBoardMetric; label: string }> = [
 ];
 const DATA_LOAD_SLOW_MS = 10_000;
 
-const TOKEN_BOARD_AGENT_VERSION = "0.4.9";
+const TOKEN_BOARD_AGENT_VERSION = "0.4.11";
 const NPX_PACKAGE_URL = `https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=${TOKEN_BOARD_AGENT_VERSION}`;
 const NPX_INSTALL_COMMAND =
   `npx --yes --package ${NPX_PACKAGE_URL} -- token-board-agent install`;
@@ -1069,6 +1069,8 @@ function AccountUsagePanel({
             />
           </div>
 
+          <AccountConfigPanel config={dashboardProfile.config} />
+
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]">
             <AccountDailyTrend daily={dashboardProfile.daily} />
             <AccountHeatmap heatmap={dashboardProfile.heatmap} />
@@ -1103,6 +1105,87 @@ function AccountUsagePanel({
           <AccountSessionList sessions={dashboardProfile.sessions} />
         </div>
       )}
+    </section>
+  );
+}
+
+function AccountConfigPanel({ config }: { config: TokenAccountUsageProfile["config"] }) {
+  const codex = config?.codex;
+  const configuredContextWindow = codex?.modelContextWindow;
+  const modelContextWindow = codex?.modelCacheContextWindow;
+  const contextWindow = configuredContextWindow || modelContextWindow || 0;
+  const compactLimit = codex?.modelAutoCompactTokenLimit || 0;
+  const compactRatio = contextWindow > 0 && compactLimit > 0 ? compactLimit / contextWindow : null;
+  const maxContextWindow = codex?.modelMaxContextWindow || 0;
+  const effectivePercent = codex?.effectiveContextWindowPercent;
+  const items = [
+    {
+      label: "默认模型",
+      value: codex?.model || "--",
+      meta: codex?.modelReasoningEffort ? `reasoning ${codex.modelReasoningEffort}` : "config.toml",
+    },
+    {
+      label: "上下文窗口",
+      value: contextWindow > 0 ? formatTokens(contextWindow) : "--",
+      meta:
+        configuredContextWindow && modelContextWindow && configuredContextWindow !== modelContextWindow
+          ? `配置 ${formatTokens(configuredContextWindow)} · 标称 ${formatTokens(modelContextWindow)}`
+          : "model_context_window",
+    },
+    {
+      label: "自动压缩阈值",
+      value: compactLimit > 0 ? formatTokens(compactLimit) : "--",
+      meta: compactRatio === null ? "model_auto_compact_token_limit" : `${formatPercent(compactRatio)} of window`,
+    },
+    {
+      label: "模型窗口上限",
+      value: maxContextWindow > 0 ? formatTokens(maxContextWindow) : "--",
+      meta: effectivePercent === undefined ? "models_cache" : `effective ${formatPercent(effectivePercent / 100)}`,
+    },
+  ];
+
+  return (
+    <section className="rounded-2xl border border-white/10 bg-white/6 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold">当前用户配置</h3>
+          <p className="mt-1 text-xs leading-5 text-white/42">
+            只同步 Codex 配置白名单，不上传项目路径、hook、MCP 或通知命令。
+          </p>
+        </div>
+        <span className="w-fit rounded-full border border-white/10 bg-black/16 px-3 py-1 font-mono text-xs text-white/52">
+          {config ? `同步 ${formatShortDate(config.updatedAt)}` : "等待 agent 同步"}
+        </span>
+      </div>
+
+      {config ? (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {items.map((item) => (
+            <div key={item.label} className="min-h-24 rounded-xl border border-white/8 bg-black/16 p-3">
+              <p className="text-xs font-semibold text-white/40">{item.label}</p>
+              <p className="mt-2 truncate font-mono text-xl font-semibold text-[#bdf5cc]" title={item.value}>
+                {item.value}
+              </p>
+              <p className="mt-2 truncate text-xs text-white/38" title={item.meta}>
+                {item.meta}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 rounded-xl border border-white/10 bg-black/16 px-3 py-4 text-center text-sm text-white/45">
+          旧版本 agent 还没有同步配置；重新运行安装命令或等下一次新版 agent 上报后会显示。
+        </p>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-white/45">
+        <span className="rounded-full border border-white/10 bg-black/16 px-2.5 py-1">
+          agent {config?.agent?.version || "--"}
+        </span>
+        <span className="rounded-full border border-white/10 bg-black/16 px-2.5 py-1">
+          {config?.agent?.platform || "platform --"}
+        </span>
+      </div>
     </section>
   );
 }
@@ -2740,6 +2823,7 @@ function normalizeRemoteSummary(summary: TokenLeaderboardSummary, metric: TokenB
 function normalizeRemoteAccountProfile(profile: TokenAccountUsageProfile): TokenAccountUsageProfile {
   return {
     ...profile,
+    config: normalizeRemoteUserConfig(profile.config),
     daily: normalizeDailyUsageSeries(profile.daily),
     sessions: Array.isArray(profile.sessions) ? profile.sessions.map(normalizeRemoteSession) : [],
     user: profile.user
@@ -2749,6 +2833,29 @@ function normalizeRemoteAccountProfile(profile: TokenAccountUsageProfile): Token
           tokens: getTokenConsumptionTokens(profile.user),
         }
       : null,
+  };
+}
+
+function normalizeRemoteUserConfig(config: TokenAccountUsageProfile["config"]): TokenAccountUsageProfile["config"] {
+  if (!config || typeof config !== "object") {
+    return null;
+  }
+
+  return {
+    updatedAt: typeof config.updatedAt === "string" ? config.updatedAt : new Date().toISOString(),
+    agent: config.agent,
+    codex: config.codex
+      ? {
+          model: typeof config.codex.model === "string" ? config.codex.model : undefined,
+          modelReasoningEffort:
+            typeof config.codex.modelReasoningEffort === "string" ? config.codex.modelReasoningEffort : undefined,
+          modelContextWindow: finiteNumberOrUndefined(config.codex.modelContextWindow),
+          modelAutoCompactTokenLimit: finiteNumberOrUndefined(config.codex.modelAutoCompactTokenLimit),
+          modelCacheContextWindow: finiteNumberOrUndefined(config.codex.modelCacheContextWindow),
+          modelMaxContextWindow: finiteNumberOrUndefined(config.codex.modelMaxContextWindow),
+          effectiveContextWindowPercent: finiteNumberOrUndefined(config.codex.effectiveContextWindowPercent),
+        }
+      : undefined,
   };
 }
 
@@ -2768,6 +2875,10 @@ function normalizeRemoteSession(session: TokenAccountUsageProfile["sessions"][nu
     tools: Number.isFinite(session.tools) ? session.tools : 0,
     projects: Number.isFinite(session.projects) ? session.projects : 0,
   };
+}
+
+function finiteNumberOrUndefined(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 function formatMetricValue(value: number, metric: TokenBoardMetric) {

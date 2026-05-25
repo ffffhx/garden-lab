@@ -176,7 +176,7 @@ pnpm token:agent upload
 如果需要清掉当前登录用户的线上旧记录，并用本机当前可采集记录整体替换：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.8 -- token-board-agent replace
+npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent replace
 ```
 
 长期运行：

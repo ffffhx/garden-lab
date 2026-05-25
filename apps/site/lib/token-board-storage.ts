@@ -7,6 +7,7 @@ import { mergeTokenEvents } from "./token-board-automation";
 import {
   normalizeTokenUsageEvent,
   parseTokenUsageImport,
+  type TokenBoardUserConfig,
   type TokenUsageEvent,
 } from "./token-leaderboard";
 
@@ -30,6 +31,8 @@ export type TokenUsageStore = {
   countEvents: () => Promise<number>;
   insertEvents: (events: TokenUsageEvent[]) => Promise<TokenUsageStoreInsertResult>;
   deleteEventsForUser: (userId: string) => Promise<TokenUsageStoreDeleteResult>;
+  getUserConfig: (userId: string) => Promise<TokenBoardUserConfig | null>;
+  upsertUserConfig: (userId: string, config: TokenBoardUserConfig) => Promise<TokenBoardUserConfig>;
   close?: () => Promise<void>;
 };
 
@@ -48,6 +51,7 @@ export type TokenUsageJsonImportResult = TokenUsageStoreInsertResult & {
 };
 
 const POSTGRES_TABLE = "usage_events";
+const POSTGRES_USER_CONFIGS_TABLE = "user_configs";
 const INSERT_BATCH_SIZE = 400;
 
 export async function createTokenUsageStore(options: TokenUsageStoreOptions): Promise<TokenUsageStore> {
@@ -112,6 +116,7 @@ function createFileTokenUsageStore({
   maxEvents: number;
 }): TokenUsageStore {
   let storageQueue: Promise<unknown> = Promise.resolve();
+  const userConfigsFile = path.join(path.dirname(dataFile), "user-configs.json");
   const enqueueStorageOperation = <T>(operation: () => Promise<T>) => {
     const run = storageQueue.then(operation, operation);
     storageQueue = run.catch(() => undefined);
@@ -155,6 +160,14 @@ function createFileTokenUsageStore({
           records: kept.length,
         };
       }),
+    getUserConfig: (userId) => readTokenUserConfigsFromFile(userConfigsFile).then((configs) => configs[userId] ?? null),
+    upsertUserConfig: (userId, config) =>
+      enqueueStorageOperation(async () => {
+        const configs = await readTokenUserConfigsFromFile(userConfigsFile);
+        configs[userId] = config;
+        await writeTokenUserConfigsToFile(userConfigsFile, configs);
+        return config;
+      }),
   };
 }
 
@@ -172,6 +185,7 @@ function createPostgresTokenUsageStore({
   const pool = new Pool({ connectionString, ssl });
   const safeSchema = sqlIdentifier(schema);
   const table = `${safeSchema}.${sqlIdentifier(POSTGRES_TABLE)}`;
+  const userConfigsTable = `${safeSchema}.${sqlIdentifier(POSTGRES_USER_CONFIGS_TABLE)}`;
 
   return {
     kind: "postgres" as const,
@@ -206,6 +220,13 @@ function createPostgresTokenUsageStore({
       await pool.query(`CREATE INDEX IF NOT EXISTS usage_events_user_reported_at_idx ON ${table} (user_id, reported_at DESC)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS usage_events_model_idx ON ${table} (model)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS usage_events_tool_idx ON ${table} (tool)`);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS ${userConfigsTable} (
+          user_id TEXT PRIMARY KEY,
+          config JSONB NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+      `);
     },
     listEvents: async () => {
       const result = await pool.query<TokenUsageEventRow>(
@@ -256,8 +277,80 @@ function createPostgresTokenUsageStore({
         records: await countPostgresRows(pool, table),
       };
     },
+    getUserConfig: async (userId: string) => {
+      const result = await pool.query<{ config: TokenBoardUserConfig; updated_at: Date | string }>(
+        `SELECT config, updated_at FROM ${userConfigsTable} WHERE user_id = $1`,
+        [userId]
+      );
+      const row = result.rows[0];
+
+      if (!row?.config) {
+        return null;
+      }
+
+      return {
+        ...row.config,
+        updatedAt: new Date(row.updated_at || row.config.updatedAt).toISOString(),
+      };
+    },
+    upsertUserConfig: async (userId: string, config: TokenBoardUserConfig) => {
+      await pool.query(
+        `
+          INSERT INTO ${userConfigsTable} (user_id, config, updated_at)
+          VALUES ($1, $2::jsonb, $3)
+          ON CONFLICT (user_id) DO UPDATE
+          SET config = EXCLUDED.config,
+              updated_at = EXCLUDED.updated_at
+        `,
+        [userId, JSON.stringify(config), config.updatedAt]
+      );
+
+      return config;
+    },
     close: () => pool.end(),
   } satisfies TokenUsageStore & { initialize: () => Promise<void> };
+}
+
+async function readTokenUserConfigsFromFile(filePath: string): Promise<Record<string, TokenBoardUserConfig>> {
+  try {
+    const parsed = JSON.parse(await fs.readFile(filePath, "utf8")) as unknown;
+
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const users = (parsed as { users?: unknown }).users;
+      if (users && typeof users === "object" && !Array.isArray(users)) {
+        return users as Record<string, TokenBoardUserConfig>;
+      }
+    }
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return {};
+    }
+
+    throw error;
+  }
+
+  return {};
+}
+
+async function writeTokenUserConfigsToFile(filePath: string, configs: Record<string, TokenBoardUserConfig>) {
+  const dir = path.dirname(filePath);
+  const tempFile = path.join(
+    dir,
+    `.${path.basename(filePath)}.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`
+  );
+
+  await fs.mkdir(dir, { recursive: true });
+
+  try {
+    await fs.writeFile(
+      tempFile,
+      `${JSON.stringify({ schemaVersion: 1, updatedAt: new Date().toISOString(), users: configs }, null, 2)}\n`
+    );
+    await fs.rename(tempFile, filePath);
+  } catch (error) {
+    await fs.rm(tempFile, { force: true }).catch(() => undefined);
+    throw error;
+  }
 }
 
 async function writeTokenUsageEventsToFile(filePath: string, events: TokenUsageEvent[]) {

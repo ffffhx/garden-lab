@@ -333,7 +333,7 @@ function readPositiveInteger(value, label) {
   return parsed;
 }
 
-async function publishSnapshot(snapshot, { apiUrl, token, siteUrl, expiresInDays }) {
+async function publishSnapshot(snapshot, { apiUrl, token, siteUrl, expiresInDays, shareId }) {
   const normalizedApiUrl = normalizeUrl(
     apiUrl ||
       process.env.SNAPSHOT_SHARE_API_URL ||
@@ -368,6 +368,7 @@ async function publishSnapshot(snapshot, { apiUrl, token, siteUrl, expiresInDays
       snapshot: prepareSnapshotForCloud(snapshot),
       siteUrl: normalizedSiteUrl,
       expiresInDays: expiresInDays || undefined,
+      shareId: shareId || undefined,
     }),
   });
   const text = await response.text();
@@ -387,6 +388,99 @@ async function publishSnapshot(snapshot, { apiUrl, token, siteUrl, expiresInDays
   }
 
   return payload;
+}
+
+async function publishAllSnapshots({
+  codexHome,
+  claudeHome,
+  traeHome,
+  traeAppHome,
+  traeRecordingsDir,
+  cwd,
+  includeArchived,
+  source,
+  completeOnly,
+  limit,
+  includeTools,
+  includeToolOutput,
+  safety,
+}) {
+  const sessions = await listSessions({
+    codexHome,
+    claudeHome,
+    traeHome,
+    traeAppHome,
+    traeRecordingsDir,
+    limit,
+    cwd,
+    includeArchived,
+    source,
+    completeOnly,
+  });
+  const results = [];
+  const failures = [];
+
+  for (const session of sessions) {
+    const ref = session.ref || session.id;
+    if (!ref) {
+      failures.push({
+        id: "",
+        title: session.title || "Untitled session",
+        error: "missing session ref",
+      });
+      continue;
+    }
+
+    try {
+      const snapshot = await loadSnapshot(ref, {
+        codexHome,
+        claudeHome,
+        traeHome,
+        traeAppHome,
+        traeRecordingsDir,
+        includeTools,
+        includeToolOutput,
+        redact: true,
+      });
+      applySafetyChecksOption(snapshot, safety);
+      const result = await publishSnapshot(snapshot, {
+        apiUrl: "",
+        token: "",
+        siteUrl: "",
+        expiresInDays: 0,
+        shareId: stableSnapshotShareId(snapshot),
+      });
+      results.push({
+        id: snapshot.ref || ref,
+        title: snapshot.title || session.title || ref,
+        url: result.url,
+      });
+    } catch (error) {
+      failures.push({
+        id: ref,
+        title: session.title || ref,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return {
+    total: sessions.length,
+    published: results.length,
+    failed: failures.length,
+    firstUrl: results[0]?.url || "",
+    sampleUrls: results.slice(0, 5),
+    failures: failures.slice(0, 20),
+  };
+}
+
+function stableSnapshotShareId(snapshot) {
+  const source = [
+    snapshot.engine || "codex",
+    snapshot.ref || snapshot.id || snapshot.title || "",
+  ].join(":");
+  const digest = createHash("sha256").update(source).digest("base64url").slice(0, 32);
+  return `snap_${digest}`;
 }
 
 function readDefaultShareToken() {
@@ -3411,6 +3505,31 @@ async function serve({ codexHome, claudeHome, traeHome, traeAppHome, traeRecordi
         sendJson(response, snapshot);
         return;
       }
+      if (url.pathname === "/api/publish-all") {
+        if (url.searchParams.get("redact") === "0") {
+          sendJson(response, { error: "Cloud publish requires Redact enabled in the local viewer." }, 400);
+          return;
+        }
+        const result = await publishAllSnapshots({
+          codexHome,
+          claudeHome,
+          traeHome,
+          traeAppHome,
+          traeRecordingsDir,
+          cwd: url.searchParams.get("cwd") || "",
+          includeArchived: url.searchParams.get("liveOnly") !== "1",
+          source: "all",
+          completeOnly: url.searchParams.get("completeOnly") !== "0",
+          limit: url.searchParams.get("limit")
+            ? readPositiveInteger(url.searchParams.get("limit"), "limit")
+            : Number.POSITIVE_INFINITY,
+          includeTools: url.searchParams.get("includeTools") === "1" || url.searchParams.get("includeToolOutput") === "1",
+          includeToolOutput: url.searchParams.get("includeToolOutput") === "1",
+          safety: url.searchParams.get("safety") === "1",
+        });
+        sendJson(response, result);
+        return;
+      }
       if (url.pathname === "/api/publish") {
         const id = url.searchParams.get("id");
         if (!id) {
@@ -3437,6 +3556,7 @@ async function serve({ codexHome, claudeHome, traeHome, traeAppHome, traeRecordi
           token: "",
           siteUrl: "",
           expiresInDays: 0,
+          shareId: stableSnapshotShareId(snapshot),
         });
         sendJson(response, result);
         return;

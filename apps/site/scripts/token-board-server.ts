@@ -515,6 +515,7 @@ async function handleSnapshotSharePublish(request: IncomingMessage, response: Se
     snapshot?: unknown;
     expiresInDays?: unknown;
     siteUrl?: unknown;
+    shareId?: unknown;
   };
   const snapshot = normalizeSnapshotPayloadForShare(body.snapshot ?? body);
 
@@ -527,8 +528,9 @@ async function handleSnapshotSharePublish(request: IncomingMessage, response: Se
 
   const now = new Date().toISOString();
   const expiresAt = expiryFromDays(body.expiresInDays);
+  const requestedShareId = sanitizeSnapshotShareId(body.shareId);
   const record: SnapshotShareRecord = {
-    id: createSnapshotShareId(),
+    id: requestedShareId || createSnapshotShareId(),
     title: snapshot.title,
     engine: snapshot.engine,
     engineLabel: snapshot.engineLabel,
@@ -779,6 +781,11 @@ function snapshotShareIdFromPath(pathname: string) {
 
 function createSnapshotShareId() {
   return `snap_${randomBytes(18).toString("base64url")}`;
+}
+
+function sanitizeSnapshotShareId(value: unknown) {
+  const text = sanitizeSnapshotText(value, 90);
+  return /^snap_[A-Za-z0-9_-]{16,80}$/.test(text) ? text : "";
 }
 
 function normalizeSnapshotPayloadForShare(value: unknown) {

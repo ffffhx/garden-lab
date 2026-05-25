@@ -7,7 +7,7 @@ const DEFAULT_SNAPSHOT_URL = "http://127.0.0.1:4321/";
 const DEFAULT_STANDALONE_HREF = "/snapshots/viewer/";
 
 type ConnectionState = "checking" | "ready" | "unavailable";
-type SyncState = "idle" | "syncing" | "done" | "error";
+type SyncState = "idle" | "syncing" | "sharing" | "done" | "error";
 
 type ActiveSnapshot = {
   selected: string;
@@ -15,6 +15,20 @@ type ActiveSnapshot = {
   engineLabel: string;
   redacted: boolean;
   options: Record<string, string>;
+};
+
+type PublishAllResult = {
+  error?: string;
+  total?: number;
+  published?: number;
+  failed?: number;
+  firstUrl?: string;
+  failures?: Array<{ error?: string }>;
+};
+
+type PublishResult = {
+  error?: string;
+  url?: string;
 };
 
 type CodexSnapshotModuleProps = {
@@ -34,6 +48,7 @@ export function CodexSnapshotModule({
   const [syncState, setSyncState] = useState<SyncState>("idle");
   const [syncMessage, setSyncMessage] = useState("");
   const [shareUrl, setShareUrl] = useState("");
+  const [shareLinkLabel, setShareLinkLabel] = useState("打开分享链接");
   const isReady = connection === "ready";
 
   useEffect(() => {
@@ -45,6 +60,7 @@ export function CodexSnapshotModule({
     setSyncState("idle");
     setSyncMessage("");
     setShareUrl("");
+    setShareLinkLabel("打开分享链接");
 
     pingSnapshotUrl(viewerUrl).then((ok) => {
       if (!isActive) {
@@ -74,6 +90,7 @@ export function CodexSnapshotModule({
       setSyncState("idle");
       setSyncMessage("");
       setShareUrl("");
+      setShareLinkLabel("打开分享链接");
     }
 
     window.addEventListener("message", handleSnapshotMessage);
@@ -81,15 +98,65 @@ export function CodexSnapshotModule({
   }, [viewerUrl]);
 
   const handleSync = useCallback(async () => {
+    setSyncState("syncing");
+    setSyncMessage("正在同步全部会话到云端...");
+    setShareUrl("");
+    setShareLinkLabel("打开首条分享链接");
+
+    try {
+      const params = new URLSearchParams(activeSnapshot?.options ?? {});
+      params.delete("id");
+      params.set("source", "all");
+      params.set("all", "1");
+      params.set("redact", "1");
+
+      const publishUrl = new URL("/api/publish-all", viewerUrl);
+      publishUrl.search = params.toString();
+
+      const response = await fetch(publishUrl.toString(), {
+        method: "POST",
+        cache: "no-store",
+      });
+      const result = (await response.json().catch(() => ({}))) as PublishAllResult;
+      if (!response.ok) {
+        throw new Error(result.error || "同步失败");
+      }
+
+      const published = result.published ?? 0;
+      const failed = result.failed ?? 0;
+      const total = result.total ?? published + failed;
+      if (total > 0 && published === 0 && failed > 0) {
+        throw new Error(result.failures?.[0]?.error || "全部会话同步失败");
+      }
+
+      if (result.firstUrl) {
+        setShareUrl(result.firstUrl);
+      }
+      setSyncState("done");
+      setSyncMessage(
+        failed > 0
+          ? `已同步 ${published}/${total} 条，${failed} 条失败`
+          : `已同步 ${published} 条会话`
+      );
+    } catch (error) {
+      setSyncState("error");
+      setSyncMessage(error instanceof Error ? error.message : String(error));
+    }
+  }, [activeSnapshot, viewerUrl]);
+
+  const handleShareCurrent = useCallback(async () => {
     if (!activeSnapshot) {
       setSyncState("error");
       setSyncMessage("请先在下方选择一条会话");
+      setShareUrl("");
+      setShareLinkLabel("打开分享链接");
       return;
     }
 
-    setSyncState("syncing");
-    setSyncMessage("正在同步到云端...");
+    setSyncState("sharing");
+    setSyncMessage("正在生成当前会话分享链接...");
     setShareUrl("");
+    setShareLinkLabel("打开分享链接");
 
     try {
       const params = new URLSearchParams(activeSnapshot.options);
@@ -103,9 +170,9 @@ export function CodexSnapshotModule({
         method: "POST",
         cache: "no-store",
       });
-      const result = (await response.json().catch(() => ({}))) as { error?: string; url?: string };
+      const result = (await response.json().catch(() => ({}))) as PublishResult;
       if (!response.ok) {
-        throw new Error(result.error || "同步失败");
+        throw new Error(result.error || "分享失败");
       }
       if (!result.url) {
         throw new Error("云端没有返回分享链接");
@@ -113,7 +180,7 @@ export function CodexSnapshotModule({
 
       setShareUrl(result.url);
       setSyncState("done");
-      setSyncMessage("已同步，分享链接已复制");
+      setSyncMessage("当前会话分享链接已复制");
       await navigator.clipboard?.writeText(result.url).catch(() => undefined);
     } catch (error) {
       setSyncState("error");
@@ -133,8 +200,11 @@ export function CodexSnapshotModule({
       : connection === "checking"
         ? "bg-amber-300"
         : "bg-rose-300";
-  const canSync = isReady && Boolean(activeSnapshot) && syncState !== "syncing";
-  const syncButtonLabel = syncState === "syncing" ? "同步中..." : "同步";
+  const isBusy = syncState === "syncing" || syncState === "sharing";
+  const canShareCurrent = isReady && Boolean(activeSnapshot) && !isBusy;
+  const canSync = isReady && !isBusy;
+  const syncButtonLabel = syncState === "syncing" ? "同步中..." : "同步全部";
+  const shareButtonLabel = syncState === "sharing" ? "分享中..." : "分享当前";
 
   return (
     <main className="flex min-h-0 w-full flex-1 flex-col">
@@ -151,16 +221,29 @@ export function CodexSnapshotModule({
           <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
             <button
               type="button"
+              onClick={handleShareCurrent}
+              disabled={!canShareCurrent}
+              title={
+                !isReady
+                  ? "需要先连接本机 Snapshot 服务"
+                  : activeSnapshot
+                    ? `分享「${activeSnapshot.title}」`
+                    : "请先在下方选择一条会话"
+              }
+              className="inline-flex min-h-8 items-center justify-center rounded-full bg-[#1d6f78] px-3 text-xs font-semibold text-white shadow-[0_18px_40px_-24px_rgba(29,111,120,0.8)] transition hover:-translate-y-0.5 hover:bg-[#165a62] focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:translate-y-0"
+            >
+              {shareButtonLabel}
+            </button>
+            <button
+              type="button"
               onClick={handleSync}
               disabled={!canSync}
               title={
                 !isReady
                   ? "需要先连接本机 Snapshot 服务"
-                  : activeSnapshot
-                    ? `同步「${activeSnapshot.title}」`
-                    : "请先在下方选择一条会话"
+                  : "同步所有本机会话到云端"
               }
-              className="inline-flex min-h-8 items-center justify-center rounded-full bg-[#1d6f78] px-3 text-xs font-semibold text-white shadow-[0_18px_40px_-24px_rgba(29,111,120,0.8)] transition hover:-translate-y-0.5 hover:bg-[#165a62] focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:translate-y-0"
+              className="inline-flex min-h-8 items-center justify-center rounded-full border border-slate-950/12 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-950/25 hover:text-slate-950 focus:outline-none focus:ring-4 focus:ring-[#1d6f78]/15 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
             >
               {syncButtonLabel}
             </button>
@@ -220,7 +303,7 @@ export function CodexSnapshotModule({
                 rel="noreferrer"
                 className="min-w-0 truncate text-xs font-semibold text-sky-200 underline decoration-white/30 underline-offset-4 hover:text-white"
               >
-                打开分享链接
+                {shareLinkLabel}
               </a>
             ) : null}
           </div>

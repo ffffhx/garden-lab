@@ -80,7 +80,6 @@ function NavLink({
     <Link
       key={item.href}
       href={item.href}
-      prefetch={false}
       aria-current={active ? "page" : undefined}
       className={cn(
         mobile
@@ -105,7 +104,6 @@ export function SiteHeader({ currentPathname }: SiteHeaderProps) {
         <div className="min-w-0 max-w-xl">
           <Link
             href="/"
-            prefetch={false}
             className="inline-flex items-baseline gap-3 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
           >
             <span>{SITE.title}</span>

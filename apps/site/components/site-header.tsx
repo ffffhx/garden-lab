@@ -84,7 +84,7 @@ function NavLink({
       className={cn(
         mobile
           ? "inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30"
-          : "rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30",
+          : "whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30",
         active
           ? "bg-slate-950 font-semibold !text-white shadow-[0_10px_28px_-22px_rgba(15,23,42,0.85)]"
           : "text-slate-700 hover:bg-amber-100 hover:text-slate-950"
@@ -111,41 +111,43 @@ export function SiteHeader({ currentPathname }: SiteHeaderProps) {
           </Link>
           <p className="mt-1 hidden text-sm leading-6 text-slate-600 sm:block">{SITE.description}</p>
         </div>
-        <div className="hidden flex-col gap-3 lg:flex lg:items-end">
-          <nav className="flex flex-wrap items-center gap-1 rounded-full border border-slate-900/10 bg-white/65 p-1 shadow-[0_18px_60px_-48px_rgba(15,23,42,0.45)]">
-            {NAV_LINKS.map((item) => (
-              <NavLink key={item.href} item={item} currentPathname={currentPathname} />
-            ))}
-          </nav>
-          <form
-            action={withBasePath("/search/")}
-            role="search"
-            toolname="search_blog_posts_form"
-            tooldescription="Search this blog by article title keyword and open the search results page."
-            toolautosubmit=""
-            className="flex w-full min-w-0 max-w-md gap-2"
-          >
-            <label className="sr-only" htmlFor="site-title-search">
-              按标题搜索
-            </label>
-            <input
-              id="site-title-search"
-              name="q"
-              type="search"
-              toolparamtitle="query"
-              toolparamdescription="Article title keywords to search for."
-              placeholder="搜索标题"
-              className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-900/12 bg-white/75 px-4 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[#b45f28] focus:ring-4 focus:ring-[#b45f28]/15"
-            />
-            <button
-              type="submit"
-              className="min-h-10 rounded-full bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
+        <div className="hidden min-w-0 flex-1 justify-end xl:flex">
+          <div className="flex max-w-full items-center gap-1 rounded-full border border-slate-900/10 bg-white/65 p-1 shadow-[0_18px_60px_-48px_rgba(15,23,42,0.45)]">
+            <nav className="flex shrink-0 items-center gap-1">
+              {NAV_LINKS.map((item) => (
+                <NavLink key={item.href} item={item} currentPathname={currentPathname} />
+              ))}
+            </nav>
+            <form
+              action={withBasePath("/search/")}
+              role="search"
+              toolname="search_blog_posts_form"
+              tooldescription="Search this blog by article title keyword and open the search results page."
+              toolautosubmit=""
+              className="flex min-w-0 items-center gap-1 border-l border-slate-900/10 pl-1"
             >
-              搜索
-            </button>
-          </form>
+              <label className="sr-only" htmlFor="site-title-search">
+                按标题搜索
+              </label>
+              <input
+                id="site-title-search"
+                name="q"
+                type="search"
+                toolparamtitle="query"
+                toolparamdescription="Article title keywords to search for."
+                placeholder="搜索标题"
+                className="h-9 w-32 min-w-0 rounded-full border border-slate-900/12 bg-white/75 px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[#b45f28] focus:ring-4 focus:ring-[#b45f28]/15 2xl:w-44"
+              />
+              <button
+                type="submit"
+                className="h-9 shrink-0 rounded-full bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20 xl:px-4"
+              >
+                搜索
+              </button>
+            </form>
+          </div>
         </div>
-        <details className="relative lg:hidden">
+        <details className="relative xl:hidden">
           <summary className="inline-flex min-h-11 cursor-pointer list-none items-center justify-center rounded-full border border-slate-900/10 bg-white/75 px-4 text-sm font-semibold text-slate-800 shadow-[0_14px_40px_-34px_rgba(15,23,42,0.6)] transition hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#b45f28]/20 [&::-webkit-details-marker]:hidden">
             菜单
           </summary>

@@ -333,6 +333,14 @@ function readPositiveInteger(value, label) {
   return parsed;
 }
 
+function readNonNegativeInteger(value, label) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${label} must be a non-negative integer`);
+  }
+  return parsed;
+}
+
 async function publishSnapshot(snapshot, { apiUrl, token, siteUrl, expiresInDays, shareId }) {
   const normalizedApiUrl = normalizeUrl(
     apiUrl ||
@@ -3470,19 +3478,21 @@ async function serve({ codexHome, claudeHome, traeHome, traeAppHome, traeRecordi
         const limit = url.searchParams.get("all") === "1"
           ? Number.POSITIVE_INFINITY
           : readPositiveInteger(url.searchParams.get("limit") || String(DEFAULT_SERVER_LIMIT), "limit");
+        const offset = readNonNegativeInteger(url.searchParams.get("offset") || "0", "offset");
+        const scanLimit = Number.isFinite(limit) ? limit + offset : Number.POSITIVE_INFINITY;
         const sessions = await listSessions({
           codexHome,
           claudeHome,
           traeHome,
           traeAppHome,
           traeRecordingsDir,
-          limit,
+          limit: scanLimit,
           cwd: url.searchParams.get("cwd") || "",
           includeArchived: url.searchParams.get("liveOnly") !== "1",
           source: url.searchParams.get("source") || "codex",
           completeOnly: url.searchParams.get("completeOnly") !== "0",
         });
-        sendJson(response, sessions);
+        sendJson(response, Number.isFinite(limit) ? sessions.slice(offset, offset + limit) : sessions.slice(offset));
         return;
       }
       if (url.pathname === "/api/snapshot") {
@@ -5091,7 +5101,8 @@ button:focus-visible,
 .exports a:focus-visible,
 .source-tab:focus-visible,
 .session:focus-visible,
-.project-more:focus-visible {
+.project-more:focus-visible,
+.sessions-load-more:focus-visible {
   outline: 3px solid rgba(14, 116, 144, 0.24);
   outline-offset: 2px;
 }
@@ -5312,6 +5323,36 @@ button:disabled {
   margin-left: 44px;
   color: rgba(22, 25, 31, 0.52);
   font: 700 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.load-more-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-left: 34px;
+}
+.sessions-load-more {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(22, 25, 31, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.9);
+  color: var(--ink);
+  box-shadow: none;
+}
+.sessions-load-more:hover {
+  background: rgba(22, 25, 31, 0.07);
+  transform: none;
+  box-shadow: none;
+}
+.sessions-load-more:disabled {
+  background: rgba(22, 25, 31, 0.05);
+}
+.load-more-meta {
+  color: rgba(22, 25, 31, 0.48);
+  font: 700 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.load-more-error {
+  color: var(--red);
 }
 .project-group.no-project .project-header {
   color: rgba(22, 25, 31, 0.58);
@@ -5635,12 +5676,13 @@ pre {
 
 function serverJs() {
   return `
-const state = { sessions: [], selected: "", activeSource: "codex", requestToken: 0, expandedProjects: new Set() };
+const state = { sessions: [], selected: "", activeSource: "codex", requestToken: 0, expandedProjects: new Set(), hasMoreSessions: false, loadingMoreSessions: false, sessionListError: "" };
 const SOURCE_MODULES = [
   { key: "codex", label: "Codex" },
   { key: "claude", label: "Claude Code" },
   { key: "trae", label: "Trae" },
 ];
+const SESSION_BATCH_LIMIT = 200;
 const SAFETY_CHECKS_ENABLED = false;
 const SIDEBAR_WIDTH_KEY = "codex-snapshot.sidebar-width";
 const SIDEBAR_MIN = 280;
@@ -5757,9 +5799,14 @@ async function loadSessions() {
   $("sessions").innerHTML = renderLoading("正在加载会话...");
   $("sessions").setAttribute("aria-busy", "true");
   $("reload").disabled = true;
+  state.sessions = [];
+  state.hasMoreSessions = false;
+  state.loadingMoreSessions = false;
+  state.sessionListError = "";
   try {
-    const response = await fetch("/api/sessions?source=all&all=1");
-    state.sessions = await response.json();
+    const sessions = await fetchSessionPage(0);
+    state.sessions = sessions;
+    state.hasMoreSessions = sessions.length === SESSION_BATCH_LIMIT;
     if (!sourceSessions(state.activeSource).length) {
       const firstSourceWithSessions = SOURCE_MODULES.find((source) => sourceSessions(source.key).length);
       if (firstSourceWithSessions) {
@@ -5767,9 +5814,63 @@ async function loadSessions() {
       }
     }
     await selectFirstSessionForActiveSource();
+  } catch (error) {
+    state.sessionListError = error instanceof Error ? error.message : String(error);
+    renderSessions();
+    clearViewer("会话列表加载失败。");
   } finally {
     $("sessions").removeAttribute("aria-busy");
     $("reload").disabled = false;
+  }
+}
+
+async function fetchSessionPage(offset) {
+  const query = new URLSearchParams({
+    source: "all",
+    limit: String(SESSION_BATCH_LIMIT),
+    offset: String(Math.max(0, Number(offset) || 0)),
+  });
+  const response = await fetch("/api/sessions?" + query.toString());
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error || "Failed to load sessions");
+  }
+  return Array.isArray(result) ? result : [];
+}
+
+function appendSessions(sessions) {
+  const seen = new Set(state.sessions.map(sessionRef));
+  const nextSessions = [];
+  for (const session of sessions) {
+    const ref = sessionRef(session);
+    if (!seen.has(ref)) {
+      seen.add(ref);
+      nextSessions.push(session);
+    }
+  }
+  state.sessions = state.sessions.concat(nextSessions);
+}
+
+async function loadMoreSessions() {
+  if (state.loadingMoreSessions || !state.hasMoreSessions) {
+    return;
+  }
+  state.loadingMoreSessions = true;
+  state.sessionListError = "";
+  renderSessions();
+  try {
+    const sessions = await fetchSessionPage(state.sessions.length);
+    appendSessions(sessions);
+    state.hasMoreSessions = sessions.length === SESSION_BATCH_LIMIT;
+    if (!state.selected && sourceSessions(state.activeSource).length) {
+      await selectFirstSessionForActiveSource();
+      return;
+    }
+  } catch (error) {
+    state.sessionListError = error instanceof Error ? error.message : String(error);
+  } finally {
+    state.loadingMoreSessions = false;
+    renderSessions();
   }
 }
 
@@ -5782,7 +5883,7 @@ function renderSessions() {
   const body = groups.length
     ? groups.map(renderProjectGroup).join("")
     : "<div class='source-empty'>" + (filter ? "没有匹配的会话" : "暂无会话") + "</div>";
-  $("sessions").innerHTML = renderSourceSwitcher() + body;
+  $("sessions").innerHTML = renderSourceSwitcher() + body + renderLoadMore();
 }
 
 function renderSourceSwitcher() {
@@ -5796,6 +5897,19 @@ function renderSourceSwitcher() {
       "</button>";
     }).join("") +
   "</div>";
+}
+
+function renderLoadMore() {
+  if (!state.hasMoreSessions && !state.loadingMoreSessions && !state.sessionListError) {
+    return "";
+  }
+  const button = state.hasMoreSessions || state.loadingMoreSessions
+    ? "<button class='sessions-load-more' type='button' data-load-more='1'" + (state.loadingMoreSessions ? " disabled aria-busy='true'" : "") + ">" + (state.loadingMoreSessions ? "正在加载..." : "加载更多") + "</button>"
+    : "";
+  const status = state.sessionListError
+    ? "<span class='load-more-meta load-more-error'>" + esc(state.sessionListError) + "</span>"
+    : "<span class='load-more-meta'>已加载 " + esc(state.sessions.length) + " 条</span>";
+  return "<div class='load-more-row'>" + button + status + "</div>";
 }
 
 function sourceByKey(key) {
@@ -6112,6 +6226,11 @@ $("sessions").addEventListener("click", async (event) => {
       state.activeSource = nextSource;
       await selectFirstSessionForActiveSource();
     }
+    return;
+  }
+  const loadMoreButton = event.target.closest("[data-load-more]");
+  if (loadMoreButton) {
+    await loadMoreSessions();
     return;
   }
   const toggle = event.target.closest("[data-project-toggle]");

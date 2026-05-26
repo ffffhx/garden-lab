@@ -5372,6 +5372,15 @@ button:disabled {
   overflow-wrap: anywhere;
   box-shadow: var(--shadow-soft);
 }
+.meta.loading {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+.meta.loading .loading-state {
+  width: 100%;
+}
 .risks { display: grid; gap: 8px; }
 .notice {
   display: grid;
@@ -5744,6 +5753,7 @@ function initSplitter() {
 }
 
 async function loadSessions() {
+  setViewerLoading("正在加载会话...");
   $("sessions").innerHTML = renderLoading("正在加载会话...");
   $("sessions").setAttribute("aria-busy", "true");
   $("reload").disabled = true;
@@ -5808,11 +5818,22 @@ async function selectFirstSessionForActiveSource() {
   await selectSession(sessionRef(selected || sessions[0]));
 }
 
+function setViewerLoading(message) {
+  state.requestToken += 1;
+  $("title").textContent = "正在加载会话";
+  $("meta").classList.add("empty", "loading");
+  $("meta").innerHTML = renderLoading(message || "正在加载...");
+  $("risks").innerHTML = "";
+  $("exports").innerHTML = "";
+  $("turns").innerHTML = "";
+}
+
 function clearViewer(message) {
   state.requestToken += 1;
   $("title").textContent = "Select a session";
   $("meta").textContent = message || "No session selected.";
   $("meta").classList.add("empty");
+  $("meta").classList.remove("loading");
   $("risks").innerHTML = "";
   $("exports").innerHTML = "";
   $("turns").innerHTML = "";
@@ -5989,7 +6010,7 @@ async function selectSession(id) {
 function renderSnapshot(snapshot) {
   $("turns").removeAttribute("aria-busy");
   $("title").textContent = snapshot.title;
-  $("meta").classList.remove("empty");
+  $("meta").classList.remove("empty", "loading");
   $("meta").textContent = (snapshot.engineLabel || "Codex") + (snapshot.sourceDetail ? " | " + snapshot.sourceDetail : "") + " | " + snapshot.id + " | " + (snapshot.displayCwd || snapshot.cwd || "no cwd") + " | " + snapshot.turns.length + " entries | redacted: " + (snapshot.redacted ? "yes" : "no");
   const notices = (snapshot.notices || []).map((notice) => {
     return "<div class='notice " + esc(notice.severity || "medium") + "'><b>NOTE</b><span><strong>" + esc(notice.label || "Notice") + ".</strong> " + esc(notice.text || "") + "</span></div>";
@@ -6120,6 +6141,7 @@ for (const id of ["includeTools", "includeToolOutput", "redact"]) {
 initSplitter();
 loadSessions().catch((error) => {
   $("sessions").innerHTML = "<div class='meta'>" + esc(error.message) + "</div>";
+  clearViewer(error.message || "Failed to load sessions.");
 });
 `;
 }

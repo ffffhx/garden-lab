@@ -9,13 +9,13 @@ import {
   normalizeUploadUsers,
   sanitizeIngestEvents,
   sanitizeTokenBoardUserConfig,
-} from "@/lib/token-board-automation";
+} from "@garden-lab/token-board-core/automation";
 import {
   collectTokenBoardUserConfig,
   defaultSourceTargets,
   extractTokenUsageEventsFromJson,
   parseUsageFile,
-} from "@/lib/token-usage-collector";
+} from "@garden-lab/token-board-core/collector";
 
 describe("token board automation", () => {
   it("collects from the friend agent default coding tools", () => {

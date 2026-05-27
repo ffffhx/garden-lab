@@ -4,7 +4,7 @@ import {
   buildSelectionExplainMessages,
   parseKimiExplainContent,
   parseSelectionExplainPayload,
-} from "../../lib/selection-explainer";
+} from "@garden-lab/token-board-core/selection-explainer";
 
 describe("selection explainer", () => {
   it("normalizes valid selection requests", () => {

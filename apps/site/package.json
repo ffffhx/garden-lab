@@ -12,11 +12,6 @@
     "forest:server": "tsx scripts/forest-shuffle-room-server.ts",
     "holdem:server": "tsx scripts/texas-holdem-room-server.ts",
     "holdem:public-proxy": "tsx scripts/texas-holdem-public-proxy.ts",
-    "token:server": "tsx scripts/token-board-server.ts",
-    "token:migrate-json": "tsx scripts/token-board-server.ts migrate-json",
-    "token:agent": "tsx scripts/token-usage-agent.ts",
-    "token:agent:watch": "tsx scripts/token-usage-agent.ts watch",
-    "selection:server": "tsx scripts/selection-explainer-server.ts",
     "prepare:public": "pnpm run farm:build && pnpm run sync:assets && pnpm run sync:pet",
     "prebuild": "pnpm run prepare:public",
     "build": "next build",
@@ -36,6 +31,7 @@
     "new:daily-news": "node scripts/new-entry.mjs daily-news"
   },
   "dependencies": {
+    "@garden-lab/token-board-core": "workspace:*",
     "@tauri-apps/api": "2.11.0",
     "@tauri-apps/plugin-opener": "2.5.4",
     "clsx": "^2.1.1",

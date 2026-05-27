@@ -7,13 +7,13 @@ import {
   sanitizeIngestEvents,
   type TokenBoardPrivacyOptions,
   type TokenBoardUploadUser,
-} from "../lib/token-board-automation";
+} from "@garden-lab/token-board-core/automation";
 import {
   collectLocalTokenUsage,
   collectTokenBoardUserConfig,
   type TokenUsageCollectorConfig,
-} from "../lib/token-usage-collector";
-import type { TokenBoardUserConfig } from "../lib/token-leaderboard";
+} from "@garden-lab/token-board-core/collector";
+import type { TokenBoardUserConfig } from "@garden-lab/token-board-core";
 
 type AgentConfig = TokenUsageCollectorConfig & {
   apiUrl: string;

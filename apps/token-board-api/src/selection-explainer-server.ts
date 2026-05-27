@@ -5,12 +5,12 @@ import {
   parseCookieHeader,
   verifyWebSessionToken,
   type TokenBoardIdentity,
-} from "../lib/token-board-auth";
+} from "@garden-lab/token-board-core/auth";
 import {
   explainSelectionWithKimi,
   parseSelectionExplainPayload,
   SelectionExplainServiceError,
-} from "../lib/selection-explainer";
+} from "@garden-lab/token-board-core/selection-explainer";
 
 const DEFAULT_PORT = 8791;
 const DEFAULT_OWNER_GITHUB_LOGINS = ["ffffhx"];

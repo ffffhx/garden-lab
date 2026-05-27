@@ -4,8 +4,8 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { createTokenUsageStore } from "@/lib/token-board-storage";
-import type { TokenUsageEvent } from "@/lib/token-leaderboard";
+import { createTokenUsageStore } from "@garden-lab/token-board-core/storage";
+import type { TokenUsageEvent } from "@garden-lab/token-board-core";
 
 describe("token board storage", () => {
   it("deletes only the selected user's usage events from file storage", async () => {

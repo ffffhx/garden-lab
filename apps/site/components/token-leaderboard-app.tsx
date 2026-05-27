@@ -11,7 +11,7 @@ import {
   type TokenAccountUsageProfile,
   type TokenLeaderboardSummary,
   type TokenLeaderboardUser,
-} from "@/lib/token-leaderboard";
+} from "@garden-lab/token-board-core";
 
 const RANGES: TokenBoardRange[] = ["1D", "7D", "30D", "90D"];
 const ROLLING_RANGE_LABELS: Record<TokenBoardRange, string> = {

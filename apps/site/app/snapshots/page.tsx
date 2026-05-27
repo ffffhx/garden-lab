@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 
-import { withBasePath } from "@/lib/utils/site-path";
-
 const CODEX_SNAPSHOTS_URL =
-  process.env.NEXT_PUBLIC_CODEX_SNAPSHOTS_URL || withBasePath("/codex-snapshots/index.html");
+  process.env.NEXT_PUBLIC_CODEX_SNAPSHOTS_URL || "https://ffffhx.github.io/codex-snapshots/";
 
 export const metadata: Metadata = {
   title: "Codex Snapshots",

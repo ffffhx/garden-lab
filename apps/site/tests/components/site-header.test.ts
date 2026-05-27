@@ -27,7 +27,7 @@ describe("SiteHeader", () => {
   it("links the snapshots entry to the standalone project site", () => {
     const markup = renderToStaticMarkup(createElement(SiteHeader));
 
-    expect(markup).toContain('href="/codex-snapshots/index.html"');
+    expect(markup).toContain('href="https://ffffhx.github.io/codex-snapshots/"');
     expect(markup).toContain('target="_blank"');
     expect(markup).toContain(">会话快照</a>");
   });

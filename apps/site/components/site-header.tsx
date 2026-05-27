@@ -20,7 +20,7 @@ const NAV_LINKS = [
     href: `/category/${CATEGORY_DEFINITIONS.dailyNews.slug}`,
     label: CATEGORY_DEFINITIONS.dailyNews.label,
   },
-  { href: "/games", label: "游戏入口", private: true },
+  { href: "/games", label: "游戏入口" },
   { href: CODEX_SNAPSHOTS_URL, label: "会话快照", external: true },
   { href: "/token-leaderboard", label: "Token榜" },
   { href: "/pet", label: "桌宠", private: true },

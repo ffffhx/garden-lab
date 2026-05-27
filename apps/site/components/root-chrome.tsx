@@ -22,7 +22,6 @@ const PRIVATE_FEATURE_ROUTES = [
   "/desktop-pet",
   "/farm-life-mvp",
   "/forest-shuffle",
-  "/games",
   "/pet",
   "/texas-holdem",
 ];

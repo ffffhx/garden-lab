@@ -32,6 +32,8 @@ http://localhost:3000
 
 - 根目录：monorepo 编排、CI、文档和统一命令代理
 - `apps/site`：Next.js 静态站点、Tauri 桌宠、内容编译、页面和站点内领域逻辑
+- `apps/token-board-api`：Token 排行榜 API 服务入口、OAuth 回调、上传和查询接口
+- `packages/token-board-core`：Token 排行榜共享模型、聚合、鉴权、清洗和存储逻辑
 - `deploy/token-board`：Token 排行榜后端的 Docker 部署包
 - `tools/token-board-agent-npx`：给朋友安装的轻量 npx agent
 - `tools/codex-pet-aloha-cash-buddy`：Codex pet 安装包

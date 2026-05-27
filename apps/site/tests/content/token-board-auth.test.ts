@@ -10,7 +10,7 @@ import {
   verifyAgentSessionToken,
   verifyOAuthState,
   verifyWebSessionToken,
-} from "@/lib/token-board-auth";
+} from "@garden-lab/token-board-core/auth";
 
 describe("token board GitHub auth", () => {
   it("signs separate web and agent sessions", () => {

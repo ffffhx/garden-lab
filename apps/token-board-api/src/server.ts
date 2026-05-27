@@ -16,7 +16,7 @@ import {
   verifyWebSessionToken,
   type GitHubUserProfile,
   type TokenBoardIdentity,
-} from "../lib/token-board-auth";
+} from "@garden-lab/token-board-core/auth";
 import {
   findUserByUploadToken,
   isTokenBoardMetric,
@@ -25,29 +25,29 @@ import {
   sanitizeIngestEvents,
   sanitizeTokenBoardUserConfig,
   type TokenBoardUploadUser,
-} from "../lib/token-board-automation";
+} from "@garden-lab/token-board-core/automation";
 import {
   buildTokenAccountUsageProfile,
   buildTokenLeaderboard,
   type TokenBoardMetric,
   type TokenBoardRange,
-} from "../lib/token-leaderboard";
+} from "@garden-lab/token-board-core";
 import {
   createTokenUsageStore,
   importTokenUsageEventsFromJsonFile,
   type TokenUsageStore,
-} from "../lib/token-board-storage";
+} from "@garden-lab/token-board-core/storage";
 import {
   explainSelectionWithKimi,
   parseSelectionExplainPayload,
   SelectionExplainServiceError,
-} from "../lib/selection-explainer";
+} from "@garden-lab/token-board-core/selection-explainer";
 import {
   createSnapshotShareStore,
   type SnapshotShareRecord,
   type SnapshotShareStore,
-} from "../lib/snapshot-share-storage";
-import { buildTokenUsageSnapshotFromEvents } from "../lib/content/token-usage";
+} from "@garden-lab/token-board-core/snapshot-share-storage";
+import { buildTokenUsageSnapshotFromEvents } from "@garden-lab/token-board-core/snapshot";
 
 const PORT = Number(process.env.TOKEN_BOARD_PORT || 8787);
 const HOST = process.env.TOKEN_BOARD_HOST || "127.0.0.1";

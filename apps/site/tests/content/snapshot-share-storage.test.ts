@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   createSnapshotShareStore,
   type SnapshotShareRecord,
-} from "@/lib/snapshot-share-storage";
+} from "@garden-lab/token-board-core/snapshot-share-storage";
 
 describe("snapshot share storage", () => {
   it("stores public snapshot shares without exposing publisher metadata", async () => {

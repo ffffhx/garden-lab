@@ -6,7 +6,7 @@ import {
   buildTokenLeaderboard,
   parseTokenUsageImport,
   type TokenUsageEvent,
-} from "@/lib/token-leaderboard";
+} from "@garden-lab/token-board-core";
 
 const now = new Date("2026-05-14T12:00:00.000Z");
 

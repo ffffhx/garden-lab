@@ -57,7 +57,7 @@ SELECTION_EXPLAIN_ALLOWED_GITHUB_LOGINS=ffffhx
 NEXT_PUBLIC_TOKEN_BOARD_API_URL=https://你的-token-board-服务域名
 ```
 
-如果需要单独部署 `apps/site/scripts/selection-explainer-server.ts`，再额外配置：
+如果需要单独部署 `apps/token-board-api/src/selection-explainer-server.ts`，再额外配置；Token Board API 内置的解释接口位于 `apps/token-board-api`：
 
 ```bash
 SELECTION_EXPLAIN_ALLOWED_ORIGINS=https://你的博客域名

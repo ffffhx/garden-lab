@@ -227,7 +227,7 @@ GITHUB_CLIENT_SECRET=<your-client-secret>
 TOKEN_BOARD_DATA_FILE=/data/usage-events.json
 ```
 
-仓库内置 Docker Compose 部署包在 `deploy/token-board`。它的 build context 指向仓库根目录，这样镜像只复制后端需要的 `apps/site/lib/`、`apps/site/scripts/token-board-server.ts` 和部署包自己的 `package.json`：
+仓库内置 Docker Compose 部署包在 `deploy/token-board`。它的 build context 指向仓库根目录，镜像会复制独立的 `apps/token-board-api` 服务入口和 `packages/token-board-core` 共享逻辑：
 
 ```bash
 cd deploy/token-board

@@ -1,14 +1,19 @@
 FROM node:22-alpine
 
-WORKDIR /app
+WORKDIR /workspace
 ENV NODE_ENV=production
 
-COPY deploy/token-board/package.json ./
-RUN npm install --omit=dev --ignore-scripts
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/token-board-api/package.json ./apps/token-board-api/package.json
+COPY deploy/token-board/package.json ./deploy/token-board/package.json
+COPY packages/token-board-core/package.json ./packages/token-board-core/package.json
+RUN corepack enable && pnpm install --filter @garden-lab/token-board-service --prod --frozen-lockfile
 
-COPY apps/site/tsconfig.json ./
-COPY apps/site/lib ./lib
-COPY apps/site/scripts/token-board-server.ts ./scripts/token-board-server.ts
+COPY apps/token-board-api/tsconfig.json ./apps/token-board-api/tsconfig.json
+COPY apps/token-board-api/src ./apps/token-board-api/src
+COPY packages/token-board-core/src ./packages/token-board-core/src
+
+WORKDIR /workspace/deploy/token-board
 
 USER node
 EXPOSE 8789

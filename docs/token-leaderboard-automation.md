@@ -2,7 +2,7 @@
 
 这个版本把页面、后端和本地 agent 拆开：
 
-- 静态博客页面：`/token-leaderboard`
+- 独立静态站点：`https://ffffhx.github.io/open-token-board/`
 - 后端服务：`POST /api/usage/ingest` 接收上报，`GET /api/usage/stats` 返回聚合榜单
 - 本地 agent：定时扫描本机 Codex / Claude Code / Cursor / Trae / Gemini CLI 以及自定义 usage 文件，只上传 token 统计字段
 

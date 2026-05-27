@@ -121,7 +121,7 @@ CODEX_HOME=/Users/你的用户名/.codex
 
 ## 朋友 Token 排行榜
 
-排行榜页面：`https://ffffhx.github.io/garden-lab/token-leaderboard/`
+排行榜页面：`https://ffffhx.github.io/open-token-board/`
 
 朋友不需要 clone 仓库。首次安装后台同步时，在自己的 macOS 终端或 Windows PowerShell 里执行：
 

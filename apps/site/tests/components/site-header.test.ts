@@ -21,7 +21,7 @@ describe("SiteHeader", () => {
     expect(markup).toContain(">游戏入口</a>");
     expect(markup).not.toContain('href="/pet"');
     expect(markup).not.toContain(">桌宠</a>");
-    expect(markup).toContain('href="/token-leaderboard"');
+    expect(markup).toContain('href="https://ffffhx.github.io/open-token-board/"');
   });
 
   it("links the snapshots entry to the standalone project site", () => {
@@ -32,14 +32,11 @@ describe("SiteHeader", () => {
     expect(markup).toContain(">会话快照</a>");
   });
 
-  it("highlights the token leaderboard link on the token leaderboard page", () => {
-    const markup = renderToStaticMarkup(
-      createElement(SiteHeader, { currentPathname: "/token-leaderboard" })
-    );
+  it("links the token leaderboard entry to the standalone project site", () => {
+    const markup = renderToStaticMarkup(createElement(SiteHeader));
 
-    expect(markup).toContain('href="/token-leaderboard"');
-    expect(markup).toContain('aria-current="page"');
-    expect(markup).toContain("bg-slate-950");
-    expect(markup).toContain("!text-white");
+    expect(markup).toContain('href="https://ffffhx.github.io/open-token-board/"');
+    expect(markup).toContain('target="_blank"');
+    expect(markup).toContain(">Token榜</a>");
   });
 });

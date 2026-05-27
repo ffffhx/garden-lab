@@ -8,6 +8,8 @@ import { normalizeBasePath, withBasePath } from "@/lib/utils/site-path";
 
 const CODEX_SNAPSHOTS_URL =
   process.env.NEXT_PUBLIC_CODEX_SNAPSHOTS_URL || "https://ffffhx.github.io/codex-snapshots/";
+const OPEN_TOKEN_BOARD_URL =
+  process.env.NEXT_PUBLIC_OPEN_TOKEN_BOARD_URL || "https://ffffhx.github.io/open-token-board/";
 
 const NAV_LINKS = [
   { href: "/", label: "首页" },
@@ -22,7 +24,7 @@ const NAV_LINKS = [
   },
   { href: "/games", label: "游戏入口" },
   { href: CODEX_SNAPSHOTS_URL, label: "会话快照", external: true },
-  { href: "/token-leaderboard", label: "Token榜" },
+  { href: OPEN_TOKEN_BOARD_URL, label: "Token榜", external: true },
   { href: "/pet", label: "桌宠", private: true },
   { href: "/search", label: "搜索" },
   { href: "/about", label: "关于" },

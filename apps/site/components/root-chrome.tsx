@@ -24,7 +24,6 @@ const PRIVATE_FEATURE_ROUTES = [
   "/forest-shuffle",
   "/games",
   "/pet",
-  "/snapshots",
   "/texas-holdem",
 ];
 
@@ -57,7 +56,18 @@ function isGameTableRoute(pathname: string | null) {
 function isFocusedToolRoute(pathname: string | null) {
   const normalizedPathname = normalizeAppPathname(pathname);
 
-  return normalizedPathname === "/snapshots" || normalizedPathname.startsWith("/snapshots/");
+  return (
+    normalizedPathname === "/snapshots/share" ||
+    normalizedPathname.startsWith("/snapshots/share/") ||
+    normalizedPathname === "/snapshots/viewer" ||
+    normalizedPathname.startsWith("/snapshots/viewer/")
+  );
+}
+
+function isSnapshotIndexRoute(pathname: string | null) {
+  const normalizedPathname = normalizeAppPathname(pathname);
+
+  return normalizedPathname === "/snapshots" || normalizedPathname === "/snapshots/";
 }
 
 function isSnapshotShareRoute(pathname: string | null) {
@@ -76,8 +86,12 @@ function isSnapshotStandaloneRoute(pathname: string | null) {
 }
 
 function isPrivateFeatureRoute(pathname: string | null) {
-  if (isSnapshotShareRoute(pathname)) {
+  if (isSnapshotShareRoute(pathname) || isSnapshotIndexRoute(pathname)) {
     return false;
+  }
+
+  if (isSnapshotStandaloneRoute(pathname)) {
+    return true;
   }
 
   const normalizedPathname = normalizeAppPathname(pathname);

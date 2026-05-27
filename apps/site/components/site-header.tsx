@@ -6,6 +6,9 @@ import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
 import { cn } from "@/lib/utils/cn";
 import { normalizeBasePath, withBasePath } from "@/lib/utils/site-path";
 
+const CODEX_SNAPSHOTS_URL =
+  process.env.NEXT_PUBLIC_CODEX_SNAPSHOTS_URL || withBasePath("/codex-snapshots/index.html");
+
 const NAV_LINKS = [
   { href: "/", label: "首页" },
   { href: `/category/${CATEGORY_DEFINITIONS.tech.slug}`, label: CATEGORY_DEFINITIONS.tech.label },
@@ -18,7 +21,7 @@ const NAV_LINKS = [
     label: CATEGORY_DEFINITIONS.dailyNews.label,
   },
   { href: "/games", label: "游戏入口", private: true },
-  { href: "/snapshots", label: "会话快照", private: true },
+  { href: CODEX_SNAPSHOTS_URL, label: "会话快照", external: true },
   { href: "/token-leaderboard", label: "Token榜" },
   { href: "/pet", label: "桌宠", private: true },
   { href: "/search", label: "搜索" },
@@ -52,7 +55,7 @@ function normalizeNavPathname(pathname: string | null | undefined) {
 }
 
 function isActiveNavItem(item: NavItem, currentPathname: string | null | undefined) {
-  if (!currentPathname) {
+  if (!currentPathname || item.external) {
     return false;
   }
 
@@ -76,20 +79,20 @@ function NavLink({
   currentPathname?: string | null;
 }) {
   const active = isActiveNavItem(item, currentPathname);
-  const link = (
-    <Link
-      key={item.href}
-      href={item.href}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        mobile
-          ? "inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30"
-          : "whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30",
-        active
-          ? "bg-slate-950 font-semibold !text-white shadow-[0_10px_28px_-22px_rgba(15,23,42,0.85)]"
-          : "text-slate-700 hover:bg-amber-100 hover:text-slate-950"
-      )}
-    >
+  const className = cn(
+    mobile
+      ? "inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30"
+      : "whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30",
+    active
+      ? "bg-slate-950 font-semibold !text-white shadow-[0_10px_28px_-22px_rgba(15,23,42,0.85)]"
+      : "text-slate-700 hover:bg-amber-100 hover:text-slate-950"
+  );
+  const link = item.external ? (
+    <a href={item.href} target="_blank" rel="noreferrer" className={className}>
+      {item.label}
+    </a>
+  ) : (
+    <Link href={item.href} aria-current={active ? "page" : undefined} className={className}>
       {item.label}
     </Link>
   );

@@ -24,6 +24,14 @@ describe("SiteHeader", () => {
     expect(markup).toContain('href="/token-leaderboard"');
   });
 
+  it("links the snapshots entry to the standalone project site", () => {
+    const markup = renderToStaticMarkup(createElement(SiteHeader));
+
+    expect(markup).toContain('href="/codex-snapshots/index.html"');
+    expect(markup).toContain('target="_blank"');
+    expect(markup).toContain(">会话快照</a>");
+  });
+
   it("highlights the token leaderboard link on the token leaderboard page", () => {
     const markup = renderToStaticMarkup(
       createElement(SiteHeader, { currentPathname: "/token-leaderboard" })

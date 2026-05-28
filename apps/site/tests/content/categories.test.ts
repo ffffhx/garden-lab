@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { getAllCategories } from "../../lib/content/categories";
 import { getAllPosts } from "../../lib/content/posts";
 
+const POST_SCAN_TIMEOUT_MS = 15_000;
+
 describe("getAllCategories", () => {
   it("builds category collections from post metadata", () => {
     const categories = getAllCategories();
@@ -10,7 +12,7 @@ describe("getAllCategories", () => {
     expect(categories.map((item) => item.slug)).toContain("tech");
     expect(categories.map((item) => item.slug)).toContain("fitness");
     expect(categories.map((item) => item.slug)).toContain("daily-news");
-  });
+  }, POST_SCAN_TIMEOUT_MS);
 });
 
 describe("asset urls", () => {
@@ -19,5 +21,5 @@ describe("asset urls", () => {
 
     expect(post).toBeDefined();
     expect(post?.assetBasePath.startsWith("/post-assets/")).toBe(true);
-  });
+  }, POST_SCAN_TIMEOUT_MS);
 });

@@ -1,3 +1,7 @@
+import { GAMES_SITE_URL } from "@/lib/standalone-projects";
+
+export { GAMES_SITE_URL } from "@/lib/standalone-projects";
+
 export type GameEntry = {
   slug: string;
   title: string;
@@ -6,9 +10,6 @@ export type GameEntry = {
   status: string;
   actionLabel?: string;
 };
-
-export const GAMES_SITE_URL =
-  process.env.NEXT_PUBLIC_GAMES_SITE_URL || "https://ffffhx.github.io/games/";
 
 function withGamesSite(pathname = "") {
   return `${GAMES_SITE_URL.replace(/\/+$/, "")}/${pathname.replace(/^\/+/, "")}`;

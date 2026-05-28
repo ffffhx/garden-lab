@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
-const CODEX_SNAPSHOTS_URL =
-  process.env.NEXT_PUBLIC_CODEX_SNAPSHOTS_URL || "https://ffffhx.github.io/codex-snapshots/";
+import { CODEX_SNAPSHOTS_URL } from "@/lib/standalone-projects";
 
 export const metadata: Metadata = {
   title: "Codex Snapshots",

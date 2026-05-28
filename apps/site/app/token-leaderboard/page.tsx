@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-const OPEN_TOKEN_BOARD_URL =
-  process.env.NEXT_PUBLIC_OPEN_TOKEN_BOARD_URL || "https://ffffhx.github.io/open-token-board/";
+import { OPEN_TOKEN_BOARD_URL } from "@/lib/standalone-projects";
+
 const OPEN_TOKEN_BOARD_REPO_URL = "https://github.com/ffffhx/open-token-board";
 
 export const metadata: Metadata = {

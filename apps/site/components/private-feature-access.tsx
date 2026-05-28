@@ -109,8 +109,8 @@ function usePrivateFeatureAccessState(enabled: boolean): PrivateFeatureAccess {
   const allowLocalPreview = useMemo(isLocalPrivateFeaturePreview, []);
   const [access, setAccess] = useState<PrivateFeatureAccess>(() => ({
     apiBaseUrl,
-    status: allowLocalPreview ? "allowed" : apiBaseUrl ? "loading" : "denied",
-    viewer: allowLocalPreview ? createLocalPreviewViewer() : null,
+    status: apiBaseUrl ? "loading" : "denied",
+    viewer: null,
   }));
 
   useEffect(() => {

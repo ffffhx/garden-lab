@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
@@ -5,6 +6,7 @@ import { PostCard } from "@/components/post-card";
 import { getAllCategories } from "@/lib/content/categories";
 import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
 import { getArticlePosts, getDailyNewsPosts } from "@/lib/content/posts";
+import { STANDALONE_PROJECTS } from "@/lib/standalone-projects";
 import { withBasePath } from "@/lib/utils/site-path";
 
 export default function HomePage() {
@@ -53,6 +55,59 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="space-y-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.32em] text-slate-500">
+              Standalone Projects
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+              已独立维护的项目
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-right">
+            会话快照、Token 榜和游戏入口都已经搬到独立站点，这里保留简短索引和公开地址。
+          </p>
+        </div>
+        <div className="grid min-w-0 gap-5 lg:grid-cols-3">
+          {STANDALONE_PROJECTS.map((project) => (
+            <article
+              key={project.slug}
+              className="group flex min-h-[17rem] flex-col rounded-lg border border-slate-900/10 bg-white/86 p-5 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.5)] transition hover:-translate-y-1 hover:border-slate-900/18 hover:shadow-[0_32px_96px_-58px_rgba(15,23,42,0.58)]"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span
+                  className={`font-mono text-xs font-black uppercase tracking-[0.08em] ${project.accentClassName}`}
+                >
+                  {project.badge}
+                </span>
+                <span className="rounded-full border border-slate-950/10 px-3 py-1 text-xs font-semibold text-slate-500">
+                  独立站
+                </span>
+              </div>
+              <h3 className="mt-5 text-2xl font-semibold tracking-tight text-slate-950">
+                {project.title}
+              </h3>
+              <p className="mt-1 text-sm font-semibold text-slate-500">{project.productName}</p>
+              <p className="mt-4 text-base leading-8 text-slate-700">{project.description}</p>
+              <div className="mt-auto pt-5">
+                <p className="break-all font-mono text-xs font-semibold text-slate-500">
+                  {project.displayUrl}
+                </p>
+                <a
+                  href={project.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold !text-white transition hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
+                >
+                  打开网站
+                </a>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 

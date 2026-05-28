@@ -6,12 +6,14 @@ import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
 import { cn } from "@/lib/utils/cn";
 import { normalizeBasePath, withBasePath } from "@/lib/utils/site-path";
 
-const CODEX_SNAPSHOTS_URL =
-  process.env.NEXT_PUBLIC_CODEX_SNAPSHOTS_URL || "https://ffffhx.github.io/codex-snapshots/";
-const OPEN_TOKEN_BOARD_URL =
-  process.env.NEXT_PUBLIC_OPEN_TOKEN_BOARD_URL || "https://ffffhx.github.io/open-token-board/";
+type NavItem = {
+  href: string;
+  label: string;
+  external?: boolean;
+  private?: boolean;
+};
 
-const NAV_LINKS = [
+const NAV_LINKS: NavItem[] = [
   { href: "/", label: "首页" },
   { href: `/category/${CATEGORY_DEFINITIONS.tech.slug}`, label: CATEGORY_DEFINITIONS.tech.label },
   {
@@ -22,15 +24,10 @@ const NAV_LINKS = [
     href: `/category/${CATEGORY_DEFINITIONS.dailyNews.slug}`,
     label: CATEGORY_DEFINITIONS.dailyNews.label,
   },
-  { href: "/games", label: "游戏入口" },
-  { href: CODEX_SNAPSHOTS_URL, label: "会话快照", external: true },
-  { href: OPEN_TOKEN_BOARD_URL, label: "Token榜", external: true },
   { href: "/pet", label: "桌宠", private: true },
   { href: "/search", label: "搜索" },
   { href: "/about", label: "关于" },
 ];
-
-type NavItem = (typeof NAV_LINKS)[number];
 
 type SiteHeaderProps = {
   currentPathname?: string | null;

@@ -32,11 +32,9 @@ http://localhost:3000
 
 - 根目录：monorepo 编排、CI、文档和统一命令代理
 - `apps/site`：Next.js 静态站点、Tauri 桌宠、内容编译、页面和站点内领域逻辑
-- `apps/token-board-api`：Token 排行榜 API 服务入口、OAuth 回调、上传和查询接口
-- `packages/token-board-core`：Token 排行榜共享模型、聚合、鉴权、清洗和存储逻辑
-- `deploy/token-board`：Token 排行榜后端的 Docker 部署包
-- `tools/token-board-agent-npx`：给朋友安装的轻量 npx agent
 - `tools/codex-pet-aloha-cash-buddy`：Codex pet 安装包
+
+Token 排行榜的前端、后端、core、Docker 部署包和 agent 发布已经迁移到独立公开仓库：`https://github.com/ffffhx/open-token-board`。
 
 ## 常用命令
 
@@ -126,7 +124,7 @@ CODEX_HOME=/Users/你的用户名/.codex
 朋友不需要 clone 仓库。首次安装后台同步时，在自己的 macOS 终端或 Windows PowerShell 里执行：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent install
+npx --yes --package https://ffffhx.github.io/open-token-board/token-board-agent.tgz?v=0.4.11 -- token-board-agent install
 ```
 
 这条命令会先引导 GitHub Device Login，授权成功后在 macOS 上安装 LaunchAgent，在 Windows 上安装隐藏的 Task Scheduler 任务。之后终端关闭也会每 5 分钟读取本机 AI 编码工具 token 记录并上传到排行榜后端。
@@ -134,25 +132,25 @@ npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=
 查看后台同步状态：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent status
+npx --yes --package https://ffffhx.github.io/open-token-board/token-board-agent.tgz?v=0.4.11 -- token-board-agent status
 ```
 
 如果后端数据被清空或迁移，且页面只显示最近少量记录，可以强制重传最近 30 天可采集到的记录：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent resync
+npx --yes --package https://ffffhx.github.io/open-token-board/token-board-agent.tgz?v=0.4.11 -- token-board-agent resync
 ```
 
 如果需要把自己线上的旧记录清掉，并用本机当前能采集到的记录整体替换：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent replace
+npx --yes --package https://ffffhx.github.io/open-token-board/token-board-agent.tgz?v=0.4.11 -- token-board-agent replace
 ```
 
 卸载后台同步：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent uninstall
+npx --yes --package https://ffffhx.github.io/open-token-board/token-board-agent.tgz?v=0.4.11 -- token-board-agent uninstall
 ```
 
 轻量 npx agent 默认读取本机 Codex、Claude Code、Cursor、Trae 的本地 token 记录；Codex 会覆盖 `~/.codex/sessions`、`~/.codex/archived_sessions` 和 `~/.codex/projects`，并允许 Codex JSONL 会话日志最大到 256 MiB。也可以通过 `TOKEN_BOARD_USAGE_PATHS` 或配置文件里的 `usagePaths` 补充自定义 JSON / JSONL / CSV 路径。上传内容只包含 token 数、模型、工具、项目 basename 和匿名 session hash，不上传 prompt 文本。
@@ -161,22 +159,7 @@ npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=
 
 ### Token Board 后端存储
 
-Token Board 后端优先使用 PostgreSQL。部署配置在 `deploy/token-board/compose.yaml`，会启动一个 `postgres:17-alpine` 容器，并把数据保存在 Compose volume `postgres-data` 里。
-
-旧 JSON 文件仍保留为本地开发 fallback 和迁移来源。没有配置 `TOKEN_BOARD_DATABASE_URL` 时，服务会继续读写 `TOKEN_BOARD_DATA_FILE`；生产部署建议使用 `.env.example` 里的 PostgreSQL 变量。
-
-从旧 JSON 导入 PostgreSQL：
-
-```bash
-cd deploy/token-board
-docker compose run --rm token-board npm run docker:start -- migrate-json
-```
-
-本地开发也可以直接跑：
-
-```bash
-TOKEN_BOARD_DATABASE_URL=postgresql://token_board:password@127.0.0.1:5432/token_board pnpm token:migrate-json
-```
+Token Board 后端、PostgreSQL Docker Compose 部署包、core 聚合逻辑和 agent 发布现在都由 `open-token-board` 仓库维护。后端存储和 JSON 导入说明见：`https://github.com/ffffhx/open-token-board`。
 
 导入使用事件 `id` 主键去重，可以重复执行。确认数据库已有历史数据后，再让朋友们执行一次 `token-board-agent resync` 补齐本机还能采集到的最近记录。
 

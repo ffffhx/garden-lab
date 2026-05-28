@@ -15,7 +15,7 @@ KIMI_API_KEY=你的_key pnpm token:server
 NEXT_PUBLIC_TOKEN_BOARD_API_URL=http://127.0.0.1:8787 pnpm dev
 ```
 
-前端会优先使用 `NEXT_PUBLIC_SELECTION_EXPLAIN_API_URL`，没有配置时自动退回到 `NEXT_PUBLIC_TOKEN_BOARD_API_URL/api/explain-selection`。如果你只想单独启动解释服务，也可以运行：
+前端会优先使用 `NEXT_PUBLIC_SELECTION_EXPLAIN_API_URL`，没有配置时自动退回到 `NEXT_PUBLIC_TOKEN_BOARD_API_URL/api/explain-selection`。Token Board 后端已经迁移到 `https://github.com/ffffhx/open-token-board`；如果你只想单独启动解释服务，也可以在新仓库运行：
 
 ```bash
 # 终端 1
@@ -57,7 +57,7 @@ SELECTION_EXPLAIN_ALLOWED_GITHUB_LOGINS=ffffhx
 NEXT_PUBLIC_TOKEN_BOARD_API_URL=https://你的-token-board-服务域名
 ```
 
-如果需要单独部署 `apps/token-board-api/src/selection-explainer-server.ts`，再额外配置；Token Board API 内置的解释接口位于 `apps/token-board-api`：
+如果需要单独部署 `apps/token-board-api/src/selection-explainer-server.ts`，再额外配置；Token Board API 内置的解释接口位于 `open-token-board/apps/token-board-api`：
 
 ```bash
 SELECTION_EXPLAIN_ALLOWED_ORIGINS=https://你的博客域名

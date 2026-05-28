@@ -3,8 +3,11 @@
 这个版本把页面、后端和本地 agent 拆开：
 
 - 独立静态站点：`https://ffffhx.github.io/open-token-board/`
+- 独立源码仓库：`https://github.com/ffffhx/open-token-board`
 - 后端服务：`POST /api/usage/ingest` 接收上报，`GET /api/usage/stats` 返回聚合榜单
 - 本地 agent：定时扫描本机 Codex / Claude Code / Cursor / Trae / Gemini CLI 以及自定义 usage 文件，只上传 token 统计字段
+
+后端、core、Docker 部署包和 agent 发布已从 `garden-lab` 迁移到 `open-token-board`。下面涉及 `pnpm token:*`、`apps/token-board-api` 和 `deploy/token-board` 的命令都应在 `open-token-board` 仓库执行。
 
 当前阿里云后端地址：
 
@@ -176,7 +179,7 @@ pnpm token:agent upload
 如果需要清掉当前登录用户的线上旧记录，并用本机当前可采集记录整体替换：
 
 ```bash
-npx --yes --package https://ffffhx.github.io/garden-lab/token-board-agent.tgz?v=0.4.11 -- token-board-agent replace
+npx --yes --package https://ffffhx.github.io/open-token-board/token-board-agent.tgz?v=0.4.11 -- token-board-agent replace
 ```
 
 长期运行：

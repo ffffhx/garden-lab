@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Coze 账号切换插件三层架构</title>
+  <desc id="desc">popup、service worker、content script 与外部服务之间的职责边界</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#0f766e" />
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#f8fafc" />
+  <text x="70" y="78" fill="#0f172a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="800">三层边界：UI 很薄，后台很重，页面只读状态</text>
+  <text x="70" y="114" fill="#64748b" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18">高权限动作集中在 Manifest V3 service worker，popup 和 content script 都不触碰账号密码。</text>
+  <rect x="76" y="176" width="300" height="392" rx="24" fill="#ecfeff" stroke="#67e8f9" stroke-width="2" />
+  <text x="114" y="228" fill="#155e75" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="800">Popup UI</text>
+  <text x="114" y="286" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">保存 JWT</text>
+  <text x="114" y="326" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">选择权益和角色</text>
+  <text x="114" y="366" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">确认同权益换新账号</text>
+  <text x="114" y="406" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">展示 steps 和 lastRun</text>
+  <rect x="124" y="484" width="204" height="44" rx="14" fill="#155e75" />
+  <text x="154" y="513" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700">只发消息，不做登录</text>
+  <rect x="450" y="154" width="300" height="438" rx="24" fill="#f0fdf4" stroke="#86efac" stroke-width="2" />
+  <text x="488" y="206" fill="#166534" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="800">Service Worker</text>
+  <text x="488" y="264" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">消息协议总入口</text>
+  <text x="488" y="304" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">Stone 查询账号</text>
+  <text x="488" y="344" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">CloudIdentity 登录</text>
+  <text x="488" y="384" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">Coze Passport 写态</text>
+  <text x="488" y="424" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">Coze API 验权</text>
+  <text x="488" y="464" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">cookie 快照恢复</text>
+  <rect x="512" y="524" width="176" height="44" rx="14" fill="#166534" />
+  <text x="542" y="553" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700">高权限收口</text>
+  <rect x="824" y="176" width="300" height="392" rx="24" fill="#fff7ed" stroke="#fdba74" stroke-width="2" />
+  <text x="862" y="228" fill="#9a3412" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="800">Content Script</text>
+  <text x="862" y="286" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">读取页面文案</text>
+  <text x="862" y="326" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">识别企业 URL</text>
+  <text x="862" y="366" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">提取权益和额度</text>
+  <text x="862" y="406" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">发现待审批和无权限</text>
+  <rect x="874" y="484" width="200" height="44" rx="14" fill="#9a3412" />
+  <text x="904" y="513" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700">只兜底，不裁决</text>
+  <path d="M380 346 H442" stroke="#0f766e" stroke-width="4" marker-end="url(#arrow)" />
+  <path d="M754 346 H816" stroke="#0f766e" stroke-width="4" marker-end="url(#arrow)" />
+  <rect x="178" y="640" width="844" height="58" rx="18" fill="#0f172a" />
+  <text x="222" y="676" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="800">账号密码只在后台切换流程中使用，不进入 popup、content script 或 lastRun 展示。</text>
+</svg>

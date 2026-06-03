@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Coze 账号验权和页面兜底</title>
+  <desc id="desc">Coze API 验证身份、权益和角色，content script 只在有限场景作为页面兜底</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#0f766e" />
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#f8fafc" />
+  <text x="70" y="78" fill="#0f172a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="800">最终裁决：Coze API 先验，页面标记只兜底</text>
+  <text x="70" y="114" fill="#64748b" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18">登录接口返回成功不等于切换成功，必须验证目标账号事实。</text>
+  <rect x="80" y="176" width="486" height="360" rx="24" fill="#f0fdf4" stroke="#86efac" stroke-width="2" />
+  <text x="120" y="226" fill="#166534" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="800">API 主验证</text>
+  <g fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">
+    <text x="120" y="286">Passport 当前用户信息</text>
+    <text x="120" y="330">订阅权益 subscription_v2</text>
+    <text x="120" y="374">uid / enterprise_id 身份匹配</text>
+    <text x="120" y="418">user_level_v2 映射套餐权益</text>
+    <text x="120" y="462">企业列表检查角色类型</text>
+  </g>
+  <rect x="146" y="490" width="354" height="34" rx="12" fill="#166534" />
+  <text x="178" y="513" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">输出 finalMarkers，决定 popup 成功态</text>
+  <rect x="634" y="176" width="486" height="360" rx="24" fill="#fff7ed" stroke="#fdba74" stroke-width="2" />
+  <text x="674" y="226" fill="#9a3412" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="800">页面辅助信号</text>
+  <g fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">
+    <text x="674" y="286">企业空间 URL 和 enterprise id</text>
+    <text x="674" y="330">页面上的权益名和额度</text>
+    <text x="674" y="374">目标用户名或账号 id 文案</text>
+    <text x="674" y="418">待审批、无权限、登录页标记</text>
+    <text x="674" y="462">订阅接口 5xx 时有限兜底</text>
+  </g>
+  <rect x="708" y="490" width="338" height="34" rx="12" fill="#9a3412" />
+  <text x="740" y="513" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">不能覆盖角色校验和明确 API 失败</text>
+  <path d="M566 356 H626" stroke="#0f766e" stroke-width="4" marker-end="url(#arrow)" />
+  <rect x="300" y="616" width="600" height="64" rx="20" fill="#0f172a" />
+  <text x="344" y="648" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20" font-weight="800">成功条件 = 身份匹配 + 权益匹配 + 角色匹配</text>
+  <text x="344" y="674" fill="#bfdbfe" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="16">页面看起来像目标账号，只能作为少数异常场景的补充证据。</text>
+</svg>

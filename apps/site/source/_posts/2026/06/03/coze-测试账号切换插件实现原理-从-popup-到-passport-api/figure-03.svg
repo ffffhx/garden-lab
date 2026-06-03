@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">CloudIdentity 双登录链路</title>
+  <desc id="desc">个人主账号和企业子账号分别通过 SDK 登录和 SaaS userlogin 换取 auth code</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#7c3aed" />
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#f8fafc" />
+  <text x="70" y="78" fill="#0f172a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="800">CloudIdentity：个人主账号和企业子账号不是一条路</text>
+  <text x="70" y="114" fill="#64748b" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18">后台根据账号类型选择 SDK 登录或 SaaS userlogin，最终都收敛成 Coze auth code。</text>
+  <rect x="72" y="174" width="500" height="388" rx="24" fill="#ecfeff" stroke="#67e8f9" stroke-width="2" />
+  <text x="110" y="226" fill="#155e75" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="800">个人 / 主账号</text>
+  <g fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">
+    <text x="112" y="286">1. getLoginCredential</text>
+    <text x="112" y="330">2. mixtureLogin 密码事件</text>
+    <text x="112" y="374">3. 必要时 identity selection</text>
+    <text x="112" y="418">4. getAuthCodeForLogin</text>
+    <text x="112" y="462">5. 返回 AuthCodeForLogin</text>
+  </g>
+  <rect x="164" y="500" width="316" height="40" rx="14" fill="#155e75" />
+  <text x="202" y="526" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17" font-weight="700">适合主账号密码登录和身份选择</text>
+  <rect x="628" y="174" width="500" height="388" rx="24" fill="#fff7ed" stroke="#fdba74" stroke-width="2" />
+  <text x="666" y="226" fill="#9a3412" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="800">企业 / SaaS 子账号</text>
+  <g fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">
+    <text x="668" y="286">1. 检查公司别名登录设置</text>
+    <text x="668" y="330">2. workflow token + random salt</text>
+    <text x="668" y="374">3. JWK 公钥加密 password + salt</text>
+    <text x="668" y="418">4. authorizeMixtureLogin</text>
+    <text x="668" y="462">5. OAuth redirect 解析 auth code</text>
+  </g>
+  <rect x="702" y="500" width="352" height="40" rx="14" fill="#9a3412" />
+  <text x="736" y="526" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17" font-weight="700">需要 webRequest 或临时 tab 捕获跳转</text>
+  <rect x="364" y="620" width="472" height="58" rx="18" fill="#ede9fe" stroke="#c4b5fd" />
+  <text x="404" y="655" fill="#5b21b6" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="22" font-weight="800">共同出口：auth code -> Coze Passport login</text>
+  <path d="M322 562 C322 604 430 604 472 620" stroke="#7c3aed" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+  <path d="M878 562 C878 604 770 604 728 620" stroke="#7c3aed" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+</svg>

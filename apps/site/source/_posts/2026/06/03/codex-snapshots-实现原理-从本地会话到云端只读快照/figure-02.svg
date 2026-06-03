@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">数据源归一流程</title>
+  <desc id="desc">Codex、Claude Code 和 Trae 历史记录如何归一成 summary 与 snapshot</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#17202a"/>
+    </marker>
+    <style>
+      .title { font: 900 32px "Inter", "PingFang SC", sans-serif; fill: #17202a; }
+      .sub { font: 600 17px "Inter", "PingFang SC", sans-serif; fill: #617181; }
+      .box-title { font: 850 21px "Inter", "PingFang SC", sans-serif; fill: #17202a; }
+      .box-text { font: 600 15px "Inter", "PingFang SC", sans-serif; fill: #4f5e6d; }
+      .mono { font: 700 13px "SFMono-Regular", Menlo, monospace; fill: #245d83; }
+    </style>
+  </defs>
+  <rect width="1200" height="760" fill="#f5f1e8"/>
+  <text x="70" y="70" class="title">数据源归一：列表扫摘要，详情再读完整内容</text>
+  <text x="72" y="102" class="sub">三类 Agent 的历史格式不同，但 UI 只消费 summary 和 snapshot 两种稳定对象。</text>
+  <g transform="translate(70 160)">
+    <rect width="275" height="125" rx="10" fill="#edf4ff" stroke="#2f6fbb" stroke-width="2"/>
+    <text x="24" y="42" class="box-title">Codex</text>
+    <text x="24" y="76" class="box-text">sessions / archived_sessions</text>
+    <text x="24" y="104" class="mono">session_index.jsonl 补标题</text>
+  </g>
+  <g transform="translate(70 330)">
+    <rect width="275" height="125" rx="10" fill="#eef9f6" stroke="#0f766e" stroke-width="2"/>
+    <text x="24" y="42" class="box-title">Claude Code</text>
+    <text x="24" y="76" class="box-text">projects / sessions</text>
+    <text x="24" y="104" class="mono">history.jsonl 只作线索</text>
+  </g>
+  <g transform="translate(70 500)">
+    <rect width="275" height="125" rx="10" fill="#fff8df" stroke="#b7791f" stroke-width="2"/>
+    <text x="24" y="42" class="box-title">Trae</text>
+    <text x="24" y="76" class="box-text">recorder / memory / input</text>
+    <text x="24" y="104" class="mono">recorded 才默认完整</text>
+  </g>
+  <g transform="translate(480 250)">
+    <rect width="260" height="220" rx="12" fill="#ffffff" stroke="#17202a" stroke-width="2"/>
+    <text x="32" y="52" class="box-title">listSessions</text>
+    <text x="32" y="90" class="box-text">并行扫描</text>
+    <text x="32" y="124" class="box-text">按 mtime 排序</text>
+    <text x="32" y="158" class="box-text">completeOnly 过滤</text>
+    <text x="32" y="192" class="mono">source = codex | claude | trae | all</text>
+  </g>
+  <path d="M345 222 H468" stroke="#17202a" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M345 392 H468" stroke="#17202a" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M345 562 C405 560 430 472 468 440" stroke="#17202a" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <g transform="translate(870 200)">
+    <rect width="250" height="135" rx="10" fill="#f8fbf9" stroke="#d9e2e8" stroke-width="2"/>
+    <text x="24" y="44" class="box-title">summary</text>
+    <text x="24" y="78" class="box-text">标题、来源、项目路径</text>
+    <text x="24" y="108" class="box-text">消息数、风险计数</text>
+  </g>
+  <g transform="translate(870 430)">
+    <rect width="250" height="135" rx="10" fill="#f8fbf9" stroke="#d9e2e8" stroke-width="2"/>
+    <text x="24" y="44" class="box-title">snapshot</text>
+    <text x="24" y="78" class="box-text">点开后才完整加载</text>
+    <text x="24" y="108" class="box-text">统一 turns 和风险面板</text>
+  </g>
+  <path d="M740 330 C800 300 805 270 858 266" stroke="#17202a" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M740 390 C805 410 805 480 858 496" stroke="#17202a" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <text x="70" y="690" class="sub">列表快，是因为只读摘要；分享准，是因为详情阶段再按来源加载完整 transcript。</text>
+</svg>

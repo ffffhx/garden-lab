@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Codex Snapshots 总体架构</title>
+  <desc id="desc">CLI、数据源、快照核心、本地查看器和云端分享 API 的分层关系</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#17202a"/>
+    </marker>
+    <style>
+      .title { font: 900 32px "Inter", "PingFang SC", sans-serif; fill: #17202a; }
+      .sub { font: 600 17px "Inter", "PingFang SC", sans-serif; fill: #617181; }
+      .box-title { font: 850 22px "Inter", "PingFang SC", sans-serif; fill: #17202a; }
+      .box-text { font: 600 15px "Inter", "PingFang SC", sans-serif; fill: #4f5e6d; }
+      .mono { font: 700 13px "SFMono-Regular", Menlo, monospace; fill: #245d83; }
+    </style>
+  </defs>
+  <rect width="1200" height="760" fill="#f6f8f5"/>
+  <text x="70" y="70" class="title">总体架构：同一套快照核心，服务三种入口</text>
+  <text x="72" y="102" class="sub">终端命令、本地审阅台、云端只读分享都围绕 snapshot / turns 这层稳定结构展开。</text>
+  <g transform="translate(70 150)">
+    <rect width="210" height="124" rx="10" fill="#edf4ff" stroke="#2f6fbb" stroke-width="2"/>
+    <text x="24" y="42" class="box-title">CLI 入口</text>
+    <text x="24" y="70" class="mono">list / preview / export</text>
+    <text x="24" y="96" class="mono">serve / publish / daemon</text>
+  </g>
+  <g transform="translate(370 110)">
+    <rect width="250" height="210" rx="10" fill="#eef9f6" stroke="#0f766e" stroke-width="2"/>
+    <text x="24" y="42" class="box-title">本地数据源</text>
+    <text x="24" y="78" class="box-text">Codex JSONL</text>
+    <text x="24" y="112" class="box-text">Claude transcript / history</text>
+    <text x="24" y="146" class="box-text">Trae recorder / history</text>
+    <text x="24" y="180" class="mono">summary -> snapshot</text>
+  </g>
+  <g transform="translate(710 110)">
+    <rect width="280" height="210" rx="10" fill="#fff8df" stroke="#b7791f" stroke-width="2"/>
+    <text x="24" y="42" class="box-title">Snapshot Core</text>
+    <text x="24" y="78" class="box-text">统一 turns</text>
+    <text x="24" y="112" class="box-text">风险检测与脱敏</text>
+    <text x="24" y="146" class="box-text">Markdown 渲染</text>
+    <text x="24" y="180" class="box-text">HTML 净化</text>
+  </g>
+  <path d="M280 212 H358" stroke="#17202a" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M620 215 H698" stroke="#17202a" stroke-width="3" marker-end="url(#arrow)"/>
+  <g transform="translate(90 430)">
+    <rect width="260" height="150" rx="10" fill="#ffffff" stroke="#d9e2e8" stroke-width="2"/>
+    <text x="24" y="44" class="box-title">静态导出</text>
+    <text x="24" y="78" class="box-text">HTML / Markdown</text>
+    <text x="24" y="112" class="box-text">不可继续对话</text>
+  </g>
+  <g transform="translate(470 430)">
+    <rect width="260" height="150" rx="10" fill="#ffffff" stroke="#d9e2e8" stroke-width="2"/>
+    <text x="24" y="44" class="box-title">本地 Viewer</text>
+    <text x="24" y="78" class="box-text">127.0.0.1:4321</text>
+    <text x="24" y="112" class="box-text">审阅、开关、导出、发布</text>
+  </g>
+  <g transform="translate(850 430)">
+    <rect width="260" height="150" rx="10" fill="#ffffff" stroke="#d9e2e8" stroke-width="2"/>
+    <text x="24" y="44" class="box-title">Share API</text>
+    <text x="24" y="78" class="box-text">保存脱敏 payload</text>
+    <text x="24" y="112" class="box-text">公网只读分享页</text>
+  </g>
+  <path d="M850 320 C760 380 250 350 220 418" stroke="#17202a" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M850 320 C805 388 620 365 600 418" stroke="#17202a" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M900 320 C950 380 995 370 980 418" stroke="#17202a" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <text x="70" y="675" class="sub">核心边界：本机历史不直接上云，云端只接收已脱敏且再次净化的只读快照。</text>
+</svg>

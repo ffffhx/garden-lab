@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Open Token Board 发布和部署链路</title>
+  <desc id="desc">agent 打包到 public，Next.js 静态站点走 GitHub Pages，API 和 PostgreSQL 走 Docker Compose</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#2563eb" />
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#fbfaf7" />
+  <text x="70" y="78" fill="#0f172a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="800">发布链路：网页和 agent 共用 Pages 出口</text>
+  <text x="70" y="114" fill="#64748b" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18">前端静态发布，后端独立部署，agent tarball 随站点一起分发。</text>
+  <rect x="82" y="174" width="1036" height="196" rx="24" fill="#ffffff" stroke="#cbd5e1" />
+  <text x="118" y="222" fill="#0f172a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="800">静态发布</text>
+  <g>
+    <rect x="136" y="260" width="205" height="70" rx="16" fill="#fef2f2" stroke="#fca5a5" />
+    <text x="166" y="304" fill="#7f1d1d" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="19" font-weight="800">tools/agent-npx</text>
+  </g>
+  <g>
+    <rect x="418" y="260" width="205" height="70" rx="16" fill="#fff7ed" stroke="#fdba74" />
+    <text x="452" y="304" fill="#7c2d12" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="19" font-weight="800">npm pack</text>
+  </g>
+  <g>
+    <rect x="700" y="260" width="205" height="70" rx="16" fill="#eff6ff" stroke="#93c5fd" />
+    <text x="726" y="304" fill="#1e3a8a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="19" font-weight="800">public/agent.tgz</text>
+  </g>
+  <path d="M344 295 H410" stroke="#2563eb" stroke-width="4" marker-end="url(#arrow)" />
+  <path d="M626 295 H692" stroke="#2563eb" stroke-width="4" marker-end="url(#arrow)" />
+  <rect x="82" y="430" width="486" height="196" rx="24" fill="#eff6ff" stroke="#93c5fd" />
+  <text x="120" y="480" fill="#1e3a8a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="800">GitHub Pages</text>
+  <text x="120" y="526" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="19">Next.js 静态页面</text>
+  <text x="120" y="560" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="19">/board 榜单</text>
+  <text x="120" y="594" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="19">/token-board-agent.tgz</text>
+  <rect x="632" y="430" width="486" height="196" rx="24" fill="#ecfdf5" stroke="#86efac" />
+  <text x="670" y="480" fill="#14532d" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="800">Docker Compose 后端</text>
+  <text x="670" y="526" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="19">token-board API</text>
+  <text x="670" y="560" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="19">PostgreSQL 17</text>
+  <text x="670" y="594" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="19">TOKEN_BOARD_DATABASE_URL</text>
+  <path d="M802 334 C802 386 330 386 330 422" stroke="#2563eb" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+  <path d="M920 334 C920 386 870 386 870 422" stroke="#2563eb" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+  <rect x="206" y="666" width="788" height="44" rx="14" fill="#0f172a" />
+  <text x="238" y="695" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700">朋友只需要 npx 安装；网页和 agent 从同一个公开站点下载，API 独立保存真实数据。</text>
+</svg>

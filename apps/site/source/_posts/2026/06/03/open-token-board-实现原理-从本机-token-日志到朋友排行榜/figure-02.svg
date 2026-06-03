@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">open-token-board monorepo 模块边界</title>
+  <desc id="desc">web api core deploy agent 和 pack 脚本的职责关系</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#334155" />
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#f8fafc" />
+  <text x="70" y="78" fill="#0f172a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="800">Monorepo 模块边界</text>
+  <text x="70" y="114" fill="#64748b" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18">业务规则下沉到 core，web 和 api 都通过 workspace 包复用同一套模型。</text>
+  <rect x="80" y="170" width="1040" height="470" rx="24" fill="#ffffff" stroke="#cbd5e1" />
+  <g>
+    <rect x="130" y="230" width="240" height="130" rx="18" fill="#eff6ff" stroke="#93c5fd" />
+    <text x="160" y="274" fill="#1e3a8a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="800">apps/web</text>
+    <text x="160" y="312" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">Next.js 静态站点</text>
+    <text x="160" y="340" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">榜单 UI / 安装指南</text>
+  </g>
+  <g>
+    <rect x="480" y="204" width="240" height="182" rx="18" fill="#ecfdf5" stroke="#86efac" stroke-width="2" />
+    <text x="510" y="250" fill="#14532d" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="800">packages/core</text>
+    <text x="510" y="288" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">TokenUsageEvent</text>
+    <text x="510" y="316" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">采集 / 清洗</text>
+    <text x="510" y="344" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">聚合 / 费用估算</text>
+    <text x="510" y="372" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">存储接口</text>
+  </g>
+  <g>
+    <rect x="830" y="230" width="240" height="130" rx="18" fill="#fff7ed" stroke="#fdba74" />
+    <text x="860" y="274" fill="#7c2d12" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="800">apps/api</text>
+    <text x="860" y="312" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">GitHub OAuth</text>
+    <text x="860" y="340" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">上传 / 查询接口</text>
+  </g>
+  <g>
+    <rect x="130" y="456" width="240" height="120" rx="18" fill="#fef2f2" stroke="#fca5a5" />
+    <text x="160" y="500" fill="#7f1d1d" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="800">tools/agent-npx</text>
+    <text x="160" y="538" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">单文件 agent</text>
+    <text x="160" y="566" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">LaunchAgent / Task</text>
+  </g>
+  <g>
+    <rect x="480" y="456" width="240" height="120" rx="18" fill="#f8fafc" stroke="#94a3b8" />
+    <text x="510" y="500" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="800">scripts/pack-agent</text>
+    <text x="510" y="538" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">npm pack</text>
+    <text x="510" y="566" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">输出到 public tgz</text>
+  </g>
+  <g>
+    <rect x="830" y="456" width="240" height="120" rx="18" fill="#fdf4ff" stroke="#d8b4fe" />
+    <text x="860" y="500" fill="#581c87" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="800">deploy/token-board</text>
+    <text x="860" y="538" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">PostgreSQL</text>
+    <text x="860" y="566" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="17">API Docker Compose</text>
+  </g>
+  <path d="M370 292 H470" stroke="#334155" stroke-width="3" marker-end="url(#arrow)" />
+  <path d="M720 292 H820" stroke="#334155" stroke-width="3" marker-end="url(#arrow)" />
+  <path d="M250 456 V382 H480" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M600 456 V396" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M950 456 V382 H720" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <rect x="80" y="672" width="1040" height="44" rx="14" fill="#0f172a" />
+  <text x="112" y="701" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700">设计重点：web 和 api 都依赖 core，避免把排行榜口径散落在 UI 或 HTTP handler 里。</text>
+</svg>

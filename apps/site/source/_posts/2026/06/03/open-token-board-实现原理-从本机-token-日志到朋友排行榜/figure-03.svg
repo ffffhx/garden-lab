@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">双层隐私清洗与鉴权</title>
+  <desc id="desc">agent 少传敏感字段，API 按认证身份二次清洗</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#2563eb" />
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#fbfaf7" />
+  <text x="70" y="78" fill="#0f172a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="800">隐私边界：客户端少传，服务端再洗</text>
+  <text x="70" y="114" fill="#64748b" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18">公开的是统计，不是 prompt、绝对路径或原始 transcript。</text>
+  <rect x="80" y="172" width="430" height="426" rx="24" fill="#ecfdf5" stroke="#86efac" stroke-width="2" />
+  <text x="118" y="224" fill="#14532d" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="800">Agent 端</text>
+  <g fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">
+    <text x="118" y="282">只抽 token 计数</text>
+    <text x="118" y="328">跳过 content / prompt / body</text>
+    <text x="118" y="374">项目默认取 basename</text>
+    <text x="118" y="420">session id 默认 hash</text>
+    <text x="118" y="466">短标题截断到安全长度</text>
+    <text x="118" y="512">本地状态记 uploadedIds</text>
+  </g>
+  <rect x="154" y="548" width="280" height="34" rx="12" fill="#14532d" />
+  <text x="184" y="571" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">尽量不让敏感字段离开本机</text>
+  <rect x="690" y="172" width="430" height="426" rx="24" fill="#fff7ed" stroke="#fdba74" stroke-width="2" />
+  <text x="728" y="224" fill="#7c2d12" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="800">API 端</text>
+  <g fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20">
+    <text x="728" y="282">验证 GitHub agent token</text>
+    <text x="728" y="328">用认证身份覆盖 userId</text>
+    <text x="728" y="374">限制事件时间范围</text>
+    <text x="728" y="420">根据环境变量隐藏字段</text>
+    <text x="728" y="466">重新生成稳定事件 id</text>
+    <text x="728" y="512">按 id 幂等写入存储层</text>
+  </g>
+  <rect x="764" y="548" width="280" height="34" rx="12" fill="#9a3412" />
+  <text x="794" y="571" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">不信任客户端原样上传字段</text>
+  <path d="M522 354 H678" stroke="#2563eb" stroke-width="4" marker-end="url(#arrow)" />
+  <rect x="526" y="294" width="146" height="92" rx="18" fill="#eff6ff" stroke="#93c5fd" />
+  <text x="560" y="328" fill="#1e3a8a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20" font-weight="800">Bearer</text>
+  <text x="552" y="360" fill="#1e3a8a" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20" font-weight="800">agent token</text>
+  <rect x="210" y="638" width="780" height="54" rx="18" fill="#0f172a" />
+  <text x="250" y="672" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20" font-weight="800">原则：排行榜需要可信身份，上传事件不能决定自己是谁。</text>
+</svg>

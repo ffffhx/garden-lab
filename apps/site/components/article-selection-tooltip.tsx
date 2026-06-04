@@ -1,6 +1,6 @@
 "use client";
 
-import {
+import React, {
   type MouseEvent,
   type ReactNode,
   type TouchEvent,
@@ -10,6 +10,8 @@ import {
   useRef,
   useState,
 } from "react";
+
+import { ARTICLE_AI_CHAT_OPEN_EVENT } from "@/components/article-ai-chat-events";
 
 type SelectionExplanation = {
   term: string;
@@ -456,6 +458,29 @@ export function ArticleSelectionTooltip({
     void explainSelection(nextTooltip);
   };
 
+  const openSelectionInChat = (
+    event: MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!tooltip) {
+      return;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent(ARTICLE_AI_CHAT_OPEN_EVENT, {
+        detail: {
+          context: tooltip.context,
+          selection: tooltip.selectedText,
+          slug,
+          title,
+        },
+      })
+    );
+    closeTooltip({ clearSelection: true });
+  };
+
   const closeFromButton = (
     event: MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>
   ) => {
@@ -517,6 +542,13 @@ export function ArticleSelectionTooltip({
             <div className="article-ai-tooltip__prompt">
               <p>用 Kimi 搜索并结合上下文解释这个词？</p>
               <div className="article-ai-tooltip__actions">
+                <button
+                  className="article-ai-tooltip__secondary-action"
+                  onClick={openSelectionInChat}
+                  type="button"
+                >
+                  放进问答
+                </button>
                 <button
                   className="article-ai-tooltip__primary-action"
                   onClick={requestExplanation}
@@ -581,6 +613,15 @@ export function ArticleSelectionTooltip({
                   </div>
                 </section>
               ) : null}
+              <div className="article-ai-tooltip__actions">
+                <button
+                  className="article-ai-tooltip__secondary-action"
+                  onClick={openSelectionInChat}
+                  type="button"
+                >
+                  继续问
+                </button>
+              </div>
             </div>
           ) : null}
         </div>

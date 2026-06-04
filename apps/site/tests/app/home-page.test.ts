@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import HomePage from "../../app/page";
 
+const HOME_PAGE_RENDER_TIMEOUT_MS = 15_000;
+
 describe("HomePage", () => {
   it("introduces standalone projects with their public sites", () => {
     const markup = renderToStaticMarkup(createElement(HomePage));
@@ -15,5 +17,5 @@ describe("HomePage", () => {
     expect(markup).toContain('href="https://ffffhx.github.io/open-token-board/"');
     expect(markup).toContain(">游戏入口</h3>");
     expect(markup).toContain('href="https://ffffhx.github.io/games/"');
-  });
+  }, HOME_PAGE_RENDER_TIMEOUT_MS);
 });

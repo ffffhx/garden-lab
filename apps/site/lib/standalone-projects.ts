@@ -7,6 +7,9 @@ export const OPEN_TOKEN_BOARD_URL =
 export const GAMES_SITE_URL =
   process.env.NEXT_PUBLIC_GAMES_SITE_URL || "https://ffffhx.github.io/games/";
 
+export const PROFILE_PILOT_URL =
+  process.env.NEXT_PUBLIC_PROFILE_PILOT_URL || "https://ffffhx.github.io/profilepilot/";
+
 export type StandaloneProject = {
   slug: string;
   title: string;
@@ -51,5 +54,16 @@ export const STANDALONE_PROJECTS: StandaloneProject[] = [
     description:
       "山居种田、森林卡牌和德州扑克等小游戏都搬到独立站点，Garden Lab 首页只保留公开跳转和项目介绍。",
     accentClassName: "text-[#2f6b4f]",
+  },
+  {
+    slug: "profilepilot",
+    title: "浏览器档案控制台",
+    productName: "ProfilePilot",
+    href: PROFILE_PILOT_URL,
+    displayUrl: "ffffhx.github.io/profilepilot",
+    badge: "Chrome工作台",
+    description:
+      "管理真实 Chrome Profile，创建隔离测试环境，迁移扩展和登录态，再把干净浏览器交给 Agent 或人工验证。",
+    accentClassName: "text-[#5b4aa0]",
   },
 ];

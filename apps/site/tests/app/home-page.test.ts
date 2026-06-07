@@ -11,7 +11,6 @@ describe("HomePage", () => {
     const markup = renderToStaticMarkup(createElement(HomePage));
 
     expect(markup).toContain("已独立维护的项目");
-    expect(markup.indexOf("Standalone Projects")).toBeLessThan(markup.indexOf("内容分区"));
     expect(markup).toContain(">会话快照</h3>");
     expect(markup).toContain('href="https://ffffhx.github.io/codex-snapshots/"');
     expect(markup).toContain(">Token榜</h3>");

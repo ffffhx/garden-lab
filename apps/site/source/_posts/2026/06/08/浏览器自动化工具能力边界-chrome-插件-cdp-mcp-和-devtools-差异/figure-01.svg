@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-label="浏览器能力面分层图">
+  <defs>
+    <style>
+      .title{font-family:Georgia,"Noto Serif SC","Songti SC",serif;font-weight:700}
+      .text{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#fbfaf7"/>
+  <text x="72" y="82" class="title" font-size="42" fill="#0f172a">浏览器不是一个平面，而是多层能力面</text>
+  <text x="72" y="122" class="text" font-size="20" fill="#64748b">同样叫浏览器自动化，真正差异在它站在哪一层。</text>
+  <g transform="translate(96 178)">
+    <rect x="0" y="0" width="1008" height="470" rx="22" fill="#fff" stroke="#cbd5e1"/>
+    <g transform="translate(58 44)">
+      <rect x="0" y="0" width="890" height="70" rx="14" fill="#eff6ff" stroke="#bfdbfe"/>
+      <text x="28" y="43" class="text" font-size="25" font-weight="700" fill="#1d4ed8">网页面：DOM、点击、输入、截图、可访问性树</text>
+      <text x="658" y="44" class="mono" font-size="18" fill="#2563eb">Playwright / Puppeteer</text>
+    </g>
+    <g transform="translate(58 126)">
+      <rect x="0" y="0" width="890" height="70" rx="14" fill="#f0fdf4" stroke="#bbf7d0"/>
+      <text x="28" y="43" class="text" font-size="25" font-weight="700" fill="#15803d">Chrome 插件面：书签、历史、侧边栏、扩展自己的 UI</text>
+      <text x="704" y="44" class="mono" font-size="18" fill="#16a34a">@chrome / chrome.*</text>
+    </g>
+    <g transform="translate(58 208)">
+      <rect x="0" y="0" width="890" height="70" rx="14" fill="#fff7ed" stroke="#fed7aa"/>
+      <text x="28" y="43" class="text" font-size="25" font-weight="700" fill="#c2410c">CDP 调试面：Network、Runtime、Target、Page、Trace</text>
+      <text x="676" y="44" class="mono" font-size="18" fill="#ea580c">agent-browser / CDP</text>
+    </g>
+    <g transform="translate(58 290)">
+      <rect x="0" y="0" width="890" height="70" rx="14" fill="#fdf2f8" stroke="#fbcfe8"/>
+      <text x="28" y="43" class="text" font-size="25" font-weight="700" fill="#be185d">DevTools 产品面：Performance、Lighthouse、Trace insight</text>
+      <text x="642" y="44" class="mono" font-size="18" fill="#db2777">Chrome DevTools MCP</text>
+    </g>
+    <g transform="translate(58 372)">
+      <rect x="0" y="0" width="890" height="70" rx="14" fill="#f5f3ff" stroke="#ddd6fe"/>
+      <text x="28" y="43" class="text" font-size="25" font-weight="700" fill="#6d28d9">站点适配面：把具体网站封装成稳定命令</text>
+      <text x="710" y="44" class="mono" font-size="18" fill="#7c3aed">bb-browser site</text>
+    </g>
+    <path d="M502 114V126M502 196V208M502 278V290M502 360V372" stroke="#334155" stroke-width="2.4" marker-end="url(#arrow)"/>
+  </g>
+  <text x="96" y="704" class="text" font-size="20" fill="#475569">判断工具能力时，先看它接入哪一层，再看它暴露了多少安全子集。</text>
+</svg>

@@ -42,6 +42,7 @@ coverPosition: "below-title"
 1. 它为什么强调“你的浏览器就是 API”
 1. 它的 CLI、Daemon、CDP、Chrome 是怎么串起来的
 1. 它到底复用哪个 Chrome profile 和登录态
+1. 为什么 Agent Browser 能连上某些授权 CDP 端口，而旧版 bb-browser 会卡在 `/json/version`
 1. 它怎样把 DOM 快照变成 Agent 可点击的 `@ref`
 1. site adapter 为什么是这个项目最有想象力的部分
 1. MCP 接入为什么几乎是顺手长出来的
@@ -339,6 +340,100 @@ const sharedAutomationProfile = { // 用对象描述推荐的共享自动化 pro
 所以这一节可以压成一句实践建议：
 
 **不要把“复用登录态”理解成“直接接管我的日常 Chrome”。更稳的理解是：给 Agent 一个专门的 Chrome profile，让它在这个受控身份里长期复用登录态。**
+
+## 4.2. 补充：为什么 Agent Browser 能连，旧版 bb-browser 可能连不上
+
+2026-06-08 我又遇到一个很容易误判的问题：Chrome 主进程明明监听了 `127.0.0.1:9222`，Agent Browser 可以连接，但 bb-browser 连接失败。第一反应很容易是“9222 不是 CDP 端口”或者“Chrome 没授权远程调试”，但实际问题更细。
+
+**端口监听只说明 Chrome 在本机接收连接，不等于传统 HTTP discovery endpoint 一定可用。**
+
+很多 CDP 客户端会先请求：
+
+```text
+GET http://127.0.0.1:9222/json/version
+GET http://127.0.0.1:9222/json/list
+```
+
+传统情况下，`/json/version` 会返回一个 `webSocketDebuggerUrl`：
+
+```json
+{
+  "webSocketDebuggerUrl": "ws://127.0.0.1:9222/devtools/browser/xxxx"
+}
+```
+
+客户端再拿这个地址建立 WebSocket。WebSocket 连上以后，才真正开始发送 CDP 命令，例如：
+
+```json
+{
+  "id": 1,
+  "method": "Browser.getVersion"
+}
+```
+
+但在某些较新的 Chrome 授权远程调试场景里，会出现一个很尴尬的状态：
+
+```text
+127.0.0.1:9222 正在监听
+/json/version 返回 404
+/json/list 返回 404
+Browser WebSocket 实际可用
+```
+
+这时真正的入口不一定来自 `/json/version`，而可能来自 Chrome 写在用户数据目录下的 `DevToolsActivePort` 文件。这个文件通常只有两行：
+
+```text
+9222
+/devtools/browser/1113fafe-7a05-410c-a561-4311833670d9
+```
+
+把它拼起来就是：
+
+```text
+ws://127.0.0.1:9222/devtools/browser/1113fafe-7a05-410c-a561-4311833670d9
+```
+
+Agent Browser 的实现正是多走了这一步。它的 `--auto-connect` 会读 Chrome 默认 user data 目录里的 `DevToolsActivePort`；在只给端口的 CDP 模式里，它也会在 `/json/version`、`/json/list` 失败后，尝试直接连接 `ws://127.0.0.1:9222/devtools/browser`，并用 `Browser.getVersion` 验证这个 WebSocket 是不是活的 CDP server。
+
+所以 Agent Browser 成功，不是因为它绕开了 CDP，而是因为它没有把“`/json/version` 可用”当成“CDP 可用”的唯一判据。
+
+旧版 bb-browser 的链路更保守：
+
+```text
+CLI 发现 CDP 端口
+  -> daemon 拿到 host / port
+  -> CdpConnection 请求 http://host:port/json/version
+  -> 从 webSocketDebuggerUrl 拿 Browser WebSocket
+  -> new WebSocket(wsUrl)
+```
+
+如果 `/json/version` 返回 404，它就拿不到 `webSocketDebuggerUrl`，后面也不会继续尝试 `DevToolsActivePort` 或 direct browser WebSocket。于是表现出来就是：同一个 `9222`，Agent Browser 能连，bb-browser 不能连。
+
+更稳的设计是把 discovery 结果从“只有 host / port”升级成“host / port / browserWebSocketUrl 可选”：
+
+```ts
+const cdpEndpoint = { // 用对象描述更完整的 CDP 发现结果
+  host: "127.0.0.1", // 本机 Chrome
+  port: 9222, // Chrome 监听的 TCP 端口
+  browserWebSocketUrl: "ws://127.0.0.1:9222/devtools/browser/xxxx", // 可选：已经发现的 Browser WebSocket
+}; // 发现结果说明结束
+```
+
+然后 daemon 建立连接时按这个顺序：
+
+```ts
+const wsUrl = browserWebSocketUrl ?? await readWebSocketFromJsonVersion(host, port); // 优先使用已知 WS，否则走传统 discovery
+const socket = new WebSocket(wsUrl); // 这里才是真正的 CDP 长连接
+```
+
+我给 bb-browser 提的修复也是这个方向：CLI 发现阶段可以从 `DevToolsActivePort` 或显式 `BB_BROWSER_CDP_URL=ws://...` 拿到 browser WebSocket；daemon 通过 `--cdp-ws-url` 接收它；`CdpConnection` 如果已经拿到 WebSocket，就直接连接，不再强依赖 `/json/version`。
+
+这个细节也提醒我：判断一个浏览器自动化工具“能不能连 CDP”，不能只看端口有没有监听，也不能只看 `/json/version` 是否返回 200。更准确的判断应该是：
+
+```text
+是否能拿到一个 browser-level WebSocket endpoint
+并且能通过它收到 Browser.getVersion 这类 CDP 命令响应
+```
 
 ## 5. 协议模型：Request / Response 是所有入口的共同语言
 
@@ -704,7 +799,9 @@ CLI、MCP、provider 都不用直接管 Chrome 连接，而是通过本地 HTTP 
 
 - [epiral/bb-browser GitHub 仓库](https://github.com/epiral/bb-browser)
 - [epiral/bb-browser 观察 commit](https://github.com/epiral/bb-browser/tree/561c00261981546d2e662329eb1343d072f80ea5)
+- [bb-browser PR：Support DevToolsActivePort CDP endpoints](https://github.com/epiral/bb-browser/pull/236)
 - [bb-browser npm 包](https://www.npmjs.com/package/bb-browser)
+- [vercel-labs/agent-browser GitHub 仓库](https://github.com/vercel-labs/agent-browser)
 - [epiral/bb-sites GitHub 仓库](https://github.com/epiral/bb-sites)
 - [bb-sites 观察 commit](https://github.com/epiral/bb-sites/tree/fce0d3a0a955137004eb5cd24aedb302d7596004)
 - [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/)

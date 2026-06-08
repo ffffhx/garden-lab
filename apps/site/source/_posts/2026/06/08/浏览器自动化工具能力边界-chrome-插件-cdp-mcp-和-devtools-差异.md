@@ -92,6 +92,23 @@ coverPosition: "below-title"
 
 Chrome 136 之后，Google 对默认 profile 的 remote debugging 做了安全收紧。官方博客说，`--remote-debugging-port` 和 `--remote-debugging-pipe` 在调试默认 Chrome data dir 时不再被尊重，必须配合非标准 `--user-data-dir`；Chrome for Testing 继续保留自动化场景的旧行为。参考：[Chrome remote debugging switches security change](https://developer.chrome.com/blog/remote-debugging-port)。
 
+### auto-connect 的授权不是一次性开关
+
+Chrome 144+ 的 auto-connect 流程解决的是“Agent 怎么请求连接当前正在运行的 Chrome”，不是“把某个 Agent 永久加入信任列表”。官方文档要求先到 `chrome://inspect/#remote-debugging` 手动启用 remote debugging，然后 MCP server 才能用 `--autoConnect` 请求连接当前浏览器。参考：[Connect your AI agent to your personal browser with auto-connect](https://developer.chrome.com/docs/devtools/agents/use-cases/auto-connect)。
+
+这里最容易误会的是：打开 remote debugging 只是在 Chrome 里打开这座桥，不等于以后每次都自动放行。Chrome DevTools MCP 的官方博客明确说，为了避免恶意滥用，每次 MCP server 请求 remote debugging session，Chrome 都会弹出确认框，让用户允许这次 session。参考：[Let your Coding Agent debug your browser session with Chrome DevTools MCP](https://developer.chrome.com/blog/chrome-devtools-mcp-debug-your-browser-session)。
+
+所以如果你每次用 agent-browser 或 Chrome DevTools MCP 接默认 profile 时都被问一次 `Allow`，这不是工具故障，而是 Chrome 把“真实浏览器 profile”当成敏感边界来保护。企业策略里有 `RemoteDebuggingAllowed`，但它只控制“是否允许 remote debugging”，不是“是否跳过每次确认弹窗”。参考：[RemoteDebuggingAllowed policy](https://chromeenterprise.google/policies/remote-debugging-allowed/)。
+
+实际使用时可以这样取舍：
+
+| 需求 | 更合适的做法 | 代价 |
+| --- | --- | --- |
+| 必须复用当前默认 profile 的真实登录态 | 接受每次 `Allow` 确认 | 安全边界最强，但交互最烦 |
+| 高频调试扩展、Network、Performance | 准备一个 Agent 专用 Chrome profile | 需要单独登录和维护状态 |
+| 自动化测试或 CI | Chrome for Testing / 独立 `--user-data-dir` | 不复用日常浏览器状态 |
+| 只操作普通网页登录态 | Codex `@chrome` 插件 | 不走这个 CDP 授权弹窗，但受扩展沙箱限制 |
+
 这件事直接影响了旧式工具：
 
 ```ts
@@ -376,6 +393,7 @@ Puppeteer 和 Playwright 官方都把 Chrome extension 放在专门章节里讲�
 | 操作真实网页登录态页面 | Codex `@chrome` 插件 | 默认 profile 体验最好，少折腾 CDP |
 | 本地开发扩展后 reload | agent-browser 或 Chrome DevTools MCP 扩展类别 | agent-browser 能进扩展页；DevTools MCP 有 reload_extension 工具 |
 | 在默认 profile 里操作 `chrome://extensions` | agent-browser | `--auto-connect` + CDP 更适合这个场景 |
+| 高频调试默认 profile，又不想每次点 `Allow` | Agent 专用 profile / 独立 `--user-data-dir` | Chrome 目前没有“永远允许这个 Agent”的普通设置 |
 | 启隔离浏览器测试扩展 | Puppeteer / Playwright / Chrome DevTools MCP | profile 可控，扩展开发 API 更直接 |
 | 读写书签 | 自己写 Chrome 扩展或已有扩展工具 | `chrome.bookmarks` 是正路 |
 | 查询历史记录 | Chrome extension API 或工具暴露的 history 能力 | 普通网页和普通 CDP 页面工具不是主场 |
@@ -412,6 +430,9 @@ Puppeteer 和 Playwright 官方都把 Chrome extension 放在专门章节里讲�
 ## 参考材料
 
 - [Chrome remote debugging switches security change](https://developer.chrome.com/blog/remote-debugging-port)
+- [Chrome DevTools MCP: debug your browser session](https://developer.chrome.com/blog/chrome-devtools-mcp-debug-your-browser-session)
+- [Chrome DevTools auto-connect](https://developer.chrome.com/docs/devtools/agents/use-cases/auto-connect)
+- [Chrome Enterprise RemoteDebuggingAllowed policy](https://chromeenterprise.google/policies/remote-debugging-allowed/)
 - [Chrome extension match patterns](https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns)
 - [Chrome bookmarks API](https://developer.chrome.com/docs/extensions/reference/api/bookmarks)
 - [Chrome history API](https://developer.chrome.com/docs/extensions/reference/api/history)

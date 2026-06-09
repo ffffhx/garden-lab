@@ -31,6 +31,7 @@ const NAV_LINKS: NavItem[] = [
 
 type SiteHeaderProps = {
   currentPathname?: string | null;
+  wide?: boolean;
 };
 
 function normalizeNavPathname(pathname: string | null | undefined) {
@@ -99,10 +100,15 @@ function NavLink({
   return item.private ? <PrivateFeatureGate>{link}</PrivateFeatureGate> : link;
 }
 
-export function SiteHeader({ currentPathname }: SiteHeaderProps) {
+export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-900/10 bg-[#fffdf7]/82 backdrop-blur-xl">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+      <div
+        className={cn(
+          "mx-auto flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8",
+          wide ? "max-w-[1680px] 2xl:px-10" : "max-w-7xl"
+        )}
+      >
         <div className="min-w-0 max-w-xl">
           <Link
             href="/"

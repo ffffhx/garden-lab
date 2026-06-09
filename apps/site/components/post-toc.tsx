@@ -51,7 +51,7 @@ export function PostToc({ headings }: PostTocProps) {
   }
 
   return (
-    <aside className="rounded-lg border border-slate-950/10 bg-[#fffdf7]/84 p-5 shadow-[0_24px_80px_-60px_rgba(15,23,42,0.58)] backdrop-blur xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:overscroll-contain">
+    <aside className="rounded-lg border border-slate-950/10 bg-[#fffdf7]/84 p-5 shadow-[0_24px_80px_-60px_rgba(15,23,42,0.58)] backdrop-blur xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:overscroll-contain 2xl:p-6">
       <p className="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-slate-500 xl:sticky xl:top-0 xl:bg-[#fffdf7]/95 xl:pb-3 xl:backdrop-blur">
         目录
       </p>

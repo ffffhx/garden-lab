@@ -57,13 +57,13 @@ export default async function PostPage({ params }: PostPageProps) {
   ) : null;
 
   return (
-    <main className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-      <article className="min-w-0 rounded-lg border border-slate-950/10 bg-[#fffdf7]/92 p-6 shadow-[0_32px_120px_-72px_rgba(15,23,42,0.68)] sm:p-10">
+    <main className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:gap-8">
+      <article className="min-w-0 rounded-lg border border-slate-950/10 bg-[#fffdf7]/92 p-6 shadow-[0_32px_120px_-72px_rgba(15,23,42,0.68)] sm:p-10 2xl:p-12">
         <div className="space-y-5">
           {post.coverPosition === "above-title" ? coverImage : null}
           <div className="space-y-3">
             <p className="text-sm uppercase tracking-[0.32em] text-slate-500">Post</p>
-            <h1 className="max-w-4xl break-words text-balance text-3xl font-semibold leading-[1.08] tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
+            <h1 className="max-w-[72rem] break-words text-balance text-3xl font-semibold leading-[1.08] tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
               {post.title}
             </h1>
           </div>

@@ -78,6 +78,7 @@ export default async function PostPage({ params }: PostPageProps) {
         </div>
         <div className="mt-10">
           <ArticleBody
+            contentImageSize={post.contentImageSize}
             enableAiChat
             excerpt={post.excerpt}
             headings={post.headings}

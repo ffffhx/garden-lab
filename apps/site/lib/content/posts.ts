@@ -16,6 +16,7 @@ import { compileMarkdown } from "@/lib/content/markdown";
 import { ensureUniqueSlug, slugifyPostStem } from "@/lib/content/slug";
 import type {
   CategoryKey,
+  ContentImageSize,
   CoverPosition,
   Post,
   PostSummary,
@@ -63,6 +64,10 @@ function normalizeTags(input: unknown) {
 
 function normalizeCoverPosition(input: unknown): CoverPosition {
   return input === "below-title" ? "below-title" : "above-title";
+}
+
+function normalizeContentImageSize(input: unknown): ContentImageSize {
+  return input === "phone-screenshot" ? "phone-screenshot" : "default";
 }
 
 function deriveExcerpt(explicitExcerpt: unknown, content: string) {
@@ -152,6 +157,7 @@ function loadPosts() {
       const tags = normalizeTags(parsed.data.tags);
       const cover = resolveOptimizedPostAssetUrl(assetBasePath, parsed.data.cover);
       const coverPosition = normalizeCoverPosition(parsed.data.coverPosition);
+      const contentImageSize = normalizeContentImageSize(parsed.data.contentImageSize);
       const reading = readingTime(decodeContentForReadingTime(compiled.content));
 
       return {
@@ -168,6 +174,7 @@ function loadPosts() {
         coverPosition,
         content: compiled.content,
         contentHtml: compiled.contentHtml,
+        contentImageSize,
         headings: compiled.headings,
         sourcePath: relativePath,
       } satisfies Post;

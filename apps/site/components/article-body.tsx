@@ -2,10 +2,11 @@ import React from "react";
 
 import { ArticleAiChat } from "@/components/article-ai-chat";
 import { ArticleSelectionTooltip } from "@/components/article-selection-tooltip";
-import type { Heading } from "@/lib/content/types";
+import type { ContentImageSize, Heading } from "@/lib/content/types";
 
 type ArticleBodyProps = {
   enableAiChat?: boolean;
+  contentImageSize?: ContentImageSize;
   excerpt?: string;
   headings?: Heading[];
   html: string;
@@ -20,6 +21,7 @@ function toArticleContentId(slug: string) {
 }
 
 export function ArticleBody({
+  contentImageSize = "default",
   enableAiChat = false,
   excerpt,
   headings = [],
@@ -34,6 +36,7 @@ export function ArticleBody({
       <ArticleSelectionTooltip slug={slug} title={title}>
         <div
           className="article-content"
+          data-content-image-size={contentImageSize}
           dangerouslySetInnerHTML={{ __html: html }}
           id={articleContentId}
         />

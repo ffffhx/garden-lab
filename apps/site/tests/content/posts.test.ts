@@ -52,4 +52,11 @@ describe("getPostBySlug", () => {
     expect(post?.cover).toContain("/cover-v2.webp");
     expect(post?.coverPosition).toBe("below-title");
   }, POST_SCAN_TIMEOUT_MS);
+
+  it("loads article-level content image sizing metadata", () => {
+    const post = getPostBySlug("claude-code");
+
+    expect(post).not.toBeNull();
+    expect(post?.contentImageSize).toBe("phone-screenshot");
+  }, POST_SCAN_TIMEOUT_MS);
 });

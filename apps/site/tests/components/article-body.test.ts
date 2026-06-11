@@ -27,6 +27,7 @@ describe("ArticleBody", () => {
     );
 
     expect(markup).toContain('id="article-content-demo-post"');
+    expect(markup).toContain('data-content-image-size="default"');
     expect(markup).toContain('aria-label="打开文章问答"');
     expect(markup).toContain('aria-label="文章问答"');
     expect(markup).toContain("问文章");

@@ -12,6 +12,7 @@ tags:
 excerpt: "整理了在中国订阅 Claude Code 和 Codex 的一套实际操作记录，其中 Claude Code 包括账号注册、订阅购买和代理搭建，Codex 则可以直接复用相同购买方式。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
+contentImageSize: "phone-screenshot"
 ---
 
 > 先说明一下：下面提到的这些平台，都是笔者自己实际用过的，不是广告，也不是推广，大家完全可以按自己的情况自由选择其他平台。

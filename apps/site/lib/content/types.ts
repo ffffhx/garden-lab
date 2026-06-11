@@ -14,6 +14,7 @@ export type Heading = {
 };
 
 export type CoverPosition = "above-title" | "below-title";
+export type ContentImageSize = "default" | "phone-screenshot";
 
 export type PostSummary = {
   slug: string;
@@ -34,6 +35,7 @@ export type PostCardSummary = Omit<PostSummary, "date">;
 export type Post = PostSummary & {
   content: string;
   contentHtml: string;
+  contentImageSize: ContentImageSize;
   headings: Heading[];
   sourcePath: string;
 };

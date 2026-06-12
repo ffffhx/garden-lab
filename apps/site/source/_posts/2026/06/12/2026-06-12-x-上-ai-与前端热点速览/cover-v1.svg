@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">2026-06-12 X 上 AI 与前端热点速览</title>
+  <desc id="desc">Fable 5 护栏、Codex Ona 收购、OpenAI 影响行动和 Vercel AI 工具更新组成的新闻封面。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f3f7f4"/>
+      <stop offset="48%" stop-color="#edf4fb"/>
+      <stop offset="100%" stop-color="#fbf3ec"/>
+    </linearGradient>
+    <filter id="shadow" x="-18%" y="-18%" width="136%" height="136%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#23303a" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="760" fill="url(#bg)"/>
+  <path d="M0 96 C138 46 280 122 450 76 C610 33 748 49 918 88 C1048 118 1144 96 1200 58 L1200 0 L0 0 Z" fill="#dfeee5" opacity="0.86"/>
+  <path d="M0 630 C126 596 289 664 438 622 C620 570 784 593 936 642 C1065 684 1146 652 1200 618 L1200 760 L0 760 Z" fill="#f4dfd5" opacity="0.88"/>
+  <g transform="translate(76 72)" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <text x="0" y="0" font-size="26" font-weight="700" fill="#35515a">每日新闻</text>
+    <text x="0" y="58" font-size="54" font-weight="800" fill="#172b31">X 上 AI 与前端热点速览</text>
+    <text x="0" y="104" font-size="23" fill="#5b696d">2026-06-11 12:00 至 2026-06-12 12:00 · 北京时间</text>
+  </g>
+  <g transform="translate(80 198)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1040" height="398" rx="18" fill="#fffefa" opacity="0.97"/>
+    <g transform="translate(54 48)" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+      <rect x="0" y="0" width="258" height="300" rx="18" fill="#eef8f2" stroke="#4c8c6a" stroke-width="3"/>
+      <circle cx="128" cy="88" r="46" fill="#244536"/>
+      <path d="M105 88 L124 107 L157 68" fill="none" stroke="#dff4e7" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="54" y="158" width="148" height="18" rx="9" fill="#4c8c6a" opacity="0.82"/>
+      <rect x="54" y="194" width="148" height="18" rx="9" fill="#4c8c6a" opacity="0.54"/>
+      <text x="40" y="250" font-size="25" font-weight="800" fill="#244536">护栏可见</text>
+      <text x="39" y="278" font-size="17" fill="#557061">模型回退 · 审计 · 信任</text>
+    </g>
+    <g transform="translate(360 42)" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+      <g>
+        <rect x="0" y="0" width="600" height="78" rx="16" fill="#eef6fb"/>
+        <rect x="24" y="22" width="34" height="34" rx="8" fill="#3f7fa0"/>
+        <text x="78" y="32" font-size="23" font-weight="800" fill="#163547">Fable 5 护栏争议</text>
+        <text x="78" y="59" font-size="16" fill="#526e7b">隐性切换变成可见回退，agent 需要真实执行记录</text>
+      </g>
+      <g transform="translate(0 98)">
+        <rect x="0" y="0" width="600" height="78" rx="16" fill="#f2f0fb"/>
+        <rect x="24" y="22" width="34" height="34" rx="8" fill="#6b5ca8"/>
+        <text x="78" y="32" font-size="23" font-weight="800" fill="#30294d">OpenAI 收购 Ona</text>
+        <text x="78" y="59" font-size="16" fill="#665f7e">Codex 长任务从本机控制面走向持久云工作区</text>
+      </g>
+      <g transform="translate(0 196)">
+        <rect x="0" y="0" width="600" height="78" rx="16" fill="#fff2e8"/>
+        <rect x="24" y="22" width="34" height="34" rx="8" fill="#c2733f"/>
+        <text x="78" y="32" font-size="23" font-weight="800" fill="#4a2a19">AI 基础设施叙事战</text>
+        <text x="78" y="59" font-size="16" fill="#725847">数据中心、电价、关税和内容生成进入同一风险面</text>
+      </g>
+      <g transform="translate(0 294)">
+        <rect x="0" y="0" width="600" height="52" rx="14" fill="#edf8f7"/>
+        <text x="24" y="33" font-size="18" font-weight="700" fill="#315d63">Vercel：Grok Build 插件 · AI Gateway Azure DeepSeek 路由</text>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(86 664)" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <rect x="0" y="-30" width="1028" height="60" rx="16" fill="#ffffff" opacity="0.75"/>
+    <text x="24" y="8" font-size="18" font-weight="700" fill="#4c5b60">追踪：Codex Ona · Claude Code 2.1.173 · Fable 5 · Vercel AI Gateway</text>
+  </g>
+</svg>

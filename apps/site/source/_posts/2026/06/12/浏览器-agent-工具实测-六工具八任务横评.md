@@ -216,11 +216,27 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 
 ### 6.2 agent-browser：Rust 直连调试协议的薄 CLI
 
-agent-browser 是用 Rust 写的一个薄 CLI，直接连 CDP（Chrome 的调试协议），而且能 `connect` 到任意一个调试目标——实测里我用一个本地 Electron 应用验证过 `--cdp` 直连的完整流程。它不像 DevTools MCP 那样在底下背一个 Puppeteer，也不像 bb-browser 那样架一个常驻后台进程，整条链路很短：命令直接翻译成调试协议调用。这种"协议层直给、原语克制"的取向体现在它的几个特点上：页面快照短、元素引用稳、长对话省 token；网络请求是被动留底的，事后随时能查响应体。它在八道题里拿到满分、全程只被迫用了一次 eval 兜底，靠的就是这套克制而直接的实现。（agent-browser 没有公开的源码解析单篇，这一节的机制以本文实测和它的公开命令行为为准。）
+agent-browser 是用 Rust 写的一个薄 CLI，直接连 CDP（Chrome 的调试协议），而且能 `connect` 到任意一个调试目标——实测里我用一个本地 Electron 应用验证过 `--cdp` 直连的完整流程。它不像 DevTools MCP 那样在底下背一个 Puppeteer，也不像 bb-browser 那样架一个常驻后台进程，整条链路很短：命令直接翻译成调试协议调用。这种"协议层直给、原语克制"的取向体现在它的几个特点上：页面快照短、元素引用稳、长对话省 token；网络请求是被动留底的，事后随时能查响应体。它在八道题里拿到满分、全程只被迫用了一次 eval 兜底，靠的就是这套克制而直接的实现。（agent-browser 没有公开的源码解析单篇，这一节的机制以本文实测和它的公开命令行为为准。）它和 bb-browser 在链路上的差别，见 6.3 的对比图。
 
 ### 6.3 bb-browser：后台常驻进程 + 调试协议 + 站点适配器
 
 bb-browser 同样站在 CDP 调试层，但形态和 agent-browser 完全不同。它对外有三个入口——CLI、MCP server、provider（给上层框架注册用），但这三个入口谁都不直接连 Chrome，而是统一汇到一个常驻的后台进程（默认监听 `127.0.0.1:19824`）。这个后台进程才是核心中转站：它维持着和 Chrome 的唯一一条调试长连接、记录每个标签页的状态、持续监听网络/控制台/报错事件，再把各入口发来的命令翻译成调试协议调用。这样 CLI、MCP、provider 就都不用各自再实现一遍浏览器连接和标签页管理。
+
+画成链路图，bb-browser 和 agent-browser 的差别一眼可见——注意两边的 Agent 都不是自己说 CDP，真正连 CDP 的都是工具进程，区别只在中间多不多一层常驻 daemon：
+
+```
+agent-browser（链路短，没有独立 daemon）
+  Agent 发命令
+    → agent-browser CLI（Rust 直接说 CDP）
+    → Chrome 的 CDP 端口
+
+bb-browser（多一层常驻 daemon 中转）
+  Agent 发命令
+    → bb-browser CLI（瘦客户端）
+    → 本地 HTTP（127.0.0.1:19824）
+    → daemon（常驻，持有唯一 CDP 长连接 + 各 tab 状态）
+    → Chrome 的 CDP 端口
+```
 
 它最有标志性的一句话是"你的浏览器就是 API"。意思是：网站本来就是给浏览器用的，那就让 Agent 直接进到真实的标签页上下文里执行代码——于是发出的请求天然带着当前账号的 Cookie 和本地存储，页面的前端运行时和状态也都在，Agent 可以直接调同源接口、复用页面自己的请求封装，不必非得去解析界面。这也正是 4.5 里它点击功能整个坏掉、却还能靠 eval 答对 7 道题的底气来源。
 

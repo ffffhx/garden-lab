@@ -2,7 +2,7 @@
 title: "Codex 和 Claude Code 最近一个月更新了什么：两个 Coding Agent 都在变成工作台"
 date: "2026-05-03 10:30:00"
 categories:
-  - 技术
+  - 每日新闻
 tags:
   - Codex
   - Claude Code

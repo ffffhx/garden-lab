@@ -30,7 +30,7 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 
 > **工具实际能力 = min(协议层上限, 产品封装范围, 安全策略)**
 
-矩阵里每一个 ❌ 和 ⚠️，都能归因到这三个因素中的一个。后文逐格验证。
+矩阵里每一个 ❌ 和 ⚠️，都能归因到这三个因素中的一个。后文逐格验证，并在第 6 节把每个工具的源码实现原理一并收进来——让矩阵里的每条边界都能落到具体代码。
 
 ## 1. 理论：能力从哪一层来，边界由什么决定
 
@@ -198,7 +198,31 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 4. **粗粒度组合动作 vs 细粒度原语**。DevTools MCP 用一半操作数完赛（fill_form 一次填整张表、wait_for 等待确认合一），但预想工作流之外就要翻墙；CLI 细原语常规路径多走几步，却能拼出作者没想到的流程。微软给 playwright-cli 的官方定位（"CLI 给高吞吐编码 Agent，MCP 给持久状态场景"）与实测互相印证。
 5. **无偏成本约为熟练者的 2~4 倍**。评测报告里的数字应该以无偏 Agent 为准——那才是真实用户要付的价格。
 
-## 6. 实测修订版选型路由表
+## 6. 各工具实现原理：矩阵背后的源码
+
+前五节用"站在哪一层 + 三因子"解释了每个 ✅/⚠️/❌。这一节再往下钻一层：这些边界在各工具源码里具体长什么样。每个工具我都单独写过一篇实现原理解析，这里只取与本文结论直接相关的核心机制，想看完整源码走读可顺着链接进去。
+
+### 6.1 Codex `@chrome` / `@browser`：被 feature gate 和沙箱 socket 收口的能力
+
+`@chrome` / `@browser` 不是一段独立浏览器脚本，而是接在 Codex App Server、agent loop、plugin 与安全策略之上的一等能力，Agent 经本地 IPC 访问 Codex 自带的浏览器后端，而非直接驱动系统 Chrome。公开的 `openai/codex` 仓库里搜不到它的本体——没有插件目录、没有 `agent.browser.*` API，开源的只是承载它的平台层；能找到的最硬证据有两条：`codex-rs/features/src/lib.rs` 把 `BrowserUse` 与 `InAppBrowser`、`ComputerUse` 并列成一等 feature（默认开启，但最终开关由组织远端归一化，所以同版本不同账号能力不同），以及 `seatbelt_tests.rs` 专门把 `/tmp/codex-browser-use` 这个 Unix socket 加进 macOS 沙箱 allowlist——受限的 Agent 必须经一条明确放行的本地 socket 去和独立浏览器控制进程通信。**这正是矩阵里那一串 ❌ 的源头**：能力被层层关进 feature gate + requirements + 沙箱 socket，动作走受限桥接，于是天然止于页面可见域、`evaluate` 只读——4.5 那笔"真实登录态 vs Runtime 可写性二选一"的交易，在源码层就是这样焊死的。（以上从公开部分推导，非官方实现确认；完整边界分析见[《Codex Browser Use 实现原理公开了吗》](https://ffffhx.github.io/garden-lab/post/codex-browser-use/)。）
+
+### 6.2 agent-browser：Rust 直连 CDP 的薄 CLI
+
+agent-browser 是 Rust 写的薄 CLI，直接连 CDP，能 `connect` 任意 CDP 目标（实测用本地 Electron 应用验证过 `--cdp` 直连全流程）。它不像 DevTools MCP 那样背一个 Puppeteer，也不像 bb-browser 那样架常驻 daemon——快照短、ref 稳、长轮次省 token 是它的设计取向，被动留底的 network 让它事后可查响应体。它在 T01–T08 拿到满分、自救只用 1 次，靠的就是"协议层直给 + 原语克制"。（本系列暂无它的独立源码解析单篇，机制以本文实测为准。）
+
+### 6.3 bb-browser：daemon + CDP + site adapter
+
+bb-browser 同样站在 CDP 层，但形态和 agent-browser 不同：CLI / MCP / provider 三个入口都收敛到一个常驻 daemon，由它维持唯一一条 CDP 长连接、维护各 tab 状态、监听 network/console/error。它的卖点"你的浏览器就是 API"指的是让 Agent 直接进入真实 tab 上下文执行代码，天然带上 profile 的 cookie 与页面运行时——这也是 4.5 里它 click 全坏却靠 eval 答对 7 题的底气。所有动作抽象成统一的 Request/Response 协议、由 `COMMANDS` 注册表用 schema 描述，三个入口从同一份元数据生成。snapshot 注入 `buildDomTree.js` 给可交互元素分配 `@ref`、daemon 再把 ref 解析回 backend node 经 CDP 派发事件（4.5 的 click bug 就出在这条事件注入链上，是实现 bug 而非边界）。它的两个差异化——site adapter（带 `@meta` 的 JS 按 domain 注入 `eval`，把网站能力沉淀成命令）和每 tab 的 ring buffer + `seq`/`lastActionSeq` 增量观察（4.2 那条 trace 因果链的来源）——在 4.6 被实测从反面证明是更稳的方向。完整源码走读见[《bb-browser 源码解析》](https://ffffhx.github.io/garden-lab/post/bb-browser-agent-api/)。
+
+### 6.4 Chrome DevTools MCP：把 DevTools 调试工作流包成工具
+
+Chrome DevTools MCP 是本地 MCP stdio server，接管的是浏览器的"调试会话"层。启动入口很薄，真正逻辑在 `createMcpServer`，浏览器懒启动（`listTools` 不拉起 Chrome）；执行底座不是手写 CDP 而是 Puppeteer。工具统一收敛到 `ToolDefinition`（zod schema + handler），注册时套一层运行时治理——分类过滤、`Mutex` 串行化调用、懒加载 `McpContext`。它对 Agent 友好的关键在 `McpContext`：把页面列表、network/console collector 维护成可读上下文，输入用 a11y tree 快照给每个节点分配跨快照唯一的 `uid`，`click`/`fill` 凭 `uid` 找回元素。**4.3 它性能诊断 111 秒直出结构化归因的能力，源头是它直接复用了 `chrome-devtools-frontend` 的 TraceEngine 与 Insight formatter**——不自造指标解释器，而是搬来 DevTools 面向人类的那套诊断模型。一句话：它封装的不是浏览器 API，是 DevTools 的整套调试工作流。完整解析见[《Chrome DevTools MCP 实现原理解析》](https://ffffhx.github.io/garden-lab/post/chrome-devtools-mcp-agent/)。
+
+### 6.5 playwright-cli：把 Playwright 引擎装成工程化总入口
+
+playwright-cli 站在 Playwright 引擎（CDP/BiDi 之上的自动化层）。三个包分层：`playwright-core` 提供 open/codegen/screenshot/install 等基础命令，`playwright` / `@playwright/test` 再叠加测试与报告命令，bin 极薄只做 `program.parse`。`playwright test` 把 `--headed`/`--trace` 等参数先归一成 `cliOverrides` 再合并成单一 `FullConfigInternal`，运行用任务链（load → run）描述生命周期，并用 phase + worker 调度而非裸 `Promise.all`。它在 4.1 一次命中"视口外 3px 按钮"的可靠性，来自引擎的 actionability：动作前自动检查元素可见、稳定、可交互——把"人类能不能执行这个动作"编码进动作模型，从根上消掉硬等待的偶发失败；Locator 是"怎么找元素"的可重复规则而非一次性节点引用，重渲染后自动指向新节点。CLI 还新增了 `run-test-mcp-server`、`init-agents` 入口，使它同时成为人、CI、MCP、agent 的共用集成层——这正是第 8 节核对表里"playwright-cli 补齐 snapshot/ref/auto-wait、综合成绩全场最佳"的工程来源。实现细节见[《Playwright CLI 实现原理解析》](https://ffffhx.github.io/garden-lab/post/playwright-cli-npx-playwright/)与[《Playwright 开源了吗》](https://ffffhx.github.io/garden-lab/post/playwright-ai-agent/)。
+
+## 7. 实测修订版选型路由表
 
 理论篇第 8 节的表按数据修订（**加粗 = 与理论版不同**）：
 
@@ -214,7 +238,7 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 | 排障复盘（动作↔请求因果） | bb-browser trace | trigger 关联是全场独有 |
 | 长期回归测试 | Playwright（库） | 不变；playwright-cli 让"Playwright 系"同时覆盖了 Agent 日常操作 |
 
-## 7. 理论断言核对表
+## 8. 理论断言核对表
 
 | 理论篇断言 | 裁决 | 归因因子 |
 | --- | --- | --- |
@@ -229,7 +253,7 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 
 理论框架本身——按层定上限、按安全域解释取舍、按任务阶段路由——全部站住了；被推翻的都是具体工具格子。这说明此类文章的保鲜期取决于工具版本，**结论应该和版本号写在一起**。
 
-## 8. 下一步
+## 9. 下一步
 
 - T09（扩展 reload）、T10（真实登录态）未实测——后者是 @chrome/@browser 的主场，预期会改写路由表一行。
 - 增加每 cell 重复次数收方差；引入弱一档模型验证 5.1 的预言。
@@ -241,7 +265,13 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 - 靶场与任务卡：`apps/browser-tool-bench/`（零依赖 Node 测试站 + T01-T10 任务卡 + 复现步骤）
 - 原始数据：`results/formal-2026-06-12/`（ab vs bb）、`results/formal-2026-06-12-mcp/`（ab vs DevTools MCP）、`results/formal-2026-06-12-pw/`（playwright-cli）、`results/codex-plugins-2026-06-12/`（@chrome/@browser，Codex 宿主）
 - 版本：agent-browser 0.27.2 · bb-browser 0.14.2 · chrome-devtools-mcp 1.2.0 · @playwright/cli 0.1.14 · Chrome 148/149 · 模型 claude-fable-5（Codex 轮除外）
-- 理论篇：《浏览器 Agent 工具怎么选》（2026-06-08），其框架是本文第 1 节的来源
+- 理论篇：[《浏览器 Agent 工具怎么选》](https://ffffhx.github.io/garden-lab/post/chrome-cdp-mcp-devtools/)（2026-06-08），其框架是本文第 1 节的来源
+- 实现原理深挖系列（第 6 节各小节的完整源码走读）：
+  - [Codex Browser Use 实现原理公开了吗](https://ffffhx.github.io/garden-lab/post/codex-browser-use/)
+  - [bb-browser 源码解析](https://ffffhx.github.io/garden-lab/post/bb-browser-agent-api/)
+  - [Chrome DevTools MCP 实现原理解析](https://ffffhx.github.io/garden-lab/post/chrome-devtools-mcp-agent/)
+  - [Playwright CLI 实现原理解析](https://ffffhx.github.io/garden-lab/post/playwright-cli-npx-playwright/)
+  - [Playwright 开源了吗：从浏览器自动化到 AI Agent 工具链](https://ffffhx.github.io/garden-lab/post/playwright-ai-agent/)
 
 ### 参考
 

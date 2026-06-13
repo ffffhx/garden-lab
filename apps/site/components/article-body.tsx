@@ -2,6 +2,7 @@ import React from "react";
 
 import { ArticleAiChat } from "@/components/article-ai-chat";
 import { ArticleSelectionTooltip } from "@/components/article-selection-tooltip";
+import { PrivateFeatureGate } from "@/components/private-feature-access";
 import type { ContentImageSize, Heading } from "@/lib/content/types";
 
 type ArticleBodyProps = {
@@ -42,13 +43,15 @@ export function ArticleBody({
         />
       </ArticleSelectionTooltip>
       {enableAiChat ? (
-        <ArticleAiChat
-          articleContentId={articleContentId}
-          excerpt={excerpt ?? ""}
-          headings={headings}
-          slug={slug}
-          title={title}
-        />
+        <PrivateFeatureGate>
+          <ArticleAiChat
+            articleContentId={articleContentId}
+            excerpt={excerpt ?? ""}
+            headings={headings}
+            slug={slug}
+            title={title}
+          />
+        </PrivateFeatureGate>
       ) : null}
     </>
   );

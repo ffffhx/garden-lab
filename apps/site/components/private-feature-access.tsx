@@ -10,6 +10,8 @@ import {
   useState,
 } from "react";
 
+import { cn } from "@/lib/utils/cn";
+
 type PrivateFeatureStatus = "allowed" | "denied" | "loading";
 
 type PrivateFeatureViewer = {
@@ -64,6 +66,33 @@ export function PrivateFeatureGate({
   }
 
   return children;
+}
+
+export function PrivateBadge({
+  className,
+  withText = false,
+}: {
+  className?: string;
+  withText?: boolean;
+}) {
+  return (
+    <span
+      title="仅自己可见"
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border border-amber-300/70 bg-amber-50/90 px-1.5 py-0.5 text-[0.65rem] font-semibold leading-none text-amber-700",
+        className
+      )}
+    >
+      <svg viewBox="0 0 16 16" width="10" height="10" fill="currentColor" aria-hidden="true">
+        <path d="M8 1.5A2.75 2.75 0 0 0 5.25 4.25V6H5A1.5 1.5 0 0 0 3.5 7.5v5A1.5 1.5 0 0 0 5 14h6a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11 6h-.25V4.25A2.75 2.75 0 0 0 8 1.5Zm1.25 4.5h-2.5V4.25a1.25 1.25 0 0 1 2.5 0V6Z" />
+      </svg>
+      {withText ? <span>仅自己可见</span> : <span className="sr-only">仅自己可见</span>}
+    </span>
+  );
+}
+
+export function useIsPrivateFeatureAllowed() {
+  return usePrivateFeatureAccess().status === "allowed";
 }
 
 export function PrivateFeaturePageFallback() {

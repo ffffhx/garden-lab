@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 
-import { PrivateFeatureGate } from "@/components/private-feature-access";
+import { PrivateBadge, PrivateFeatureGate } from "@/components/private-feature-access";
 import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
 import { cn } from "@/lib/utils/cn";
 import { normalizeBasePath, withBasePath } from "@/lib/utils/site-path";
@@ -86,13 +86,21 @@ function NavLink({
       ? "bg-slate-950 font-semibold !text-white shadow-[0_10px_28px_-22px_rgba(15,23,42,0.85)]"
       : "text-slate-700 hover:bg-amber-100 hover:text-slate-950"
   );
+  const labelNode = item.private ? (
+    <span className="inline-flex items-center gap-1.5">
+      {item.label}
+      <PrivateBadge />
+    </span>
+  ) : (
+    item.label
+  );
   const link = item.external ? (
     <a href={item.href} target="_blank" rel="noreferrer" className={className}>
-      {item.label}
+      {labelNode}
     </a>
   ) : (
     <Link href={item.href} aria-current={active ? "page" : undefined} className={className}>
-      {item.label}
+      {labelNode}
     </Link>
   );
 

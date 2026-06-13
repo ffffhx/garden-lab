@@ -19,6 +19,7 @@ export type StandaloneProject = {
   badge: string;
   description: string;
   accentClassName: string;
+  private?: boolean;
 };
 
 export const STANDALONE_PROJECTS: StandaloneProject[] = [
@@ -54,6 +55,7 @@ export const STANDALONE_PROJECTS: StandaloneProject[] = [
     description:
       "山居种田、森林卡牌和德州扑克等小游戏都搬到独立站点，Garden Lab 首页只保留公开跳转和项目介绍。",
     accentClassName: "text-[#2f6b4f]",
+    private: true,
   },
   {
     slug: "profilepilot",

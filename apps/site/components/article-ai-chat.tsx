@@ -13,6 +13,7 @@ import {
   ARTICLE_AI_CHAT_OPEN_EVENT,
   type ArticleAiChatOpenDetail,
 } from "@/components/article-ai-chat-events";
+import { PrivateBadge } from "@/components/private-feature-access";
 import type { Heading } from "@/lib/content/types";
 
 type ChatRole = "assistant" | "user";
@@ -425,6 +426,7 @@ export function ArticleAiChat({
       >
         <span className="article-ai-chat__launcher-mark">AI</span>
         <span>问文章</span>
+        <PrivateBadge className="border-none bg-transparent px-0 py-0 text-current" />
       </button>
 
       <aside

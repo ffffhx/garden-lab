@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
 import { PostCard } from "@/components/post-card";
+import { PrivateBadge, PrivateFeatureGate } from "@/components/private-feature-access";
 import { getAllCategories } from "@/lib/content/categories";
 import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
 import { getArticlePosts, getDailyNewsPosts } from "@/lib/content/posts";
@@ -73,41 +74,49 @@ export default function HomePage() {
           </p>
         </div>
         <div className="grid min-w-0 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {STANDALONE_PROJECTS.map((project) => (
-            <article
-              key={project.slug}
-              className="group flex min-h-[17rem] flex-col rounded-lg border border-slate-900/10 bg-white/86 p-5 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.5)] transition hover:-translate-y-1 hover:border-slate-900/18 hover:shadow-[0_32px_96px_-58px_rgba(15,23,42,0.58)]"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span
-                  className={`font-mono text-xs font-black uppercase tracking-[0.08em] ${project.accentClassName}`}
-                >
-                  {project.badge}
-                </span>
-                <span className="rounded-full border border-slate-950/10 px-3 py-1 text-xs font-semibold text-slate-500">
-                  独立站
-                </span>
-              </div>
-              <h3 className="mt-5 text-2xl font-semibold tracking-tight text-slate-950">
-                {project.title}
-              </h3>
-              <p className="mt-1 text-sm font-semibold text-slate-500">{project.productName}</p>
-              <p className="mt-4 text-base leading-8 text-slate-700">{project.description}</p>
-              <div className="mt-auto pt-5">
-                <p className="break-all font-mono text-xs font-semibold text-slate-500">
-                  {project.displayUrl}
-                </p>
-                <a
-                  href={project.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold !text-white transition hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
-                >
-                  打开网站
-                </a>
-              </div>
-            </article>
-          ))}
+          {STANDALONE_PROJECTS.map((project) => {
+            const card = (
+              <article className="group flex min-h-[17rem] flex-col rounded-lg border border-slate-900/10 bg-white/86 p-5 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.5)] transition hover:-translate-y-1 hover:border-slate-900/18 hover:shadow-[0_32px_96px_-58px_rgba(15,23,42,0.58)]">
+                <div className="flex items-center justify-between gap-3">
+                  <span
+                    className={`font-mono text-xs font-black uppercase tracking-[0.08em] ${project.accentClassName}`}
+                  >
+                    {project.badge}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {project.private ? <PrivateBadge withText /> : null}
+                    <span className="rounded-full border border-slate-950/10 px-3 py-1 text-xs font-semibold text-slate-500">
+                      独立站
+                    </span>
+                  </span>
+                </div>
+                <h3 className="mt-5 text-2xl font-semibold tracking-tight text-slate-950">
+                  {project.title}
+                </h3>
+                <p className="mt-1 text-sm font-semibold text-slate-500">{project.productName}</p>
+                <p className="mt-4 text-base leading-8 text-slate-700">{project.description}</p>
+                <div className="mt-auto pt-5">
+                  <p className="break-all font-mono text-xs font-semibold text-slate-500">
+                    {project.displayUrl}
+                  </p>
+                  <a
+                    href={project.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold !text-white transition hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
+                  >
+                    打开网站
+                  </a>
+                </div>
+              </article>
+            );
+
+            return project.private ? (
+              <PrivateFeatureGate key={project.slug}>{card}</PrivateFeatureGate>
+            ) : (
+              <React.Fragment key={project.slug}>{card}</React.Fragment>
+            );
+          })}
         </div>
       </section>
 

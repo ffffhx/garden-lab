@@ -12,6 +12,7 @@ import React, {
 } from "react";
 
 import { ARTICLE_AI_CHAT_OPEN_EVENT } from "@/components/article-ai-chat-events";
+import { PrivateBadge, useIsPrivateFeatureAllowed } from "@/components/private-feature-access";
 
 type SelectionExplanation = {
   term: string;
@@ -192,6 +193,7 @@ export function ArticleSelectionTooltip({
   const suppressSelectionCaptureRef = useRef(false);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const privateAllowed = useIsPrivateFeatureAllowed();
 
   const closeTooltip = useCallback((options?: { clearSelection?: boolean }) => {
     abortRef.current?.abort();
@@ -499,7 +501,7 @@ export function ArticleSelectionTooltip({
   return (
     <div className="article-selection-layer" ref={containerRef}>
       {children}
-      {tooltip ? (
+      {tooltip && privateAllowed ? (
         <div
           aria-live="polite"
           className="article-ai-tooltip"
@@ -519,6 +521,7 @@ export function ArticleSelectionTooltip({
           <div className="article-ai-tooltip__header">
             <div className="min-w-0">
               <p className="article-ai-tooltip__eyebrow">Kimi 搜索</p>
+              <PrivateBadge className="mt-1" />
               <p className="article-ai-tooltip__term" title={tooltip.selectedText}>
                 {tooltip.selectedText}
               </p>

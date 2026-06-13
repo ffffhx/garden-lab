@@ -26,7 +26,6 @@ const NAV_LINKS: NavItem[] = [
   },
   { href: "/pet", label: "桌宠", private: true },
   { href: "/search", label: "搜索" },
-  { href: "/about", label: "关于" },
 ];
 
 type SiteHeaderProps = {

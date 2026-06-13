@@ -58,6 +58,8 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 | Chrome DevTools MCP | CDP 调试面 + DevTools 产品面 | MCP server |
 | playwright-cli | Playwright 引擎（CDP/BiDi 之上的自动化层） | CLI |
 
+注意 playwright-cli 这一行：它的底座其实仍是 CDP/BiDi，只是 Playwright 在其上自封了一层跨浏览器的自动化引擎（Locator、自动等待等浏览器原生没有的能力），你直接面对的是这层引擎而不是裸 CDP，所以单列而没归进「CDP 调试面」。
+
 ### 1.2 边界公式的三个因素
 
 站位只决定**上限**，实际能力还要再砍两刀：

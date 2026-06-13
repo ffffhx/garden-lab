@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">2026-06-13 X 上 AI 与前端热点速览</title>
+  <desc id="desc">Meta AI 组织、KPMG 幻觉报告、token 成本、MiMo Code 和 Vercel AI 工具链组成的新闻封面。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8f6ef"/>
+      <stop offset="50%" stop-color="#eef6f4"/>
+      <stop offset="100%" stop-color="#f2f0fb"/>
+    </linearGradient>
+    <filter id="shadow" x="-18%" y="-18%" width="136%" height="136%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#1f2933" flood-opacity="0.13"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="760" fill="url(#bg)"/>
+  <path d="M0 118 C150 64 280 122 430 80 C604 32 750 54 928 104 C1056 140 1147 116 1200 86 L1200 0 L0 0 Z" fill="#dceee7" opacity="0.88"/>
+  <path d="M0 635 C150 590 296 668 466 618 C642 566 810 598 982 650 C1080 680 1148 652 1200 626 L1200 760 L0 760 Z" fill="#eadff6" opacity="0.86"/>
+  <g transform="translate(76 72)" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <text x="0" y="0" font-size="26" font-weight="700" fill="#4e5b55">每日新闻</text>
+    <text x="0" y="58" font-size="54" font-weight="800" fill="#172820">X 上 AI 与前端热点速览</text>
+    <text x="0" y="104" font-size="23" fill="#627069">2026-06-12 12:00 至 2026-06-13 12:00 · 北京时间</text>
+  </g>
+  <g transform="translate(82 196)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1036" height="408" rx="18" fill="#fffef9" opacity="0.97"/>
+    <g transform="translate(52 48)" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+      <rect x="0" y="0" width="274" height="312" rx="18" fill="#edf8f2" stroke="#4f8a66" stroke-width="3"/>
+      <circle cx="137" cy="82" r="42" fill="#2f5f46"/>
+      <path d="M116 83 L132 100 L160 66" fill="none" stroke="#e4f5ea" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="54" y="148" width="166" height="18" rx="9" fill="#4f8a66" opacity="0.82"/>
+      <rect x="54" y="184" width="166" height="18" rx="9" fill="#4f8a66" opacity="0.54"/>
+      <rect x="54" y="220" width="118" height="18" rx="9" fill="#4f8a66" opacity="0.34"/>
+      <text x="38" y="272" font-size="25" font-weight="800" fill="#294c39">事实核验</text>
+      <text x="38" y="300" font-size="17" fill="#597062">来源 · 成本 · 运行时</text>
+    </g>
+    <g transform="translate(366 44)" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+      <g>
+        <rect x="0" y="0" width="600" height="66" rx="15" fill="#f1f5fb"/>
+        <rect x="24" y="19" width="30" height="30" rx="8" fill="#517aa6"/>
+        <text x="76" y="29" font-size="22" font-weight="800" fill="#203852">Meta AI 组织震荡</text>
+        <text x="76" y="54" font-size="15" fill="#617080">全员 AI 需要问题边界，不只是动员口号</text>
+      </g>
+      <g transform="translate(0 82)">
+        <rect x="0" y="0" width="600" height="66" rx="15" fill="#fff3e9"/>
+        <rect x="24" y="19" width="30" height="30" rx="8" fill="#bd7442"/>
+        <text x="76" y="29" font-size="22" font-weight="800" fill="#4d2f1c">KPMG 报告幻觉</text>
+        <text x="76" y="54" font-size="15" fill="#765c49">企业内容要能回链证据，而不是只显得正式</text>
+      </g>
+      <g transform="translate(0 164)">
+        <rect x="0" y="0" width="600" height="66" rx="15" fill="#eef8f6"/>
+        <rect x="24" y="19" width="30" height="30" rx="8" fill="#3b8780"/>
+        <text x="76" y="29" font-size="22" font-weight="800" fill="#1e4a47">token 价格战</text>
+        <text x="76" y="54" font-size="15" fill="#55706e">agent 成本治理从总量走向任务级报表</text>
+      </g>
+      <g transform="translate(0 246)">
+        <rect x="0" y="0" width="286" height="66" rx="15" fill="#f4f0fb"/>
+        <text x="24" y="29" font-size="21" font-weight="800" fill="#3f345f">MiMo Code</text>
+        <text x="24" y="54" font-size="15" fill="#665f7b">开源 harness 与长任务记忆</text>
+        <rect x="314" y="0" width="286" height="66" rx="15" fill="#eef5ff"/>
+        <text x="338" y="29" font-size="21" font-weight="800" fill="#243e66">Vercel AI SDK</text>
+        <text x="338" y="54" font-size="15" fill="#5d6d83">agent harness 接入前端平台</text>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(86 666)" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <rect x="0" y="-30" width="1028" height="60" rx="16" fill="#ffffff" opacity="0.76"/>
+    <text x="24" y="8" font-size="18" font-weight="700" fill="#4f5c60">追踪：Codex 0.139.0 · Ona · Claude Code 2.1.176 · AI Gateway · HarnessAgent</text>
+  </g>
+</svg>

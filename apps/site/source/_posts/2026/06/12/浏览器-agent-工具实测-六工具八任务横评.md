@@ -19,7 +19,7 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 
 判断一个浏览器 Agent 工具，问一个问题就够了：**它能让 Agent 多容易地完成任务？**
 
-我之前写过一篇理论文章，从"Agent 友好度"和浏览器能力分层的角度推演各工具的边界。但推演终归是断言。这篇文章把理论和实测装进同一个框架里：
+这篇文章把理论和实测装进同一个框架里：
 
 - **理论负责解释**：每个工具站在浏览器的哪一层、被什么安全域约束，决定了它"天生能做什么、天生做不了什么"；
 - **实测负责裁决**：一个每道题都有标准答案的本地靶场、八个任务、六个工具、互相隔离且不知道答案的独立 Agent 会话——理论断言被证实五条、推翻三条，靶场自己的预设答案还被 Agent 用 trace 证据修正了一处。
@@ -66,7 +66,7 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 
 ### 1.3 Agent 友好度：决定"考什么"
 
-层和边界决定能不能做；Agent 友好度决定做起来顺不顺。理论篇定义的维度——看懂页面、稳定引用（@eN ref）、动作后复盘、复用真实状态、看请求和错误、性能诊断、结构化输出、风险控制——直接翻译成了靶场的八道题。
+层和边界决定能不能做；Agent 友好度决定做起来顺不顺。前面定义的维度——看懂页面、稳定引用（@eN ref）、动作后复盘、复用真实状态、看请求和错误、性能诊断、结构化输出、风险控制——直接翻译成了靶场的八道题。
 
 ## 2. 实测方法：为什么这些数字可信
 
@@ -135,7 +135,7 @@ bb-browser（7 题，子 Agent 宿主）：235 条命令、26.3 分钟，7 个�
 ### 4.1 页面观察与操作（T01/T05/T06/T08 的 ✅ 半区）：网页面是大家共用的底座
 
 **理论预测**：网页面是六个工具都接到的最低一层，纯页面任务应该全员通过。
-**实测**：成立——T01 六家全过，T05/T08 也只有质量差异没有能力缺口。**六个工具全部采用"可访问性快照 + 元素编号引用"工作流**（@eN / e15 / uid），理论篇把它列为友好度第一要素，现在可以说它已是事实标准。
+**实测**：成立——T01 六家全过，T05/T08 也只有质量差异没有能力缺口。**六个工具全部采用"可访问性快照 + 元素编号引用"工作流**（@eN / e15 / uid），第 1 节把它列为友好度第一要素，现在可以说它已是事实标准。
 
 但"全过"之下藏着三档工程质量，全部来自动作可靠性：
 
@@ -145,7 +145,7 @@ bb-browser（7 题，子 Agent 宿主）：235 条命令、26.3 分钟，7 个�
 
 Shadow DOM（T08）同样体现"层与质量"的分离：可访问性树天生跨过 open shadow 边界，所以**六家快照全部看得见**里面的按钮（平台行为，不是工具功劳）；但定位、等待、点击原语是否跟着穿透，各家工程实现差异巨大——MCP/playwright-cli/@chrome/@browser 无感知穿透，agent-browser 的 ref 点击可以但 find 文本定位不行，bb-browser 点不动。
 
-T06 的 ⚠️ 是个有价值的反例：@chrome 把"缺货"徽标拼进了商品名字段。没有结构化提取通道、纯靠可见文本抽取时，展示性元素污染数据字段是常见病——这正是理论篇第 7 节 site adapter 价值的反面教材。
+T06 的 ⚠️ 是个有价值的反例：@chrome 把"缺货"徽标拼进了商品名字段。没有结构化提取通道、纯靠可见文本抽取时，展示性元素污染数据字段是常见病——这正是 site adapter 价值的反面教材（见 6.3）。
 
 ### 4.2 Network 响应体（T02）：协议层上限划出的第一道分界线
 
@@ -167,12 +167,12 @@ CDP 阵营内部还有一层封装差异：agent-browser / DevTools MCP / playwr
 
 ### 4.4 请求 mock（T04）：三个边界因素在同一道题里同台
 
-**理论预测**（理论篇原文）：mock/abort 可选 Playwright、agent-browser、bb-browser，DevTools MCP 也合适。
+**理论预测**：mock/abort 可选 Playwright、agent-browser、bb-browser，DevTools MCP 也合适。
 **实测**：这一格被改写得最多——
 
 - **agent-browser、playwright-cli ✅**：原生 `network route` / `route`，真正的网络层拦截。
 - **DevTools MCP ⚠️**：没有任何拦截工具。CDP 的 Fetch domain 明明支持——这是**产品封装范围**因素：协议有，产品没包。子 Agent 的自救很体面（`navigate_page` 的 initScript 在页面脚本运行前补丁 fetch/XHR），但补丁在 JS 层：mock 跨域接口、abort 流量这类升级需求就绕不过去了。
-- **bb-browser ⚠️**：理论篇写的 `bb-browser network route` 命令**在 0.14.2 里不存在**（断言被推翻），子 Agent 确认无 mock/intercept 命令后在页面里直接改写了 `window.fetch`。
+- **bb-browser ⚠️**：按理论预期该有的 `bb-browser network route` 命令**在 0.14.2 里不存在**（断言被推翻），子 Agent 确认无 mock/intercept 命令后在页面里直接改写了 `window.fetch`。
 - **@chrome/@browser ❌**：扩展层理论上有 `declarativeNetRequest` 可改写请求，但产品没封装，Runtime 又只读连补丁都打不了——**封装范围和安全策略两个因素叠加**，一条路都不剩。
 
 ### 4.5 已登录 fetch（T07）与逃生舱：安全策略因素的明码标价
@@ -242,7 +242,7 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 
 ## 7. 实测修订版选型路由表
 
-理论篇第 8 节的表按数据修订（**加粗 = 与理论版不同**）：
+下表按实测数据给出选型（**加粗 = 实测改写了纯理论推演的判断**）：
 
 | Agent 任务 | 实测首选 | 依据 |
 | --- | --- | --- |
@@ -258,7 +258,7 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 
 ## 8. 理论断言核对表
 
-| 理论篇断言 | 裁决 | 原因 |
+| 理论预测 | 裁决 | 原因 |
 | --- | --- | --- |
 | @chrome 的 Network 详情和有副作用 evaluate 较弱 | ✅ 证实且更绝对（4 题 ❌，@browser 同样） | 协议层 + 安全策略 |
 | agent-browser 快照短、ref 稳、适合长轮次 | ✅ 证实（8/8），且被低估——profiler/connect-anything 没写够 | — |
@@ -283,8 +283,6 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 - 靶场与任务卡：`apps/browser-tool-bench/`（零依赖 Node 测试站 + T01-T10 任务卡 + 复现步骤）
 - 原始数据：`results/formal-2026-06-12/`（ab vs bb）、`results/formal-2026-06-12-mcp/`（ab vs DevTools MCP）、`results/formal-2026-06-12-pw/`（playwright-cli）、`results/codex-plugins-2026-06-12/`（@chrome/@browser，Codex 宿主）
 - 版本：agent-browser 0.27.2 · bb-browser 0.14.2 · chrome-devtools-mcp 1.2.0 · @playwright/cli 0.1.14 · Chrome 148/149 · 模型 claude-fable-5（Codex 轮除外）
-- 理论篇：[《浏览器 Agent 工具怎么选》](https://ffffhx.github.io/garden-lab/post/chrome-cdp-mcp-devtools/)（2026-06-08），其框架是本文第 1 节的来源
-
 ### 参考
 
 - [agent-browser](https://github.com/vercel-labs/agent-browser)

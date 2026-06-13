@@ -12,7 +12,7 @@ tags:
   - Agent
   - Playwright
   - Benchmark
-excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安全域解释每个工具的边界从哪来，再用一个有标准答案的靶场、互相隔离的无偏 Agent 会话实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli。总表里每个 ✅/⚠️/❌ 都能被理论解释，每条理论断言都被数据裁决——证实五条，推翻三条。"
+excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安全域解释每个工具的边界从哪来，再用一个有标准答案的基准测试站、互相隔离的无偏 Agent 会话实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli。总表里每个 ✅/⚠️/❌ 都能被理论解释，每条理论断言都被数据裁决——证实五条，推翻三条。"
 ---
 
 ## 摘要
@@ -22,9 +22,9 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 这篇文章把理论和实测装进同一个框架里：
 
 - **理论负责解释**：每个工具站在浏览器的哪一层、被什么安全域约束，决定了它"天生能做什么、天生做不了什么"；
-- **实测负责裁决**：一个每道题都有标准答案的本地靶场、八个任务、六个工具、互相隔离且不知道答案的独立 Agent 会话——理论断言被证实五条、推翻三条，靶场自己的预设答案还被 Agent 用 trace 证据修正了一处。
+- **实测负责裁决**：一个每道题都有标准答案的本地基准测试站、八个任务、六个工具、互相隔离且不知道答案的独立 Agent 会话——理论断言被证实五条、推翻三条，基准测试站自己的预设答案还被 Agent 用 trace 证据修正了一处。
 
-被测六个工具：Codex `@chrome`、Codex `@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP`、`playwright-cli`。靶场、任务卡与全部原始数据在仓库 `apps/browser-tool-bench/`，可复现。
+被测六个工具：Codex `@chrome`、Codex `@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP`、`playwright-cli`。基准测试站、任务卡与全部原始数据在仓库 `apps/browser-tool-bench/`，可复现。
 
 全文的主线是一个从实测里提炼出来的公式：
 
@@ -66,13 +66,13 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 
 ### 1.3 Agent 友好度：决定"考什么"
 
-层和边界决定能不能做；Agent 友好度决定做起来顺不顺。前面定义的维度——看懂页面、稳定引用（@eN ref）、动作后复盘、复用真实状态、看请求和错误、性能诊断、结构化输出、风险控制——直接翻译成了靶场的八道题。
+层和边界决定能不能做；Agent 友好度决定做起来顺不顺。前面定义的维度——看懂页面、稳定引用（@eN ref）、动作后复盘、复用真实状态、看请求和错误、性能诊断、结构化输出、风险控制——直接翻译成了基准测试站的八道题。
 
 ## 2. 实测方法：为什么这些数字可信
 
-### 2.1 靶场：每道题有标准答案
+### 2.1 基准测试站：每道题有标准答案
 
-本地零依赖测试站，每页埋一个已知答案的坑。直接测真实网站不可复现（网站会变、登录态各异），本地靶场让每个判定都可机械核对：
+本地零依赖的基准测试站，每页埋一个已知答案的坑。直接测真实网站不可复现（网站会变、登录态各异），它让每个判定都可机械核对：
 
 | 任务 | 坑 | 标准答案 | 考的理论维度 |
 | --- | --- | --- | --- |
@@ -89,9 +89,9 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 
 ### 2.2 无偏执行：测工具，不测操作者
 
-我先自己试跑过一轮，数据基本没用：自己搭的靶场自己知道答案，也摸熟了工具脾气。**知道答案的人测不出真实成本**——同一任务我 6 条命令完赛，无偏 Agent 要 13~26 条，多出来的是探索、验证、撞坑的合理成本，也正是真实用户的 Agent 要付的成本。
+我先自己试跑过一轮，数据基本没用：自己搭的基准测试站自己知道答案，也摸熟了工具脾气。**知道答案的人测不出真实成本**——同一任务我 6 条命令完赛，无偏 Agent 要 13~26 条，多出来的是探索、验证、撞坑的合理成本，也正是真实用户的 Agent 要付的成本。
 
-所以正式数据全部来自独立 会话：每个单元格（任务 × 工具）由一个全新上下文的 Agent 执行（Claude Code 无头 `claude -p` 进程或 Codex 隔离 子 Agent），提示词只含任务原文、工具限定、约 25 次操作止损线；不知道答案、不知道工具的已知 bug、禁止 curl/读源码旁路。单元格之间重启靶场清状态。
+所以正式数据全部来自独立 会话：每个单元格（任务 × 工具）由一个全新上下文的 Agent 执行（Claude Code 无头 `claude -p` 进程或 Codex 隔离 子 Agent），提示词只含任务原文、工具限定、约 25 次操作止损线；不知道答案、不知道工具的已知 bug、禁止 curl/读源码旁路。单元格之间重启基准测试站清状态。
 
 无偏的价值立刻显形：bb-browser 的 click bug 被六个互不知情的 子 Agent 在六个场景独立复现，且全部独立收敛到同一个绕过方案——"操作姿势问题"被彻底排除。
 
@@ -99,7 +99,7 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 
 每个单元格记录：判定（✅/⚠️/❌ 按任务卡标准）、操作数、轮数、实际耗时、成本，外加实测中演化出的指标——**eval 自救次数**（Agent 被迫弃用工具原语、用 eval 直接执行 JS 才能推进的次数，见 5.2）。
 
-如实声明的局限：每个单元格一次运行（agent-browser 例外，同日两轮），方差未收敛；@chrome/@browser 跑在 Codex 宿主内，时间/调用数只能粗比，**能力判定不受宿主影响**；靶场全在 localhost，真实登录态与风控不在本轮；模型是 Fable 5 量级，其自救能力会掩盖工具缺陷；版本钉死 agent-browser 0.27.2 / bb-browser 0.14.2 / chrome-devtools-mcp 1.2.0 / @playwright/cli 0.1.14（开测时均为 npm latest）。
+如实声明的局限：每个单元格一次运行（agent-browser 例外，同日两轮），方差未收敛；@chrome/@browser 跑在 Codex 宿主内，时间/调用数只能粗比，**能力判定不受宿主影响**；基准测试站全在 localhost，真实登录态与风控不在本轮；模型是 Fable 5 量级，其自救能力会掩盖工具缺陷；版本钉死 agent-browser 0.27.2 / bb-browser 0.14.2 / chrome-devtools-mcp 1.2.0 / @playwright/cli 0.1.14（开测时均为 npm latest）。
 
 ## 3. 结果总表
 
@@ -156,14 +156,14 @@ T06 的 ⚠️ 是个有价值的反例：@chrome 把"缺货"徽标拼进了商�
 
 CDP 阵营内部还有一层封装差异：agent-browser / DevTools MCP / playwright-cli 是**被动留底、事后可查**（点击前不需要任何准备）；bb-browser 把响应体封进了 trace 体系——必须 `trace start` 之后**重放动作**才能 `trace body`，多付一次重放成本。这是**产品封装范围**因素的教科书案例：同一个协议层，封装方式决定了排障的成本结构。bb 换来的独有回报是 trace 时间线带因果关联（`request … trigger:25 → click #order-btn`），"哪个动作引发了哪个请求"这条信息其他五家都给不了。
 
-### 4.3 性能诊断（T03）：DevTools 产品面的价值被量化，靶场被反向修正
+### 4.3 性能诊断（T03）：DevTools 产品面的价值被量化，基准测试站被反向修正
 
 **理论预测**：性能分析需要的不止 timing 数字，是"能解释问题的诊断模型"——这是 DevTools 产品面独有的，DevTools MCP 应该最省解释成本。
 **实测**：成立，并且可以报出具体倍数——DevTools MCP 用 `performance_start_trace` + `performance_analyze_insight`（LCPBreakdown/RenderBlocking）6 次调用、111 秒直出结构化的原因分析；agent-browser 没有诊断模型，但 子 Agent 从工具文档自己挖出 `profiler` 命令导出原始 trace、用 python 解析、再用 PerformanceObserver 交叉验证，**结论完全一致**——代价是 215 秒和全场最贵的单个单元格成本。一句话：**MCP 把"解释"内置在工具里，CLI 把"解释"外包给模型**。模型强时殊途同归，弱模型下差距会以失败形式放大。
 
 @chrome/@browser 双 ❌：evaluate 环境里连 `performance` 对象都没有——**安全策略**因素（Runtime 被阉割）顺带砍掉了性能取证的全部入口。
 
-这道题还发生了全评测最有意思的事：**三个独立 Agent 用 trace 证据一致推翻了靶场的预设答案**。我出题时写的是"hero.svg（延迟 1.5s）对 LCP 影响最大"，时间线证明：阻塞 CSS（1.2s TTFB）卡住首绘、又按规范卡住其后同步脚本（800ms 长任务），两者**串行** ≈ 2.1s 才是 LCP 真相；hero.svg 与它们**并行**加载、首绘前早已完成，是"看起来最慢但不背锅"的干扰项。"最慢的资源"和"拖慢页面的资源"是两回事。任务卡已修正，"会不会被最慢资源带偏"升格为正式考点——**有标准答案的靶场加无偏 Agent，连出题人的错误都测得出来**。
+这道题还发生了全评测最有意思的事：**三个独立 Agent 用 trace 证据一致推翻了基准测试站的预设答案**。我出题时写的是"hero.svg（延迟 1.5s）对 LCP 影响最大"，时间线证明：阻塞 CSS（1.2s TTFB）卡住首绘、又按规范卡住其后同步脚本（800ms 长任务），两者**串行** ≈ 2.1s 才是 LCP 真相；hero.svg 与它们**并行**加载、首绘前早已完成，是"看起来最慢但不背锅"的干扰项。"最慢的资源"和"拖慢页面的资源"是两回事。任务卡已修正，"会不会被最慢资源带偏"升格为正式考点——**有标准答案的基准测试站加无偏 Agent，连出题人的错误都测得出来**。
 
 ### 4.4 请求 mock（T04）：三个边界因素在同一道题里同台
 
@@ -278,9 +278,9 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 - 把"登录态持久化"（state save/load、profile 复用）设计成新任务——agent-browser 与 playwright-cli 都有全套命令，是两者下一个分胜负的点。
 - 值得上游提 issue：bb-browser 事件注入缺陷、agent-browser 视口外静默点击与 Electron 下 connect 会话失灵、playwright-cli 不验证响应结构就 mock。
 
-## 附录：靶场、数据与版本
+## 附录：基准测试站、数据与版本
 
-- 靶场与任务卡：`apps/browser-tool-bench/`（零依赖 Node 测试站 + T01-T10 任务卡 + 复现步骤）
+- 基准测试站与任务卡：`apps/browser-tool-bench/`（零依赖 Node 测试站 + T01-T10 任务卡 + 复现步骤）
 - 原始数据：`results/formal-2026-06-12/`（ab vs bb）、`results/formal-2026-06-12-mcp/`（ab vs DevTools MCP）、`results/formal-2026-06-12-pw/`（playwright-cli）、`results/codex-plugins-2026-06-12/`（@chrome/@browser，Codex 宿主）
 - 版本：agent-browser 0.27.2 · bb-browser 0.14.2 · chrome-devtools-mcp 1.2.0 · @playwright/cli 0.1.14 · Chrome 148/149 · 模型 claude-fable-5（Codex 轮除外）
 ### 参考

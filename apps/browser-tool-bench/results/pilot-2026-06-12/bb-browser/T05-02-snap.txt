@@ -1,0 +1,6 @@
+标题: 团队动态 · Bench 靶场
+URL: http://localhost:4399/livefeed
+
+link [ref=0] "Bench 靶场"
+link [ref=1] "控制台"
+button [ref=2] "加载更多"

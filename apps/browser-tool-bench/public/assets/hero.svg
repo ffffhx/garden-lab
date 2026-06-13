@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="320" viewBox="0 0 780 320">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff7a45" />
+      <stop offset="100%" stop-color="#ffc53d" />
+    </linearGradient>
+  </defs>
+  <rect width="780" height="320" rx="12" fill="url(#bg)" />
+  <circle cx="640" cy="80" r="46" fill="#fff" opacity="0.35" />
+  <circle cx="700" cy="170" r="26" fill="#fff" opacity="0.25" />
+  <text x="56" y="150" font-family="PingFang SC, sans-serif" font-size="56" font-weight="700" fill="#fff">夏季大促</text>
+  <text x="58" y="205" font-family="PingFang SC, sans-serif" font-size="26" fill="#fff" opacity="0.9">全场五折起 · 6.12 - 6.20</text>
+</svg>

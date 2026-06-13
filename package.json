@@ -37,6 +37,7 @@
     "tauri": "pnpm --filter @garden-lab/site tauri",
     "tauri:dev": "pnpm --filter @garden-lab/site tauri:dev",
     "tauri:build": "pnpm --filter @garden-lab/site tauri:build",
+    "bench:dev": "pnpm --filter @garden-lab/browser-tool-bench dev",
     "new:post": "pnpm --filter @garden-lab/site new:post",
     "new:tech": "pnpm --filter @garden-lab/site new:tech",
     "new:fitness": "pnpm --filter @garden-lab/site new:fitness",

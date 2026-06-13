@@ -1,0 +1,1 @@
+✓ Screenshot saved to /Users/bytedance/Code/garden-lab/apps/browser-tool-bench/results/pilot-2026-06-12/agent-browser/T04-empty-state-v2.png

@@ -1,0 +1,4 @@
+Trace started
+Tracing tabs: 6cf3
+
+Operate the browser, then run 'bb-browser trace events' to see the timeline.

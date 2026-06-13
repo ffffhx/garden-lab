@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bench 靶场 · 首页</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+</head>
+<body>
+  <header class="site">
+    <span class="brand">Bench 靶场</span>
+    <a href="/login">登录</a>
+    <a href="/users">成员</a>
+    <a href="/catalog">商品目录</a>
+    <a href="/livefeed">动态</a>
+    <a href="/slow">活动页（慢）</a>
+  </header>
+  <main>
+    <div class="card">
+      <h1>浏览器 Agent 工具对比靶场</h1>
+      <p>这个站点的每个页面都埋了一个有标准答案的"坑"，用来横向对比浏览器自动化工具。任务卡见仓库 <code>apps/browser-tool-bench/tasks/</code>。</p>
+      <nav class="home">
+        <a href="/login">/login —— 登录页（T01 页面观察与表单操作）</a>
+        <a href="/dashboard">/dashboard —— 控制台（T02 接口排障 · T07 已登录 fetch · T08 Shadow DOM）</a>
+        <a href="/users">/users —— 成员列表（T04 请求 mock 与空状态）</a>
+        <a href="/livefeed">/livefeed —— 动态流（T05 动态渲染与等待）</a>
+        <a href="/catalog">/catalog —— 商品目录（T06 结构化提取）</a>
+        <a href="/slow">/slow —— 营销活动页（T03 性能诊断）</a>
+      </nav>
+    </div>
+  </main>
+</body>
+</html>

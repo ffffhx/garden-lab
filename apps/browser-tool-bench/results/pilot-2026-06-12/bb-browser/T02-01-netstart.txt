@@ -1,0 +1,17 @@
+网络请求 (5 条):
+
+GET http://localhost:4399/favicon.ico
+  类型: Other, 状态: 404 Not Found
+
+POST http://localhost:4399/api/login
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/dashboard
+  类型: Document, 状态: 200 OK
+
+GET http://localhost:4399/assets/app.css
+  类型: Stylesheet, 状态: 200 OK
+
+GET http://localhost:4399/api/me
+  类型: Fetch, 状态: 200 OK
+

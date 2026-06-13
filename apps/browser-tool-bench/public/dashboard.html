@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>控制台 · Bench 靶场</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+</head>
+<body>
+  <header class="site">
+    <a class="brand" href="/">Bench 靶场</a>
+    <a href="/users">成员</a>
+    <a href="/catalog">商品目录</a>
+    <a href="/livefeed">动态</a>
+  </header>
+  <main>
+    <div class="card">
+      <h1 id="greeting">加载中…</h1>
+      <p class="muted">这里是你的工作台。</p>
+    </div>
+
+    <div class="card">
+      <h2>快速下单</h2>
+      <p class="muted">为常用物料 SKU-8821 创建补货订单。</p>
+      <button id="order-btn">提交订单</button>
+      <p class="error" id="order-error" hidden></p>
+    </div>
+
+    <div class="card">
+      <h2>每日福利</h2>
+      <bench-widget></bench-widget>
+    </div>
+  </main>
+  <script>
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((me) => {
+        document.getElementById("greeting").textContent =
+          `欢迎回来，${me.user}（工号 ${me.badge}）`;
+      })
+      .catch(() => {
+        location.href = "/login";
+      });
+
+    document.getElementById("order-btn").addEventListener("click", async () => {
+      const errEl = document.getElementById("order-error");
+      errEl.hidden = true;
+      const res = await fetch("/api/orders", { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        // 页面上故意只给笼统文案，真实原因要看接口响应体
+        errEl.textContent = "提交失败，请稍后再试（错误码已上报）";
+        errEl.hidden = false;
+        console.error("order submit failed", data.traceId || "");
+      }
+    });
+
+    // T08：Shadow DOM 内的交互组件
+    customElements.define(
+      "bench-widget",
+      class extends HTMLElement {
+        connectedCallback() {
+          const root = this.attachShadow({ mode: "open" });
+          root.innerHTML = `
+            <style>
+              .box { border: 1px dashed #cfd3da; border-radius: 8px; padding: 14px; font-size: 14px; }
+              button { padding: 7px 16px; border: none; border-radius: 6px; background: #00a86b; color: #fff; cursor: pointer; }
+              .code { margin-top: 10px; font-weight: 700; color: #00a86b; }
+            </style>
+            <div class="box">
+              <p>每天可以领取一次奖励。</p>
+              <button id="claim">领取今日奖励</button>
+              <p class="code" id="code" hidden></p>
+            </div>`;
+          root.getElementById("claim").addEventListener("click", () => {
+            const el = root.getElementById("code");
+            el.textContent = "兑换码：SHADOW-99";
+            el.hidden = false;
+          });
+        }
+      }
+    );
+  </script>
+</body>
+</html>

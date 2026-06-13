@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>团队动态 · Bench 靶场</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+</head>
+<body>
+  <header class="site">
+    <a class="brand" href="/">Bench 靶场</a>
+    <a href="/dashboard">控制台</a>
+  </header>
+  <main>
+    <div class="card">
+      <h1>团队动态</h1>
+      <ul class="feed" id="feed"></ul>
+      <p class="muted" id="status">正在拉取动态…</p>
+      <button id="load-more" hidden>加载更多</button>
+    </div>
+  </main>
+  <script>
+    const feed = document.getElementById("feed");
+    const status = document.getElementById("status");
+    const loadMore = document.getElementById("load-more");
+
+    // 逐条渲染，模拟流式加载——快照时机不对就会看到不完整列表
+    function appendGradually(items, done) {
+      let i = 0;
+      const timer = setInterval(() => {
+        const li = document.createElement("li");
+        li.textContent = items[i];
+        feed.appendChild(li);
+        i += 1;
+        if (i >= items.length) {
+          clearInterval(timer);
+          done();
+        }
+      }, 250);
+    }
+
+    fetch("/api/feed?page=1")
+      .then((r) => r.json())
+      .then(({ items }) => {
+        appendGradually(items, () => {
+          status.textContent = `已加载 ${feed.children.length} 条`;
+          loadMore.hidden = false;
+        });
+      });
+
+    loadMore.addEventListener("click", () => {
+      loadMore.disabled = true;
+      fetch("/api/feed?page=2")
+        .then((r) => r.json())
+        .then(({ items }) => {
+          appendGradually(items, () => {
+            status.textContent = `已加载 ${feed.children.length} 条（没有更多了）`;
+            loadMore.hidden = true;
+          });
+        });
+    });
+  </script>
+</body>
+</html>

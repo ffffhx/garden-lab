@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>Bench Badge 设置</title>
+  <style>
+    body {
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      max-width: 480px;
+      margin: 40px auto;
+      color: #1f2329;
+    }
+    h1 { font-size: 18px; }
+    label { display: block; font-size: 14px; margin: 16px 0 6px; color: #4b515b; }
+    input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #cfd3da;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 14px;
+      padding: 8px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #2b5cff;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #status { font-size: 13px; color: #00a86b; margin-top: 10px; min-height: 18px; }
+    .muted { font-size: 12px; color: #8a909a; }
+  </style>
+</head>
+<body>
+  <h1>Bench Badge 设置</h1>
+  <p class="muted">徽标显示在靶场（localhost:4399）页面的右下角。留空则显示默认的扩展名和版本号。</p>
+  <label for="badge-text">徽标文字</label>
+  <input id="badge-text" type="text" placeholder="例如 HELLO-2026" />
+  <button id="save">保存</button>
+  <p id="status"></p>
+  <script src="options.js"></script>
+</body>
+</html>

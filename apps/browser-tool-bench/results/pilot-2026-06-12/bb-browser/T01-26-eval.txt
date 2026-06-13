@@ -1,0 +1,5 @@
+{
+  "email": "agent@bench.dev",
+  "pwd": "bench-2026",
+  "err": ""
+}

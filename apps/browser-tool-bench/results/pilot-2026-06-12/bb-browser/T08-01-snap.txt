@@ -1,0 +1,9 @@
+标题: 控制台 · Bench 靶场
+URL: http://localhost:4399/dashboard
+
+link [ref=0] "Bench 靶场"
+link [ref=1] "成员"
+link [ref=2] "商品目录"
+link [ref=3] "动态"
+button [ref=4] "提交订单"
+button [ref=5] "领取今日奖励"

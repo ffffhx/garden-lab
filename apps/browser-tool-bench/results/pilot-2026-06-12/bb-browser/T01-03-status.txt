@@ -1,0 +1,3 @@
+Daemon not running
+
+💡 启动: bb-browser daemon start

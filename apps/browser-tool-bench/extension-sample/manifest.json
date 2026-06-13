@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Bench Badge",
+  "version": "1.0.0",
+  "description": "在靶场页面右下角显示徽标。T09 测 reload（改版本号），T11 测使用扩展（设置页改徽标文字）。",
+  "permissions": ["storage"],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost:4399/*", "http://127.0.0.1:4399/*"],
+      "js": ["content.js"]
+    }
+  ]
+}

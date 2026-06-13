@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>夏季大促活动页 · Bench 靶场</title>
+  <!-- 坑 1：渲染阻塞 CSS，服务端延迟 1200ms 才返回 -->
+  <link rel="stylesheet" href="/assets/blocking.css" />
+  <link rel="stylesheet" href="/assets/app.css" />
+  <!-- 坑 2：同步脚本，主线程长任务约 800ms -->
+  <script src="/assets/heavy.js"></script>
+</head>
+<body>
+  <header class="site"><a class="brand" href="/">Bench 靶场</a></header>
+  <main>
+    <div class="card promo">
+      <h1>夏季大促，全场五折起</h1>
+      <!-- 坑 3：LCP 元素，服务端延迟 1500ms 才返回 -->
+      <img src="/assets/hero.svg" alt="夏季大促主视觉" width="780" height="320" style="max-width: 100%; border-radius: 10px;" />
+      <p>活动时间：6 月 12 日 - 6 月 20 日。所有自营商品参与，叠加优惠券更划算。</p>
+      <button>立即抢购</button>
+    </div>
+  </main>
+</body>
+</html>

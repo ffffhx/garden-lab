@@ -1,0 +1,32 @@
+- banner
+  - link "Bench 靶场" [ref=e1]
+  - link "控制台" [ref=e2]
+- main
+  - heading "团队动态" [level=1, ref=e3]
+  - list
+    - listitem [level=1]
+      - StaticText "小林 发布了新文档《季度复盘》"
+    - listitem [level=1]
+      - StaticText "构建流水线 #4821 通过"
+    - listitem [level=1]
+      - StaticText "阿芳 评论了你的合并请求"
+    - listitem [level=1]
+      - StaticText "监控告警已恢复：api-gateway 延迟"
+    - listitem [level=1]
+      - StaticText "新成员 莫莫 加入了团队"
+    - listitem [level=1]
+      - StaticText "周报机器人推送了上周摘要"
+    - listitem [level=1]
+      - StaticText "设计稿《新版首页》更新到 v7"
+    - listitem [level=1]
+      - StaticText "数据库备份任务完成"
+    - listitem [level=1]
+      - StaticText "老张 关闭了工单 #233"
+    - listitem [level=1]
+      - StaticText "灰度发布已扩量到 50%"
+    - listitem [level=1]
+      - StaticText "客服值班表已更新"
+    - listitem [level=1]
+      - StaticText "系统公告：今日口令 LIVE-512"
+  - paragraph
+    - StaticText "已加载 12 条（没有更多了）"

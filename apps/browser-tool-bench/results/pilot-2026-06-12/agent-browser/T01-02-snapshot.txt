@@ -1,0 +1,6 @@
+- link "Bench 靶场" [ref=e1]
+- heading "登录" [level=1, ref=e2]
+- textbox "邮箱" [ref=e3]
+- textbox "密码" [ref=e4]
+- button "登录" [ref=e5]
+- link "忘记密码" [ref=e6]

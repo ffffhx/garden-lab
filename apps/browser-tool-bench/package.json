@@ -1,0 +1,11 @@
+{
+  "name": "@garden-lab/browser-tool-bench",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "浏览器 Agent 工具对比靶场：有标准答案的本地测试站 + 任务卡",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs"
+  }
+}

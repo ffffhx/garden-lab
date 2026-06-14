@@ -18,7 +18,7 @@ export function PostCard({
   return (
     <article
       className={[
-        "group min-w-0 rounded-lg border border-slate-950/10 bg-[#fffdf7]/88 p-5 shadow-[0_24px_80px_-56px_rgba(15,23,42,0.48)] transition hover:-translate-y-1 hover:border-slate-950/18 hover:shadow-[0_32px_96px_-56px_rgba(15,23,42,0.62)] sm:p-6",
+        "group min-w-0 rounded-lg border border-slate-950/10 bg-[#fffdf7]/88 p-5 shadow-[0_24px_80px_-56px_rgba(15,23,42,0.48)] transition duration-300 ease-out hover:-translate-y-1 hover:border-slate-950/18 hover:shadow-[0_32px_96px_-56px_rgba(15,23,42,0.62)] sm:p-6",
         featured ? "lg:col-span-2" : "",
       ].join(" ")}
     >

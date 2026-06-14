@@ -76,7 +76,7 @@ export default function HomePage() {
         <div className="grid min-w-0 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {STANDALONE_PROJECTS.map((project) => {
             const card = (
-              <article className="group flex min-h-[17rem] flex-col rounded-lg border border-slate-900/10 bg-white/86 p-5 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.5)] transition hover:-translate-y-1 hover:border-slate-900/18 hover:shadow-[0_32px_96px_-58px_rgba(15,23,42,0.58)]">
+              <article className="group flex min-h-[17rem] flex-col rounded-lg border border-slate-900/10 bg-white/86 p-5 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.5)] transition duration-300 ease-out hover:-translate-y-1 hover:border-slate-900/18 hover:shadow-[0_32px_96px_-58px_rgba(15,23,42,0.58)]">
                 <div className="flex items-center justify-between gap-3">
                   <span
                     className={`font-mono text-xs font-black uppercase tracking-[0.08em] ${project.accentClassName}`}

@@ -3529,3 +3529,119 @@ html.desktop-pet-document body {
   color: var(--pet-deep);
   font-style: normal;
 }
+
+/* ============================================================
+   样式精修（增量增强）：阅读排版 · 卡片质感 · 微交互 · 载入动效
+   保留现有暖纸 + 衬线风格，只打磨细节；全部新增、不改动既有规则。
+   ============================================================ */
+
+@keyframes gl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* —— 文章正文柔和载入（容器内无 sticky 元素，安全） —— */
+.article-content {
+  animation: gl-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* —— 引导首段：开篇一段更醒目，强化编辑感 —— */
+.article-content > p:first-of-type {
+  font-size: 1.16rem;
+  line-height: 1.95;
+  color: rgb(31 41 55);
+}
+
+/* —— 正文链接：hover 平滑过渡并加深 —— */
+.article-content a {
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.article-content a:hover {
+  color: rgb(146 64 14);
+  text-decoration-color: rgb(180 95 40 / 0.85);
+}
+
+/* —— 引用块：右侧也收圆角，更柔和 —— */
+.article-content blockquote {
+  border-radius: 0 0.6rem 0.6rem 0;
+}
+
+/* —— 表格：行 hover 高亮，长表更易读 —— */
+.article-content tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.article-content tbody tr:hover {
+  background: rgb(180 95 40 / 0.045);
+}
+
+/* —— 正文图片：hover 轻微上浮，强化层次 —— */
+.article-content img {
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease;
+}
+
+.article-content img:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 40px 96px -52px rgba(15, 23, 42, 0.55);
+}
+
+/* —— 全站滚动条：暖色细滚动条，呼应主题 —— */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(180 95 40 / 0.32) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgb(180 95 40 / 0.3);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(180 95 40 / 0.5);
+  background-clip: padding-box;
+}
+
+/* —— 统一可见焦点环，提升可访问性与质感 —— */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgb(180 95 40 / 0.6);
+  outline-offset: 2px;
+  border-radius: 0.4rem;
+}
+
+/* —— 尊重「减少动效」偏好 —— */
+@media (prefers-reduced-motion: reduce) {
+  .article-content {
+    animation: none;
+  }
+
+  .article-content img {
+    transition: none;
+  }
+
+  .article-content img:hover {
+    transform: none;
+  }
+}

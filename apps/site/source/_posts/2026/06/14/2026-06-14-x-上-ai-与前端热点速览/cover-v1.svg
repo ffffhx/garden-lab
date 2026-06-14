@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">2026-06-14 AI 与前端热点速览</title>
+  <desc id="desc">一张用五条信息流表现 AI 模型治理、开源 coding model、token 成本、用户安全和 agent OS 的中文封面图。</desc>
+  <rect width="1200" height="760" fill="#f7f4ec"/>
+  <rect x="72" y="70" width="1056" height="620" rx="28" fill="#ffffff" stroke="#2f3747" stroke-width="4"/>
+  <rect x="72" y="70" width="1056" height="128" rx="28" fill="#172033"/>
+  <path d="M72 170H1128V198H72Z" fill="#172033"/>
+  <text x="112" y="126" fill="#f8fafc" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="38" font-weight="700">每日新闻：AI 与前端热点速览</text>
+  <text x="112" y="170" fill="#cbd5e1" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="22">2026-06-13 12:00 至 2026-06-14 12:00 · X / Techmeme / 官方来源交叉核验</text>
+
+  <g transform="translate(112 248)">
+    <rect x="0" y="0" width="184" height="260" rx="18" fill="#e9f7f5" stroke="#1f7a73" stroke-width="3"/>
+    <circle cx="92" cy="58" r="30" fill="#1f7a73"/>
+    <path d="M78 58L88 69L108 45" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="92" y="124" text-anchor="middle" fill="#123d3a" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="25" font-weight="700">模型访问</text>
+    <text x="92" y="164" text-anchor="middle" fill="#315a57" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">Fable / Mythos</text>
+    <text x="92" y="192" text-anchor="middle" fill="#315a57" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">政策风险</text>
+  </g>
+
+  <g transform="translate(320 248)">
+    <rect x="0" y="0" width="184" height="260" rx="18" fill="#fef2d6" stroke="#b66a00" stroke-width="3"/>
+    <circle cx="92" cy="58" r="30" fill="#b66a00"/>
+    <text x="92" y="68" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="30" font-weight="700">K</text>
+    <text x="92" y="124" text-anchor="middle" fill="#5b3500" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="25" font-weight="700">开源编码</text>
+    <text x="92" y="164" text-anchor="middle" fill="#724a14" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">Kimi K2.7</text>
+    <text x="92" y="192" text-anchor="middle" fill="#724a14" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">低 token</text>
+  </g>
+
+  <g transform="translate(528 248)">
+    <rect x="0" y="0" width="184" height="260" rx="18" fill="#eef2ff" stroke="#4958a8" stroke-width="3"/>
+    <circle cx="92" cy="58" r="30" fill="#4958a8"/>
+    <path d="M78 58H106M92 44V72" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+    <text x="92" y="124" text-anchor="middle" fill="#252d63" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="25" font-weight="700">成本治理</text>
+    <text x="92" y="164" text-anchor="middle" fill="#49517c" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">Meta token</text>
+    <text x="92" y="192" text-anchor="middle" fill="#49517c" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">使用配额</text>
+  </g>
+
+  <g transform="translate(736 248)">
+    <rect x="0" y="0" width="184" height="260" rx="18" fill="#fff1f2" stroke="#b42345" stroke-width="3"/>
+    <circle cx="92" cy="58" r="30" fill="#b42345"/>
+    <path d="M92 39L113 76H71Z" fill="none" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+    <text x="92" y="124" text-anchor="middle" fill="#681528" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="25" font-weight="700">用户安全</text>
+    <text x="92" y="164" text-anchor="middle" fill="#814153" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">OpenAI</text>
+    <text x="92" y="192" text-anchor="middle" fill="#814153" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">多州调查</text>
+  </g>
+
+  <g transform="translate(944 248)">
+    <rect x="0" y="0" width="184" height="260" rx="18" fill="#eff6e8" stroke="#4f7d25" stroke-width="3"/>
+    <circle cx="92" cy="58" r="30" fill="#4f7d25"/>
+    <path d="M72 61C82 43 102 43 112 61C102 79 82 79 72 61Z" fill="none" stroke="#ffffff" stroke-width="6"/>
+    <circle cx="92" cy="61" r="7" fill="#ffffff"/>
+    <text x="92" y="124" text-anchor="middle" fill="#2b4716" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="25" font-weight="700">系统入口</text>
+    <text x="92" y="164" text-anchor="middle" fill="#526a3d" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">HarmonyOS</text>
+    <text x="92" y="192" text-anchor="middle" fill="#526a3d" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="18">2,000+ agents</text>
+  </g>
+
+  <path d="M204 552H996" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="204" cy="552" r="12" fill="#1f7a73"/>
+  <circle cx="412" cy="552" r="12" fill="#b66a00"/>
+  <circle cx="620" cy="552" r="12" fill="#4958a8"/>
+  <circle cx="828" cy="552" r="12" fill="#b42345"/>
+  <circle cx="996" cy="552" r="12" fill="#4f7d25"/>
+
+  <text x="600" y="632" text-anchor="middle" fill="#172033" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="30" font-weight="700">今天的关键词：可用性、成本、合规、安全、系统级 agent</text>
+  <text x="600" y="668" text-anchor="middle" fill="#526071" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-size="20">模型能力正在变成工程治理问题</text>
+</svg>

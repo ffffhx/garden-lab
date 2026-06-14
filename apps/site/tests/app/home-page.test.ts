@@ -15,9 +15,9 @@ describe("HomePage", () => {
     expect(markup).toContain('href="https://ffffhx.github.io/codex-snapshots/"');
     expect(markup).toContain(">Token榜</h3>");
     expect(markup).toContain('href="https://ffffhx.github.io/open-token-board/"');
-    expect(markup).toContain(">游戏入口</h3>");
-    expect(markup).toContain('href="https://ffffhx.github.io/games/"');
     expect(markup).toContain(">浏览器档案控制台</h3>");
     expect(markup).toContain('href="https://ffffhx.github.io/profilepilot/"');
+    expect(markup).not.toContain(">游戏入口</h3>");
+    expect(markup).not.toContain('href="https://ffffhx.github.io/games/"');
   }, HOME_PAGE_RENDER_TIMEOUT_MS);
 });

@@ -14,7 +14,7 @@ const headings: Heading[] = [
 ];
 
 describe("ArticleBody", () => {
-  it("renders article text with the AI chat entry point", () => {
+  it("renders article text and gates the AI chat entry point", () => {
     const markup = renderToStaticMarkup(
       createElement(ArticleBody, {
         enableAiChat: true,
@@ -28,8 +28,9 @@ describe("ArticleBody", () => {
 
     expect(markup).toContain('id="article-content-demo-post"');
     expect(markup).toContain('data-content-image-size="default"');
-    expect(markup).toContain('aria-label="打开文章问答"');
-    expect(markup).toContain('aria-label="文章问答"');
-    expect(markup).toContain("问文章");
+    expect(markup).toContain("正文内容");
+    expect(markup).not.toContain('aria-label="打开文章问答"');
+    expect(markup).not.toContain('aria-label="文章问答"');
+    expect(markup).not.toContain("问文章");
   });
 });

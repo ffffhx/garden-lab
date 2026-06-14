@@ -20,7 +20,9 @@ export function SiteShell({
   const frameWidthClassName = isPostRoute ? "max-w-[1680px] 2xl:px-10" : "max-w-7xl";
   const contentClassName = cn(
     "mx-auto flex min-h-[calc(100vh-9rem)] w-full flex-col px-4 pb-16 pt-7 sm:px-6 lg:px-8",
-    frameWidthClassName
+    frameWidthClassName,
+    // 文章页用 .article-content 自己的入场动画，这里只给列表/首页等非文章页加柔和淡入
+    isPostRoute ? null : "page-enter"
   );
 
   return (

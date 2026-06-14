@@ -1,0 +1,7 @@
+    const rejectWithPid = (reject, message) => reject(Object.assign(new Error(`Daemon pid=${child.pid}: ${message}`), { daemonPid: child.pid }));
+Error: Daemon pid=12965: Daemon process exited with code 1
+    throw new Error(message || "Assertion error");
+Error: targetInfo: {
+  "type": "service_worker",
+  "url": "chrome-extension://aapbdbdomjkkjkaonfhkkikfgjllcleb/main_compiled.js",
+    at assert (/Users/bytedance/.nvm/versions/node/v22.21.1/lib/node_modules/@playwright/cli/node_modules/playwright-core/lib/coreBundle.js:663:11)

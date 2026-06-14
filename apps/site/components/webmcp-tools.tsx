@@ -9,6 +9,7 @@ import {
   searchAgentPosts,
   type AgentPostSummary,
 } from "@/lib/content/agent-tools";
+import { withBasePath } from "@/lib/utils/site-path";
 
 type JsonSchema = {
   type: string;
@@ -44,9 +45,10 @@ declare global {
   }
 }
 
-type WebMcpToolsProps = {
-  posts: AgentPostSummary[];
-};
+// 全站文章索引改为静态文件（构建期由 scripts/gen-agent-post-index.ts 生成），
+// 只有支持 WebMCP 的浏览器/agent 用到工具时才懒加载，普通访客不下载、也不再
+// 把它序列化进每页 HTML。
+const AGENT_POST_INDEX_URL = withBasePath("/agent-post-index.json");
 
 const categorySchema = {
   type: "string",
@@ -206,28 +208,51 @@ function createTools(posts: AgentPostSummary[]): WebMcpTool[] {
   ];
 }
 
-export function WebMcpTools({ posts }: WebMcpToolsProps) {
+export function WebMcpTools() {
   useEffect(() => {
     const modelContext = navigator.modelContext;
 
+    // 普通访客没有 modelContext：直接返回，连索引都不会去 fetch。
     if (!modelContext?.registerTool) {
       return;
     }
 
     const controller = new AbortController();
+    let cancelled = false;
 
-    for (const tool of createTools(posts)) {
+    void (async () => {
+      let posts: AgentPostSummary[];
       try {
-        modelContext.registerTool(tool, { signal: controller.signal });
-      } catch (error) {
-        console.warn(`Unable to register WebMCP tool "${tool.name}".`, error);
+        const response = await fetch(AGENT_POST_INDEX_URL, {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          return;
+        }
+        posts = (await response.json()) as AgentPostSummary[];
+      } catch {
+        // fetch 失败或被中止：工具不注册，不影响普通浏览。
+        return;
       }
-    }
+
+      if (cancelled || !modelContext.registerTool) {
+        return;
+      }
+
+      for (const tool of createTools(posts)) {
+        try {
+          modelContext.registerTool(tool, { signal: controller.signal });
+        } catch (error) {
+          console.warn(`Unable to register WebMCP tool "${tool.name}".`, error);
+        }
+      }
+    })();
 
     return () => {
+      cancelled = true;
       controller.abort();
     };
-  }, [posts]);
+  }, []);
 
   return null;
 }

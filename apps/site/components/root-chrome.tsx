@@ -10,12 +10,10 @@ import {
 } from "@/components/private-feature-access";
 import { SiteShell } from "@/components/site-shell";
 import { WebMcpTools } from "@/components/webmcp-tools";
-import type { AgentPostSummary } from "@/lib/content/agent-tools";
 import { normalizeBasePath } from "@/lib/utils/site-path";
 
 type RootChromeProps = {
   children: ReactNode;
-  posts: AgentPostSummary[];
 };
 
 const PRIVATE_FEATURE_ROUTES = [
@@ -100,7 +98,7 @@ function isPrivateFeatureRoute(pathname: string | null) {
   );
 }
 
-export function RootChrome({ children, posts }: RootChromeProps) {
+export function RootChrome({ children }: RootChromeProps) {
   const pathname = usePathname();
   const normalizedPathname = normalizeAppPathname(pathname);
   const isPrivateRoute = isPrivateFeatureRoute(pathname);
@@ -133,7 +131,7 @@ export function RootChrome({ children, posts }: RootChromeProps) {
 
   return (
     <PrivateFeatureAccessProvider>
-      <WebMcpTools posts={posts} />
+      <WebMcpTools />
       <SiteShell
         currentPathname={normalizedPathname}
         showPet={!isGameTableRoute(pathname) && !isFocusedToolRoute(pathname)}

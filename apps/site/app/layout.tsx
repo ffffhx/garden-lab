@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 
 import { RootChrome } from "@/components/root-chrome";
-import { buildAgentPostIndex } from "@/lib/content/agent-tools";
 import { SITE } from "@/lib/content/config";
-import { getAllPosts } from "@/lib/content/posts";
 import { withBasePath } from "@/lib/utils/site-path";
 
 import "./globals.css";
@@ -24,13 +22,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const posts = getAllPosts();
-  const agentPosts = buildAgentPostIndex(posts.map(({ date, ...post }) => post));
-
   return (
     <html lang="zh-CN">
       <body>
-        <RootChrome posts={agentPosts}>{children}</RootChrome>
+        <RootChrome>{children}</RootChrome>
       </body>
     </html>
   );

@@ -108,7 +108,7 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 
 ## 3. 结果总表
 
-`*` = 该单元格依赖 eval 绕过失效的工具原语才完成。
+一张总表收全十一道题（T01–T08 为八道网页任务，T09/T10/T11 为 2026-06-14 扩展/登录态补测）。图例：`*` = 依赖 eval 绕过失效的工具原语才完成；`†` = `--cdp` 命中目标 profile 不可靠、需先复位常驻 daemon（见 6.2）；`‡` = 依赖持久 userDataDir、不可移植（换目录即丢）；`△` = 工具自身无持久化机制、只能搭外部持久浏览器便车；`N/A` = 该任务对该工具不适用。
 
 | 任务 | @chrome | @browser | agent-browser | bb-browser | DevTools MCP | playwright-cli |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -120,7 +120,11 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 | T06 结构化提取 | ⚠️ 徽标混入字段 | ✅ | ✅ | ✅* | ✅ | ✅ |
 | T07 已登录 fetch | ❌ evaluate 无 fetch | ❌ fetch 被拦 | ✅ | ✅* | ✅ | ✅ |
 | T08 Shadow DOM | ✅ | ✅ | ✅ | ✅*（双重 eval） | ✅ | ✅ |
-| **合计** | **3✅1⚠️4❌** | **4✅4❌** | **8✅** | **6✅1⚠️**（7 题） | **7✅1⚠️** | **8✅** |
+| T09 扩展 reload | ❌ chrome:// 被策略拦 | ❌ 封死 chrome:// | ✅† | ⚠️/❌ 到不了扩展管理 | ✅ | ✅ 自管 context |
+| T10a 真实登录态（默认 profile） | ✅ 68 | ❌ 无真实登录态 | ✅† 68 | ✅ 68 | ✅ 68 | ❌ 接不进系统 Chrome |
+| T10b 登录态持久化（专用 profile） | N/A | N/A | ✅ 可移植 state 文件 | △ 仅能 attach | ✅‡ 持久 userDataDir | ✅ 可移植 state 文件 |
+| T11 用扩展（设置页改徽标） | ❌ chrome-extension:// 被拦 | ❌ | ✅† | ⚠️ 靠 CDP 强开设置页 | ✅ | ✅ 自管 context |
+| **合计（仅 T01–T08）** | **3✅1⚠️4❌** | **4✅4❌** | **8✅** | **6✅1⚠️**（7 题） | **7✅1⚠️** | **8✅** |
 
 同宿主（claude -p）三列的过程成本：
 
@@ -133,18 +137,9 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 
 bb-browser（7 题，子 Agent 宿主）：235 条命令、26.3 分钟，7 个单元格全部依赖 eval 自救——约 agent-browser 的 2.3 倍成本，差额全部来自一个工具缺陷（4.5）。
 
-### 3.1 扩展与真实登录态（T09 / T10 / T11，2026-06-14 补测）
+关于补测三题（T09 / T10 / T11，2026-06-14）：T01–T08 跑在 localhost、不碰真实登录态与扩展安全域；这三道题专门补这块，已并入上面的总表，由两轮互相独立的隔离 子 Agent 实测（一轮 Claude Code 主控、一轮 Codex），结论高度一致，差异只在评分口径（详见 4.7）。
 
-八任务跑在 localhost、不碰真实登录态与扩展安全域；这三道题专门补这块，由两轮互相独立的隔离 子 Agent 实测（一轮 Claude Code 主控、一轮 Codex），结论高度一致，差异只在评分口径（详见 4.7）。`†` = `--cdp` 命中目标 profile 不可靠、需先复位常驻 daemon（见 6.2）；`*` = 依赖持久 userDataDir、不可移植；`△` = 工具自身无持久化机制、只能搭外部持久浏览器便车。
-
-| 任务 | @chrome | @browser | agent-browser | bb-browser | DevTools MCP | playwright-cli |
-| --- | --- | --- | --- | --- | --- | --- |
-| T09 扩展 reload | ❌ chrome:// 被策略拦 | ❌ 封死 chrome:// | ✅† | ⚠️/❌ 到不了扩展管理 | ✅ | ✅ 自管 context |
-| T10a 真实登录态（默认 profile） | ✅ 68 | ❌ 无真实登录态 | ✅† 68 | ✅ 68 | ✅ 68 | ❌ 接不进系统 Chrome |
-| T10b 登录态持久化（专用 profile） | N/A | N/A | ✅ 可移植 state 文件 | △ 仅能 attach | ✅\* 持久 userDataDir | ✅ 可移植 state 文件 |
-| T11 用扩展（设置页改徽标） | ❌ chrome-extension:// 被拦 | ❌ | ✅† | ⚠️ 靠 CDP 强开设置页 | ✅ | ✅ 自管 context |
-
-关键前置（影响这张表怎么读）：目标机器的系统默认 Chrome（CDP 9223）是**企业管控**的，会在运行时拦截"加载已解压扩展"（扩展自身 `chrome-extension://` 资源返回 `ERR_BLOCKED_BY_CLIENT`、content script 不注入），所以 T09/T11 的扩展宿主改用一台**干净的 Chrome for Testing**（`--disable-features=DisableLoadExtensionCommandLineSwitch --load-extension` 才能让 137+ 真正加载扩展）；T10a 仍在企业 9223 上测真实登录态。未读数两轮都读到 **68**（与 06-12 轮的 66/67 只是 GitHub 实时状态差异，非能力差异）。
+关键前置（影响上表 T09/T10/T11 怎么读）：目标机器的系统默认 Chrome（CDP 9223）是**企业管控**的，会在运行时拦截"加载已解压扩展"（扩展自身 `chrome-extension://` 资源返回 `ERR_BLOCKED_BY_CLIENT`、content script 不注入），所以 T09/T11 的扩展宿主改用一台**干净的 Chrome for Testing**（`--disable-features=DisableLoadExtensionCommandLineSwitch --load-extension` 才能让 137+ 真正加载扩展）；T10a 仍在企业 9223 上测真实登录态。未读数两轮都读到 **68**（与 06-12 轮的 66/67 只是 GitHub 实时状态差异，非能力差异）。
 
 ## 4. 逐维度对照：理论预测 → 实测结果 → 边界的成因
 
@@ -346,7 +341,7 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 
 ## 9. 下一步
 
-- T09（扩展 reload）、T10（真实登录态 + 持久化）、T11（使用扩展）已于 2026-06-14 补测，见 3.1 / 4.7——结果确实改写了路由表，并顺带推翻了本文初稿对 agent-browser "无 daemon" 的判断。
+- T09（扩展 reload）、T10（真实登录态 + 持久化）、T11（使用扩展）已于 2026-06-14 补测，见第 3 节总表 / 4.7——结果确实改写了路由表，并顺带推翻了本文初稿对 agent-browser "无 daemon" 的判断。
 - 增加每个单元格重复次数收方差；引入弱一档模型验证 5.1 的预言。
 - 把扩展宿主的搭建本身做成可复现脚本（企业策略检测 → 干净 CfT + 正确 feature flag），因为补测里"让扩展真能跑"比测工具本身更费劲。
 - 值得上游提 issue：bb-browser 事件注入缺陷 + `chrome://`/`chrome-extension://` URL 归一化把特权页堵死；**agent-browser 粘滞 daemon 致 `--cdp` 静默落到自起托管浏览器**（4.7/6.2）+ 视口外静默点击 + Electron 下 connect 会话失灵；playwright-cli 不验证响应结构就 mock + attach 多扩展真实 Chrome 时 service_worker target 断言崩溃。

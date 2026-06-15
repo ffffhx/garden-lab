@@ -134,7 +134,7 @@ export function PostTitleSearch({ posts }: PostTitleSearchProps) {
           />
           <button
             type="submit"
-            className="min-h-12 rounded-full border-[1.5px] border-[#1a1815] bg-[#8f2d20] px-6 text-sm font-semibold text-[#faf6ec] shadow-[0.16rem_0.16rem_0_#1a1815] transition hover:-translate-y-0.5 hover:bg-[#1a1815] focus:outline-none focus:ring-4 focus:ring-[#8f2d20]/25"
+            className="min-h-12 rounded-full border border-[#1a1815] bg-[#8f2d20] px-6 text-sm font-semibold text-[#faf6ec] transition hover:bg-[#1a1815] focus:outline-none focus:ring-4 focus:ring-[#8f2d20]/25"
           >
             搜索
           </button>

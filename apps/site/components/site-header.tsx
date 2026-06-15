@@ -19,6 +19,7 @@ const NAV_LINKS: NavItem[] = [
   {
     href: `/category/${CATEGORY_DEFINITIONS.fitness.slug}`,
     label: CATEGORY_DEFINITIONS.fitness.label,
+    private: true,
   },
   {
     href: `/category/${CATEGORY_DEFINITIONS.dailyNews.slug}`,
@@ -83,7 +84,7 @@ function NavLink({
       ? "inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8f2d20]/30"
       : "whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8f2d20]/30",
     active
-      ? "border-[1.5px] border-[#1a1815] bg-[#1a1815] font-semibold !text-[#faf6ec] shadow-[0.16rem_0.16rem_0_var(--riso-terra)]"
+      ? "bg-[#1a1815] font-semibold !text-[#faf6ec]"
       : "text-[#3c362c] hover:bg-[#1a1815]/14 hover:text-[#1a1815]"
   );
   const labelNode = item.private ? (
@@ -136,7 +137,7 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
           </p>
         </div>
         <div className="hidden min-w-0 flex-1 justify-end xl:flex">
-          <div className="flex max-w-full items-center gap-1 rounded-full border-[1.5px] border-[#1a1815]/80 bg-[#faf6ec]/80 p-1 shadow-[0.2rem_0.2rem_0_var(--riso-teal)]">
+          <div className="flex max-w-full items-center gap-1 rounded-full border border-[#1a1815]/30 bg-[#faf6ec]/70 p-1">
             <nav className="flex shrink-0 items-center gap-1">
               {NAV_LINKS.map((item) => (
                 <NavLink key={item.href} item={item} currentPathname={currentPathname} />
@@ -172,10 +173,10 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
           </div>
         </div>
         <details className="relative xl:hidden">
-          <summary className="inline-flex min-h-11 cursor-pointer list-none items-center justify-center rounded-full border-[1.5px] border-[#1a1815] bg-[#faf6ec]/85 px-4 text-sm font-semibold text-[#1a1815] shadow-[0.16rem_0.16rem_0_var(--riso-terra)] transition hover:bg-[#1a1815]/12 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8f2d20]/20 [&::-webkit-details-marker]:hidden">
+          <summary className="inline-flex min-h-11 cursor-pointer list-none items-center justify-center rounded-full border border-[#1a1815] bg-[#faf6ec]/85 px-4 text-sm font-semibold text-[#1a1815] transition hover:bg-[#1a1815]/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8f2d20]/20 [&::-webkit-details-marker]:hidden">
             菜单
           </summary>
-          <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(22rem,calc(100vw-2rem))] rounded-2xl border-[1.5px] border-[#1a1815] bg-[#faf6ec]/97 p-3 shadow-[0.4rem_0.4rem_0_var(--riso-teal)] backdrop-blur-xl">
+          <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-[#1a1815] bg-[#faf6ec]/97 p-3 shadow-[0_20px_50px_-30px_rgba(26,24,21,0.5)] backdrop-blur-xl">
             <nav className="grid grid-cols-2 gap-1">
               {NAV_LINKS.map((item) => (
                 <NavLink

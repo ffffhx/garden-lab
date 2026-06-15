@@ -17,6 +17,7 @@ type RootChromeProps = {
 };
 
 const PRIVATE_FEATURE_ROUTES = [
+  "/category/fitness",
   "/desktop-pet",
   "/farm-life-mvp",
   "/forest-shuffle",

@@ -6,10 +6,10 @@ import { PostCard } from "@/components/post-card";
 import { PrivateBadge, PrivateFeatureGate } from "@/components/private-feature-access";
 import { getAllCategories } from "@/lib/content/categories";
 import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
-import { getArticlePosts, getDailyNewsPosts } from "@/lib/content/posts";
+import { getArticlePosts } from "@/lib/content/posts";
 import { STANDALONE_PROJECTS } from "@/lib/standalone-projects";
 
-const heroVerbs = ["写作", "实验", "训练", "观察"];
+const heroVerbs = ["写作", "构建", "观察"];
 
 function SectionHead({
   kicker,
@@ -37,10 +37,15 @@ function SectionHead({
 
 export default function HomePage() {
   const articlePosts = getArticlePosts();
-  const dailyNewsPosts = getDailyNewsPosts();
   const categories = getAllCategories();
-  const featuredPosts = articlePosts.slice(0, 8);
-  const featuredNews = dailyNewsPosts.slice(0, 4);
+  // 健身改为仅自己可见：首页公开列表与分区索引都不展示健身
+  const publicPosts = articlePosts.filter(
+    (post) => !post.categories.includes(CATEGORY_DEFINITIONS.fitness.key)
+  );
+  const publicCategories = categories.filter(
+    (category) => category.slug !== CATEGORY_DEFINITIONS.fitness.slug
+  );
+  const featuredPosts = publicPosts.slice(0, 8);
   const priorityCoverSlug = featuredPosts.find((post) => post.cover)?.slug;
 
   return (
@@ -64,10 +69,10 @@ export default function HomePage() {
               </React.Fragment>
             ))}
             <br />
-            都长在同一座数字花园里。
+            都在这座数字花园里生长。
           </h1>
           <p className="drop-cap mt-7 max-w-2xl text-lg leading-[1.85] text-[#3c362c]">
-            {SITE.description}所有手记、实验与训练复盘都收进同一张工作台——像一本不断增订的私人年鉴，按季翻新，逐页累积。
+            一座持续生长的数字花园，收录源码解析与工程实践、亲手做的项目，以及日常的技术观察。一边搭建一边修剪，让每一篇手记都留下年轮。
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-5">
             <Link
@@ -90,7 +95,7 @@ export default function HomePage() {
             本卷分区 · Contents
           </p>
           <div>
-            {categories.map((category, index) => (
+            {publicCategories.map((category, index) => (
               <Link
                 key={category.slug}
                 href={`/category/${category.slug}`}
@@ -185,31 +190,6 @@ export default function HomePage() {
           </div>
         ) : (
           <EmptyState title="还没有文章" description="内容会在这里出现。" />
-        )}
-      </section>
-
-      {/* —— 每日新闻 —— */}
-      <section className="space-y-7">
-        <SectionHead
-          kicker="Daily News"
-          title="每日新闻"
-          action={
-            <Link
-              href={`/category/${CATEGORY_DEFINITIONS.dailyNews.slug}`}
-              className="font-mono-ui inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#8f2d20] transition hover:gap-2.5"
-            >
-              查看全部 <span aria-hidden="true">→</span>
-            </Link>
-          }
-        />
-        {featuredNews.length > 0 ? (
-          <div className="grid min-w-0 gap-x-6 gap-y-8 lg:grid-cols-2">
-            {featuredNews.map((post) => (
-              <PostCard key={post.slug} post={post} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState title="还没有新闻" description="每日新闻会在这里单独更新。" />
         )}
       </section>
     </main>

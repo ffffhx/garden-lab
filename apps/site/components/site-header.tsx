@@ -4,7 +4,7 @@ import Link from "next/link";
 import { PrivateBadge, PrivateFeatureGate } from "@/components/private-feature-access";
 import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
 import { cn } from "@/lib/utils/cn";
-import { normalizeBasePath, withBasePath } from "@/lib/utils/site-path";
+import { normalizeBasePath } from "@/lib/utils/site-path";
 
 type NavItem = {
   href: string;
@@ -26,7 +26,6 @@ const NAV_LINKS: NavItem[] = [
     label: CATEGORY_DEFINITIONS.dailyNews.label,
   },
   { href: "/pet", label: "桌宠", private: true },
-  { href: "/search", label: "搜索" },
 ];
 
 type SiteHeaderProps = {
@@ -143,33 +142,6 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
                 <NavLink key={item.href} item={item} currentPathname={currentPathname} />
               ))}
             </nav>
-            <form
-              action={withBasePath("/search/")}
-              role="search"
-              toolname="search_blog_posts_form"
-              tooldescription="Search this blog by article title keyword and open the search results page."
-              toolautosubmit=""
-              className="flex min-w-0 items-center gap-1 border-l-[1.5px] border-[#1a1815]/15 pl-1"
-            >
-              <label className="sr-only" htmlFor="site-title-search">
-                按标题搜索
-              </label>
-              <input
-                id="site-title-search"
-                name="q"
-                type="search"
-                toolparamtitle="query"
-                toolparamdescription="Article title keywords to search for."
-                placeholder="搜索标题"
-                className="h-9 w-32 min-w-0 rounded-full border-[1.5px] border-[#1a1815]/15 bg-[#faf6ec]/85 px-3 text-sm text-[#1a1815] outline-none transition placeholder:text-[#6b6457]/60 focus:border-[#1a1815] focus:ring-4 focus:ring-[#1a1815]/15 2xl:w-44"
-              />
-              <button
-                type="submit"
-                className="h-9 shrink-0 rounded-full border-[1.5px] border-[#1a1815] bg-[#8f2d20] px-3 text-sm font-semibold text-[#faf6ec] transition hover:bg-[#1a1815] focus:outline-none focus:ring-4 focus:ring-[#8f2d20]/25 xl:px-4"
-              >
-                搜索
-              </button>
-            </form>
           </div>
         </div>
         <details className="relative xl:hidden">
@@ -187,33 +159,6 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
                 />
               ))}
             </nav>
-            <form
-              action={withBasePath("/search/")}
-              role="search"
-              toolname="search_blog_posts_form_mobile"
-              tooldescription="Search this blog by article title keyword and open the search results page."
-              toolautosubmit=""
-              className="mt-3 grid grid-cols-[minmax(0,1fr)_4.5rem] gap-2 border-t-[1.5px] border-[#1a1815]/12 pt-3"
-            >
-              <label className="sr-only" htmlFor="site-title-search-mobile">
-                按标题搜索
-              </label>
-              <input
-                id="site-title-search-mobile"
-                name="q"
-                type="search"
-                toolparamtitle="query"
-                toolparamdescription="Article title keywords to search for."
-                placeholder="搜索标题"
-                className="min-h-11 min-w-0 rounded-full border-[1.5px] border-[#1a1815]/15 bg-[#faf6ec]/85 px-4 text-sm text-[#1a1815] outline-none transition placeholder:text-[#6b6457]/60 focus:border-[#1a1815] focus:ring-4 focus:ring-[#1a1815]/15"
-              />
-              <button
-                type="submit"
-                className="min-h-11 rounded-full border-[1.5px] border-[#1a1815] bg-[#8f2d20] px-4 text-sm font-semibold text-[#faf6ec] transition hover:bg-[#1a1815] focus:outline-none focus:ring-4 focus:ring-[#8f2d20]/25"
-              >
-                搜索
-              </button>
-            </form>
           </div>
         </details>
       </div>

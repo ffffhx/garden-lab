@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { EmptyState } from "@/components/empty-state";
-import { PostCard } from "@/components/post-card";
+import { CategorySearchList } from "@/components/category-search-list";
 import { getAllCategories, getCategoryBySlug } from "@/lib/content/categories";
 
 type CategoryPageProps = {
@@ -40,13 +39,6 @@ const CATEGORY_COLORS: Record<string, "terra" | "teal" | "pink" | "yellow"> = {
   "daily-news": "pink",
 };
 
-const ACCENT_CYCLE: ("terra" | "teal" | "pink" | "yellow")[] = [
-  "teal",
-  "pink",
-  "terra",
-  "yellow",
-];
-
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
   const category = getCategoryBySlug(slug);
@@ -80,15 +72,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           </div>
         </div>
       </div>
-      {category.posts.length > 0 ? (
-        <div className="grid gap-x-6 gap-y-8 lg:grid-cols-2">
-          {category.posts.map((post, index) => (
-            <PostCard key={post.slug} accent={ACCENT_CYCLE[index % ACCENT_CYCLE.length]} post={post} />
-          ))}
-        </div>
-      ) : (
-        <EmptyState title="这个分类还没有内容" description="稍后再来看看。" />
-      )}
+      <CategorySearchList posts={category.posts} label={category.label} />
     </main>
   );
 }

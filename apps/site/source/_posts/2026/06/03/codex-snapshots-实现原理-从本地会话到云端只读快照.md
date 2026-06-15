@@ -12,7 +12,7 @@ tags:
   - 本地工具
   - GitHub OAuth
 excerpt: "从 codex-snapshots 独立仓库出发，拆解它如何扫描 Codex、Claude Code 和 Trae 的本地历史，归一成只读 transcript，通过风险检测、脱敏和 HTML 净化守住分享边界，再用本地 Viewer、静态导出和云端 Share API 组成完整发布链路。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

@@ -11,7 +11,7 @@ tags:
   - MV3
   - 测试账号
 excerpt: "拆解 coze-account-switch-extension 如何用 Chrome MV3 把测试账号查询、CloudIdentity 登录、Coze Passport 写入、订阅权益验权、异常跳过和自己账号会话恢复串成一条可观察的后台接口切换链路。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

@@ -1,0 +1,512 @@
+[
+  {
+    "dir": "2026/05/04/2026-05-04-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-04",
+    "title": "每日新闻：2026-05-04 X 上 AI 与前端热点速览",
+    "texts": [
+      "搜索入口",
+      "Ask.com / AI 问答",
+      "模型评估",
+      "DeepSeek V4 / 成本",
+      "Agent 控制面",
+      "Portkey / AI Gateway",
+      "2026-05-04",
+      "X 上 AI 与前端热点速览"
+    ]
+  },
+  {
+    "dir": "2026/05/05/2026-05-05-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-05",
+    "title": "每日新闻：2026-05-05 X 上 AI 与前端热点速览",
+    "texts": [
+      "X 上 AI 与前端热点速览",
+      "2026-05-05 · 模型审查 / Agent 体验 / 身份安全",
+      "模型审查",
+      "白宫 / 安全测试",
+      "Agent 体验",
+      "Sierra / 客户流程",
+      "身份安全",
+      "Cisco / Astrix",
+      "从模型能力到企业落地，今天的热度都指向同一件事：agent 需要可治理的产品和安全边界。"
+    ]
+  },
+  {
+    "dir": "2026/05/02/2026-05-02-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-02",
+    "title": "每日新闻：2026-05-02 X 上 AI 与前端热点速览",
+    "texts": [
+      "AI 模型",
+      "Grok 4.3 / 成本曲线",
+      "Agent 权限",
+      "身份 / 审计 / 确认",
+      "前端供应链",
+      "npm / PyPI / CI/CD",
+      "2026-05-02",
+      "X 上 AI 与前端热点速览"
+    ]
+  },
+  {
+    "dir": "2026/05/02/codex-april-2026-updates-from-code-agent-to-workbench",
+    "cat": "每日新闻",
+    "date": "2026-05-03",
+    "title": "Codex 和 Claude Code 最近一个月更新了什么：两个 Coding Agent 都在变成工作台",
+    "texts": [
+      "2026.04 - 2026.05",
+      "Codex × Claude Code",
+      "最近一个月更新",
+      "从代码 Agent 到常驻工作台与开发平台",
+      "GPT-5.5",
+      "Browser Use",
+      "Automations",
+      "Ultrareview",
+      "Claude Security"
+    ]
+  },
+  {
+    "dir": "2026/05/11/2026-05-11-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-11",
+    "title": "每日新闻：2026-05-11 X 上 AI 与前端热点速览",
+    "texts": [
+      "X 上 AI 与前端热点速览",
+      "2026-05-11 · 设计系统、验证入口与 agentic AI 安全",
+      "界面回炉",
+      "macOS 27 修补可读性",
+      "验证入口",
+      "reCAPTCHA 走向设备证明",
+      "AI 风险",
+      "agentic 安全进入默认项",
+      "Techmeme / X 聚合 + 官方文档交叉核对 · Codex 与 Claude Code 更新追踪"
+    ]
+  },
+  {
+    "dir": "2026/05/16/codex-cli-接入飞书机器人-把本机-coding-agent-接进群聊",
+    "cat": "技术",
+    "date": "2026-05-16",
+    "title": "Codex CLI 接入飞书机器人：让阿里云做入口，Mac 跑 Agent",
+    "texts": [
+      "Feishu Bot × Codex CLI",
+      "阿里云做入口",
+      "Mac 跑 Codex",
+      "事件回调、任务队列、非交互执行、按群续聊",
+      "飞书消息",
+      "阿里云 hub",
+      "Mac worker",
+      "codex resume",
+      "@Codex"
+    ]
+  },
+  {
+    "dir": "2026/05/10/2026-05-10-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-10",
+    "title": "每日新闻：2026-05-10 X 上 AI 与前端热点速览",
+    "texts": [
+      "每日新闻",
+      "X 上 AI 与前端热点速览",
+      "2026-05-10 · 北京时间 24 小时观察",
+      "Agent 安全",
+      "AI 渗透测试",
+      "算力成本",
+      "Anthropic · Palo Alto Networks · ByteDance · Codex / Claude Code 跟踪"
+    ]
+  },
+  {
+    "dir": "2026/05/19/codex-app-远程控制实现原理-从云端-relay-到-app-server",
+    "cat": "技术",
+    "date": "2026-05-19",
+    "title": "Codex App 远程控制实现原理：从云端 Relay 到 App Server",
+    "texts": [
+      "Codex App 远程控制实现原理",
+      "从云端 Relay 到本机 App Server 的公开源码拆解",
+      "手机端",
+      "查看线程",
+      "发送指令",
+      "审批动作",
+      "云端 Relay",
+      "转发 JSON-RPC Envelope",
+      "PC / Mac",
+      "Codex App Server",
+      "文件、凭据、终端仍留在本机执行端"
+    ]
+  },
+  {
+    "dir": "2026/05/21/codex-会话分享工具实现解析-把本地-agent-历史做成只读-snapshot",
+    "cat": "技术",
+    "date": "2026-05-21",
+    "title": "Codex 会话分享工具实现解析：把本地 Agent 历史做成只读 Snapshot",
+    "texts": [
+      "Codex 会话分享工具实现解析",
+      "把本地 Agent 历史做成只读 Snapshot",
+      "local",
+      "Codex / Claude / Trae",
+      "JSONL、history、recorder",
+      "只读扫描，不写回原文件",
+      "Snapshot",
+      "turns[]",
+      "Markdown + Highlight",
+      "redact + export",
+      "Read-only",
+      "HTML / Markdown",
+      "朋友只能阅读",
+      "不能继续操作",
+      "核心不是公开 thread，而是冻结一份可审阅的静态快照"
+    ]
+  },
+  {
+    "dir": "2026/05/07/2026-05-07-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-07",
+    "title": "每日新闻：2026-05-07 X 上 AI 与前端热点速览",
+    "texts": [
+      "X 上 AI 与前端热点速览",
+      "2026-05-07 · 算力限额 / 公开应用 / 浏览器模型",
+      "算力限额",
+      "Claude Code",
+      "公开应用",
+      "Vibe Coding",
+      "浏览器模型",
+      "Gemini Nano",
+      "AI 工具开始变成默认运行时，前端也要解释算力、权限、发布与本地资源成本。"
+    ]
+  },
+  {
+    "dir": "2026/05/09/2026-05-09-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-09",
+    "title": "每日新闻：2026-05-09 X 上 AI 与前端热点速览",
+    "texts": [
+      "X 上 AI 与前端热点速览",
+      "2026-05-09 · 算力 / 语音 agent / 芯片成本",
+      "算力限额",
+      "Claude Code",
+      "实时语音",
+      "GPT-Realtime-2",
+      "芯片成本",
+      "OpenAI / Broadcom",
+      "AI 前端越来越轻，背后的模型、限额、证书和芯片成本越来越像产品运行时。"
+    ]
+  },
+  {
+    "dir": "2026/05/06/2026-05-06-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-06",
+    "title": "每日新闻：2026-05-06 X 上 AI 与前端热点速览",
+    "texts": [
+      "X 上 AI 与前端热点速览",
+      "2026-05-06 · 默认模型 / 个人 Agent / 工具供应链",
+      "默认模型",
+      "GPT-5.5 Instant",
+      "个人 Agent",
+      "Gemini / Instagram",
+      "供应链安全",
+      "DAEMON Tools",
+      "AI 入口开始替用户执行动作，前端也要同时设计权限、记忆、审计与工具链边界。"
+    ]
+  },
+  {
+    "dir": "2026/05/15/2026-05-15-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-15",
+    "title": "每日新闻：2026-05-15 X 上 AI 与前端热点速览",
+    "texts": [
+      "每日新闻",
+      "X 上 AI 与前端热点速览",
+      "2026-05-14 12:00 至 2026-05-15 12:00 · 北京时间",
+      "Agent 控制面",
+      "手机 · CLI · 供应链",
+      "Codex 进入 ChatGPT 手机 App",
+      "长任务 agent 可以远程审批、改方向、看 diff",
+      "Microsoft 收敛到 Copilot CLI",
+      "企业 AI coding 工具进入治理与成本选择",
+      "TanStack npm 供应链攻击",
+      "前端依赖、签名证书、AI 工具安全绑在一起",
+      "追踪：Codex mobile preview · Claude Code 2.1.142 · Copilot CLI · npm 供应链安全"
+    ]
+  },
+  {
+    "dir": "2026/05/12/2026-05-12-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-12",
+    "title": "每日新闻：2026-05-12 X 上 AI 与前端热点速览",
+    "texts": [
+      "每日新闻",
+      "X 上 AI 与前端热点速览",
+      "2026-05-11 12:00 至 2026-05-12 12:00 · 北京时间",
+      "新闻雷达",
+      "TanStack npm 供应链攻击",
+      "CI cache、OIDC、开发者工具目录连成攻击链",
+      "Google 报告 AI 生成零日",
+      "语义级漏洞发现推动安全 review 前移",
+      "Thinking Machines 实时交互模型",
+      "AI 前端从聊天框走向实时共在",
+      "追踪：OpenAI Daybreak / Claude Code Agent View",
+      "关键词：AI 安全 · 前端依赖 · agentic coding · 实时多模态 · 开发者工具"
+    ]
+  },
+  {
+    "dir": "2026/05/13/2026-05-13-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-13",
+    "title": "每日新闻：2026-05-13 X 上 AI 与前端热点速览",
+    "texts": [
+      "每日新闻",
+      "X 上 AI 与前端热点速览",
+      "2026-05-12 12:00 至 2026-05-13 12:00 · 北京时间",
+      "AI-native OS",
+      "Googlebook / Gemini Intelligence",
+      "光标、Chrome、Autofill、Widget 进入系统级 AI",
+      "Mini Shai-Hulud 扩散",
+      "npm、PyPI、CI OIDC、Claude hooks 连成攻击面",
+      "Amazon MeshClaw tokenmaxxing",
+      "AI 工具指标从 adoption 转向有效产出",
+      "追踪：OpenAI Daybreak / Codex 案例 · Claude Code 2.1.140",
+      "关键词：AI 操作系统 · 前端自动化 · 供应链安全 · agentic coding · 指标治理"
+    ]
+  },
+  {
+    "dir": "2026/05/14/2026-05-14-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-05-14",
+    "title": "每日新闻：2026-05-14 X 上 AI 与前端热点速览",
+    "texts": [
+      "每日新闻",
+      "X 上 AI 与前端热点速览",
+      "2026-05-13 12:00 至 2026-05-14 12:00 · 北京时间",
+      "Credit / Risk / Context",
+      "Claude Agent SDK credit",
+      "第三方 harness 从订阅套利走向 API 预算",
+      "AISI / Microsoft MDASH",
+      "AI 漏洞发现进入多 agent 安全流水线",
+      "Edge Copilot 浏览器上下文",
+      "多标签页、历史、写作和学习工具并入前端入口",
+      "追踪：Codex 官方更新空窗 · Claude Code 2.1.141 · Agent 计费边界 · AI 安全工程"
+    ]
+  },
+  {
+    "dir": "2026/05/22/codex-appshot-实现原理-左右-command-如何变成输入框截图",
+    "cat": "技术",
+    "date": "2026-05-22",
+    "title": "Codex Appshot 实现原理：左右 Command 如何变成输入框截图",
+    "texts": [
+      "Codex Appshot 实现原理",
+      "左右 Command 如何变成输入框截图",
+      "⌘",
+      "Left Command",
+      "modifierFlags",
+      "⌘",
+      "Right Command",
+      "bare modifier",
+      "stdout: down",
+      "Electron main",
+      "appshot-shortcut",
+      "Composer",
+      "appshot attachment",
+      "截图 + 辅助功能文本",
+      "从裸修饰键事件，到多模态输入附件"
+    ]
+  },
+  {
+    "dir": "2026/06/03/open-token-board-实现原理-从本机-token-日志到朋友排行榜",
+    "cat": "技术",
+    "date": "2026-06-03",
+    "title": "Open Token Board 实现原理：从本机 Token 日志到朋友排行榜",
+    "texts": [
+      "Open Token Board",
+      "从本机 Token 日志到朋友排行榜",
+      "本机日志",
+      "Codex / Claude",
+      "Cursor / Trae",
+      "Agent",
+      "采集 / 差分",
+      "脱敏 / 去重",
+      "API + 存储",
+      "GitHub 鉴权",
+      "PostgreSQL",
+      "排行榜",
+      "1D / 7D / 30D",
+      "Token / 费用",
+      "统一事件模型 TokenUsageEvent：input + output 作为总消耗，cached input 作为效率副指标"
+    ]
+  },
+  {
+    "dir": "2026/06/03/coze-测试账号切换插件实现原理-从-popup-到-passport-api",
+    "cat": "技术",
+    "date": "2026-06-03",
+    "title": "Coze 测试账号切换插件实现原理：从 Popup 到 Passport API",
+    "texts": [
+      "Coze Test Account Switcher",
+      "从 Popup 到 Passport API 的切换链路",
+      "Popup",
+      "JWT / 权益",
+      "角色 / 进度",
+      "后台状态机",
+      "查账号 / 跳过",
+      "退出 / 登录",
+      "CloudIdentity",
+      "密码登录",
+      "Auth Code",
+      "Coze Passport",
+      "写入登录态",
+      "订阅权益验权",
+      "核心原则：不用页面点击猜结果，用后台接口登录，再用 Coze API 证明账号、权益和角色。"
+    ]
+  },
+  {
+    "dir": "2026/06/03/codex-snapshots-实现原理-从本地会话到云端只读快照",
+    "cat": "技术",
+    "date": "2026-06-03",
+    "title": "Codex Snapshots 实现原理：从本地会话到云端只读快照",
+    "texts": [
+      "CODEX SNAPSHOTS",
+      "从本地会话到云端只读快照",
+      "扫描、归一、脱敏、审阅、发布：一条有边界的 Agent 会话分享链路",
+      "本地历史",
+      "Codex / Claude / Trae",
+      "隐私闸门",
+      "risk / redact / sanitize",
+      "只读分享",
+      "share API",
+      "观察 commit：acb51b3cef05728a96184f7d1fa886c7cb4a3a8c"
+    ]
+  },
+  {
+    "dir": "2026/06/10/claude-code-代理配置复盘-从住宅-ip-到-clash-verge-rev-分流",
+    "cat": "技术",
+    "date": "2026-06-10",
+    "title": "Claude Code 代理配置复盘：从住宅 IP 到 Clash Verge Rev 分流",
+    "texts": [
+      "CLAUDE CODE PROXY NOTES",
+      "从住宅 IP 到 Clash 分流",
+      "把出口 IP、系统代理、本机端口和规则命中分清楚",
+      "应用",
+      "Chrome / CLI",
+      "本机端口",
+      "127.0.0.1:7897",
+      "规则出口",
+      "UK",
+      "AWS/VPS、住宅 IP、ISP proxy、HTTP/SOCKS、Clash Verge Rev、Mihomo、CLI 环境变量"
+    ]
+  },
+  {
+    "dir": "2026/06/08/浏览器自动化工具能力边界-chrome-插件-cdp-mcp-和-devtools-差异",
+    "cat": "技术",
+    "date": "2026-06-08",
+    "title": "浏览器 Agent 工具怎么选：从 Agent 友好度看 Chrome 插件、CDP、MCP、DevTools、Playwright 和 bb-browser",
+    "texts": [
+      "browser capability boundaries",
+      "浏览器自动化工具",
+      "能力边界",
+      "Chrome 插件、CDP、MCP、DevTools、Network 与性能面板到底差在哪",
+      "Extension",
+      "CDP",
+      "MCP",
+      "DevTools",
+      "Site Adapter",
+      "default profile / chrome:// / extension worker / bookmarks / history / network / performance"
+    ]
+  },
+  {
+    "dir": "2026/06/15/2026-06-15-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-06-15",
+    "title": "每日新闻：2026-06-15 X 上 AI 与前端热点速览",
+    "texts": [
+      "每日新闻：AI 与前端热点速览",
+      "2026-06-14 12:00 至 2026-06-15 12:00 · X / Techmeme / 官方来源核验",
+      "模型供应链",
+      "Anthropic",
+      "政策下线风险",
+      "学习回路",
+      "Nadella",
+      "token capital",
+      "推理芯片",
+      "ByteDance",
+      "国产替代",
+      "年龄门槛",
+      "UK under-16",
+      "chatbot / game",
+      "无障碍 AI",
+      "Rylo",
+      "实时沟通",
+      "今天的关键词：供应链、学习回路、推理成本、年龄门槛、无障碍",
+      "AI 工程正在从模型调用变成系统治理"
+    ]
+  },
+  {
+    "dir": "2026/06/12/2026-06-12-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-06-12",
+    "title": "每日新闻：2026-06-12 X 上 AI 与前端热点速览",
+    "texts": [
+      "每日新闻",
+      "X 上 AI 与前端热点速览",
+      "2026-06-11 12:00 至 2026-06-12 12:00 · 北京时间",
+      "护栏可见",
+      "模型回退 · 审计 · 信任",
+      "Fable 5 护栏争议",
+      "隐性切换变成可见回退，agent 需要真实执行记录",
+      "OpenAI 收购 Ona",
+      "Codex 长任务从本机控制面走向持久云工作区",
+      "AI 基础设施叙事战",
+      "数据中心、电价、关税和内容生成进入同一风险面",
+      "Vercel：Grok Build 插件 · AI Gateway Azure DeepSeek 路由",
+      "追踪：Codex Ona · Claude Code 2.1.173 · Fable 5 · Vercel AI Gateway"
+    ]
+  },
+  {
+    "dir": "2026/06/13/2026-06-13-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-06-13",
+    "title": "每日新闻：2026-06-13 X 上 AI 与前端热点速览",
+    "texts": [
+      "每日新闻",
+      "X 上 AI 与前端热点速览",
+      "2026-06-12 12:00 至 2026-06-13 12:00 · 北京时间",
+      "事实核验",
+      "来源 · 成本 · 运行时",
+      "Meta AI 组织震荡",
+      "全员 AI 需要问题边界，不只是动员口号",
+      "KPMG 报告幻觉",
+      "企业内容要能回链证据，而不是只显得正式",
+      "token 价格战",
+      "agent 成本治理从总量走向任务级报表",
+      "MiMo Code",
+      "开源 harness 与长任务记忆",
+      "Vercel AI SDK",
+      "agent harness 接入前端平台",
+      "追踪：Codex 0.139.0 · Ona · Claude Code 2.1.176 · AI Gateway · HarnessAgent"
+    ]
+  },
+  {
+    "dir": "2026/06/14/2026-06-14-x-上-ai-与前端热点速览",
+    "cat": "每日新闻",
+    "date": "2026-06-14",
+    "title": "每日新闻：2026-06-14 X 上 AI 与前端热点速览",
+    "texts": [
+      "每日新闻：AI 与前端热点速览",
+      "2026-06-13 12:00 至 2026-06-14 12:00 · X / Techmeme / 官方来源交叉核验",
+      "模型访问",
+      "Fable / Mythos",
+      "政策风险",
+      "K",
+      "开源编码",
+      "Kimi K2.7",
+      "低 token",
+      "成本治理",
+      "Meta token",
+      "使用配额",
+      "用户安全",
+      "OpenAI",
+      "多州调查",
+      "系统入口",
+      "HarmonyOS",
+      "2,000+ agents",
+      "今天的关键词：可用性、成本、合规、安全、系统级 agent",
+      "模型能力正在变成工程治理问题"
+    ]
+  }
+]

@@ -11,7 +11,7 @@ tags:
   - Trae
   - 本地工具
 excerpt: "从一次真实需求出发，拆解如何把 Codex、Claude Code 和 Trae 的本地会话历史读取出来，归一成只读 transcript，再用 Markdown 渲染、代码高亮、脱敏、Trae recorder 和站内私有模块组成一个可分享的 Snapshot 工具。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

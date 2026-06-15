@@ -11,7 +11,7 @@ tags:
   - WebSocket
   - Agent
 excerpt: "Codex App 的跨设备连接不是手机直连电脑，而是本机 App Server 主动连到 ChatGPT 云端 relay。本文基于官方文章和 openai/codex 的 remote_control 源码，拆解 enrollment、WebSocket、分片、ack、客户端复用和安全边界。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

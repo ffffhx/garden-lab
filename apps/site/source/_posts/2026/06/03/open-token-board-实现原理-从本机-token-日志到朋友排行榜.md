@@ -11,7 +11,7 @@ tags:
   - PostgreSQL
   - GitHub OAuth
 excerpt: "拆解 open-token-board 如何把 Codex、Claude Code、Cursor、Trae 的本机用量日志采集成统一事件，再通过 GitHub Device Flow、后端二次清洗、PostgreSQL/JSON 存储、滚动时间窗口聚合和 Next.js 榜单 UI，做成一个朋友之间可公开查看的 AI 编码 Token 排行榜。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

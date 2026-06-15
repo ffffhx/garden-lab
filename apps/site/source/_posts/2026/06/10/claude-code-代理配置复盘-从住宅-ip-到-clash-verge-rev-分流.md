@@ -11,7 +11,7 @@ tags:
   - 网络
   - macOS
 excerpt: "整理一次从 AWS/VPS、住宅 IP、ISP 代理、HTTP/SOCKS 协议，到 Clash Verge Rev 分流和 Claude Code CLI 环境变量验证的完整配置复盘。重点不是买哪个代理，而是把出口 IP、系统代理、本机端口、规则命中和连接验证这些概念分清楚。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

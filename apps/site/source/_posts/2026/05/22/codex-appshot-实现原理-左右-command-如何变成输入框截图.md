@@ -10,7 +10,7 @@ tags:
   - Appshot
   - Computer Use
 excerpt: "从本机 Codex Desktop 26.519.31651 的 app bundle 出发，拆解左右 Command 触发 Appshot 的链路：bare modifier monitor 如何监听裸修饰键、Electron 主进程如何转成 appshot-shortcut、Computer Use 服务如何完成截图与辅助功能文本采集，最后为什么输入框里出现的是 composer attachment。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

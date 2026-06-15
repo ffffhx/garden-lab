@@ -14,7 +14,7 @@ tags:
   - GPT-5.5
   - Opus 4.7
 excerpt: "整理截至 2026-05-03 最近一个月里 Codex 和 Claude Code 的主要更新：Codex 往常驻桌面工作台演进，Claude Code 往本地 CLI、云端 Agent 编排和安全审查平台演进。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

@@ -11,7 +11,7 @@ tags:
   - CLI
   - 自动化
 excerpt: "从一次真实搭建出发，拆解如何用飞书事件回调、阿里云公网 hub、Mac worker、lark-cli 和 codex exec，把群聊消息变成可续聊的本机 Codex 任务。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

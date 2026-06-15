@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>cover generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@500;700;800&family=Noto+Sans+SC:wght@700;900&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#f1ecdd; --ink:#16130c; --blue:#1f3fd6; --red:#e8412a;
+    --acid:#cfe646; --yellow:#f5c11e; --teal:#15938a; --violet:#6b4ee6;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+    --black:"Archivo Black","Noto Sans SC",sans-serif;
+    --han:"Noto Sans SC","PingFang SC",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#3a382f}
+  .poster{position:relative;width:1600px;height:900px;background:var(--paper);
+    overflow:hidden;font-family:var(--mono);color:var(--ink);flex:none}
+  .poster::before{content:"";position:absolute;inset:0;z-index:60;pointer-events:none;
+    background-image:radial-gradient(var(--ink) 0.7px,transparent 0.9px);background-size:7px 7px;opacity:.05}
+  .grain{position:absolute;inset:0;z-index:61;pointer-events:none;mix-blend-mode:multiply;opacity:.5;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='0.55'/></svg>")}
+
+  /* shared left text column (split designs) */
+  .text{position:absolute;left:0;top:0;width:840px;height:900px;padding:74px 60px;display:flex;flex-direction:column;z-index:40}
+  .text.on-dark{color:var(--paper)} .text.on-dark .en{color:var(--paper)} .text.on-dark .sub{color:#cfc9b8;border-color:var(--paper)}
+  .text.on-dark .kw span{background:transparent;color:var(--paper);border-color:var(--paper)}
+  .text.on-dark .kw span.on{background:var(--paper);color:var(--ink)}
+  .text.on-dark .label .line{background:var(--paper)}
+  .label{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+  .label .cat{color:#fff;font-family:var(--black);font-size:17px;padding:6px 15px}
+  .label .en{font-family:var(--mono);font-weight:800;font-size:17px;letter-spacing:.2em;color:var(--ink)}
+  .label .line{flex:1;height:4px;background:var(--ink);max-width:110px}
+  h1{font-family:var(--han);font-weight:900;line-height:.99;letter-spacing:-.01em}
+  h1 .hl{color:var(--blue)} h1 .hr{color:var(--red)} h1 .ht{color:var(--teal)} h1 .hv{color:var(--violet)}
+  h1 em{font-style:normal;padding:0 6px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+  h1 .latin{font-family:var(--black);letter-spacing:-.02em}
+  .sub{margin-top:24px;max-width:640px;font-family:var(--mono);font-weight:500;font-size:19px;line-height:1.5;
+    color:#332f24;border-left:6px solid var(--ink);padding-left:18px}
+  .kw{margin-top:auto;display:flex;flex-wrap:wrap;gap:9px;max-width:680px}
+  .kw span{font-family:var(--mono);font-weight:700;font-size:15px;border:3px solid var(--ink);padding:5px 12px;background:var(--paper)}
+  .kw span.on{background:var(--ink);color:var(--paper)}
+
+  /* ===== feed (news) ===== */
+  .stage{position:absolute;top:0;right:0;width:760px;height:900px;overflow:hidden}
+  .feed-bg{position:absolute;inset:0;background:var(--ink)}
+  .feed-bg .dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.16) 2px,transparent 2.4px);background-size:18px 18px;
+    -webkit-mask-image:linear-gradient(210deg,#000,transparent 65%);mask-image:linear-gradient(210deg,#000,transparent 65%)}
+  .feed{position:absolute;inset:0;padding:70px 56px 64px 96px;display:flex;flex-direction:column;z-index:10;color:var(--paper)}
+  .feed .top{display:flex;align-items:baseline;gap:14px}
+  .feed .live{font-family:var(--black);font-size:16px;background:var(--red);color:#fff;padding:5px 12px}
+  .feed .src{font-family:var(--mono);font-weight:700;font-size:14px;color:#b7b1a0;letter-spacing:.04em}
+  .feed .date{font-family:var(--black);font-size:96px;line-height:1;letter-spacing:-.02em;margin-top:20px}
+  .feed .date .y{color:#7b7768;font-size:40px;display:block;letter-spacing:.06em}
+  .feed .items{margin-top:30px;display:flex;flex-direction:column;gap:14px}
+  .feed .it{display:flex;align-items:center;gap:14px}
+  .feed .it .k{font-family:var(--mono);font-weight:800;font-size:15px;color:var(--ink);padding:5px 9px;min-width:34px;text-align:center}
+  .feed .it .t{font-family:var(--han);font-weight:900;font-size:26px}
+  .feed .it .rule{flex:1;height:3px;background:#3a362c}
+  .feed .tagline{margin-top:auto;font-family:var(--mono);font-weight:700;font-size:17px;color:var(--acid);border-top:3px solid #3a362c;padding-top:16px;line-height:1.4}
+  .feed .radar{position:absolute;right:44px;top:60px;width:150px;height:150px;z-index:9;opacity:.95}
+
+  /* ===== full-bleed helpers ===== */
+  .fb{position:absolute;inset:0;z-index:10}
+  .fb .cap{display:flex;align-items:center;gap:14px}
+  .fb .cap .cat{color:#fff;font-family:var(--black);font-size:16px;padding:5px 14px}
+  .fb .cap .en{font-family:var(--mono);font-weight:800;font-size:16px;letter-spacing:.2em}
+  .fb h1{font-family:var(--han);font-weight:900;line-height:.99}
+
+  /* D1 changelog duel */
+  .duel{inset:0;background:var(--ink);color:var(--paper);padding:66px 70px}
+  .duel .head{margin-bottom:30px}
+  .duel h1{font-size:78px;margin-top:18px}
+  .duel .cols{display:flex;gap:26px;margin-top:38px}
+  .duel .col{flex:1;border:4px solid var(--paper)}
+  .duel .col .h{font-family:var(--black);font-size:30px;padding:14px 20px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .duel .col .h .v{font-family:var(--mono);font-size:15px;opacity:.85}
+  .duel .col ul{list-style:none;padding:18px 20px}
+  .duel .col li{font-family:var(--han);font-weight:900;font-size:24px;padding:9px 0;border-bottom:2px dashed #4a463a;display:flex;align-items:center;gap:12px}
+  .duel .col li:last-child{border-bottom:0}
+  .duel .col li .d{width:13px;height:13px;flex:none}
+  .duel .vs{position:absolute;left:50%;top:60%;transform:translate(-50%,-50%) rotate(-8deg);z-index:20;
+    width:96px;height:96px;border-radius:50%;background:var(--acid);border:5px solid var(--ink);box-shadow:0 0 0 5px var(--acid);
+    display:flex;align-items:center;justify-content:center;font-family:var(--black);font-size:30px;color:var(--ink)}
+  .duel .foot{position:absolute;left:70px;bottom:48px;font-family:var(--mono);font-weight:700;font-size:18px;color:var(--acid)}
+
+  /* D3 remote devices */
+  .remote{inset:0;background:#0e2a28;color:var(--paper);padding:64px 70px}
+  .remote h1{font-size:84px;margin-top:16px;max-width:900px}
+  .remote .scene{position:absolute;left:0;right:0;bottom:96px;height:300px}
+  .dev{position:absolute;border:5px solid var(--paper);background:#0e2a28;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  .dev .ic{font-family:var(--black);color:var(--yellow)} .dev .lb{font-family:var(--mono);font-weight:800;font-size:16px}
+  .dev .sm{font-family:var(--mono);font-size:13px;color:#9fc7c1}
+  .phone{left:120px;top:60px;width:130px;height:230px;border-radius:18px}
+  .relay{left:50%;top:40px;transform:translateX(-50%);width:260px;height:150px;background:var(--teal);border-color:var(--paper)}
+  .laptop{right:120px;top:90px;width:280px;height:180px;border-radius:8px}
+  .beam{position:absolute;height:6px;background:repeating-linear-gradient(90deg,var(--yellow) 0 16px,transparent 16px 28px);top:120px}
+  .remote .foot{position:absolute;left:70px;bottom:44px;font-family:var(--mono);font-weight:700;font-size:17px;color:var(--yellow)}
+
+  /* D5 keycaps */
+  .keys{inset:0;background:var(--ink);color:var(--paper);padding:64px 70px}
+  .keys h1{font-size:80px;margin-top:16px}
+  .keys .stage2{position:absolute;left:0;right:0;bottom:70px;height:360px}
+  .keycap{position:absolute;width:280px;height:280px;background:var(--yellow);border:6px solid var(--ink);border-radius:26px;
+    box-shadow:0 16px 0 #b98c00, 14px 14px 0 rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink)}
+  .keycap .big{font-family:var(--black);font-size:120px;line-height:.8} .keycap .sm{font-family:var(--mono);font-weight:800;font-size:22px;margin-top:8px}
+  .kL{left:140px;top:30px;transform:rotate(-5deg)} .kR{left:380px;top:60px;transform:rotate(4deg);background:var(--acid);box-shadow:0 16px 0 #8aa10c,14px 14px 0 rgba(0,0,0,.45)}
+  .shot{position:absolute;right:120px;top:0;width:340px;height:220px;background:var(--paper);border:6px solid var(--paper);box-shadow:14px 14px 0 rgba(0,0,0,.5);transform:rotate(6deg)}
+  .shot .bar{height:34px;background:var(--ink);display:flex;align-items:center;gap:7px;padding:0 12px}
+  .shot .bar i{width:11px;height:11px;border-radius:50%;background:#555;display:block}
+  .shot .b{padding:18px}.shot .ln{height:12px;background:#d7d1bf;margin-bottom:11px}.shot .ln.s{width:55%}
+  .shot .tag{position:absolute;right:-14px;bottom:-16px;background:var(--red);color:#fff;font-family:var(--black);font-size:18px;padding:6px 14px;transform:rotate(-4deg)}
+  .keys .foot{position:absolute;left:70px;bottom:40px;font-family:var(--mono);font-weight:700;font-size:17px;color:var(--yellow)}
+
+  /* D8 cloud blueprint */
+  .blue{inset:0;background:#16357a;color:#eaf0ff;padding:64px 70px;
+    background-image:linear-gradient(rgba(255,255,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.10) 1px,transparent 1px);
+    background-size:40px 40px}
+  .blue h1{font-size:84px;margin-top:16px;max-width:900px}
+  .blue h1 .hl{color:var(--acid)}
+  .blue .draw{position:absolute;left:0;right:0;bottom:80px;height:320px}
+  .bp{position:absolute;border:4px solid #eaf0ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+  .bp .lb{font-family:var(--mono);font-weight:800;font-size:16px}.bp .sm{font-family:var(--mono);font-size:13px;color:#9fb4e6}
+  .localbox{left:150px;top:120px;width:230px;height:130px}
+  .cloudbox{right:170px;top:50px;width:300px;height:200px;border-radius:90px/70px;background:rgba(255,255,255,.06)}
+  .blue .arc{position:absolute;left:380px;top:96px;width:780px;height:150px}
+  .lockb{position:absolute;right:300px;top:30px;width:60px;height:60px;background:var(--yellow);border:4px solid var(--ink);display:flex;align-items:center;justify-content:center;z-index:5}
+  .blue .ro{position:absolute;right:170px;top:255px;background:var(--acid);color:var(--ink);font-family:var(--black);font-size:18px;padding:5px 13px}
+  .blue .foot{position:absolute;left:70px;bottom:44px;font-family:var(--mono);font-weight:700;font-size:17px;color:#9fb4e6}
+
+  /* D9 route map */
+  .route{inset:0;background:#161310;color:var(--paper);padding:64px 70px;
+    background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1.4px);background-size:30px 30px}
+  .route h1{font-size:84px;margin-top:16px}
+  .route .net{position:absolute;left:60px;right:60px;bottom:80px;height:330px}
+  .rn{position:absolute;border:4px solid var(--paper);background:#161310;padding:12px 16px;text-align:center}
+  .rn .lb{font-family:var(--han);font-weight:900;font-size:22px}.rn .sm{font-family:var(--mono);font-size:14px;color:#b7b1a0;margin-top:3px}
+  .rn.acc{border-color:var(--acid)} .rn.red{border-color:var(--red)}
+  .route .foot{position:absolute;left:70px;bottom:42px;font-family:var(--mono);font-weight:700;font-size:16px;color:var(--acid)}
+
+  /* D2 chat (split right stage) */
+  .chat{position:absolute;inset:30px 30px 30px 0;background:#0d1b3e;border:5px solid var(--ink);box-shadow:-14px 14px 0 var(--ink);display:flex;flex-direction:column;overflow:hidden}
+  .chat .ch{background:#1f3fd6;color:#fff;padding:16px 22px;font-family:var(--han);font-weight:900;font-size:24px;display:flex;justify-content:space-between;align-items:center}
+  .chat .ch .n{font-family:var(--mono);font-size:14px;font-weight:700;opacity:.85}
+  .chat .body{flex:1;padding:26px 24px;display:flex;flex-direction:column;gap:18px;background-image:radial-gradient(rgba(255,255,255,.05) 2px,transparent 2.3px);background-size:20px 20px}
+  .msg{max-width:80%;font-family:var(--han);font-weight:700;font-size:21px;padding:14px 18px;border:4px solid var(--ink)}
+  .msg.u{align-self:flex-end;background:var(--acid);color:var(--ink);box-shadow:6px 6px 0 rgba(0,0,0,.4)}
+  .msg.b{align-self:flex-start;background:var(--paper);color:var(--ink);box-shadow:6px 6px 0 rgba(0,0,0,.4)}
+  .msg .who{font-family:var(--mono);font-weight:800;font-size:13px;color:#1f3fd6;margin-bottom:5px;display:block}
+  .msg.u .who{color:#3a6a00}
+  .msg code{font-family:var(--mono);font-size:15px;background:var(--ink);color:var(--acid);padding:2px 7px;font-weight:700}
+  .chat .flow{padding:14px 22px;background:var(--ink);color:var(--paper);font-family:var(--mono);font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px;justify-content:center}
+  .chat .flow b{color:var(--acid)}
+
+  /* D4 share stamp (split right stage) */
+  .docs{position:absolute;right:0;top:0;width:760px;height:900px;overflow:hidden;background:var(--red)}
+  .docs .strip{position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 30px,rgba(0,0,0,.08) 30px 60px)}
+  .doc{position:absolute;width:420px;background:var(--paper);border:5px solid var(--ink);box-shadow:12px 12px 0 rgba(0,0,0,.4);padding:22px}
+  .doc .ln{height:13px;background:#d7d1bf;margin-bottom:13px}.doc .ln.s{width:50%}.doc .ln.m{width:78%}
+  .doc .t{font-family:var(--mono);font-weight:800;font-size:15px;color:#8a8475;margin-bottom:16px}
+  .d1{left:120px;top:90px;transform:rotate(-7deg)} .d2{left:200px;top:150px;transform:rotate(3deg)} .d3{left:170px;top:230px;transform:rotate(-2deg)}
+  .stamp{position:absolute;right:70px;bottom:150px;width:230px;height:230px;border:8px solid var(--ink);border-radius:50%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-14deg);background:rgba(241,236,221,.5);z-index:10}
+  .stamp .a{font-family:var(--black);font-size:40px;color:var(--ink);line-height:.9;text-align:center}
+  .stamp .b{font-family:var(--mono);font-weight:800;font-size:15px;margin-top:8px;letter-spacing:.1em}
+  .lock2{position:absolute;left:120px;bottom:120px;width:90px;height:90px;background:var(--yellow);border:5px solid var(--ink);box-shadow:8px 8px 0 var(--ink);display:flex;align-items:center;justify-content:center;transform:rotate(8deg);z-index:11}
+
+  /* D6 leaderboard (split right stage) */
+  .board{position:absolute;right:30px;top:30px;bottom:30px;left:auto;width:710px;background:var(--paper);border:5px solid var(--ink);box-shadow:-14px 14px 0 var(--ink);padding:26px 28px;display:flex;flex-direction:column}
+  .board .bh{display:flex;justify-content:space-between;align-items:center;border-bottom:5px solid var(--ink);padding-bottom:16px}
+  .board .bh .tt{font-family:var(--black);font-size:26px}
+  .board .seg{display:flex;gap:6px}.board .seg span{font-family:var(--mono);font-weight:800;font-size:14px;border:3px solid var(--ink);padding:4px 10px}
+  .board .seg span.on{background:var(--violet);color:#fff}
+  .board .rows{margin-top:18px;display:flex;flex-direction:column;gap:14px}
+  .row{display:flex;align-items:center;gap:14px}
+  .row .rk{width:44px;height:44px;flex:none;background:var(--ink);color:var(--paper);font-family:var(--black);font-size:20px;display:flex;align-items:center;justify-content:center}
+  .row.top1 .rk{background:var(--yellow);color:var(--ink)} .row.top2 .rk{background:#bfb9a6;color:var(--ink)} .row.top3 .rk{background:var(--red);color:#fff}
+  .row .nm{font-family:var(--han);font-weight:900;font-size:21px;width:130px;flex:none}
+  .row .barwrap{flex:1;height:30px;background:#e2dcca;border:3px solid var(--ink)}
+  .row .bar{height:100%;background:var(--violet)}
+  .row.top1 .bar{background:var(--yellow)}
+  .row .val{font-family:var(--mono);font-weight:800;font-size:16px;width:96px;text-align:right;flex:none}
+
+  /* D7 account switch (split right stage) */
+  .sw{position:absolute;right:0;top:0;width:760px;height:900px;overflow:hidden}
+  .sw .field{position:absolute;top:-60px;right:-90px;width:780px;height:1020px;transform:rotate(-4deg);background:var(--teal);box-shadow:-14px 0 0 var(--ink)}
+  .sw .dots{position:absolute;top:-60px;right:-90px;width:780px;height:1020px;transform:rotate(-4deg);background-image:radial-gradient(rgba(255,255,255,.45) 2px,transparent 2.4px);background-size:16px 16px;-webkit-mask-image:linear-gradient(200deg,#000,transparent 60%)}
+  .acct{position:absolute;left:120px;width:430px;background:var(--paper);border:5px solid var(--ink);box-shadow:11px 11px 0 var(--ink);padding:20px;display:flex;align-items:center;gap:18px}
+  .acct .av{width:64px;height:64px;flex:none;border:4px solid var(--ink)}
+  .acct .nm{font-family:var(--han);font-weight:900;font-size:24px}.acct .rl{margin-top:8px;display:flex;gap:6px}
+  .acct .rl span{font-family:var(--mono);font-weight:700;font-size:13px;border:2px solid var(--ink);padding:2px 8px}
+  .a-old{top:150px;transform:rotate(-2deg);opacity:.6;filter:grayscale(.4)} .a-old .av{background:#bbb}
+  .a-new{top:430px;transform:rotate(2deg)} .a-new .av{background:var(--acid)}
+  .a-new .badge{position:absolute;right:-12px;top:-16px;background:var(--blue);color:#fff;font-family:var(--black);font-size:15px;padding:5px 12px;transform:rotate(5deg)}
+  .toggle{position:absolute;right:56px;top:300px;width:110px;height:200px;background:var(--ink);border-radius:60px;display:flex;flex-direction:column;justify-content:flex-end;padding:8px;z-index:8;box-shadow:8px 8px 0 rgba(0,0,0,.4)}
+  .toggle .knob{width:94px;height:94px;border-radius:50%;background:var(--acid);border:4px solid var(--paper)}
+  .sw .arrow2{position:absolute;left:300px;top:300px;font-family:var(--black);font-size:56px;color:var(--ink);transform:rotate(90deg);z-index:7}
+
+  /* browser scene */
+  .field{position:absolute;top:-60px;right:-90px;width:780px;height:1020px;transform:rotate(-4deg);box-shadow:-14px 0 0 var(--ink)}
+  .field-stripe{position:absolute;top:-60px;right:-90px;width:780px;height:1020px;transform:rotate(-4deg);background:repeating-linear-gradient(135deg,transparent 0 26px,rgba(0,0,0,.10) 26px 52px)}
+  .field-dots{position:absolute;top:-60px;right:-90px;width:780px;height:1020px;transform:rotate(-4deg);background-image:radial-gradient(rgba(255,255,255,.5) 2px,transparent 2.4px);background-size:16px 16px;-webkit-mask-image:linear-gradient(200deg,rgba(0,0,0,.9),transparent 60%);mask-image:linear-gradient(200deg,rgba(0,0,0,.9),transparent 60%)}
+  .win{position:absolute;left:150px;top:212px;width:520px;height:360px;background:var(--paper);border:5px solid var(--ink);box-shadow:14px 16px 0 var(--ink);transform:rotate(-4deg)}
+  .win .bar{display:flex;align-items:center;gap:9px;height:48px;padding:0 16px;background:var(--ink)}
+  .win .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--paper)}
+  .win .dot.r{background:var(--red)} .win .dot.y{background:var(--yellow)} .win .dot.g{background:var(--acid)}
+  .win .url{flex:1;margin-left:10px;height:22px;background:#2c2920;border:2px solid #54503f}
+  .win .body{padding:24px 22px;position:relative}
+  .win .line{height:14px;background:#d7d1bf;margin-bottom:14px}
+  .win .line.s{width:62%} .win .line.m{width:84%} .win .line.l{width:96%}
+  .el{position:absolute;border:4px solid var(--red);background:rgba(232,65,42,.10)}
+  .el .ref{position:absolute;top:-15px;left:-4px;background:var(--red);color:#fff;font-weight:800;font-size:14px;padding:1px 7px;font-family:var(--mono)}
+  .el.btn{left:298px;top:206px;width:152px;height:58px;border-color:var(--blue);background:var(--blue);display:flex;align-items:center;justify-content:center}
+  .el.btn .ref{background:var(--blue);top:-18px}
+  .el.btn .t{font-family:var(--han);font-weight:900;font-size:24px;color:#fff}
+  .eye{position:absolute;right:118px;top:120px;width:118px;height:118px;background:var(--yellow);border:5px solid var(--ink);transform:rotate(8deg);box-shadow:8px 8px 0 var(--ink);display:flex;align-items:center;justify-content:center}
+  .eye .pupil{width:46px;height:46px;border-radius:50%;background:var(--ink);position:relative}
+  .eye .pupil::after{content:"";position:absolute;left:9px;top:8px;width:14px;height:14px;border-radius:50%;background:var(--paper)}
+  .scan{position:absolute;right:150px;top:230px;width:4px;height:300px;background:repeating-linear-gradient(var(--yellow) 0 10px,transparent 10px 20px);transform:rotate(20deg);opacity:.85}
+  .tools{position:absolute;right:46px;bottom:70px;display:flex;flex-direction:column;gap:13px;align-items:flex-end;z-index:20}
+  .pill{font-family:var(--mono);font-weight:800;font-size:17px;color:var(--ink);background:var(--paper);border:4px solid var(--ink);padding:8px 16px;box-shadow:6px 6px 0 rgba(0,0,0,.35)}
+  .pill.a{background:var(--acid)} .pill.b{background:var(--yellow)} .pill.c{background:var(--red);color:#fff}
+</style>
+</head>
+<body>
+  <div class="poster" id="poster"></div>
+<script>
+  var __cb = new URLSearchParams(location.search).get("cb") || "0";
+  document.write('<scr'+'ipt src="./covers.js?cb=' + __cb + '"></scr'+'ipt>');
+</script>
+<script>
+const C = window.COVERS;
+const idx = parseInt(new URLSearchParams(location.search).get("i")||"0",10);
+const d = C[idx];
+const ACCENT = {blue:"#1f3fd6",red:"#e8412a",teal:"#15938a",violet:"#6b4ee6",yellow:"#f5c11e",acid:"#cfe646"};
+const accent = ACCENT[d.accent] || ACCENT.blue;
+const poster = document.getElementById("poster");
+
+function labelRow(d, catColor){return `<div class="label"><span class="cat" style="background:${catColor||accent}">${d.cat}</span><span class="en">${d.en}</span><span class="line"></span></div>`;}
+function leftText(d, dark){return `<div class="text ${dark?'on-dark':''}">${labelRow(d, d.scene==='feed'?ACCENT.red:accent)}
+  <h1 style="font-size:${d.titleSize||80}px">${d.title}</h1>
+  <p class="sub">${d.sub}</p>
+  <div class="kw">${(d.kw||[]).map((k,i)=>`<span class="${i%3===0?'on':''}">${k}</span>`).join("")}</div></div>`;}
+
+// ---- news feed ----
+function renderFeed(){
+  const yy=d.date.slice(0,4), md=d.date.slice(5).replace("-",".");
+  const radar=`<div class="radar"><svg viewBox="0 0 150 150"><g fill="none" stroke="#e8412a" stroke-width="4"><circle cx="75" cy="75" r="20"/><circle cx="75" cy="75" r="44"/><circle cx="75" cy="75" r="68"/></g><path d="M75 75 L143 60 A68 68 0 0 0 120 26 Z" fill="#e8412a" opacity="0.85"/><circle cx="75" cy="75" r="7" fill="#cfe646"/></svg></div>`;
+  const items=d.topics.map((t,i)=>`<div class="it"><span class="k" style="background:${[ACCENT.acid,ACCENT.yellow,ACCENT.red,'#67d3c8','#a99bf2'][i%5]}">0${i+1}</span><span class="t">${t}</span><span class="rule"></span></div>`).join("");
+  poster.innerHTML = leftText(d,false) + `<div class="stage"><div class="feed-bg"><div class="dots"></div></div>${radar}
+    <div class="feed"><div class="top"><span class="live">每日新闻 ● LIVE</span><span class="src">${d.src||"X / Techmeme / 官方核验"}</span></div>
+    <div class="date"><span class="y">DAILY BRIEF · ${yy}</span>${md}</div>
+    <div class="items">${items}</div><div class="tagline">▸ ${d.tagline}</div></div></div>`;
+}
+
+// ---- technical designs (one distinct style each) ----
+const DESIGN = {
+  "browser-tools": () => leftText(d,false) + `<div class="stage">${d.stageHTML}</div>`,
+
+  "codex-claude-updates": () => `<div class="fb duel">
+    <div class="head"><div class="cap"><span class="cat" style="background:${ACCENT.red}">${d.cat}</span><span class="en">${d.en}</span></div>
+    <h1>${d.title}</h1></div>
+    <div class="cols">
+      <div class="col"><div class="h" style="background:${ACCENT.red}">Codex<span class="v">2026.04→05</span></div>
+        <ul>${d.codex.map(x=>`<li><span class="d" style="background:${ACCENT.red}"></span>${x}</li>`).join("")}</ul></div>
+      <div class="col"><div class="h" style="background:${ACCENT.blue}">Claude Code<span class="v">UPDATES</span></div>
+        <ul>${d.claude.map(x=>`<li><span class="d" style="background:${ACCENT.blue}"></span>${x}</li>`).join("")}</ul></div>
+    </div><div class="vs">VS</div><div class="foot">▸ 从代码 Agent → 常驻工作台 → 开发平台</div></div>`,
+
+  "codex-cli-feishu": () => leftText(d,false) + `<div class="stage" style="overflow:visible"><div class="chat">
+    <div class="ch">技术群 · Codex Bot<span class="n">23 人</span></div>
+    <div class="body">
+      <div class="msg u"><span class="who">我</span>@Codex 帮我把这个仓库的测试跑一遍 👀</div>
+      <div class="msg b"><span class="who">▣ Codex（Mac worker）</span>已在本机执行 <code>codex resume</code>，38 passed，正在续聊…</div>
+      <div class="msg u"><span class="who">我</span>顺手 commit 一下</div>
+    </div>
+    <div class="flow">飞书消息 <b>→</b> 阿里云 hub <b>→</b> Mac worker <b>→</b> @Codex 回群</div></div></div>`,
+
+  "codex-app-remote": () => `<div class="fb remote">
+    <div class="cap"><span class="cat" style="background:${ACCENT.teal}">${d.cat}</span><span class="en">${d.en}</span></div>
+    <h1>${d.title}</h1>
+    <div class="scene">
+      <div class="beam" style="left:250px;width:170px"></div><div class="beam" style="right:250px;width:170px"></div>
+      <div class="dev phone"><span class="ic" style="font-size:34px">▤</span><span class="lb">手机端</span><span class="sm">看线程 / 发指令</span></div>
+      <div class="dev relay"><span class="ic" style="font-size:30px">☁</span><span class="lb">云端 Relay</span><span class="sm">转发 JSON-RPC Envelope</span></div>
+      <div class="dev laptop"><span class="ic" style="font-size:30px">▣</span><span class="lb">App Server（本机）</span><span class="sm">文件 · 凭据 · 终端</span></div>
+    </div><div class="foot">▸ 手机只发指令，文件、凭据、终端仍留在本机执行端</div></div>`,
+
+  "codex-share": () => leftText(d,false) + `<div class="docs"><div class="strip"></div>
+    <div class="doc d1"><div class="t">session · 2026-05-19.jsonl</div><div class="ln l m"></div><div class="ln m"></div><div class="ln s"></div><div class="ln m"></div></div>
+    <div class="doc d2"><div class="t">turns[ 42 ]</div><div class="ln m"></div><div class="ln s"></div><div class="ln m"></div></div>
+    <div class="doc d3"><div class="t">snapshot.html</div><div class="ln m"></div><div class="ln m"></div><div class="ln s"></div></div>
+    <div class="stamp"><span class="a">READ<br>ONLY</span><span class="b">SNAPSHOT</span></div>
+    <div class="lock2"><svg width="44" height="44" viewBox="0 0 64 64"><path d="M18 30V22a14 14 0 0128 0v8" fill="none" stroke="#16130c" stroke-width="6"/><rect x="10" y="30" width="44" height="30" fill="#16130c"/></svg></div></div>`,
+
+  "codex-appshot": () => `<div class="fb keys">
+    <div class="cap"><span class="cat" style="background:${ACCENT.yellow};color:var(--ink)">${d.cat}</span><span class="en">${d.en}</span></div>
+    <h1>${d.title}</h1>
+    <div class="stage2">
+      <div class="keycap kL"><span class="big">⌘</span><span class="sm">LEFT</span></div>
+      <div class="keycap kR"><span class="big">⌘</span><span class="sm">RIGHT</span></div>
+      <div class="shot"><div class="bar"><i></i><i></i><i></i></div><div class="b"><div class="ln"></div><div class="ln s"></div></div><div class="tag">appshot ↘</div></div>
+    </div><div class="foot">▸ 裸修饰键事件 → Electron 捕获 → Composer 多模态附件</div></div>`,
+
+  "open-token-board": () => leftText(d,false) + `<div class="stage" style="overflow:visible"><div class="board">
+    <div class="bh"><span class="tt">▮ TOKEN BOARD</span><div class="seg"><span>1D</span><span class="on">7D</span><span>30D</span></div></div>
+    <div class="rows">
+      <div class="row top1"><span class="rk">1</span><span class="nm">you</span><span class="barwrap"><span class="bar" style="width:96%"></span></span><span class="val">8.4M</span></div>
+      <div class="row top2"><span class="rk">2</span><span class="nm">@lin</span><span class="barwrap"><span class="bar" style="width:72%"></span></span><span class="val">6.1M</span></div>
+      <div class="row top3"><span class="rk">3</span><span class="nm">@kai</span><span class="barwrap"><span class="bar" style="width:54%"></span></span><span class="val">4.7M</span></div>
+      <div class="row"><span class="rk">4</span><span class="nm">@mo</span><span class="barwrap"><span class="bar" style="width:38%"></span></span><span class="val">3.0M</span></div>
+      <div class="row"><span class="rk">5</span><span class="nm">@ada</span><span class="barwrap"><span class="bar" style="width:22%"></span></span><span class="val">1.8M</span></div>
+    </div></div></div>`,
+
+  "coze-switch": () => leftText(d,false) + `<div class="sw"><div class="field"></div><div class="dots"></div>
+    <div class="acct a-old"><div class="av"></div><div><div class="nm">我的账号</div><div class="rl"><span>登录态</span><span>已保存</span></div></div></div>
+    <div class="arrow2">➜</div>
+    <div class="toggle"><div class="knob"></div></div>
+    <div class="acct a-new"><span class="badge">Passport ✓</span><div class="av"></div><div><div class="nm">测试账号</div><div class="rl"><span>专业版</span><span>企业管理员</span></div></div></div></div>`,
+
+  "codex-snapshots": () => `<div class="fb blue">
+    <div class="cap"><span class="cat" style="background:${ACCENT.blue}">${d.cat}</span><span class="en">${d.en}</span></div>
+    <h1>${d.title}</h1>
+    <div class="draw">
+      <svg class="arc" viewBox="0 0 360 120"><path d="M10 110 Q180 -20 350 60" fill="none" stroke="#eaf0ff" stroke-width="4" stroke-dasharray="3 10"/><path d="M338 48 l16 14 -20 8z" fill="#cfe646"/></svg>
+      <div class="bp localbox"><span class="lb">本地会话</span><span class="sm">Codex / Claude / Trae</span></div>
+      <div class="lockb"><svg width="30" height="30" viewBox="0 0 64 64"><path d="M18 30V22a14 14 0 0128 0v8" fill="none" stroke="#16130c" stroke-width="6"/><rect x="10" y="30" width="44" height="30" fill="#16130c"/></svg></div>
+      <div class="bp cloudbox"><span class="lb">云端只读快照</span><span class="sm">share API · sanitize</span></div>
+      <div class="ro">READ-ONLY</div>
+    </div><div class="foot">▸ 扫描 · 归一 · 脱敏 · 审阅 · 发布</div></div>`,
+
+  "claude-proxy": () => `<div class="fb route">
+    <div class="cap"><span class="cat" style="background:${ACCENT.red}">${d.cat}</span><span class="en">${d.en}</span></div>
+    <h1>${d.title}</h1>
+    <div class="net">
+      <svg width="100%" height="100%" viewBox="0 0 1480 330" preserveAspectRatio="none" style="position:absolute;inset:0">
+        <path d="M250 165 H470" stroke="#cfe646" stroke-width="5" stroke-dasharray="2 12" stroke-linecap="round"/>
+        <path d="M740 165 H980" stroke="#cfe646" stroke-width="5" stroke-dasharray="2 12" stroke-linecap="round"/>
+        <path d="M740 165 C880 165 880 60 1010 60" stroke="#e8412a" stroke-width="5" stroke-dasharray="2 12" fill="none"/>
+        <path d="M740 165 C880 165 880 290 1010 290" stroke="#e8412a" stroke-width="5" stroke-dasharray="2 12" fill="none"/>
+      </svg>
+      <div class="rn" style="left:60px;top:120px"><div class="lb">应用</div><div class="sm">Chrome / CLI</div></div>
+      <div class="rn acc" style="left:490px;top:120px"><div class="lb">本机端口</div><div class="sm">127.0.0.1:7897</div></div>
+      <div class="rn" style="left:1000px;top:18px"><div class="lb">直连</div><div class="sm">direct</div></div>
+      <div class="rn red" style="left:1000px;top:118px"><div class="lb">规则出口</div><div class="sm">住宅 IP</div></div>
+      <div class="rn red" style="left:1000px;top:248px"><div class="lb">UK / VPS</div><div class="sm">SOCKS / HTTP</div></div>
+    </div><div class="foot">▸ 出口 IP · 系统代理 · 本机端口 · 规则命中 分清楚</div></div>`,
+};
+
+if (d.scene === "feed") renderFeed();
+else poster.innerHTML = DESIGN[d.slug](d);
+const g=document.createElement("div"); g.className="grain"; poster.appendChild(g);
+document.title = "cover "+idx+" "+(d.slug||"");
+</script>
+</body>
+</html>

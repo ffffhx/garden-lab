@@ -13,7 +13,7 @@ tags:
   - 浏览器插件
   - 性能分析
 excerpt: "从 Agent 的任务流出发，比较 Codex @chrome、agent-browser、bb-browser、Chrome DevTools MCP、Puppeteer 和 Playwright 在页面观察、点击输入、Network 排障、性能分析、真实登录态、扩展调试和 site adapter 上的友好度。"
-cover: "cover-v1.svg"
+cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 

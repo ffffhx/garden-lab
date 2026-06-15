@@ -51,9 +51,9 @@ export function PostToc({ headings }: PostTocProps) {
   }
 
   return (
-    <aside className="rounded-lg border border-slate-950/10 bg-[#fffdf7]/84 p-5 shadow-[0_24px_80px_-60px_rgba(15,23,42,0.58)] backdrop-blur xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:overscroll-contain 2xl:p-6">
-      <p className="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-slate-500 xl:sticky xl:top-0 xl:bg-[#fffdf7]/95 xl:pb-3 xl:backdrop-blur">
-        目录
+    <aside className="riso-card riso-card--pink p-5 backdrop-blur xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:overscroll-contain 2xl:p-6">
+      <p className="font-mono-ui mb-4 text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#1a1815] xl:sticky xl:top-0 xl:bg-[#faf6ec]/95 xl:pb-3 xl:backdrop-blur">
+        目录 · Index
       </p>
       <nav aria-label="文章目录" className="space-y-1">
         {headings.map((heading) => (
@@ -61,11 +61,11 @@ export function PostToc({ headings }: PostTocProps) {
             key={heading.id}
             href={`#${heading.id}`}
             className={cn(
-              "block rounded-md px-3 py-2 text-sm leading-6 text-slate-600 transition hover:bg-[#fff4cf] hover:text-[#7c3b16]",
+              "block rounded-lg px-3 py-2 text-sm leading-6 text-[#3c362c] transition hover:bg-[#1a1815]/12 hover:text-[#1a1815]",
               heading.depth === 3 && "ml-3",
               heading.depth === 4 && "ml-6",
               activeId === heading.id &&
-                "bg-[#fff4cf] text-slate-950 ring-1 ring-[#b45f28]/18 hover:bg-[#fff4cf] hover:text-slate-950"
+                "border-l-2 border-[#8f2d20] bg-[#8f2d20]/14 font-semibold text-[#1a1815] hover:bg-[#8f2d20]/14"
             )}
           >
             {heading.text}

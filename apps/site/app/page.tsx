@@ -8,7 +8,32 @@ import { getAllCategories } from "@/lib/content/categories";
 import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
 import { getArticlePosts, getDailyNewsPosts } from "@/lib/content/posts";
 import { STANDALONE_PROJECTS } from "@/lib/standalone-projects";
-import { withBasePath } from "@/lib/utils/site-path";
+
+const heroVerbs = ["写作", "实验", "训练", "观察"];
+
+function SectionHead({
+  kicker,
+  title,
+  action,
+}: {
+  kicker: string;
+  title: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-end justify-between gap-4 border-b-2 border-[#1a1815] pb-3">
+      <div>
+        <p className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[#8f2d20]">
+          {kicker}
+        </p>
+        <h2 className="font-display mt-1.5 text-3xl tracking-tight text-[#1a1815] sm:text-[2.6rem]">
+          {title}
+        </h2>
+      </div>
+      {action}
+    </div>
+  );
+}
 
 export default function HomePage() {
   const articlePosts = getArticlePosts();
@@ -19,93 +44,117 @@ export default function HomePage() {
   const priorityCoverSlug = featuredPosts.find((post) => post.cover)?.slug;
 
   return (
-    <main className="min-w-0 space-y-12">
-      <section className="relative overflow-hidden rounded-lg border border-slate-950/15 bg-slate-950 text-white shadow-[0_40px_120px_-72px_rgba(15,23,42,0.95)]">
-        <div className="absolute left-0 top-20 hidden h-24 w-16 border-y border-white/45 bg-white/80 mix-blend-screen lg:block" />
-        <div className="absolute bottom-0 right-0 h-40 w-40 bg-[#b45f28]/35 blur-3xl" />
-        <div
-          className="relative grid gap-8 bg-cover bg-center px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.75fr)] lg:px-12 lg:py-12"
-          style={{ backgroundImage: `url('${withBasePath("/images/banner.svg")}')` }}
-        >
-          <div className="space-y-6 rounded-lg border border-white/12 bg-slate-950/60 p-5 backdrop-blur-sm sm:p-6 lg:p-7">
-            <p className="text-sm uppercase tracking-[0.28em] text-white/68">{SITE.subtitle}</p>
-            <h1 className="max-w-4xl break-words text-balance text-4xl font-semibold leading-[1.08] tracking-tight [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
-              {SITE.description}
-            </h1>
-            <p className="max-w-2xl text-base leading-8 text-white/78 sm:text-lg">写作、实验、训练和观察都留在同一张工作台上。</p>
+    <main className="min-w-0 space-y-14">
+      {/* —— 期号条 —— */}
+      <div className="edition-bar">
+        <span>第 01 卷 · 数字花园与实验室</span>
+        <span className="hidden sm:inline">MMXXVI · 逐日增订</span>
+        <span>免费取阅</span>
+      </div>
+
+      {/* —— Hero / 报头引言 —— */}
+      <section className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-0">
+        <div className="lg:border-r lg:border-[#1a1815]/25 lg:pr-12">
+          <p className="riso-sticker mb-5">{SITE.subtitle}</p>
+          <h1 className="font-display text-[2.7rem] leading-[1.08] text-[#1a1815] sm:text-6xl lg:text-[4.2rem]">
+            {heroVerbs.map((verb, index) => (
+              <React.Fragment key={verb}>
+                <span className="riso-mark">{verb}</span>
+                {index < heroVerbs.length - 1 ? "、" : "，"}
+              </React.Fragment>
+            ))}
+            <br />
+            都长在同一座数字花园里。
+          </h1>
+          <p className="drop-cap mt-7 max-w-2xl text-lg leading-[1.85] text-[#3c362c]">
+            {SITE.description}所有手记、实验与训练复盘都收进同一张工作台——像一本不断增订的私人年鉴，按季翻新，逐页累积。
+          </p>
+          <div className="mt-7 flex flex-wrap items-center gap-5">
+            <Link
+              href={`/category/${CATEGORY_DEFINITIONS.tech.slug}`}
+              className="inline-flex min-h-11 items-center rounded-none border-[1.5px] border-[#1a1815] bg-[#1a1815] px-5 text-sm font-semibold !text-[#faf6ec] transition hover:bg-[#8f2d20] hover:border-[#8f2d20]"
+            >
+              开始阅读 →
+            </Link>
+            <Link
+              href="/search"
+              className="font-mono-ui text-xs font-semibold uppercase tracking-[0.16em] text-[#8f2d20] underline decoration-1 underline-offset-4"
+            >
+              搜索全部文章
+            </Link>
           </div>
-          <div className="rounded-lg border border-white/12 bg-white/12 p-5 backdrop-blur-md sm:p-6">
-            <p className="text-sm uppercase tracking-[0.24em] text-white/68">内容分区</p>
-            <div className="mt-5 space-y-3">
-              {categories.map((category) => (
-                <Link
-                  key={category.slug}
-                  href={`/category/${category.slug}`}
-                  className="group block rounded-lg border border-white/14 bg-white/8 px-5 py-4 transition hover:-translate-y-0.5 hover:border-white/28 hover:bg-white/16"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold">{category.label}</h2>
-                    <span className="rounded-full bg-white/14 px-3 py-1 text-sm text-white/80 transition group-hover:bg-white/22">
-                      {category.posts.length} 篇
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-7 text-white/72">
+        </div>
+
+        <div className="lg:pl-12">
+          <p className="font-mono-ui border-b border-[#1a1815]/25 pb-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[#8f2d20]">
+            本卷分区 · Contents
+          </p>
+          <div>
+            {categories.map((category, index) => (
+              <Link
+                key={category.slug}
+                href={`/category/${category.slug}`}
+                className="group flex items-baseline gap-4 border-b border-[#1a1815]/15 py-4 transition hover:bg-[#1a1815]/[0.03]"
+              >
+                <span className="font-display w-9 shrink-0 text-2xl text-[#8f2d20]">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="font-display block text-xl text-[#1a1815] transition group-hover:text-[#8f2d20]">
+                    {category.label}
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-5 text-[#6a6155]">
                     {category.description}
-                  </p>
-                </Link>
-              ))}
-            </div>
+                  </span>
+                </span>
+                <span className="tabular shrink-0 text-xs text-[#6a6155]">
+                  {category.posts.length} 篇
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="space-y-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.32em] text-slate-500">
-              Standalone Projects
+      {/* —— 独立项目 —— */}
+      <section className="space-y-7">
+        <SectionHead
+          kicker="Standalone Projects"
+          title="已独立维护的项目"
+          action={
+            <p className="hidden max-w-xs text-xs leading-6 text-[#6a6155] sm:block sm:text-right">
+              独立维护的小项目都放在这里，保留简短索引和公开地址。
             </p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-              已独立维护的项目
-            </h2>
-          </div>
-          <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-right">
-            独立维护的小项目都放在这里，这里保留简短索引和公开地址。
-          </p>
-        </div>
-        <div className="grid min-w-0 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {STANDALONE_PROJECTS.map((project) => {
+          }
+        />
+        <div className="grid min-w-0 gap-x-6 gap-y-7 sm:grid-cols-2 xl:grid-cols-4">
+          {STANDALONE_PROJECTS.map((project, index) => {
             const card = (
-              <article className="group flex min-h-[17rem] flex-col rounded-lg border border-slate-900/10 bg-white/86 p-5 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.5)] transition duration-300 ease-out hover:-translate-y-1 hover:border-slate-900/18 hover:shadow-[0_32px_96px_-58px_rgba(15,23,42,0.58)]">
+              <article className="riso-card group flex min-h-[16rem] flex-col p-5">
                 <div className="flex items-center justify-between gap-3">
-                  <span
-                    className={`font-mono text-xs font-black uppercase tracking-[0.08em] ${project.accentClassName}`}
-                  >
-                    {project.badge}
+                  <span className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-[#8f2d20]">
+                    {String(index + 1).padStart(2, "0")} · {project.badge}
                   </span>
-                  <span className="flex items-center gap-2">
-                    {project.private ? <PrivateBadge withText /> : null}
-                    <span className="rounded-full border border-slate-950/10 px-3 py-1 text-xs font-semibold text-slate-500">
-                      独立站
-                    </span>
-                  </span>
+                  {project.private ? <PrivateBadge withText /> : null}
                 </div>
-                <h3 className="mt-5 text-2xl font-semibold tracking-tight text-slate-950">
+                <h3 className="font-display mt-4 text-2xl leading-tight text-[#1a1815]">
                   {project.title}
                 </h3>
-                <p className="mt-1 text-sm font-semibold text-slate-500">{project.productName}</p>
-                <p className="mt-4 text-base leading-8 text-slate-700">{project.description}</p>
+                <p className="font-mono-ui mt-1 text-[0.7rem] uppercase tracking-[0.08em] text-[#6a6155]">
+                  {project.productName}
+                </p>
+                <p className="mt-3 text-[0.95rem] leading-7 text-[#3c362c]">{project.description}</p>
                 <div className="mt-auto pt-5">
-                  <p className="break-all font-mono text-xs font-semibold text-slate-500">
+                  <p className="break-all font-mono text-[0.7rem] text-[#6a6155]">
                     {project.displayUrl}
                   </p>
                   <a
                     href={project.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold !text-white transition hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
+                    className="font-mono-ui mt-3 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#1a1815] transition hover:gap-2.5 hover:text-[#8f2d20]"
                   >
-                    打开网站
+                    打开网站 →
                   </a>
                 </div>
               </article>
@@ -120,15 +169,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="space-y-5">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.32em] text-slate-500">Latest Writing</p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">最新文章</h2>
-          </div>
-        </div>
+      {/* —— 最新文章 —— */}
+      <section className="space-y-7">
+        <SectionHead kicker="Latest Writing" title="最新文章" />
         {featuredPosts.length > 0 ? (
-          <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+          <div className="grid min-w-0 gap-x-6 gap-y-8 lg:grid-cols-2">
             {featuredPosts.map((post, index) => (
               <PostCard
                 key={post.slug}
@@ -143,21 +188,22 @@ export default function HomePage() {
         )}
       </section>
 
-      <section className="space-y-5">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.32em] text-slate-500">Daily News</p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">每日新闻</h2>
-          </div>
-          <Link
-            href={`/category/${CATEGORY_DEFINITIONS.dailyNews.slug}`}
-            className="text-sm font-semibold text-amber-800 underline decoration-amber-400/50 underline-offset-4"
-          >
-            查看全部
-          </Link>
-        </div>
+      {/* —— 每日新闻 —— */}
+      <section className="space-y-7">
+        <SectionHead
+          kicker="Daily News"
+          title="每日新闻"
+          action={
+            <Link
+              href={`/category/${CATEGORY_DEFINITIONS.dailyNews.slug}`}
+              className="font-mono-ui inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#8f2d20] transition hover:gap-2.5"
+            >
+              查看全部 <span aria-hidden="true">→</span>
+            </Link>
+          }
+        />
         {featuredNews.length > 0 ? (
-          <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+          <div className="grid min-w-0 gap-x-6 gap-y-8 lg:grid-cols-2">
             {featuredNews.map((post) => (
               <PostCard key={post.slug} post={post} />
             ))}

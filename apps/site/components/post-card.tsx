@@ -4,27 +4,32 @@ import Link from "next/link";
 import { PostMeta } from "@/components/post-meta";
 import type { PostCardSummary } from "@/lib/content/types";
 
+type RisoColor = "terra" | "teal" | "pink" | "yellow";
+
 type PostCardProps = {
   featured?: boolean;
   post: PostCardSummary;
   priority?: boolean;
+  accent?: RisoColor;
 };
 
 export function PostCard({
   featured = false,
   post,
   priority = false,
+  accent = "teal",
 }: PostCardProps) {
   return (
     <article
       className={[
-        "group min-w-0 rounded-lg border border-slate-950/10 bg-[#fffdf7]/88 p-5 shadow-[0_24px_80px_-56px_rgba(15,23,42,0.48)] transition duration-300 ease-out hover:-translate-y-1 hover:border-slate-950/18 hover:shadow-[0_32px_96px_-56px_rgba(15,23,42,0.62)] sm:p-6",
+        "riso-card group min-w-0 p-5 sm:p-6",
+        `riso-card--${accent}`,
         featured ? "lg:col-span-2" : "",
       ].join(" ")}
     >
       <div
         className={[
-          "h-full gap-5",
+          "h-full gap-6",
           featured && post.cover
             ? "grid lg:grid-cols-[minmax(0,0.78fr)_minmax(22rem,1.22fr)] lg:items-center"
             : "flex flex-col",
@@ -41,22 +46,22 @@ export function PostCard({
           <div className={post.cover ? "space-y-4" : "space-y-3"}>
             <h2
               className={[
-                "break-words font-semibold leading-tight tracking-tight text-slate-950 [overflow-wrap:anywhere]",
-                featured ? "text-3xl sm:text-4xl" : "text-2xl",
+                "font-display break-words font-semibold leading-[1.12] tracking-[-0.015em] text-[#1a1815] [overflow-wrap:anywhere]",
+                featured ? "text-3xl sm:text-[2.6rem]" : "text-2xl",
               ].join(" ")}
             >
-              <Link href={`/post/${post.slug}`} className="hover:text-[#9b481c]">
+              <Link href={`/post/${post.slug}`} className="transition-colors hover:text-[#8f2d20]">
                 {post.title}
               </Link>
             </h2>
             {featured || !post.cover ? (
-              <p className="text-base leading-8 text-slate-700">{post.excerpt}</p>
+              <p className="text-[0.98rem] leading-8 text-[#3c362c]">{post.excerpt}</p>
             ) : null}
           </div>
           <div className="mt-auto">
             <Link
               href={`/post/${post.slug}`}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-950 transition group-hover:text-[#9b481c]"
+              className="font-mono-ui inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#1a1815] transition-all group-hover:gap-3 group-hover:text-[#8f2d20]"
             >
               继续阅读
               <span aria-hidden="true">→</span>
@@ -66,7 +71,7 @@ export function PostCard({
         {post.cover ? (
           <Link
             href={`/post/${post.slug}`}
-            className="block overflow-hidden rounded-lg border border-slate-950/10 bg-slate-100 shadow-[0_24px_80px_-56px_rgba(15,23,42,0.55)]"
+            className="block overflow-hidden rounded-2xl border-[1.5px] border-[#1a1815]/70 bg-[#ece5d5]"
           >
             <img
               src={post.cover}
@@ -74,7 +79,7 @@ export function PostCard({
               loading={priority ? "eager" : "lazy"}
               decoding="async"
               fetchPriority={priority ? "high" : "low"}
-              className="block h-auto w-full transition duration-500 group-hover:scale-[1.018]"
+              className="block h-auto w-full transition duration-500 group-hover:scale-[1.02]"
             />
           </Link>
         ) : null}

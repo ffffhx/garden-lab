@@ -103,9 +103,11 @@ export function PostTitleSearch({ posts }: PostTitleSearchProps) {
 
   return (
     <main className="space-y-6">
-      <section className="rounded-[2rem] border border-slate-900/10 bg-white/82 p-7 shadow-[0_32px_120px_-68px_rgba(15,23,42,0.65)]">
-        <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Search</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
+      <section className="riso-card riso-card--yellow relative overflow-hidden p-7 sm:p-9">
+        <div className="riso-blob -right-12 -top-10 h-44 w-44" style={{ background: "var(--riso-pink)", opacity: 0.4 }} />
+        <div className="halftone pointer-events-none absolute inset-0 opacity-[0.4] mix-blend-multiply" />
+        <span className="riso-sticker riso-sticker--teal relative">Search · 搜索</span>
+        <h1 className="font-display relative mt-4 text-4xl font-semibold tracking-[-0.015em] text-[#1a1815] sm:text-5xl">
           搜索文章
         </h1>
         <form
@@ -113,7 +115,7 @@ export function PostTitleSearch({ posts }: PostTitleSearchProps) {
           toolname="search_blog_posts_on_page"
           tooldescription="Search this blog by article keyword and return matching posts on the search page."
           toolautosubmit=""
-          className="mt-6 flex w-full flex-col gap-3 sm:flex-row"
+          className="relative mt-6 flex w-full flex-col gap-3 sm:flex-row"
           onSubmit={handleSubmit}
         >
           <label className="sr-only" htmlFor="post-title-search">
@@ -128,16 +130,16 @@ export function PostTitleSearch({ posts }: PostTitleSearchProps) {
             toolparamtitle="query"
             toolparamdescription="Keywords to search in article title, excerpt, tags, and categories."
             placeholder="输入标题关键词"
-            className="min-h-12 min-w-0 flex-1 rounded-full border border-slate-300 bg-white px-5 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-200/70"
+            className="min-h-12 min-w-0 flex-1 rounded-full border-[1.5px] border-[#1a1815]/70 bg-[#faf6ec] px-5 text-base text-[#1a1815] outline-none transition placeholder:text-[#6b6457]/60 focus:border-[#1a1815] focus:ring-4 focus:ring-[#1a1815]/15"
           />
           <button
             type="submit"
-            className="min-h-12 rounded-full bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-amber-800 focus:outline-none focus:ring-4 focus:ring-amber-200"
+            className="min-h-12 rounded-full border-[1.5px] border-[#1a1815] bg-[#8f2d20] px-6 text-sm font-semibold text-[#faf6ec] shadow-[0.16rem_0.16rem_0_#1a1815] transition hover:-translate-y-0.5 hover:bg-[#1a1815] focus:outline-none focus:ring-4 focus:ring-[#8f2d20]/25"
           >
             搜索
           </button>
         </form>
-        <p className="mt-4 text-sm text-slate-600">
+        <p className="font-mono-ui relative mt-4 text-xs uppercase tracking-[0.08em] text-[#6b6457]">
           {hasQuery ? `找到 ${results.length} 篇标题匹配的文章` : `共 ${posts.length} 篇文章`}
         </p>
       </section>
@@ -145,9 +147,13 @@ export function PostTitleSearch({ posts }: PostTitleSearchProps) {
       {!hasQuery ? (
         <EmptyState title="等待关键词" description="标题匹配的文章会显示在这里。" />
       ) : results.length > 0 ? (
-        <div className="grid gap-5 lg:grid-cols-2">
-          {results.map((post) => (
-            <PostCard key={post.slug} post={post} />
+        <div className="grid gap-x-6 gap-y-8 lg:grid-cols-2">
+          {results.map((post, index) => (
+            <PostCard
+              key={post.slug}
+              accent={["teal", "pink", "terra", "yellow"][index % 4] as "teal" | "pink" | "terra" | "yellow"}
+              post={post}
+            />
           ))}
         </div>
       ) : (

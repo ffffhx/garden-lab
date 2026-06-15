@@ -34,6 +34,19 @@ export async function generateMetadata({
   };
 }
 
+const CATEGORY_COLORS: Record<string, "terra" | "teal" | "pink" | "yellow"> = {
+  tech: "teal",
+  fitness: "terra",
+  "daily-news": "pink",
+};
+
+const ACCENT_CYCLE: ("terra" | "teal" | "pink" | "yellow")[] = [
+  "teal",
+  "pink",
+  "terra",
+  "yellow",
+];
+
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
   const category = getCategoryBySlug(slug);
@@ -42,29 +55,35 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
+  const color = CATEGORY_COLORS[category.slug] ?? "yellow";
+
   return (
     <main className="space-y-6">
-      <div className="rounded-[2rem] border border-slate-900/10 bg-white/82 p-7 shadow-[0_32px_120px_-68px_rgba(15,23,42,0.65)]">
-        <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Category</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
-          {category.label}
-        </h1>
-        <p className="mt-4 max-w-3xl text-base leading-8 text-slate-700">
-          {category.description}
-        </p>
-        <div className="mt-6">
-          <Link
-            href="/"
-            className="text-sm font-semibold text-amber-800 underline decoration-amber-400/50 underline-offset-4"
-          >
-            返回首页
-          </Link>
+      <div className={`riso-card riso-card--${color} relative overflow-hidden p-7 sm:p-9`}>
+        <div className="riso-blob -right-10 -top-12 h-44 w-44" style={{ background: `var(--riso-${color})`, opacity: 0.4 }} />
+        <div className="halftone pointer-events-none absolute inset-0 opacity-[0.4] mix-blend-multiply" />
+        <div className="relative">
+          <span className={`riso-sticker riso-sticker--${color}`}>Category · 分区</span>
+          <h1 className="font-display mt-4 text-4xl font-semibold tracking-[-0.015em] text-[#1a1815] sm:text-5xl">
+            {category.label}
+          </h1>
+          <p className="mt-4 max-w-3xl text-base leading-8 text-[#3c362c]">
+            {category.description}
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/"
+              className="font-mono-ui inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-[#1a1815]/70 transition hover:gap-2.5 hover:text-[#8f2d20]"
+            >
+              <span aria-hidden="true">←</span> 返回首页
+            </Link>
+          </div>
         </div>
       </div>
       {category.posts.length > 0 ? (
-        <div className="grid gap-5 lg:grid-cols-2">
-          {category.posts.map((post) => (
-            <PostCard key={post.slug} post={post} />
+        <div className="grid gap-x-6 gap-y-8 lg:grid-cols-2">
+          {category.posts.map((post, index) => (
+            <PostCard key={post.slug} accent={ACCENT_CYCLE[index % ACCENT_CYCLE.length]} post={post} />
           ))}
         </div>
       ) : (

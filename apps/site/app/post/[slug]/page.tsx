@@ -44,7 +44,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const showToc = post.headings.length >= TOC_MIN_HEADINGS;
   const coverImage = post.cover ? (
-    <div className="overflow-hidden rounded-lg border border-slate-950/10 bg-slate-100 shadow-[0_24px_80px_-56px_rgba(15,23,42,0.58)]">
+    <div className="overflow-hidden rounded-2xl border-[1.5px] border-[#1a1815]/70 bg-[#ece5d5]">
       <img
         src={post.cover}
         alt={`${post.title} 封面`}
@@ -58,12 +58,12 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <main className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:gap-8">
-      <article className="min-w-0 rounded-lg border border-slate-950/10 bg-[#fffdf7]/92 p-6 shadow-[0_32px_120px_-72px_rgba(15,23,42,0.68)] sm:p-10 2xl:p-12">
+      <article className="riso-card riso-card--teal min-w-0 p-6 sm:p-10 2xl:p-12">
         <div className="space-y-5">
           {post.coverPosition === "above-title" ? coverImage : null}
-          <div className="space-y-3">
-            <p className="text-sm uppercase tracking-[0.32em] text-slate-500">Post</p>
-            <h1 className="max-w-[72rem] break-words text-balance text-3xl font-semibold leading-[1.08] tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
+          <div className="space-y-4">
+            <span className="riso-sticker riso-sticker--terra">Post · 文章</span>
+            <h1 className="font-display max-w-[72rem] break-words text-balance text-3xl font-semibold leading-[1.06] tracking-[-0.02em] text-[#1a1815] [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
               {post.title}
             </h1>
           </div>

@@ -26,7 +26,7 @@ export function SiteShell({
   );
 
   return (
-    <div className={shellClassName}>
+    <div id="top" className={shellClassName}>
       <SiteHeader currentPathname={currentPathname} wide={isPostRoute} />
       <div className={contentClassName}>{children}</div>
       <SiteFooter wide={isPostRoute} />

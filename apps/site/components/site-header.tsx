@@ -80,11 +80,11 @@ function NavLink({
   const active = isActiveNavItem(item, currentPathname);
   const className = cn(
     mobile
-      ? "inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30"
-      : "whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b45f28]/30",
+      ? "inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8f2d20]/30"
+      : "whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8f2d20]/30",
     active
-      ? "bg-slate-950 font-semibold !text-white shadow-[0_10px_28px_-22px_rgba(15,23,42,0.85)]"
-      : "text-slate-700 hover:bg-amber-100 hover:text-slate-950"
+      ? "border-[1.5px] border-[#1a1815] bg-[#1a1815] font-semibold !text-[#faf6ec] shadow-[0.16rem_0.16rem_0_var(--riso-terra)]"
+      : "text-[#3c362c] hover:bg-[#1a1815]/14 hover:text-[#1a1815]"
   );
   const labelNode = item.private ? (
     <span className="inline-flex items-center gap-1.5">
@@ -109,7 +109,9 @@ function NavLink({
 
 export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-900/10 bg-[#fffdf7]/82 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b-[1.5px] border-[#1a1815] bg-[#faf6ec]/90 backdrop-blur-xl">
+      {/* 报头单色酒红压线 */}
+      <div aria-hidden="true" className="h-[3px] w-full bg-[#8f2d20]" />
       <div
         className={cn(
           "mx-auto flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8",
@@ -119,15 +121,22 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
         <div className="min-w-0 max-w-xl">
           <Link
             href="/"
-            className="inline-flex items-baseline gap-3 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
+            className="group inline-flex items-baseline gap-2.5 text-[#1a1815]"
           >
-            <span>{SITE.title}</span>
-            <span className="hidden h-px w-12 bg-slate-950/25 sm:inline-block" aria-hidden="true" />
+            <span className="font-display text-[1.6rem] font-normal tracking-[0.01em] sm:text-[1.95rem]">
+              {SITE.title}
+            </span>
+            <span
+              className="hidden h-px w-10 translate-y-[-0.4rem] bg-[#1a1815]/30 transition group-hover:w-16 group-hover:bg-[#8f2d20] sm:inline-block"
+              aria-hidden="true"
+            />
           </Link>
-          <p className="mt-1 hidden text-sm leading-6 text-slate-600 sm:block">{SITE.description}</p>
+          <p className="font-mono-ui mt-0.5 hidden text-[0.68rem] uppercase tracking-[0.22em] text-[#8f2d20] sm:block">
+            {SITE.subtitle}
+          </p>
         </div>
         <div className="hidden min-w-0 flex-1 justify-end xl:flex">
-          <div className="flex max-w-full items-center gap-1 rounded-full border border-slate-900/10 bg-white/65 p-1 shadow-[0_18px_60px_-48px_rgba(15,23,42,0.45)]">
+          <div className="flex max-w-full items-center gap-1 rounded-full border-[1.5px] border-[#1a1815]/80 bg-[#faf6ec]/80 p-1 shadow-[0.2rem_0.2rem_0_var(--riso-teal)]">
             <nav className="flex shrink-0 items-center gap-1">
               {NAV_LINKS.map((item) => (
                 <NavLink key={item.href} item={item} currentPathname={currentPathname} />
@@ -139,7 +148,7 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
               toolname="search_blog_posts_form"
               tooldescription="Search this blog by article title keyword and open the search results page."
               toolautosubmit=""
-              className="flex min-w-0 items-center gap-1 border-l border-slate-900/10 pl-1"
+              className="flex min-w-0 items-center gap-1 border-l-[1.5px] border-[#1a1815]/15 pl-1"
             >
               <label className="sr-only" htmlFor="site-title-search">
                 按标题搜索
@@ -151,11 +160,11 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
                 toolparamtitle="query"
                 toolparamdescription="Article title keywords to search for."
                 placeholder="搜索标题"
-                className="h-9 w-32 min-w-0 rounded-full border border-slate-900/12 bg-white/75 px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[#b45f28] focus:ring-4 focus:ring-[#b45f28]/15 2xl:w-44"
+                className="h-9 w-32 min-w-0 rounded-full border-[1.5px] border-[#1a1815]/15 bg-[#faf6ec]/85 px-3 text-sm text-[#1a1815] outline-none transition placeholder:text-[#6b6457]/60 focus:border-[#1a1815] focus:ring-4 focus:ring-[#1a1815]/15 2xl:w-44"
               />
               <button
                 type="submit"
-                className="h-9 shrink-0 rounded-full bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20 xl:px-4"
+                className="h-9 shrink-0 rounded-full border-[1.5px] border-[#1a1815] bg-[#8f2d20] px-3 text-sm font-semibold text-[#faf6ec] transition hover:bg-[#1a1815] focus:outline-none focus:ring-4 focus:ring-[#8f2d20]/25 xl:px-4"
               >
                 搜索
               </button>
@@ -163,10 +172,10 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
           </div>
         </div>
         <details className="relative xl:hidden">
-          <summary className="inline-flex min-h-11 cursor-pointer list-none items-center justify-center rounded-full border border-slate-900/10 bg-white/75 px-4 text-sm font-semibold text-slate-800 shadow-[0_14px_40px_-34px_rgba(15,23,42,0.6)] transition hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#b45f28]/20 [&::-webkit-details-marker]:hidden">
+          <summary className="inline-flex min-h-11 cursor-pointer list-none items-center justify-center rounded-full border-[1.5px] border-[#1a1815] bg-[#faf6ec]/85 px-4 text-sm font-semibold text-[#1a1815] shadow-[0.16rem_0.16rem_0_var(--riso-terra)] transition hover:bg-[#1a1815]/12 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8f2d20]/20 [&::-webkit-details-marker]:hidden">
             菜单
           </summary>
-          <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-slate-900/10 bg-[#fffdf7]/96 p-3 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.65)] backdrop-blur-xl">
+          <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(22rem,calc(100vw-2rem))] rounded-2xl border-[1.5px] border-[#1a1815] bg-[#faf6ec]/97 p-3 shadow-[0.4rem_0.4rem_0_var(--riso-teal)] backdrop-blur-xl">
             <nav className="grid grid-cols-2 gap-1">
               {NAV_LINKS.map((item) => (
                 <NavLink
@@ -183,7 +192,7 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
               toolname="search_blog_posts_form_mobile"
               tooldescription="Search this blog by article title keyword and open the search results page."
               toolautosubmit=""
-              className="mt-3 grid grid-cols-[minmax(0,1fr)_4.5rem] gap-2 border-t border-slate-900/8 pt-3"
+              className="mt-3 grid grid-cols-[minmax(0,1fr)_4.5rem] gap-2 border-t-[1.5px] border-[#1a1815]/12 pt-3"
             >
               <label className="sr-only" htmlFor="site-title-search-mobile">
                 按标题搜索
@@ -195,11 +204,11 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
                 toolparamtitle="query"
                 toolparamdescription="Article title keywords to search for."
                 placeholder="搜索标题"
-                className="min-h-11 min-w-0 rounded-full border border-slate-900/12 bg-white/80 px-4 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[#b45f28] focus:ring-4 focus:ring-[#b45f28]/15"
+                className="min-h-11 min-w-0 rounded-full border-[1.5px] border-[#1a1815]/15 bg-[#faf6ec]/85 px-4 text-sm text-[#1a1815] outline-none transition placeholder:text-[#6b6457]/60 focus:border-[#1a1815] focus:ring-4 focus:ring-[#1a1815]/15"
               />
               <button
                 type="submit"
-                className="min-h-11 rounded-full bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-[#8f3f18] focus:outline-none focus:ring-4 focus:ring-[#b45f28]/20"
+                className="min-h-11 rounded-full border-[1.5px] border-[#1a1815] bg-[#8f2d20] px-4 text-sm font-semibold text-[#faf6ec] transition hover:bg-[#1a1815] focus:outline-none focus:ring-4 focus:ring-[#8f2d20]/25"
               >
                 搜索
               </button>

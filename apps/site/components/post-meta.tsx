@@ -9,6 +9,12 @@ const categoryLabels: Record<CategoryKey, string> = {
   dailyNews: CATEGORY_DEFINITIONS.dailyNews.label,
 };
 
+const categoryColor: Record<CategoryKey, string> = {
+  tech: "riso-sticker--teal",
+  fitness: "riso-sticker--terra",
+  dailyNews: "riso-sticker--pink",
+};
+
 type PostMetaProps = {
   categories: CategoryKey[];
   dateText: string;
@@ -25,21 +31,22 @@ export function PostMeta({
   tags,
 }: PostMetaProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-600">
       <div className="flex flex-wrap gap-2">
         {categories.map((category) => (
-          <span
-            key={category}
-            className="rounded-full border border-[#b45f28]/15 bg-[#fff4cf] px-3 py-1 font-medium text-[#7c3b16]"
-          >
+          <span key={category} className={`riso-sticker ${categoryColor[category]}`}>
             {categoryLabels[category]}
           </span>
         ))}
       </div>
-      <span>{dateText}</span>
-      <span>{readingTimeText}</span>
+      <span className="font-mono-ui inline-flex items-center gap-2 text-[0.78rem] tracking-[0.02em] text-[#6b6457]">
+        <span aria-hidden="true" className="text-[#8f2d20]/60">✦</span>
+        {dateText}
+        <span aria-hidden="true" className="text-[#1a1815]/60">✦</span>
+        {readingTimeText}
+      </span>
       {showTags && tags.length > 0 ? (
-        <span className="text-slate-500">{tags.map((tag) => `#${tag}`).join(" ")}</span>
+        <span className="text-[#6b6457]/70">{tags.map((tag) => `#${tag}`).join(" ")}</span>
       ) : null}
     </div>
   );

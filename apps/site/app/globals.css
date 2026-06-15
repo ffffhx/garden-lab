@@ -1,13 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f8f3e8;
-  --paper-soft: #fffdf7;
-  --ink: #171923;
-  --muted: #5f6673;
-  --brand: #07111f;
-  --accent: #b45f28;
-  --accent-cool: #1d6f78;
+  /* —— 植物年鉴 · 印刷感：米白纸张 + 墨黑 + 一点酒红 —— */
+  --paper: #f4efe4;
+  --paper-soft: #faf6ec;
+  --paper-deep: #ece5d5;
+  --ink: #1a1815;          /* 近黑墨色 */
+  --ink-soft: #3c362c;     /* 正文 */
+  --muted: #6a6155;
+  --rule: rgba(26, 24, 21, 0.85);
+  --hair: rgba(26, 24, 21, 0.2);
+  --red: #8f2d20;          /* 期号 / 序号 / 强调的酒红 */
+
+  /* 兼容旧变量名（站点其它处仍在引用），统一收敛到年鉴配色 */
+  --brand: var(--ink);
+  --accent: var(--red);
+  --accent-cool: var(--red);
+  --riso-terra: var(--red);
+  --riso-teal: var(--ink);
+  --riso-pink: var(--red);
+  --riso-yellow: var(--ink);
+
+  /* 报头 / 大标题：古典高对比衬线 Caslon，中文回退宋体 */
+  --font-serif-display: var(--font-display), "Songti SC",
+    "Source Han Serif SC", "Noto Serif SC", serif;
+  /* 正文衬线：报刊体 Newsreader，中文回退宋体 */
+  --font-serif-body: var(--font-body), "Songti SC", "Source Han Serif SC",
+    "Noto Serif SC", "Palatino Linotype", serif;
+  /* 期号 / 栏目标签 / 元信息：等宽 */
+  --font-mono: var(--font-mono-ui), "SFMono-Regular", ui-monospace, "JetBrains Mono",
+    "Menlo", monospace;
 }
 
 html {
@@ -17,15 +39,84 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  color: var(--ink);
+  color: var(--ink-soft);
   background:
-    radial-gradient(circle at 10% -10%, rgba(180, 95, 40, 0.18), transparent 28rem),
-    radial-gradient(circle at 92% 8%, rgba(29, 111, 120, 0.14), transparent 30rem),
-    linear-gradient(180deg, var(--paper-soft) 0%, var(--paper) 46%, #ede5d8 100%);
-  font-family: "Iowan Old Style", "Palatino Linotype", "Source Han Serif SC",
-    "Noto Serif SC", serif;
+    linear-gradient(180deg, var(--paper-soft) 0%, var(--paper) 60%, var(--paper-deep) 100%);
+  font-family: var(--font-serif-body);
+  font-size: 1.02rem;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+/* —— 编辑感排版工具类 —— */
+
+/* 栏目小标题（期号 / kicker） */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.eyebrow::before {
+  content: "";
+  width: 1.65rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.eyebrow--plain::before {
+  display: none;
+}
+
+/* 展示型大标题使用 Caslon */
+.font-display {
+  font-family: var(--font-serif-display);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.font-mono-ui {
+  font-family: var(--font-mono);
+}
+
+/* 装饰性序号（栏目计数等） */
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 段落首字下沉（hero / 引言用） */
+.drop-cap::first-letter {
+  font-family: var(--font-serif-display);
+  float: left;
+  font-size: 3.6em;
+  line-height: 0.7;
+  padding: 0.06em 0.14em 0 0;
+  color: var(--red);
+}
+
+/* broadsheet 期号条 */
+.edition-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 0.5rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 a {
@@ -50,7 +141,7 @@ button:disabled,
 }
 
 ::selection {
-  background: rgba(180, 95, 40, 0.24);
+  background: rgba(143, 45, 32, 0.18);
 }
 
 .site-grain {
@@ -58,24 +149,99 @@ button:disabled,
   isolation: isolate;
 }
 
+/* 纸张点纹：极淡的印刷网点，营造纸感 */
 .site-grain::before {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
   content: "";
-  opacity: 0.28;
+  opacity: 0.6;
   background-image:
-    linear-gradient(rgba(7, 17, 31, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(7, 17, 31, 0.025) 1px, transparent 1px);
-  background-size: 3.5rem 3.5rem;
-  mask-image: linear-gradient(180deg, black, transparent 78%);
+    radial-gradient(circle at center, rgba(26, 24, 21, 0.045) 0.5px, transparent 0.6px);
+  background-size: 4px 4px;
 }
 
+/* —— 年鉴印刷组件（沿用旧类名，统一为印刷感） —— */
+
+/* 文章 / 内容块：发丝边框 + 顶部粗墨线，像剪报条目 */
+.riso-card {
+  position: relative;
+  border: 1px solid var(--hair);
+  border-top: 2.5px solid var(--rule);
+  border-radius: 0;
+  background: rgba(250, 246, 236, 0.7);
+  transition:
+    background 200ms ease,
+    transform 200ms ease;
+}
+
+.riso-card:hover {
+  background: rgba(250, 246, 236, 0.96);
+}
+
+/* 颜色修饰类在年鉴里统一收敛（保留以兼容已有 JSX） */
+.riso-card--terra,
+.riso-card--teal,
+.riso-card--pink,
+.riso-card--yellow { border-top-color: var(--rule); }
+
+/* 栏目 kicker：等宽小标签，无填充，酒红色 */
+.riso-sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.riso-sticker::before {
+  content: "";
+  width: 1.1rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.riso-sticker--terra,
+.riso-sticker--teal,
+.riso-sticker--pink,
+.riso-sticker--yellow { color: var(--red); }
+
+/* 关键词强调：斜体 + 酒红（取代荧光高亮） */
+.riso-mark {
+  font-style: italic;
+  color: var(--red);
+}
+
+.riso-mark::before { content: none; }
+
+.riso-mark--teal,
+.riso-mark--pink,
+.riso-mark--terra { color: var(--red); }
+
+/* 旧装饰类在年鉴里隐去（hero 里的墨团 / 半调层不再需要） */
+.riso-blob { display: none; }
+.halftone { background-image: none; }
+
 .article-content {
-  color: rgb(39 47 60);
-  font-size: 1.08rem;
-  line-height: 2;
+  color: var(--ink-soft);
+  font-size: 1.12rem;
+  line-height: 1.95;
+}
+
+/* 正文首段首字下沉（报刊感） */
+.article-content > p:first-of-type::first-letter {
+  font-family: var(--font-serif-display);
+  float: left;
+  font-size: 3.4em;
+  line-height: 0.72;
+  padding: 0.08em 0.12em 0 0;
+  color: var(--red);
 }
 
 .article-selection-layer {
@@ -643,17 +809,29 @@ button:disabled,
 .article-content h2,
 .article-content h3,
 .article-content h4 {
-  color: rgb(15 23 42);
-  font-weight: 700;
-  line-height: 1.25;
+  color: var(--ink);
+  font-family: var(--font-serif-display);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0;
   scroll-margin-top: 6rem;
 }
 
 .article-content h2 {
   margin-top: 3.4rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgb(15 23 42 / 0.1);
+  padding-top: 0.85rem;
+  border-top: 2px solid rgb(35 49 42 / 0.18);
   font-size: 2.05rem;
+}
+
+.article-content h2::before {
+  content: "";
+  display: block;
+  width: 2.4rem;
+  height: 2px;
+  margin-bottom: 0.85rem;
+  margin-top: -0.85rem;
+  background: var(--riso-terra);
 }
 
 .article-content h3 {
@@ -668,12 +846,12 @@ button:disabled,
 
 .article-content p code,
 .article-content li code {
-  border: 1px solid rgb(180 95 40 / 0.12);
-  border-radius: 0.45rem;
-  background: rgb(255 251 235 / 0.9);
-  padding: 0.2rem 0.45rem;
-  font-size: 0.95em;
-  color: rgb(120 53 15);
+  border: 1px solid rgb(26 24 21 / 0.16);
+  border-radius: 0.25rem;
+  background: rgb(26 24 21 / 0.04);
+  padding: 0.12rem 0.4rem;
+  font-size: 0.9em;
+  color: var(--red);
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -695,10 +873,11 @@ button:disabled,
 }
 
 .article-content blockquote {
-  border-left: 4px solid rgb(180 95 40);
-  background: linear-gradient(90deg, rgb(255 247 237), rgb(255 251 235 / 0.45));
-  padding: 1rem 1.25rem;
-  color: rgb(68 75 87);
+  border-left: 3px solid var(--red);
+  background: rgba(26, 24, 21, 0.035);
+  padding: 0.85rem 1.35rem;
+  color: var(--ink-soft);
+  font-style: italic;
 }
 
 .article-content ul,
@@ -711,10 +890,16 @@ button:disabled,
 }
 
 .article-content a {
-  color: rgb(168 70 22);
+  color: var(--red);
   text-decoration: underline;
-  text-decoration-color: rgb(180 95 40 / 0.35);
-  text-underline-offset: 0.2em;
+  text-decoration-color: rgb(143 45 32 / 0.4);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color 160ms ease;
+}
+
+.article-content a:hover {
+  text-decoration-color: var(--red);
 }
 
 .article-content img {

@@ -81,12 +81,6 @@ export default function HomePage() {
             >
               开始阅读 →
             </Link>
-            <Link
-              href="/search"
-              className="font-mono-ui text-xs font-semibold uppercase tracking-[0.16em] text-[#8f2d20] underline decoration-1 underline-offset-4"
-            >
-              搜索全部文章
-            </Link>
           </div>
         </div>
 

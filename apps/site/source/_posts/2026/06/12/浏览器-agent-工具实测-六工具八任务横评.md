@@ -54,7 +54,7 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 | 工具 | 主要站位 | 形态 |
 | --- | --- | --- |
 | @chrome / @browser | 扩展面（且只暴露其中的页面可见子集） | 宿主内插件 |
-| agent-browser | CDP 调试面（Rust 直连，可 connect 任意 CDP 目标） | CLI |
+| agent-browser | CDP 调试面（瘦 CLI + 常驻原生 daemon 连 CDP，可 connect 任意 CDP 目标） | CLI + 常驻 daemon |
 | bb-browser | CDP 调试面 + 站点适配面 | CLI |
 | Chrome DevTools MCP | CDP 调试面 + DevTools 产品面 | MCP server |
 | playwright-cli | Playwright 引擎（CDP/BiDi 之上的自动化层） | CLI |
@@ -258,7 +258,7 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 
 ### 6.2 agent-browser：Rust 瘦 CLI + 常驻原生 daemon（直连调试协议）
 
-agent-browser 是用 Rust 写的一个 CLI，直接连 CDP（Chrome 的调试协议），而且能 `connect` 到任意一个调试目标——实测里我用一个本地 Electron 应用验证过 `--cdp` 直连的完整流程。它的快照短、元素引用稳、长对话省 token，网络请求被动留底事后可查；在八道题里拿到满分、全程只被迫用了一次 eval 兜底。
+agent-browser 是用 Rust 写的，对外是一个瘦 CLI、背后挂一个常驻原生 daemon 替它连 CDP（Chrome 的调试协议，详见下文更正），而且能 `connect` 到任意一个调试目标——实测里我用一个本地 Electron 应用验证过 `--cdp` 连接的完整流程。它的快照短、元素引用稳、长对话省 token，网络请求被动留底事后可查；在八道题里拿到满分、全程只被迫用了一次 eval 兜底。
 
 **一处需要更正的早先判断**：本文初稿（含下面 6.3 的链路图）写它"没有独立 daemon、命令直接翻译成调试协议调用"。2026-06-14 补测时复核进程发现并非如此——**0.27.2 确实有一个常驻 daemon**：它是一个**编译后的原生二进制** `agent-browser-darwin-arm64`（不是 node 进程，所以按 node/daemon 关键字搜不到，这正是早先误判的来源），脱离父进程挂到 init（PPID=1）、长期常驻、监听 unix 域套接字 `~/.agent-browser/default.sock`，并配 `default.pid` / `default.engine`（值为 `chrome`）/ `default.version`（值为 `0.27.2`）这套标准 daemon 文件。也就是说 agent-browser 的 CLI 其实也是**瘦客户端**，每条命令经 `default.sock` 发给这个常驻 daemon，由 daemon 持有"当前会话绑在哪个浏览器"的状态——和 bb-browser 的形态比之前以为的更接近，区别在于它是 Rust 原生二进制、socket 走 unix 域而非本地 HTTP 端口。
 

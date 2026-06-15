@@ -28,10 +28,10 @@ describe("PostToc", () => {
     const markup = renderToStaticMarkup(createElement(PostToc, { headings }));
 
     expect(markup).toContain(
-      'href="#summary" class="block rounded-md px-3 py-2 text-sm leading-6'
+      'href="#summary" class="block rounded-lg px-3 py-2 text-sm leading-6'
     );
-    expect(markup).toContain("bg-[#fff4cf]");
-    expect(markup).toContain("text-slate-950");
+    expect(markup).toContain("bg-[#8f2d20]/14");
+    expect(markup).toContain("text-[#1a1815]");
   });
 
   it("renders a scrollable toc container for long article navigation", () => {

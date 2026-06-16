@@ -1,11 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
-  <title id="title">Blog favicon</title>
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#f59e0b" />
-    </linearGradient>
-  </defs>
-  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#bg)" />
-  <path d="M22 18h10c7.18 0 12 4.46 12 10.54 0 4.6-2.54 8.12-6.82 9.54L43 46h-9.26l-5.08-6.62H29V46h-7V18zm7 15.82h3.18c3.08 0 4.82-1.82 4.82-4.36 0-2.58-1.82-4.36-4.82-4.36H29v8.72z" fill="#ffffff" />
+  <title id="title">Garden Lab</title>
+  <style>
+    .tile { fill: #f4efe4; stroke: #1a1815; }
+    .stem { stroke: #1a1815; }
+    .leaf-ink { fill: #1a1815; }
+    .leaf-red { fill: #8f2d20; }
+    .seed { fill: #8f2d20; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #1a1815; stroke: #f4efe4; }
+      .stem { stroke: #f4efe4; }
+      .leaf-ink { fill: #f4efe4; }
+      .leaf-red { fill: #d98a3a; }
+      .seed { fill: #d98a3a; }
+    }
+  </style>
+  <rect class="tile" x="3" y="3" width="58" height="58" rx="14" stroke-width="2" />
+  <path class="stem" d="M32 50 V28" stroke-width="2.8" stroke-linecap="round" fill="none" />
+  <path class="leaf-ink" d="M32 33 C 23 33, 18 28, 17 19 C 27 19, 32 24, 32 33 Z" />
+  <path class="leaf-red" d="M32 27 C 41 27, 46 22, 47 14 C 38 14, 33 19, 32 27 Z" />
+  <circle class="seed" cx="32" cy="52" r="2.2" />
 </svg>

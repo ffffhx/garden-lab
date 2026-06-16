@@ -33,6 +33,40 @@ type SiteHeaderProps = {
   wide?: boolean;
 };
 
+function LogoMark({ className }: { className?: string }) {
+  // 「抽芽花饰」站标：与 favicon 同形——纸张瓦片 + 墨黑/酒红双叶
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      className={className}
+      role="img"
+      aria-label="Garden Lab"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="58"
+        height="58"
+        rx="14"
+        fill="#f4efe4"
+        stroke="#1a1815"
+        strokeWidth="2"
+        className="transition group-hover:stroke-[#8f2d20]"
+      />
+      <path
+        d="M32 50 V28"
+        stroke="#1a1815"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path d="M32 33 C 23 33, 18 28, 17 19 C 27 19, 32 24, 32 33 Z" fill="#1a1815" />
+      <path d="M32 27 C 41 27, 46 22, 47 14 C 38 14, 33 19, 32 27 Z" fill="#8f2d20" />
+      <circle cx="32" cy="52" r="2.2" fill="#8f2d20" />
+    </svg>
+  );
+}
+
 function normalizeNavPathname(pathname: string | null | undefined) {
   const basePath = normalizeBasePath(process.env.NEXT_PUBLIC_BASE_PATH);
   let normalizedPathname = pathname || "/";
@@ -121,13 +155,14 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
         <div className="min-w-0 max-w-xl">
           <Link
             href="/"
-            className="group inline-flex items-baseline gap-2.5 text-[#1a1815]"
+            className="group inline-flex items-center gap-2.5 text-[#1a1815]"
           >
+            <LogoMark className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
             <span className="font-display text-[1.6rem] font-normal tracking-[0.01em] sm:text-[1.95rem]">
               {SITE.title}
             </span>
             <span
-              className="hidden h-px w-10 translate-y-[-0.4rem] bg-[#1a1815]/30 transition group-hover:w-16 group-hover:bg-[#8f2d20] sm:inline-block"
+              className="hidden h-px w-10 bg-[#1a1815]/30 transition group-hover:w-16 group-hover:bg-[#8f2d20] sm:inline-block"
               aria-hidden="true"
             />
           </Link>

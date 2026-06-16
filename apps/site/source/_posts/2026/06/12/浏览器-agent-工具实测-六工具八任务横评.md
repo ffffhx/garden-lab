@@ -13,7 +13,7 @@ tags:
   - Agent
   - Playwright
   - Benchmark
-excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安全域解释每个工具的边界从哪来，再用一个有标准答案的基准测试站、互相隔离的无偏 Agent 会话实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli。八道网页任务之外，2026-06-14 又补测了扩展安全域（T09/T11）、真实登录态（T10a）与跨会话持久化（T10b）三题（Claude Code 与 Codex 两轮独立、结论一致）：扩展场景的真分水岭是能不能到 chrome:// 特权页、bb-browser 在此失能；真实登录态是 @chrome 主场、playwright-cli 出局；持久化靠可移植状态文件取胜。补测还推翻了本文初稿自己的一个判断——agent-browser 0.27.2 其实有常驻 daemon，其粘滞会话让 --cdp 命中真实 profile 不可靠。"
+excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安全域解释每个工具的边界从哪来，再用一个有标准答案的基准测试站、互相隔离的无偏 Agent 会话实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli。八道网页任务之外，2026-06-14 又补测了扩展安全域（T09/T11）、真实登录态（T10a）与跨会话持久化（T10b）三题（Claude Code 与 Codex 两轮独立、结论一致）：扩展场景的真分水岭是能不能到 chrome:// 特权页、bb-browser 在此失能；真实登录态是 @chrome 主场、playwright-cli 出局；持久化靠可移植状态文件取胜。补测还确认 agent-browser 0.27.2 有常驻 daemon，其粘滞会话让 --cdp 命中真实 profile 不可靠。"
 ---
 
 ## 摘要
@@ -23,7 +23,7 @@ excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安�
 这篇文章把理论和实测装进同一个框架里：
 
 - **理论负责解释**：每个工具站在浏览器的哪一层、被什么安全域约束，决定了它"天生能做什么、天生做不了什么"；
-- **实测负责裁决**：一个每道题都有标准答案的本地基准测试站、八道网页任务 + 三道扩展/登录态任务（T09/T10/T11，2026-06-14 补测）、六个工具、互相隔离且不知道答案的独立 Agent 会话——理论断言累计证实七条、推翻五条（含一条是本文初稿自己对 agent-browser 实现的误判），基准测试站自己的预设答案还被 Agent 用 trace 证据修正了一处。补测的三题由 Claude Code 与 Codex 两轮各自独立跑、结论一致，只在评分口径上有别。
+- **实测负责裁决**：一个每道题都有标准答案的本地基准测试站、八道网页任务 + 三道扩展/登录态任务（T09/T10/T11，2026-06-14 补测）、六个工具、互相隔离且不知道答案的独立 Agent 会话——理论断言累计证实七条、推翻五条，基准测试站自己的预设答案还被 Agent 用 trace 证据修正了一处。补测的三题由 Claude Code 与 Codex 两轮各自独立跑、结论一致，只在评分口径上有别。
 
 被测六个工具：Codex `@chrome`、Codex `@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP`、`playwright-cli`。基准测试站、任务卡与全部原始数据在仓库 `apps/browser-tool-bench/`，可复现。
 
@@ -253,9 +253,9 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 
 ### 6.2 agent-browser：Rust 瘦 CLI + 常驻原生 daemon（直连调试协议）
 
-agent-browser 是用 Rust 写的，对外是一个瘦 CLI、背后挂一个常驻原生 daemon 替它连 CDP（Chrome 的调试协议，详见下文更正），而且能 `connect` 到任意一个调试目标——实测里我用一个本地 Electron 应用验证过 `--cdp` 连接的完整流程。它的快照短、元素引用稳、长对话省 token，网络请求被动留底事后可查；在八道题里拿到满分、全程只被迫用了一次 eval 兜底。
+agent-browser 是用 Rust 写的，对外是一个瘦 CLI、背后挂一个常驻原生 daemon 替它连 CDP（Chrome 的调试协议），而且能 `connect` 到任意一个调试目标——实测里我用一个本地 Electron 应用验证过 `--cdp` 连接的完整流程。它的快照短、元素引用稳、长对话省 token，网络请求被动留底事后可查；在八道题里拿到满分、全程只被迫用了一次 eval 兜底。
 
-**一处需要更正的早先判断**：本文初稿（含下面 6.3 的链路图）写它"没有独立 daemon、命令直接翻译成调试协议调用"。2026-06-14 补测时复核进程发现并非如此——**0.27.2 确实有一个常驻 daemon**：它是一个**编译后的原生二进制** `agent-browser-darwin-arm64`（不是 node 进程，所以按 node/daemon 关键字搜不到，这正是早先误判的来源），脱离父进程挂到 init（PPID=1）、长期常驻、监听 unix 域套接字 `~/.agent-browser/default.sock`，并配 `default.pid` / `default.engine`（值为 `chrome`）/ `default.version`（值为 `0.27.2`）这套标准 daemon 文件。也就是说 agent-browser 的 CLI 其实也是**瘦客户端**，每条命令经 `default.sock` 发给这个常驻 daemon，由 daemon 持有"当前会话绑在哪个浏览器"的状态——和 bb-browser 的形态比之前以为的更接近，区别在于它是 Rust 原生二进制、socket 走 unix 域而非本地 HTTP 端口。
+**它的架构是瘦 CLI + 常驻 daemon**：0.27.2 起有一个常驻 daemon，是一个**编译后的原生二进制** `agent-browser-darwin-arm64`（不是 node 进程，按 node/daemon 关键字搜不到、容易漏看），脱离父进程挂到 init（PPID=1）、长期常驻、监听 unix 域套接字 `~/.agent-browser/default.sock`，并配 `default.pid` / `default.engine`（值为 `chrome`）/ `default.version`（值为 `0.27.2`）这套标准 daemon 文件。也就是说 agent-browser 的 CLI 是**瘦客户端**，每条命令经 `default.sock` 发给这个常驻 daemon，由 daemon 持有"当前会话绑在哪个浏览器"的状态——和 bb-browser 的形态接近，区别在于它是 Rust 原生二进制、socket 走 unix 域而非本地 HTTP 端口。
 
 这个 daemon 直接解释了 4.7 里 agent-browser `--cdp 9223` 的可靠性硬伤：**daemon 持有的会话是粘滞的**。一旦它之前把 default 会话绑到了自起的托管浏览器（一个空白 headless Chrome），后续即使带 `--cdp 9223`，daemon 也不会可靠地把目标切过去，命令静默落在旧绑定的托管浏览器上——`get url` 还返回你要的页面，像成功，实则没碰真身。复现核验很直接：`open` 一个唯一 URL 后 `curl http://127.0.0.1:9223/json` 找不到它、却在 agent-browser 自管 Chrome 的端口上找得到；进程命令行显示那是个 `--user-data-dir=/tmp/agent-browser-chrome-* --headless=new` 的临时实例。要可靠复用真实 profile，实践中得每次先 `tab` 确认目标、不对就 `close --all`（必要时连 daemon/托管 Chrome 一起 `pkill`）再重连。**这是一个实打实的"Agent 友好度/可控性"扣分项**：静默落到错的浏览器，比明确报错更难发现（呼应第 5 节"静默失败是 Agent 最大的敌人"那条）。它和 bb-browser 在链路上的差别，见 6.3。
 
@@ -263,7 +263,7 @@ agent-browser 是用 Rust 写的，对外是一个瘦 CLI、背后挂一个常�
 
 bb-browser 同样站在 CDP 调试层，但形态和 agent-browser 完全不同。它对外有三个入口——CLI、MCP server、provider（给上层框架注册用），但这三个入口谁都不直接连 Chrome，而是统一汇到一个常驻的后台进程（默认监听 `127.0.0.1:19824`）。这个后台进程才是核心中转站：它维持着和 Chrome 的唯一一条调试长连接、记录每个标签页的状态、持续监听网络/控制台/报错事件，再把各入口发来的命令翻译成调试协议调用。这样 CLI、MCP、provider 就都不用各自再实现一遍浏览器连接和标签页管理。
 
-画成链路图，bb-browser 和 agent-browser 其实比初稿以为的更像——**两边都有一层常驻 daemon 中转、都持有粘滞会话**，区别只在 daemon 的实现形态（原生二进制 + unix socket vs node + 本地 HTTP 端口）：
+画成链路图，bb-browser 和 agent-browser 其实很像——**两边都有一层常驻 daemon 中转、都持有粘滞会话**，区别只在 daemon 的实现形态（原生二进制 + unix socket vs node + 本地 HTTP 端口）：
 
 ```
 agent-browser（Rust 原生二进制 daemon，走 unix socket）
@@ -337,11 +337,11 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 | agent-browser 薄 CLI、无独立 daemon、`--cdp` 直连可靠 | ❌ 推翻：0.27.2 有常驻原生 daemon，粘滞会话致 `--cdp` 命中真身不可靠（6.2） | 实现/可控性 |
 | agent-browser 与 playwright-cli 的 state save/load 是下一个分胜负点 | ✅ 证实并打平（T10b 均可移植状态文件成功），差别仅 ergonomics | — |
 
-理论框架本身——按层定上限、按安全域解释取舍、按任务阶段路由——全部站住了；被推翻的都是具体工具格子（这轮又多推翻三条，且其中一条是本文初稿自己对 agent-browser 实现的误判）。这说明此类文章的保鲜期取决于工具版本，**结论应该和版本号写在一起**，连实现细节都要以实测进程为准、而非文档与初稿印象。
+理论框架本身——按层定上限、按安全域解释取舍、按任务阶段路由——全部站住了；被推翻的都是具体工具格子（这轮又多推翻三条）。这说明此类文章的保鲜期取决于工具版本，**结论应该和版本号写在一起**，连实现细节都要以实测进程为准、而非文档印象。
 
 ## 9. 下一步
 
-- T09（扩展 reload）、T10（真实登录态 + 持久化）、T11（使用扩展）已于 2026-06-14 补测，见第 3 节总表 / 4.7——结果确实改写了路由表，并顺带推翻了本文初稿对 agent-browser "无 daemon" 的判断。
+- T09（扩展 reload）、T10（真实登录态 + 持久化）、T11（使用扩展）已于 2026-06-14 补测，见第 3 节总表 / 4.7——结果确实改写了路由表，也确认了 agent-browser 0.27.2 有常驻 daemon。
 - 增加每个单元格重复次数收方差；引入弱一档模型验证 5.1 的预言。
 - 把扩展宿主的搭建本身做成可复现脚本（企业策略检测 → 干净 CfT + 正确 feature flag），因为补测里"让扩展真能跑"比测工具本身更费劲。
 - 值得上游提 issue：bb-browser 事件注入缺陷 + `chrome://`/`chrome-extension://` URL 归一化把特权页堵死；**agent-browser 粘滞 daemon 致 `--cdp` 静默落到自起托管浏览器**（4.7/6.2）+ 视口外静默点击 + Electron 下 connect 会话失灵；playwright-cli 不验证响应结构就 mock + attach 多扩展真实 Chrome 时 service_worker target 断言崩溃。

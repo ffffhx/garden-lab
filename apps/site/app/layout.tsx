@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Libre_Caslon_Display, Newsreader, Spline_Sans_Mono } from "next/font/google";
 
 import { RootChrome } from "@/components/root-chrome";
@@ -38,9 +38,23 @@ export const metadata: Metadata = {
     template: `%s | ${SITE.title}`,
   },
   description: SITE.description,
+  manifest: withBasePath("/manifest.webmanifest"),
   icons: {
-    icon: withBasePath("/images/favicon.svg"),
+    icon: [
+      { url: withBasePath("/images/favicon.svg"), type: "image/svg+xml" },
+      { url: withBasePath("/images/icon-192.png"), type: "image/png", sizes: "192x192" },
+    ],
+    apple: withBasePath("/images/apple-touch-icon.png"),
   },
+  appleWebApp: {
+    capable: true,
+    title: SITE.title,
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f4efe4",
 };
 
 export default function RootLayout({

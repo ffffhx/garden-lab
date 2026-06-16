@@ -73,6 +73,10 @@ window.COVERS = (function () {
       ["模型供应链", "学习回路", "推理芯片", "年龄门槛", "无障碍"],
       "AI 工程，正在从单点的模型调用，变成系统级的治理问题。",
       "Anthropic · ByteDance · UK under-16 · Rylo"),
+    news("2026/06/16/2026-06-16-x-上-ai-与前端热点速览", "2026-06-16",
+      ["agent 治理", "身份权限", "开源安全", "算力融资", "工具更新"],
+      "Agent 进入生产系统后，权限、审计、成本与修复链路都要产品化。",
+      "Anthropic · Salesforce Fin · NewCore · Athena · Codex 0.140"),
   ];
 
   const T = [

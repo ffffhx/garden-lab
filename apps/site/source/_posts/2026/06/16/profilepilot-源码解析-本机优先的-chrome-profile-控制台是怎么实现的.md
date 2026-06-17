@@ -20,14 +20,14 @@ coverPosition: "below-title"
 
 ProfilePilot 是一个本机优先（local-first）的桌面工具，给你日常在用的真实 Chrome 补上一块缺失的控制面：统一管理 Chrome 自带的 Profile，创建用独立 `--user-data-dir` 隔离的测试环境，把登录态和扩展在 Profile 之间迁移、同步，再以可控的 CDP 端口把一个干净的浏览器交给 Agent 或人工测试。
 
-如果只看 README，你大概会记住这几个标签：
+从功能上看，它做的是这么几件事：
 
-- Electron 桌面应用
-- 管理 Chrome 的多 Profile
-- 能同步登录态、迁移扩展
-- 能给 agent-browser 之类的工具开 CDP 端口
+- 一个 Electron 桌面应用
+- 管理 Chrome 的多个 Profile
+- 在 Profile 之间同步登录态、迁移扩展
+- 给 agent-browser 之类的工具开放 CDP 端口
 
-但真正进源码以后，我觉得它最值得讲的是下面这件事：
+但这篇文章想讲的不是这张功能清单，而是进到源码里之后，我觉得最值得说的一件事：
 
 **它把 Chrome 自己的磁盘数据当作一等公民，在「读真实数据 + 安全地搬运真实数据」这件事上做到了事务级的严谨。**
 

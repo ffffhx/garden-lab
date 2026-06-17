@@ -12,6 +12,8 @@ tags:
   - TypeScript
   - 源码解析
 excerpt: "ProfilePilot 站在你日常在用的真实 Chrome 之上补一块控制面：从 Local State 发现 Profile、用 ps/lsof 还原运行态、给隔离 Profile 固定 CDP 端口交给 Agent、把登录态从一个 Profile 安全搬到另一个。这篇拆解它的整体架构，以及账号同步那块「暂存 + 原子替换 + 可回滚」的事务细节——一个 4700 行 ProfileManager 里真正难的地方。"
+cover: "cover-v1.png"
+coverPosition: "below-title"
 ---
 
 ## 摘要

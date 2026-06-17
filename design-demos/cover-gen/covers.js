@@ -213,6 +213,37 @@ window.COVERS = (function () {
           <span class="pill">DevTools</span><span class="pill c">Playwright</span><span class="pill">bb-browser</span>
         </div>`,
     },
+    {
+      slug: "browser-agent-bench", dir: "2026/06/12/浏览器-agent-工具实测-六工具八任务横评",
+      scene: "browser", cat: "技术", en: "BROWSER AGENTS × BENCH", accent: "violet",
+      titleSize: 80, title: `浏览器 <span class="hv latin">Agent</span> 工具<br>分层 × <em style="background:var(--violet);color:#fff">实测</em>`,
+      sub: "先用能力分层和安全域解释每个工具的边界，再用一个有标准答案的基准站、互相隔离的无偏会话实测六款工具——谁更能让 Agent 看懂页面、复用真实登录态、跨会话续命。",
+      kw: ["能力分层", "安全域", "chrome:// 特权页", "真实登录态", "跨会话持久化", "无偏会话"],
+      stageHTML: `
+        <div class="field" style="background:var(--violet)"></div>
+        <div class="field-stripe"></div><div class="field-dots"></div>
+        <div class="win">
+          <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url"></span></div>
+          <div class="body">
+            <div class="line l"></div><div class="line m"></div><div class="line s"></div><div class="line m"></div>
+            <div class="el btn"><span class="ref">@e3</span><span class="t">登录</span></div>
+          </div>
+        </div>
+        <div class="eye"><span class="pupil"></span></div>
+        <div class="scan"></div>
+        <div style="position:absolute;left:46px;top:120px;z-index:21;background:var(--acid);border:4px solid var(--ink);box-shadow:6px 6px 0 rgba(0,0,0,.35);font-family:var(--mono);font-weight:800;font-size:18px;color:var(--ink);padding:8px 14px;transform:rotate(-4deg)">11 任务 · 6 工具</div>
+        <div class="tools">
+          <span class="pill a">@chrome</span><span class="pill">@browser</span><span class="pill b">agent-browser</span>
+          <span class="pill">bb-browser</span><span class="pill">DevTools MCP</span><span class="pill c">playwright-cli</span>
+        </div>`,
+    },
+    {
+      slug: "profilepilot", dir: "2026/06/16/profilepilot-源码解析-本机优先的-chrome-profile-控制台是怎么实现的",
+      scene: "flow", cat: "技术", en: "PROFILEPILOT · SOURCE", accent: "violet", glyph: "console",
+      titleSize: 84, title: `给真实 Chrome<br>补一块 <span class="hv">控制面</span>`,
+      sub: "本机优先：从 Local State 发现 Profile、用 ps/lsof 还原运行态、给隔离 Profile 固定 CDP 端口交给 Agent，再把登录态在 Profile 间「暂存 + 原子替换 + 可回滚」地搬运。",
+      kw: ["Local State", "ps / lsof", "固定 CDP", "原子替换 + 回滚", "Electron"],
+    },
   ];
 
   return [...N, ...T];

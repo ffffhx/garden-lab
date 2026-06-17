@@ -14,6 +14,8 @@ tags:
   - Playwright
   - Benchmark
 excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安全域解释每个工具的边界从哪来，再用一个有标准答案的基准测试站、互相隔离的无偏 Agent 会话实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli。八道网页任务之外，2026-06-14 又补测了扩展安全域（T09/T11）、真实登录态（T10a）与跨会话持久化（T10b）三题（Claude Code 与 Codex 两轮独立、结论一致）：扩展场景的真分水岭是能不能到 chrome:// 特权页、bb-browser 在此失能；真实登录态是 @chrome 主场、playwright-cli 出局；持久化靠可移植状态文件取胜。补测还确认 agent-browser 0.27.2 有常驻 daemon，其粘滞会话让 --cdp 命中真实 profile 不可靠。"
+cover: "cover-v1.png"
+coverPosition: "below-title"
 ---
 
 ## 摘要

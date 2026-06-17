@@ -260,6 +260,23 @@ function renderFeed(){
 const DESIGN = {
   "browser-tools": () => leftText(d,false) + `<div class="stage">${d.stageHTML}</div>`,
 
+  "browser-agent-bench": () => leftText(d,false) + `<div class="stage">${d.stageHTML}</div>`,
+
+  "profilepilot": () => `<div class="fb route">
+    <div class="cap"><span class="cat" style="background:${ACCENT.violet}">${d.cat}</span><span class="en">${d.en}</span></div>
+    <h1>${d.title}</h1>
+    <div class="net">
+      <svg width="100%" height="100%" viewBox="0 0 1480 330" preserveAspectRatio="none" style="position:absolute;inset:0">
+        <path d="M260 165 H430" stroke="#cfe646" stroke-width="5" stroke-dasharray="2 12" stroke-linecap="round"/>
+        <path d="M700 150 C850 150 850 60 1000 60" stroke="#cfe646" stroke-width="5" stroke-dasharray="2 12" fill="none"/>
+        <path d="M700 180 C850 180 850 290 1000 290" stroke="#e8412a" stroke-width="5" stroke-dasharray="2 12" fill="none"/>
+      </svg>
+      <div class="rn" style="left:0;top:120px"><div class="lb">真实 Chrome</div><div class="sm">Local State · ps/lsof</div></div>
+      <div class="rn acc" style="left:430px;top:120px"><div class="lb">ProfilePilot</div><div class="sm">本机控制台 · Electron</div></div>
+      <div class="rn acc" style="left:1000px;top:18px"><div class="lb">隔离 Profile → Agent</div><div class="sm">--user-data-dir · CDP :9223</div></div>
+      <div class="rn red" style="left:1000px;top:248px"><div class="lb">登录态迁移</div><div class="sm">暂存 · 原子替换 · 回滚</div></div>
+    </div><div class="foot">▸ 发现 · 还原运行态 · 固定 CDP · 安全搬运登录态</div></div>`,
+
   "codex-claude-updates": () => `<div class="fb duel">
     <div class="head"><div class="cap"><span class="cat" style="background:${ACCENT.red}">${d.cat}</span><span class="en">${d.en}</span></div>
     <h1>${d.title}</h1></div>

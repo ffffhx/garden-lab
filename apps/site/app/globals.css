@@ -860,12 +860,19 @@ button:disabled,
 .article-content pre code {
   background: transparent;
   padding: 0;
+  font-family: var(--font-mono);
 }
 
 /* Shiki writes the theme's background/foreground inline on <pre class="shiki">.
    Keep the site's designed code-card gradient and let Shiki only color tokens. */
 .article-content pre.shiki {
   background: linear-gradient(180deg, rgb(12 20 34), rgb(7 13 24)) !important;
+}
+
+/* Render code upright like a VS Code editor — drop the theme's italics. */
+.article-content pre.shiki,
+.article-content pre.shiki span {
+  font-style: normal !important;
 }
 
 .article-content blockquote {

@@ -28,7 +28,7 @@ import swift from "shiki/langs/swift.mjs";
 import tsx from "shiki/langs/tsx.mjs";
 import typescript from "shiki/langs/typescript.mjs";
 import yaml from "shiki/langs/yaml.mjs";
-import nightOwl from "shiki/themes/night-owl.mjs";
+import darkPlus from "shiki/themes/dark-plus.mjs";
 
 // Build-time syntax highlighter. We use Shiki's synchronous core + JS RegExp
 // engine so the whole markdown pipeline stays synchronous (no async refactor of
@@ -36,7 +36,7 @@ import nightOwl from "shiki/themes/night-owl.mjs";
 // list degrades to plain text via `fallbackLanguage` rather than failing the build.
 const highlighter = createHighlighterCoreSync({
   engine: createJavaScriptRegexEngine({ forgiving: true }),
-  themes: [nightOwl],
+  themes: [darkPlus],
   langs: [
     typescript,
     tsx,
@@ -148,7 +148,7 @@ export function compileMarkdown(source: string, assetBasePath: string) {
         // HighlighterGeneric<any, any> param rejects nominally — cast to its expected type.
         highlighter as Parameters<typeof rehypeShikiFromHighlighter>[0],
         {
-          theme: "night-owl",
+          theme: "dark-plus",
           defaultLanguage: "text",
           fallbackLanguage: "text",
         }

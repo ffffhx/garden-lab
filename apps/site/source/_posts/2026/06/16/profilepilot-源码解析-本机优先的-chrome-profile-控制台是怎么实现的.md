@@ -38,7 +38,6 @@ ProfilePilot 是一个本机优先（local-first）的桌面工具，给你日�
 
 这篇文章按下面这条主线走：
 
-1. 先把几个词翻成人话
 1. 说清它解决什么问题、定位在哪
 1. 看整体架构：三进程 + 一个 4700 行的 `ProfileManager`
 1. Profile 发现：从 `Local State` 读出真实身份
@@ -59,19 +58,6 @@ ProfilePilot 是一个本机优先（local-first）的桌面工具，给你日�
 - 观察时间：`2026-06-16`
 
 下面所有代码片段都是**基于源码裁剪后的讲解版**：只保留表达设计意图的主干，去掉了部分边界分支和日志，并补了中文注释。
-
-## 0. 阅读预备：先把几个词翻成人话
-
-- **Chrome Profile**：Chrome 里一个独立的「人」。每个 Profile 有自己的书签、登录态、扩展，对应磁盘上一个目录（`Default`、`Profile 1`…）。
-- **`user-data-dir`**：Chrome 的「数据根目录」。所有 Profile 都住在它下面。换一个 `--user-data-dir` 启动，就等于开了一个互相完全隔离的浏览器。
-- **`Local State`**：Chrome 在数据根目录下的一个 JSON 文件，记录了「这台机器上有哪些 Profile、各自叫什么名字、绑了哪个 Google 账号」。
-- **CDP（Chrome DevTools Protocol）**：Chrome 的远程控制协议。Chrome 带 `--remote-debugging-port=9224` 启动后，外部程序就能通过这个端口用 WebSocket 操控它——这正是各类浏览器 Agent 接管浏览器的入口。
-- **原生 Profile / 隔离 Profile**：本文反复出现的一对概念。**原生**指 Chrome 自己那套 `Default`/`Profile N`；**隔离**指 ProfilePilot 用独立 `--user-data-dir` 新建、专门给测试和 Agent 用的环境。
-- **Electron 三进程**：主进程（Node，能读文件、起子进程）、渲染进程（网页 UI，不能直接碰系统）、preload（架在两者之间的安全桥）。
-
-记住一句话，后面会轻松很多：
-
-**ProfilePilot 的所有「魔法」都发生在主进程，渲染进程只是个遥控器。**
 
 ## 1. 它解决什么问题，定位在哪
 
@@ -191,7 +177,7 @@ for (const [dirName, info] of Object.entries(localState.profile.info_cache)) {
 
 ## 4. 运行态探测：用 ps + lsof 还原「谁在跑、在哪个端口」
 
-知道「有哪些 Profile」之后，还要知道「谁正在运行、跑在哪个 CDP 端口、监听了哪些端口」。Chrome 没有 API 告诉你这些，ProfilePilot 的办法是借两个系统自带的命令来「侦察」：`ps`（列出当前所有进程，以及每个进程是用什么命令、带什么参数启动的）和 `lsof`（查某个进程占用了哪些网络端口），再从输出里把信息拼出来。
+知道「有哪些 Profile」之后，还要知道「谁正在运行、跑在哪个 CDP 端口、监听了哪些端口」。这里的 **CDP（Chrome DevTools Protocol）** 是 Chrome 的远程控制协议：Chrome 带 `--remote-debugging-port` 启动后，外部程序就能通过这个端口操控它——这正是各类浏览器 Agent 接管浏览器的入口，也是后面第 6 节的主角。Chrome 没有 API 告诉你这些运行态，ProfilePilot 的办法是借两个系统自带的命令来「侦察」：`ps`（列出当前所有进程，以及每个进程是用什么命令、带什么参数启动的）和 `lsof`（查某个进程占用了哪些网络端口），再从输出里把信息拼出来。
 
 每个 Profile 的运行态被收敛成这样一个结构：
 

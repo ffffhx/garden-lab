@@ -406,7 +406,9 @@ class OperationPauseController implements OperationPauseSignal {
 
 把这两边凑起来，就能认出每个扩展的编号、名字、版本和「从哪装的」。这里有个小坑：扩展为了支持多语言，名字往往不直接写出来，只在说明书里填一个占位符（形如 `__MSG_extName__`），真正的中文/英文名另放在一张翻译表里（`_locales/<语言>/messages.json`）。所以遇到占位符，还得再去翻译表里查一次它对应的真名。
 
-认出每个扩展后，当前实现先问的不是「Chrome 是不是 137 以上」，而是：**源 Profile 里有没有 Chrome 自己写过、带保护校验的安装记录**。这条能力在 UI 和 diff 里叫 `canPersistInstall`。只要扩展有真实目录、不是内置组件，并且 `Secure Preferences` 里能找到对应的 `extensions.settings.<id>`、`protection.macs.extensions.settings.<id>` 和 `settings_encrypted_hash.<id>`，ProfilePilot 就优先走持久迁移。
+先把几个容易混的词拆开：`Preferences` / `Secure Preferences` 不是扩展专用文件，它们还会保存启动页、权限、网站设置等 Profile 配置；这一节只读取和改写其中跟 `extensions` 有关的分支。后面说的「包体」是扩展程序文件本体，比如 `manifest.json`、service worker / background、popup、图标、脚本等；「扩展数据」是另一类东西，指 `Local Extension Settings`、`Sync Extension Settings`、IndexedDB 里按扩展 ID 存的用户配置和运行数据。
+
+认出每个扩展后，当前实现先问的不是「Chrome 是不是 137 以上」，而是：**源 Profile 里有没有 Chrome 自己写过、带保护校验的安装记录**。这条能力在 UI 和 diff 里叫 `canPersistInstall`，判断结果只有两个：`Secure Preferences` 里同时存在 `extensions.settings.<id>`、`protection.macs.extensions.settings.<id>` 和 `settings_encrypted_hash.<id>`，就是有；缺任意一项，就是没有。商店扩展走 Chrome Web Store 正常安装完成后，Chrome 会写出这组记录；本地 unpacked 扩展只有在用户通过 Chrome 自己的「加载已解压的扩展程序」等会落盘到 Profile 的流程登记过，并且这组记录还保留在源 Profile 里时才有。磁盘上只有一个源码目录，或者只是通过 `--load-extension` / `Extensions.loadUnpacked` 临时挂载过，不算有 protected install record。
 
 这条路径的关键点是：它不是用 CDP 去点 Chrome Web Store 的「添加至 Chrome」按钮，也不是每次启动再临时挂载扩展；它把 Chrome 已经承认过的安装记录搬到目标 Profile，让目标 Profile 自己成为这条扩展记录的拥有者。
 
@@ -416,7 +418,7 @@ class OperationPauseController implements OperationPauseSignal {
 
 这样做的效果和 Chrome 原生「加载已解压的扩展程序」一致：目标 Profile 离开 ProfilePilot、用普通 Chrome 启动，也会从这条源目录加载扩展。源目录里的代码原地更新后，目标下次启动也能看到新版本；但代价同样明确：源目录被删除、移动，或者 `manifest.json` 不见了，目标 Profile 里的这条扩展记录就会失效，需要重新同步。
 
-还有一个细节：本地未打包扩展需要 Chrome 的开发者模式。ProfilePilot 没有手写 Chrome 的保护哈希算法，而是启动一个临时 Chrome，通过 `chrome.developerPrivate.updateProfileConfiguration({ inDeveloperMode: true })` 让 Chrome 自己写出一份可复用的开发者模式保护记录，再把它写进目标 Profile。
+还有一个细节：本地未打包扩展需要 Chrome 的开发者模式。ProfilePilot 没有手写 Chrome 的保护哈希算法，而是启动一个临时 Chrome，通过 CDP 打开 `chrome://extensions/`，再用 `Runtime.evaluate` 调 Chrome WebUI 内部的 `chrome.developerPrivate.updateProfileConfiguration({ inDeveloperMode: true })`。CDP 这里只是执行通道，它本身没有一个专门的「开启开发者模式」协议命令；真正写出记录的是 Chrome 自己。这里得到的也不是某个扩展的签名，而是 Profile 级别的 `extensions.ui.developer_mode = true` 及对应 MAC，ProfilePilot 再把这份开发者模式保护记录写进目标 Profile。
 
 ### ② Chrome Web Store 扩展：复制包体 + 迁移保护记录
 
@@ -435,9 +437,9 @@ class OperationPauseController implements OperationPauseSignal {
 
 | 场景 | 当前主路径 | 离开 ProfilePilot 后是否可用 | 回退路径 |
 |---|---|---|---|
-| 本地 / 非商店，且有保护记录 | 写入 `Secure Preferences`，继续引用源目录 | 可用 | 源目录失效时需要重新同步 |
+| 本地 / 非商店，且三项保护字段齐全 | 写入 `Secure Preferences`，继续引用源目录 | 可用 | 源目录失效时需要重新同步 |
 | Chrome Web Store，且有保护记录 | 复制包体到目标 Profile，并写入 protected install record | 可用 | 缺记录时打开商店页 + 预铺数据 |
-| 本地 / 非商店，但没有保护记录 | 无法持久写入 | 不保证 | 隔离 Profile 可登记为 ProfilePilot 启动时 CDP 加载 |
+| 本地 / 非商店，但缺任一保护字段 | 无法持久写入 | 不保证 | 隔离 Profile 可登记为 ProfilePilot 启动时 CDP 加载 |
 | 内置组件 / 无说明书 | 跳过 | 不适用 | 跳过 |
 
 迁移前目标 Profile 仍然必须先关闭，因为 Chrome 正在运行时可能会覆盖 `Preferences` / `Secure Preferences`。持久迁移成功后，事实来源是目标 Profile 自己的 Chrome 设置和扩展目录；ProfilePilot 自己的登记记录只服务于「运行时加载」这种回退路径，不再是判断所有扩展是否存在的唯一依据。

@@ -77,6 +77,10 @@ window.COVERS = (function () {
       ["agent 治理", "身份权限", "开源安全", "算力融资", "工具更新"],
       "Agent 进入生产系统后，权限、审计、成本与修复链路都要产品化。",
       "Anthropic · Salesforce Fin · NewCore · Athena · Codex 0.140"),
+    news("2026/06/17/2026-06-17-x-上-ai-与前端热点速览", "2026-06-17",
+      ["AI coding", "开发平台", "安全补丁", "算法控制", "移动系统"],
+      "AI coding、开发平台和移动/社交入口，都在被 AI 重新定价。",
+      "Cursor · GitHub/AWS · SoftBank/OpenAI · Threads · Android 17"),
   ];
 
   const T = [

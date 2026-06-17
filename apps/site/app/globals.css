@@ -234,16 +234,6 @@ button:disabled,
   line-height: 1.95;
 }
 
-/* 正文首段首字下沉（报刊感） */
-.article-content > p:first-of-type::first-letter {
-  font-family: var(--font-serif-display);
-  float: left;
-  font-size: 3.4em;
-  line-height: 0.72;
-  padding: 0.08em 0.12em 0 0;
-  color: var(--red);
-}
-
 .article-selection-layer {
   position: relative;
 }

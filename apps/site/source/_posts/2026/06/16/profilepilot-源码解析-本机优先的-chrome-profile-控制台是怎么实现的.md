@@ -11,53 +11,10 @@ tags:
   - Agent
   - TypeScript
   - 源码解析
-excerpt: "ProfilePilot 站在你日常在用的真实 Chrome 之上补一块控制面：从 Local State 发现 Profile、用 ps/lsof 还原运行态、给隔离 Profile 固定 CDP 端口交给 Agent、把登录态从一个 Profile 安全搬到另一个。这篇拆解它的整体架构，以及账号同步那块「暂存 + 原子替换 + 可回滚」的事务细节——一个 4700 行 ProfileManager 里真正难的地方。"
+excerpt: "ProfilePilot 站在你日常在用的真实 Chrome 之上补一块控制面：从 Local State 发现 Profile、用 ps/lsof 还原运行态、给隔离 Profile 固定 CDP 端口交给 Agent、把登录态从一个 Profile 安全搬到另一个。这篇拆解它的整体架构，以及账号同步那块「暂存 + 原子替换 + 可回滚」的事务细节——一个 5000 多行 ProfileManager 里真正难的地方。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
-
-## 摘要
-
-ProfilePilot 是一个本机优先（local-first）的桌面工具，给你日常在用的真实 Chrome 补上一块缺失的控制面：统一管理 Chrome 自带的 Profile，创建用独立 `--user-data-dir` 隔离的测试环境，把登录态和扩展在 Profile 之间迁移、同步，再以可控的 CDP 端口把一个干净的浏览器交给 Agent 或人工测试。
-
-从功能上看，它做的是这么几件事：
-
-- 一个 Electron 桌面应用
-- 管理 Chrome 的多个 Profile
-- 在 Profile 之间同步登录态、迁移扩展
-- 给 agent-browser 之类的工具开放 CDP 端口
-
-但这篇文章想讲的不是这张功能清单，而是进到源码里之后，我觉得最值得说的一件事：
-
-**它把 Chrome 自己的磁盘数据当作一等公民，在「读真实数据 + 安全地搬运真实数据」这件事上做到了事务级的严谨。**
-
-换句话说，ProfilePilot 的难点在两类系统编程：
-
-- **观测**：在没有官方接口的前提下，靠读 Chrome 的配置文件、解析系统进程表、探测调试端口，把「有哪些 Profile、谁在运行、跑在哪个端口」这套运行态还原出来；
-- **搬运**：把登录态和网站数据（Cookies、Local Storage、IndexedDB 等正被浏览器使用的本地数据库），从一个 Profile 安全地复制到另一个，过程可预览、可暂停、可取消，失败了还能回滚。
-
-这篇文章按下面这条主线走：
-
-1. 说清它解决什么问题、定位在哪
-1. 看整体架构：三进程 + 一个 4700 行的 `ProfileManager`
-1. Profile 发现：从 `Local State` 读出真实身份
-1. 运行态探测：`ps` + `lsof` 还原「谁在跑、跑在哪个端口」
-1. 启动：原生 Profile vs 隔离 Profile，以及跨平台 launcher
-1. CDP 接管：固定端口、可达性验证、连接已运行的系统 Chrome
-1. 账号同步：全文最硬的一块——暂存 + 原子替换 + 可回滚
-1. 扩展迁移：本地走源目录、商店走安装页
-1. 外部实例：只读地「看见」agent-browser 们
-1. 安全加固：路径、软链、锁、locale
-1. 最后把这些串成一条主线
-
-为避免版本漂移，先说明观察范围：
-
-- 仓库：`profilepilot`（Electron + TypeScript）
-- 观察版本：`package.json` 中的 `0.1.0`
-- 核心文件：`src/main/profile-manager.ts`，约 4700 行
-- 观察时间：`2026-06-16`
-
-下面所有代码片段都是**基于源码裁剪后的讲解版**：只保留表达设计意图的主干，去掉了部分边界分支和日志，并补了中文注释。
 
 ## 1. 它解决什么问题，定位在哪
 
@@ -71,9 +28,9 @@ ProfilePilot 的定位很明确：站在你已经使用的真实 Chrome 数据�
 
 这个定位决定了它的全部技术选择：要站在真实 Chrome 之上，就只能去读 Chrome 落在磁盘上的真实文件、去解析系统的进程表。**它的工程难度，全部来自「在没有官方 API 的地方，把事情做对、做安全」。**
 
-## 2. 整体架构：三进程 + 一个 4700 行的 ProfileManager
+## 2. 整体架构：三进程 + 一个 5000 多行的 ProfileManager
 
-先看进程边界。这是个标准的 Electron 安全配置——渲染进程被彻底沙箱化：
+先看进程边界。它使用的是 Electron 常见的隔离配置：渲染进程开启上下文隔离、禁用 Node 直连；但 `sandbox` 明确是 `false`，所以这里不能说成 Electron sandbox 模式：
 
 ```ts
 // src/main/main.ts —— 创建窗口时的关键配置
@@ -82,12 +39,12 @@ mainWindow = new BrowserWindow({
     preload: path.join(__dirname, "../preload.js"),
     contextIsolation: true,   // 渲染进程与 preload 的上下文隔离
     nodeIntegration: false,   // 网页里拿不到 require / Node API
-    sandbox: false
+    sandbox: false            // 没有启用 Electron sandbox
   }
 });
 ```
 
-渲染进程（`src/renderer/app.ts`，3700 多行的纯 UI 逻辑）不能直接读文件、起进程，它要做任何事都得通过 preload 暴露的桥：
+渲染进程（`src/renderer/app.ts`，3800 多行的纯 UI 逻辑）不能直接读文件、起进程，它要做任何事都得通过 preload 暴露的桥：
 
 ```ts
 // src/preload.ts —— 把一组受控方法挂到 window.profileManager
@@ -110,7 +67,7 @@ contextBridge.exposeInMainWorld("profileManager", profileManagerApi);
   → window.profileManager.syncAccount(req)      (preload 桥)
     → ipcRenderer.invoke("profiles:account:sync")
       → main.ts 的 ipcMain.handle
-        → profileManager.syncAccount(...)        (4700 行核心)
+        → profileManager.syncAccount(...)        (5000 多行核心)
           → 读文件 / 跑 ps / 复制目录 / 连 CDP
 ```
 
@@ -283,7 +240,7 @@ async function waitForCdp(port: number, timeoutMs: number): Promise<void> {
 
 那段超时文案点破了一个 Chrome 的真实陷阱：**Chrome 是单实例的**——如果同一个 Profile 已经有窗口开着，你再带新端口启动，新进程会把请求移交给旧实例，于是新端口根本不生效。这是用 CDP 接管 Chrome 时最常见的「为什么连不上」，ProfilePilot 直接把诊断写进了错误信息。
 
-**连接已运行的系统 Chrome** 走的是另一条路（`connectRunningSystemChrome`）：系统 Chrome 通常没带调试端口，没法直接连，所以它引导用户用 Chrome 自带的 `chrome://inspect` 远程调试入口来打开授权，授权后再供自动化工具接入。
+**连接已运行的系统 Chrome** 走的是另一条路（`connectRunningSystemChrome`）：系统 Chrome 通常没带调试端口，ProfilePilot 也不会凭空给它注入一个端口。它做的是聚焦这个系统 Chrome，并打开 Chrome 自带的 `chrome://inspect/#remote-debugging` 入口，让用户在浏览器自己的授权界面里处理后续连接。
 
 最后一个很有意思的细节，把这个工具和 Agent 工作流真正打通了。当你给某个隔离 Profile 设了固定端口，ProfilePilot 会把一段配置**原子地写进你的全局 `~/.claude/CLAUDE.md`**，让 Claude Code 这类 Agent 自动知道「该复用哪个调试浏览器」：
 
@@ -440,7 +397,7 @@ class OperationPauseController implements OperationPauseSignal {
 
 同步成功后，会把这次搬过的各项指纹记到 ProfilePilot 自己的小数据库里。下次再对比时，如果源端指纹自上次同步以来没变，就标成「没变」直接跳过——避免把 `History` 这种大库反复重搬。
 
-## 8. 扩展迁移：本地走源目录，商店走安装页
+## 8. 扩展迁移：优先持久写入，必要时才回退
 
 扩展比登录态更麻烦，因为 Chrome 对「扩展能从哪儿来」管得很严。ProfilePilot 第一步是把目标 Profile 里装了哪些扩展摸清楚。它从两个地方拼信息：
 
@@ -449,48 +406,41 @@ class OperationPauseController implements OperationPauseSignal {
 
 把这两边凑起来，就能认出每个扩展的编号、名字、版本和「从哪装的」。这里有个小坑：扩展为了支持多语言，名字往往不直接写出来，只在说明书里填一个占位符（形如 `__MSG_extName__`），真正的中文/英文名另放在一张翻译表里（`_locales/<语言>/messages.json`）。所以遇到占位符，还得再去翻译表里查一次它对应的真名。
 
-认出每个扩展后，怎么把它「搬」到目标 Profile，取决于两件事：**它是不是商店扩展**，以及**你的 Chrome 是不是新版（137 及以上）**。Chrome 从 137 起在正式版上停用了 `--load-extension` 这个启动参数（防止恶意软件静默侧载），所以加载方式得分版本。按「来源」分两条主线：
+认出每个扩展后，当前实现先问的不是「Chrome 是不是 137 以上」，而是：**源 Profile 里有没有 Chrome 自己写过、带保护校验的安装记录**。这条能力在 UI 和 diff 里叫 `canPersistInstall`。只要扩展有真实目录、不是内置组件，并且 `Secure Preferences` 里能找到对应的 `extensions.settings.<id>`、`protection.macs.extensions.settings.<id>` 和 `settings_encrypted_hash.<id>`，ProfilePilot 就优先走持久迁移。
 
-### ① 本地扩展（你自己加载的解压扩展、或非商店来源的）—— 从源目录加载，不复制
+这条路径的关键点是：它不是用 CDP 去点 Chrome Web Store 的「添加至 Chrome」按钮，也不是每次启动再临时挂载扩展；它把 Chrome 已经承认过的安装记录搬到目标 Profile，让目标 Profile 自己成为这条扩展记录的拥有者。
 
-ProfilePilot 只把「这个扩展在源 Profile 里的目录路径」记下来，启动目标 Profile 时从这个**源目录现读**：
+### ① 本地未打包扩展：持久写入，但继续引用源目录
 
-- 旧版 Chrome（< 137）/ Chromium：启动时带上 `--load-extension=<源目录>`；
-- 新版 Chrome（≥ 137）：启动时带上调试端口，等浏览器起来后，通过 CDP 通道下一道「加载这个解压扩展」的命令。
+本地扩展（你自己加载的解压扩展、或非商店来源的）如果有保护记录，ProfilePilot 会把这条安装记录写进目标 Profile 的 `Secure Preferences`。扩展包体不复制，记录里的路径仍然指向源目录。
 
-两种方式都指向同一个源目录，所以**源扩展更新了，下次通过 ProfilePilot 启动那个 Profile 就是最新的**，目标里也不留副本。代价有两个：它依赖源目录一直在原地（删了、移走就加载不到）；新版 Chrome 因为只能靠 CDP 加载，只要这个 Profile 登记过本地扩展，每次启动都会自动带上一个调试端口。
+这样做的效果和 Chrome 原生「加载已解压的扩展程序」一致：目标 Profile 离开 ProfilePilot、用普通 Chrome 启动，也会从这条源目录加载扩展。源目录里的代码原地更新后，目标下次启动也能看到新版本；但代价同样明确：源目录被删除、移动，或者 `manifest.json` 不见了，目标 Profile 里的这条扩展记录就会失效，需要重新同步。
 
-### ② 商店扩展 —— 旧版可侧载，新版走安装页
+还有一个细节：本地未打包扩展需要 Chrome 的开发者模式。ProfilePilot 没有手写 Chrome 的保护哈希算法，而是启动一个临时 Chrome，通过 `chrome.developerPrivate.updateProfileConfiguration({ inDeveloperMode: true })` 让 Chrome 自己写出一份可复用的开发者模式保护记录，再把它写进目标 Profile。
 
-商店扩展不允许随便从别处加载（会被 Chrome 判为非法），所以：
+### ② Chrome Web Store 扩展：复制包体 + 迁移保护记录
 
-- 旧版 Chrome：把它的文件拷进目标 Profile，用 `--load-extension` 侧载；
-- 新版 Chrome：打开扩展管理页 / 商店页，引导你点「安装」。如果你勾了「连数据一起搬」，会先按相同编号把它的数据铺到目标，等装完正好对上原来的配置。
+商店扩展现在也不再默认走「打开商店页、等你点安装」。如果源 Profile 里已经装过这个扩展，ProfilePilot 会把它的包体从源 Profile 的 `Extensions/<id>/<version>` 复制到目标 Profile，再把源 Profile 中 Chrome 写过的 protected install record 同步过去。如果你勾了「连数据一起搬」，`Local Extension Settings`、`Sync Extension Settings`、IndexedDB 这类扩展数据也会按同一个扩展 ID 预先铺到目标。
 
-剩下两类直接跳过：Chrome 内置组件，以及连说明书都找不到的（多半是坏掉或停用的）。汇总成一张表：
+这里要分清两件事：
 
-| 扩展来源 | 旧版 Chrome（<137）/ Chromium | 新版 Chrome（≥137） |
-|---|---|---|
-| 本地 / 非商店 | `--load-extension` 加载**源目录** | CDP 加载**源目录** |
-| 商店 | 拷贝文件侧载 | 打开安装页 + 预铺数据 |
-| 内置组件 / 无说明书 | 跳过 | 跳过 |
+- 从 Chrome Web Store **新安装**一个扩展，原生确认框仍然不能被普通 CDP 命令接管；
+- 从一个已经安装过的源 Profile **迁移**到另一个本机 Profile，可以复用本机已有包体和 Chrome 已写出的保护记录。
 
-> 一个容易误会的点：本地扩展**不在目标 Profile 里留副本**，每次都从源目录现读。所以「源更新 → 目标自动跟上」是自然结果，不用重新迁移。这一点和 Chrome 原生的「加载已解压的扩展程序」相通——都是原地引用源目录，区别只在于 ProfilePilot 替你在每次启动时自动挂上。
+所以，`ExtensionInstallForcelist` 依然是官方支持的企业级静默安装通道；但 ProfilePilot 现在处理的是另一个问题：把用户本机已经安装过的扩展迁移到另一个本机 Profile，而不是替用户从商店发起一次全新的静默安装。
 
-#### 商店扩展为什么只能你点最后一下
+### ③ 回退路径：没有保护记录时才需要运行时加载或安装页
 
-新版 Chrome 上，商店扩展走的是「打开商店页、你点『添加至 Chrome』」。常有人问：能不能用 CDP 脚本把这个按钮自动点了、替我装上？卡点在按钮**之后**：
+并不是所有扩展都一定能持久迁移。源 Profile 缺少保护记录、扩展目录不完整、或者目标场景不允许写入时，ProfilePilot 才退回旧路径：
 
-- 页面上那个蓝色「添加至 Chrome」按钮在网页 DOM 里，CDP 确实点得到；
-- 但点完会弹出一个**浏览器原生的确认框**（「要添加扩展程序吗？」），它在浏览器外壳里、不在网页 DOM 里。CDP 的鼠标事件只投进网页渲染区，够不到它；也没有任何 CDP 命令能「接受扩展安装确认」（`Page.handleJavaScriptDialog` 只管 `alert`/`confirm` 这类网页 JS 弹窗，安装确认不归它管）。
+| 场景 | 当前主路径 | 离开 ProfilePilot 后是否可用 | 回退路径 |
+|---|---|---|---|
+| 本地 / 非商店，且有保护记录 | 写入 `Secure Preferences`，继续引用源目录 | 可用 | 源目录失效时需要重新同步 |
+| Chrome Web Store，且有保护记录 | 复制包体到目标 Profile，并写入 protected install record | 可用 | 缺记录时打开商店页 + 预铺数据 |
+| 本地 / 非商店，但没有保护记录 | 无法持久写入 | 不保证 | 隔离 Profile 可登记为 ProfilePilot 启动时 CDP 加载 |
+| 内置组件 / 无说明书 | 跳过 | 不适用 | 跳过 |
 
-这道原生确认框正是 Chrome 用来**防止脚本静默安装扩展**的安全设计——能被自动点掉，它就形同虚设了。所以这一下只能真人来。
-
-再叠加前面讲的 ID 问题（商店扩展的 ID 由开发者公钥决定，只有走正规安装才能拿回原 ID），商店扩展的「正确装法」就只剩一条：**从商店重装**。ProfilePilot 能帮的，是把商店页开好、把扩展数据按**原 ID** 预先铺到目标——你点完「添加」，配置正好对上，最后那一下确认留给你。
-
-> 想真正免确认地批量装商店扩展，只有企业的 `ExtensionInstallForcelist` 强制安装策略能做到，但那是系统级托管策略（要管理员配置、用户还卸不掉），不在 ProfilePilot 的范畴里。
-
-迁移前目标 Profile 必须先关闭；哪些扩展登记过以 ProfilePilot 自己的记录为准，万一中途失败，会把已登记的记录（以及商店侧载时拷进去的文件）一起回滚掉。
+迁移前目标 Profile 仍然必须先关闭，因为 Chrome 正在运行时可能会覆盖 `Preferences` / `Secure Preferences`。持久迁移成功后，事实来源是目标 Profile 自己的 Chrome 设置和扩展目录；ProfilePilot 自己的登记记录只服务于「运行时加载」这种回退路径，不再是判断所有扩展是否存在的唯一依据。
 
 ## 9. 外部实例：只读地「看见」别的工具起的浏览器
 

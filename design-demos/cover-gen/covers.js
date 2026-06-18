@@ -220,7 +220,7 @@ window.COVERS = (function () {
     {
       slug: "browser-agent-bench", dir: "2026/06/12/浏览器-agent-工具实测-六工具八任务横评",
       scene: "browser", cat: "技术", en: "BROWSER AGENTS × BENCH", accent: "violet",
-      titleSize: 80, title: `浏览器 <span class="hv latin">Agent</span> 工具<br>分层 × <em style="background:var(--violet);color:#fff">实测</em>`,
+      titleSize: 80, titleLH: 1.16, title: `浏览器 <span class="hv latin">Agent</span> 工具<br>分层 × <em style="background:var(--violet);color:#fff">实测</em>`,
       sub: "先用能力分层和安全域解释每个工具的边界，再用一个有标准答案的基准站、互相隔离的无偏会话实测六款工具——谁更能让 Agent 看懂页面、复用真实登录态、跨会话续命。",
       kw: ["能力分层", "安全域", "chrome:// 特权页", "真实登录态", "跨会话持久化", "无偏会话"],
       stageHTML: `

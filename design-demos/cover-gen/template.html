@@ -241,7 +241,7 @@ const poster = document.getElementById("poster");
 
 function labelRow(d, catColor){return `<div class="label"><span class="cat" style="background:${catColor||accent}">${d.cat}</span><span class="en">${d.en}</span><span class="line"></span></div>`;}
 function leftText(d, dark){return `<div class="text ${dark?'on-dark':''}">${labelRow(d, d.scene==='feed'?ACCENT.red:accent)}
-  <h1 style="font-size:${d.titleSize||80}px">${d.title}</h1>
+  <h1 style="font-size:${d.titleSize||80}px${d.titleLH?`;line-height:${d.titleLH}`:''}">${d.title}</h1>
   <p class="sub">${d.sub}</p>
   <div class="kw">${(d.kw||[]).map((k,i)=>`<span class="${i%3===0?'on':''}">${k}</span>`).join("")}</div></div>`;}
 

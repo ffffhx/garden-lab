@@ -81,6 +81,10 @@ window.COVERS = (function () {
       ["AI coding", "开发平台", "安全补丁", "算法控制", "移动系统"],
       "AI coding、开发平台和移动/社交入口，都在被 AI 重新定价。",
       "Cursor · GitHub/AWS · SoftBank/OpenAI · Threads · Android 17"),
+    news("2026/06/18/2026-06-18-x-上-ai-与前端热点速览", "2026-06-18",
+      ["硬件成本", "模型治理", "agent 平台", "创作引擎", "数字身份"],
+      "AI 的外部成本，正在进入硬件、监管、工具链和身份系统。",
+      "Apple · Anthropic/G7 · AWS · Unreal MCP · Estonia AI ID"),
   ];
 
   const T = [

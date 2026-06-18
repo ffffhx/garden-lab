@@ -46,7 +46,8 @@ coverPosition: "below-title"
 | 浏览器部位 | 具体是什么 | 谁能完整拿到 | 难点 / 谁够不着 |
 | --- | --- | --- | --- |
 | 网页内容 | DOM、页面 JS runtime、输入、shadow DOM、可访问性快照、页内 fetch | 六家公共底座，全员能读能点 | @chrome/@browser 的 runtime 只读，连 `fetch` 都没有 |
-| 标签页 / 窗口 / target | 多 tab、新窗口、popup 弹出窗口（`window.open` 出来的独立网页窗口，如 OAuth 登录窗）¹，以及后台 target（service worker / background page） | **前台多 tab / 新窗口 / popup**：四个 CDP 工具（agent-browser、bb-browser、DevTools MCP、playwright-cli）都能枚举并切换，@chrome 走 `chrome.tabs` 也管得了；**后台 target**（service worker / background page）要 CDP 的 Target 域才看得到，只有自管浏览器的 agent-browser、DevTools MCP、playwright-cli（自管 context）拿得到，@chrome / @browser 的扩展 runtime 只读、够不着 | playwright-cli 一旦改成 attach 企业 Chrome，枚举到扩展的 service_worker target 反而触发内部断言、直接崩（自管时没问题） |
+| 前台 tab / 窗口 / popup | 多 tab、新窗口、popup 弹出窗口（`window.open` 出来的独立网页窗口，如 OAuth 登录窗）¹ | 六家全员 ✅——四个 CDP 工具（agent-browser、bb-browser、DevTools MCP、playwright-cli）走 Target 域枚举切换，@chrome / @browser 走 `chrome.tabs` 管多 tab；这是基线能力，没有区分度 | 无实质短板，差别只在体验（@browser 是 in-app webview，独立窗口/popup 不如其余顺手） |
+| 后台 target | 扩展的 service worker / background page——不在任何 tab 里的后台 JS 环境 | 只有自管浏览器的 agent-browser、DevTools MCP、playwright-cli（自管 context）够得到（走 CDP 的 Target 域枚举/attach） | @chrome / @browser 的扩展 runtime 只认 tab、看不见后台 target；playwright-cli 一旦改成 attach 企业 Chrome，枚举到扩展的 service_worker target 反而触发内部断言、直接崩（自管时没问题） |
 | 扩展 + 特权页 | 扩展本体、`chrome://extensions`、`chrome-extension://…/options.html` | DevTools MCP、playwright-cli（自管 persistent context） | @chrome/@browser 被 URL 策略拦在 `chrome://` 外；bb-browser 把特权页 URL 归一化堵死；企业管控 Chrome 还让"装了等于没装" |
 | 身份 / 档案 | 登录态 cookie、书签、历史、保存的密码 / 证书 | @chrome、`bb-browser --port`、`DevTools MCP --browserUrl`（直连真实 profile） | @browser/playwright-cli 接不进系统默认 Chrome；真实默认 profile 的远程调试被 Chrome 136+ 收紧 |
 | 跨会话持久化 | 把身份存下来、搬到别处、恢复（可移植 state 文件 vs 绑定 userDataDir） | agent-browser、playwright-cli（可移植 state 文件，跨目录跨实例） | DevTools MCP 只能复用同一 userDataDir、换目录就丢；bb-browser 无 save/load |

@@ -39,9 +39,20 @@ coverPosition: "below-title"
 
 ## 1. 理论：能力从哪一层来，边界由什么决定
 
-### 1.1 浏览器的五个能力面
+### 1.1 浏览器有哪几个部位，工具又接到哪个入口
 
-所有"让 Agent 操作浏览器"的工具，本质区别在于接到了浏览器的哪一层：
+先从你能在 Chrome 里指着说出来的部位看起——浏览器大致由下面这几块组成，光是"每块谁够得着、卡在哪"，就已经能解释总表里的大半结果：
+
+| 浏览器部位 | 具体是什么 | 谁能完整拿到 | 难点 / 谁够不着 |
+| --- | --- | --- | --- |
+| 网页内容 | DOM、页面 JS runtime、输入、shadow DOM、可访问性快照、页内 fetch | 六家公共底座，全员能读能点 | @chrome/@browser 的 runtime 只读，连 `fetch` 都没有 |
+| 标签页 / 窗口 / target | 多 tab、新窗口、popup，以及后台 target（service worker / background page） | 自管浏览器的工具最稳 | playwright-cli attach 企业 Chrome 时，枚举到扩展的 service_worker target 触发内部断言、直接崩 |
+| 扩展 + 特权页 | 扩展本体、`chrome://extensions`、`chrome-extension://…/options.html` | DevTools MCP、playwright-cli（自管 persistent context） | @chrome/@browser 被 URL 策略拦在 `chrome://` 外；bb-browser 把特权页 URL 归一化堵死；企业管控 Chrome 还让"装了等于没装" |
+| 身份 / 档案 | 登录态 cookie、书签、历史、保存的密码 / 证书 | @chrome、`bb-browser --port`、`DevTools MCP --browserUrl`（直连真实 profile） | @browser/playwright-cli 接不进系统默认 Chrome；真实默认 profile 的远程调试被 Chrome 136+ 收紧 |
+| 跨会话持久化 | 把身份存下来、搬到别处、恢复（可移植 state 文件 vs 绑定 userDataDir） | agent-browser、playwright-cli（可移植 state 文件，跨目录跨实例） | DevTools MCP 只能复用同一 userDataDir、换目录就丢；bb-browser 无 save/load |
+| 调试与诊断 | 读：network 响应体留底、console、performance/trace；写：请求拦截 / mock / abort | 读靠 CDP 系四家；写（网络层 route）只有 agent-browser、playwright-cli | @chrome/@browser 无响应体、无 `performance` 对象；DevTools MCP、bb-browser 无网络层拦截，只能在 JS 层打补丁 |
+
+为什么同一个部位，有的工具能完整拿到、有的只能拿到残缺版、有的彻底碰不到？因为工具的本质区别在于**它从哪个入口接进浏览器**——入口决定了它站在哪一层、拿到的是原始能力还是被封装 / 阉割过的子集：
 
 | 能力面 | 典型入口 | 天生擅长 | 天生短板 |
 | --- | --- | --- | --- |
@@ -50,6 +61,8 @@ coverPosition: "below-title"
 | CDP 调试面 | Chrome DevTools Protocol | Network 留底、请求拦截、Runtime、Tracing | 权限极强，安全边界敏感（Chrome 136+ 收紧） |
 | DevTools 产品面 | DevTools / Lighthouse 的诊断模型 | 性能定位、LCP 分解、瀑布图洞察 | 围绕"被调试页面"，需自管浏览器 |
 | 站点适配面 | site adapter | 把具体网站封成结构化命令 | 与网站结构强绑定，要维护 |
+
+这两张表是同一件事的两种切法：上表按**浏览器部位**切（你能指着说出来的东西，回答"工具碰得到哪几块"），下表按**工具入口**切（回答"碰到的是完整版还是残缺版、为什么"）。数目对不上是正常的——同一个部位会被不同入口以不同成色覆盖：比如"调试与诊断"这一块，从入口看就分成了 CDP 原始数据面和 DevTools 解释面两层；而"扩展 + 特权页"既可能从扩展面接、也可能从 CDP 面强开。
 
 这里最容易混的是 **CDP 调试面**和 **DevTools 产品面**：CDP 给的是底层的原始数据和操作能力（原始 trace、原始网络事件，还能下点击、导航这类命令）；**DevTools 产品面则是在 CDP 原始数据之上、由 Chrome DevTools 和 Lighthouse 做的分析 / 解释层**——把原始 trace 算成"LCP 2.1 秒、主因是阻塞 CSS"这种能直接读的诊断结论。打个比方：CDP 给你体检的原始数值，DevTools 产品面给你医生的诊断报告。
 

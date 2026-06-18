@@ -46,7 +46,7 @@ coverPosition: "below-title"
 | 浏览器部位 | 具体是什么 | 谁能完整拿到 | 难点 / 谁够不着 |
 | --- | --- | --- | --- |
 | 网页内容 | DOM、页面 JS runtime、输入、shadow DOM、可访问性快照、页内 fetch | 六家公共底座，全员能读能点 | @chrome/@browser 的 runtime 只读，连 `fetch` 都没有 |
-| 标签页 / 窗口 / target | 多 tab、新窗口、popup 弹出窗口（`window.open` 出来的独立网页窗口，如 OAuth 登录窗；**不含 alert/confirm 这类原生对话框**，那属于「网页内容」），以及后台 target（service worker / background page） | 自管浏览器的工具最稳 | playwright-cli attach 企业 Chrome 时，枚举到扩展的 service_worker target 触发内部断言、直接崩 |
+| 标签页 / 窗口 / target | 多 tab、新窗口、popup 弹出窗口（`window.open` 出来的独立网页窗口，如 OAuth 登录窗；**不含 alert/confirm 这类原生对话框**——那是页面触发、却在 DOM 之外、只能由 CDP 的 Page/Browser/Fetch 等 domain 单独处理的模态框，另算一种薄控制面），以及后台 target（service worker / background page） | 自管浏览器的工具最稳 | playwright-cli attach 企业 Chrome 时，枚举到扩展的 service_worker target 触发内部断言、直接崩 |
 | 扩展 + 特权页 | 扩展本体、`chrome://extensions`、`chrome-extension://…/options.html` | DevTools MCP、playwright-cli（自管 persistent context） | @chrome/@browser 被 URL 策略拦在 `chrome://` 外；bb-browser 把特权页 URL 归一化堵死；企业管控 Chrome 还让"装了等于没装" |
 | 身份 / 档案 | 登录态 cookie、书签、历史、保存的密码 / 证书 | @chrome、`bb-browser --port`、`DevTools MCP --browserUrl`（直连真实 profile） | @browser/playwright-cli 接不进系统默认 Chrome；真实默认 profile 的远程调试被 Chrome 136+ 收紧 |
 | 跨会话持久化 | 把身份存下来、搬到别处、恢复（可移植 state 文件 vs 绑定 userDataDir） | agent-browser、playwright-cli（可移植 state 文件，跨目录跨实例） | DevTools MCP 只能复用同一 userDataDir、换目录就丢；bb-browser 无 save/load |

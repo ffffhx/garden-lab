@@ -22,7 +22,7 @@ coverPosition: "below-title"
 
 如果你正在选浏览器 Agent 工具，先别问"哪个最强"。先问三件事：它能不能复用真实登录态，能不能拿到 Network / 性能证据，能不能进入 `chrome://` 和扩展设置页。
 
-我用 `@chrome`、`@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP` 和 `playwright-cli` 跑了十一道有标准答案的任务：八道网页任务，加上 2026-06-14 补测的扩展安全域（T09/T11）、真实登录态（T10a）与跨会话持久化（T10b）。结论不是谁通吃，而是不同任务该选不同工具：真实 profile 优先看 `@chrome` / `Chrome DevTools MCP` / `bb-browser`，扩展与持久化优先看 `Chrome DevTools MCP`、`playwright-cli` 或 `agent-browser`，Network 排障不要指望扩展层工具给出完整证据。
+我用 `@chrome`、`@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP` 和 `playwright-cli` 跑了十一道有标准答案的任务，从网页登录、Network 排障、性能诊断，一路覆盖到扩展安全域、真实登录态与跨会话持久化——一个 Agent 操作浏览器会碰到的能力面基本都在里面。
 
 这篇文章做三件事：
 
@@ -94,9 +94,7 @@ coverPosition: "below-title"
 
 层和边界决定能不能做；Agent 友好度决定做起来顺不顺。前面定义的维度——看懂页面、稳定引用（@eN ref）、动作后复盘、复用真实状态、看请求和错误、性能诊断、结构化输出、风险控制——直接翻译成了基准测试站的八道题。
 
-## 2. 实测方法：为什么这些数字可信
-
-### 2.1 基准测试站：每道题有标准答案
+## 2. 实测方法：基准测试站与任务设计
 
 本地零依赖的基准测试站，每页埋一个已知答案的坑。直接测真实网站不可复现（网站会变、登录态各异），它让每个判定都可机械核对：
 
@@ -110,26 +108,17 @@ coverPosition: "below-title"
 | T06 结构化提取 | 脏 DOM + 千分位 + 分页 | 12 件、最贵雷霆工作站 15999 | 阅读成本、字段清洗 |
 | T07 已登录 fetch | /api/me 仅带 cookie 可访问 | plan = team-pro-2026 | **页面 Runtime 可写性** |
 | T08 Shadow DOM | open shadow 里的按钮和兑换码 | SHADOW-99 | 快照穿透、事件注入 |
+| T09 扩展 reload | 加载本地解压扩展，需进 `chrome://extensions` 重新加载 | 扩展 reload 成功、特权页可达 | **特权页可达性 / 安全策略** |
+| T10 真实登录态与持久化 | GitHub 通知页需真实登录态，并要求跨会话、跨目录恢复 | 免登录读到 68 条未读；专用 profile 可移植恢复 | **复用真实 profile / 跨会话持久化** |
+| T11 用扩展（设置页改徽标） | 需进 `chrome-extension://…/options.html` 改设置 | 在扩展设置页成功改掉徽标 | **特权页操作 / 产品封装范围** |
 
-加粗四题是按 1.2 的边界公式设计的"分界题"——后面会看到它们恰好把六个工具分成了理论预测的几个阵营。
+加粗的几道是按 1.2 的边界公式设计的"分界题"——它们恰好把六个工具分成了几个阵营。
 
-### 2.2 无偏执行：测工具，不测操作者
-
-我先自己试跑过一轮，数据基本没用：自己搭的基准测试站自己知道答案，也摸熟了工具脾气。**知道答案的人测不出真实成本**——同一任务我 6 条命令完赛，无偏 Agent 要 13~26 条，多出来的是探索、验证、撞坑的合理成本，也正是真实用户的 Agent 要付的成本。
-
-所以正式数据全部来自独立 会话：每个单元格（任务 × 工具）由一个全新上下文的 Agent 执行（Claude Code 无头 `claude -p` 进程或 Codex 隔离 子 Agent），提示词只含任务原文、工具限定、约 25 次操作止损线；不知道答案、不知道工具的已知 bug、禁止 curl/读源码旁路。单元格之间重启基准测试站清状态。
-
-无偏的价值立刻显形：bb-browser 的 click bug 被六个互不知情的 子 Agent 在六个场景独立复现，且全部独立收敛到同一个绕过方案——"操作姿势问题"被彻底排除。
-
-### 2.3 指标与局限
-
-每个单元格记录：判定（✅/⚠️/❌ 按任务卡标准）、操作数、轮数、实际耗时、成本，外加实测中演化出的指标——**eval 自救次数**（Agent 被迫弃用工具原语、用 eval 直接执行 JS 才能推进的次数，见 5.2）。
-
-如实声明的局限：每个单元格一次运行（agent-browser 例外，同日两轮），方差未收敛；@chrome/@browser 跑在 Codex 宿主内，时间/调用数只能粗比，**能力判定不受宿主影响**；基准测试站全在 localhost，真实登录态与风控不在本轮；模型是 Fable 5 量级，其自救能力会掩盖工具缺陷；版本钉死 agent-browser 0.27.2 / bb-browser 0.14.2 / chrome-devtools-mcp 1.2.0 / @playwright/cli 0.1.14（开测时均为 npm latest）。
+正式数据全部来自独立会话：每个单元格（任务 × 工具）由一个全新上下文、既不知道答案也不知道工具已知 bug 的无偏 Agent 执行（Claude Code 无头 `claude -p` 进程或 Codex 隔离子 Agent），提示词只含任务原文、工具限定与约 25 次操作止损线，禁止 curl/读源码旁路，单元格之间重启基准测试站清状态——这样测到的是真实用户要付的成本，而非熟练者的最优解。每个单元格记录判定（✅/⚠️/❌ 按任务卡标准）、操作数、轮数、耗时、成本，以及 **eval 自救次数**（Agent 被迫弃用工具原语、改用 eval 直接执行 JS 才能推进的次数，见 5.2）。需如实声明的局限：每个单元格基本只跑一次（agent-browser 同日两轮），方差未收敛；@chrome/@browser 跑在 Codex 宿主内，时间/调用数只能粗比，但**能力判定不受宿主影响**；基准测试站全在 localhost，版本钉死见附录。
 
 ## 3. 结果总表
 
-一张总表收全十一道题（T01–T08 为八道网页任务，T09/T10/T11 为 2026-06-14 扩展/登录态补测）。图例：`*` = 依赖 eval 绕过失效的工具原语才完成；`†` = `--cdp` 命中目标 profile 不可靠、需先复位常驻 daemon（见 6.2）；`‡` = 依赖持久 userDataDir、不可移植（换目录即丢）；`△` = 工具自身无持久化机制、只能搭外部持久浏览器便车；`N/A` = 该任务对该工具不适用。
+一张总表收全十一道题。图例：`*` = 依赖 eval 绕过失效的工具原语才完成；`†` = `--cdp` 命中目标 profile 不可靠、需先复位常驻 daemon（见 6.2）；`‡` = 依赖持久 userDataDir、不可移植（换目录即丢）；`△` = 工具自身无持久化机制、只能搭外部持久浏览器便车；`N/A` = 该任务对该工具不适用。
 
 | 任务 | @chrome | @browser | agent-browser | bb-browser | DevTools MCP | playwright-cli |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -145,7 +134,7 @@ coverPosition: "below-title"
 | T10a 真实登录态（默认 profile） | ✅ 68 | ❌ 无真实登录态 | ✅† 68 | ✅ 68 | ✅ 68 | ❌ 接不进系统 Chrome |
 | T10b 登录态持久化（专用 profile） | N/A | N/A | ✅ 可移植 state 文件 | △ 仅能 attach | ✅‡ 持久 userDataDir | ✅ 可移植 state 文件 |
 | T11 用扩展（设置页改徽标） | ❌ chrome-extension:// 被拦 | ❌ | ✅† | ⚠️ 靠 CDP 强开设置页 | ✅ | ✅ 自管 context |
-| **合计（仅 T01–T08）** | **3✅1⚠️4❌** | **4✅4❌** | **8✅** | **6✅1⚠️**（7 题） | **7✅1⚠️** | **8✅** |
+| **合计（六工具可比的网页八道）** | **3✅1⚠️4❌** | **4✅4❌** | **8✅** | **6✅1⚠️**（7 题） | **7✅1⚠️** | **8✅** |
 
 同宿主（claude -p）三列的过程成本：
 
@@ -158,18 +147,17 @@ coverPosition: "below-title"
 
 bb-browser（7 题，子 Agent 宿主）：235 条命令、26.3 分钟，7 个单元格全部依赖 eval 自救——约 agent-browser 的 2.3 倍成本，差额全部来自一个工具缺陷（4.5）。
 
-关于补测三题（T09 / T10 / T11，2026-06-14）：T01–T08 跑在 localhost、不碰真实登录态与扩展安全域；这三道题专门补这块，已并入上面的总表，由两轮互相独立的隔离 子 Agent 实测（一轮 Claude Code 主控、一轮 Codex），结论高度一致，差异只在评分口径（详见 4.7）。
+T09/T10/T11 把战场从 localhost 网页挪到真实登录态与扩展安全域，其中涉及真实登录态的几格由两轮互相独立的隔离子 Agent 实测（一轮 Claude Code 主控、一轮 Codex），结论一致，差异只在评分口径（详见 4.7）。
 
-关键前置（影响上表 T09/T10/T11 怎么读）：目标机器的系统默认 Chrome（CDP 9223）是**企业管控**的，会在运行时拦截"加载已解压扩展"（扩展自身 `chrome-extension://` 资源返回 `ERR_BLOCKED_BY_CLIENT`、content script 不注入），所以 T09/T11 的扩展宿主改用一台**干净的 Chrome for Testing**（`--disable-features=DisableLoadExtensionCommandLineSwitch --load-extension` 才能让 137+ 真正加载扩展）；T10a 仍在企业 9223 上测真实登录态。未读数两轮都读到 **68**（与 06-12 轮的 66/67 只是 GitHub 实时状态差异，非能力差异）。
+关键前置（影响上表 T09/T10/T11 怎么读）：目标机器的系统默认 Chrome（CDP 9223）是**企业管控**的，会在运行时拦截"加载已解压扩展"（扩展自身 `chrome-extension://` 资源返回 `ERR_BLOCKED_BY_CLIENT`、content script 不注入），所以 T09/T11 的扩展宿主改用一台**干净的 Chrome for Testing**（`--disable-features=DisableLoadExtensionCommandLineSwitch --load-extension` 才能让 137+ 真正加载扩展）；T10a 仍在企业 9223 上测真实登录态。未读数读到 **68**（66/67/68 的差异只是 GitHub 实时状态，非能力差异）。
 
-## 4. 逐维度对照：理论预测 → 实测结果 → 边界的成因
+## 4. 逐维度拆解：每道题的结果与边界成因
 
-这是全文核心：每个维度先看理论怎么预测，再看数据怎么判，最后用 1.2 的公式解释每个 ❌/⚠️ 是哪个因素造成的。
+这是全文核心：逐维度看结果，并用 1.2 的公式把每个 ❌/⚠️ 落到具体是哪个因素造成的。
 
 ### 4.1 页面观察与操作（T01/T05/T06/T08 的 ✅ 半区）：网页面是大家共用的底座
 
-**理论预测**：网页面是六个工具都接到的最低一层，纯页面任务应该全员通过。
-**实测**：成立——T01 六家全过，T05/T08 也只有质量差异没有能力缺口。**六个工具全部采用"可访问性快照 + 元素编号引用"工作流**（@eN / e15 / uid），第 1 节把它列为友好度第一要素，现在可以说它已是事实标准。
+网页面是六个工具都接到的最低一层，纯页面任务全员通过：T01 六家全过，T05/T08 也只有质量差异、没有能力缺口。**六个工具全部采用"可访问性快照 + 元素编号引用"工作流**（@eN / e15 / uid），第 1 节把它列为友好度第一要素，现在可以说它已是事实标准。
 
 但"全过"之下藏着三档工程质量，全部来自动作可靠性：
 
@@ -183,8 +171,7 @@ T06 的 ⚠️ 是个有价值的反例：@chrome 把"缺货"徽标拼进了商�
 
 ### 4.2 Network 响应体（T02）：协议层上限划出的第一道分界线
 
-**理论预测**：响应体留底是 CDP Network domain 的能力；扩展 API 层根本没有读取其他请求响应体的接口。@chrome 应该做不到。
-**实测**：完全成立，且比预想更绝对——@chrome 和 @browser 双双 ❌，子 Agent 们能拿到的只有页面错误文案和 console 里的 traceId，状态码和响应体彻底无门。CDP 阵营四家全部 ✅。
+响应体留底是 CDP Network domain 的能力，扩展 API 层根本没有读取其他请求响应体的接口——@chrome 和 @browser 因此双双 ❌，子 Agent 们能拿到的只有页面错误文案和 console 里的 traceId，状态码和响应体彻底无门；CDP 阵营四家全部 ✅。这条分界比想象中更绝对。
 
 **原因**：@chrome/@browser 的 ❌ 是**协议层上限**——`chrome.webRequest` 只能看请求元数据，读不到 body，这是扩展安全模型的根本设计，产品再封装也变不出来。这是整张总表里最"硬"的一组 ❌。
 
@@ -192,8 +179,7 @@ CDP 阵营内部还有一层封装差异：agent-browser / DevTools MCP / playwr
 
 ### 4.3 性能诊断（T03）：DevTools 产品面的价值被量化，基准测试站被反向修正
 
-**理论预测**：性能分析需要的不止 timing 数字，是"能解释问题的诊断模型"——这是 DevTools 产品面独有的，DevTools MCP 应该最省解释成本。
-**实测**：成立，并且可以报出具体倍数——DevTools MCP 用 `performance_start_trace` + `performance_analyze_insight`（LCPBreakdown/RenderBlocking）6 次调用、111 秒直出结构化的原因分析；agent-browser 没有诊断模型，但 子 Agent 从工具文档自己挖出 `profiler` 命令导出原始 trace、用 python 解析、再用 PerformanceObserver 交叉验证，**结论完全一致**——代价是 215 秒和全场最贵的单个单元格成本。一句话：**MCP 把"解释"内置在工具里，CLI 把"解释"外包给模型**。模型强时殊途同归，弱模型下差距会以失败形式放大。
+性能分析需要的不止 timing 数字，而是"能解释问题的诊断模型"——这是 DevTools 产品面独有的，DevTools MCP 因此最省解释成本，且差距能报出具体倍数：用 `performance_start_trace` + `performance_analyze_insight`（LCPBreakdown/RenderBlocking）6 次调用、111 秒直出结构化的原因分析；agent-browser 没有诊断模型，但 子 Agent 从工具文档自己挖出 `profiler` 命令导出原始 trace、用 python 解析、再用 PerformanceObserver 交叉验证，**结论完全一致**——代价是 215 秒和全场最贵的单个单元格成本。一句话：**MCP 把"解释"内置在工具里，CLI 把"解释"外包给模型**。模型强时殊途同归，弱模型下差距会以失败形式放大。
 
 @chrome/@browser 双 ❌：evaluate 环境里连 `performance` 对象都没有——**安全策略**因素（Runtime 被阉割）顺带砍掉了性能取证的全部入口。
 
@@ -201,18 +187,16 @@ CDP 阵营内部还有一层封装差异：agent-browser / DevTools MCP / playwr
 
 ### 4.4 请求 mock（T04）：三个边界因素在同一道题里同台
 
-**理论预测**：mock/abort 可选 Playwright、agent-browser、bb-browser，DevTools MCP 也合适。
-**实测**：这一格被改写得最多——
+这道题把三个边界因素摆进了同一格——
 
 - **agent-browser、playwright-cli ✅**：原生 `network route` / `route`，真正的网络层拦截。
 - **DevTools MCP ⚠️**：没有任何拦截工具。CDP 的 Fetch domain 明明支持——这是**产品封装范围**因素：协议有，产品没包。子 Agent 的自救很体面（`navigate_page` 的 initScript 在页面脚本运行前补丁 fetch/XHR），但补丁在 JS 层：mock 跨域接口、abort 流量这类升级需求就绕不过去了。
-- **bb-browser ⚠️**：按理论预期该有的 `bb-browser network route` 命令**在 0.14.2 里不存在**（断言被推翻），子 Agent 确认无 mock/intercept 命令后在页面里直接改写了 `window.fetch`。
+- **bb-browser ⚠️**：0.14.2 里**没有 `network route` 这类命令**，子 Agent 确认无 mock/intercept 命令后，在页面里直接改写了 `window.fetch`。
 - **@chrome/@browser ❌**：扩展层理论上有 `declarativeNetRequest` 可改写请求，但产品没封装，Runtime 又只读连补丁都打不了——**封装范围和安全策略两个因素叠加**，一条路都不剩。
 
 ### 4.5 已登录 fetch（T07）与逃生舱：安全策略因素的明码标价
 
-**理论预测**：@chrome 的 `evaluate` 是只读的页面作用域，"Console 式请求"做不了。
-**实测**：逐字证实——@chrome 的 evaluate 环境里**连 `fetch` 函数都没有**；@browser 同样，子 Agent 试图直接导航到 /api/me 还被策略拦截。四个 CDP 系工具则一句 `eval "fetch('/api/me')"` 解决（页面 Runtime 里发请求自动带 cookie）。
+@chrome 的 `evaluate` 是只读的页面作用域，"Console 式请求"做不了——evaluate 环境里**连 `fetch` 函数都没有**；@browser 同样，子 Agent 试图直接导航到 /api/me 还被策略拦截。四个 CDP 系工具则一句 `eval "fetch('/api/me')"` 解决（页面 Runtime 里发请求自动带 cookie）。
 
 **原因与代价**：这是纯粹的**安全策略**因素。技术上扩展的 content script 完全可以注入任意 JS，OpenAI 有意焊死——因为 @chrome 活在你的真实 Chrome、真实登录态里，可写的 Runtime 意味着 Agent 能以"你"的身份做任何事。所以这格 ❌ 的正确读法不是"@chrome 不行"，而是一笔交易：**真实登录态与 Runtime 可写性，当前你只能二选一。**
 
@@ -226,9 +210,9 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 
 ### 4.7 扩展安全域与真实登录态（T09/T10/T11）：边界从"页面"挪到"特权页与 profile"
 
-前八题都在网页面内打转；这三题把战场挪到两个新地方——`chrome://` / `chrome-extension://` 这类**特权页**（T09 调试扩展、T11 使用扩展），和**复用真实登录态 / 跨会话持久化 profile**（T10a/T10b）。理论上它们分别对应边界公式里的"安全策略"和"产品封装范围"，实测把分界线画得比八题更清楚。
+T09–T11 把战场从网页面挪到两个新地方——`chrome://` / `chrome-extension://` 这类**特权页**（T09 调试扩展、T11 使用扩展），和**复用真实登录态 / 跨会话持久化 profile**（T10a/T10b）。它们分别对应边界公式里的"安全策略"和"产品封装范围"，分界线比页面任务画得更清楚。
 
-**T09/T11 扩展：真正的分水岭不是"自带浏览器"，而是"能不能到特权页"。** 06-12 的旧推演倾向于"扩展场景偏向能自管浏览器的工具"，但补测改写了它：只要给 attach 类工具一个**扩展真能跑的浏览器**，分胜负的其实是**到达 `chrome://extensions` 和 `chrome-extension://…/options.html` 的能力**，而不是谁自带浏览器。
+**T09/T11 扩展：真正的分水岭不是"自带浏览器"，而是"能不能到特权页"。** 只要给 attach 类工具一个**扩展真能跑的浏览器**，分胜负的就是**到达 `chrome://extensions` 和 `chrome-extension://…/options.html` 的能力**，而不是谁自带浏览器。
 
 - **DevTools MCP ✅**：扩展是它的强项区。`--browserUrl` 模式连真实 Chrome 时，要么直接暴露 `list_extensions`/`reload_extension`（Chrome 149 + `--categoryExtensions`），要么退一步在 `chrome://extensions` 页面上下文里调 `chrome.developerPrivate.reload`——两条都能干净走通，options 页也能作为一等 target 操作。
 - **playwright-cli ✅**：走自管 persistent context 路线，`launchPersistentContext` 加载本地扩展（注意要用 bundled Chromium 而非 `channel: chrome`，否则又撞企业策略），在自家 chrome://extensions reload、打开 options 页，全链路可控。
@@ -238,16 +222,16 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 
 **这里还埋着一个比工具更硬的环境坑：企业管控 Chrome 会让"装了等于没装"。** 目标机器的系统 Chrome 受企业策略管控，把"加载已解压扩展"在运行时拦死——扩展能出现在列表里、显示已启用，但 content script 不注入、扩展自身资源 `ERR_BLOCKED_BY_CLIENT`。这意味着任何"复用你真实 profile 跑扩展"的方案在这类机器上直接失效，扩展测试只能改用干净的 Chrome for Testing（且 137+ 还要 `--disable-features=DisableLoadExtensionCommandLineSwitch` 才认 `--load-extension`，CDP 的 `Extensions.loadUnpacked` 只进注册表、不激活 content script）。这条对"在公司电脑上用 Agent 操作扩展"的现实预期是一盆冷水。
 
-**T10a 真实登录态：@chrome 的主场坐实，但它不再孤独。** 旧文第 8 节把"真实登录态 @chrome 授权成本最低"标成"未测"，补测给了裁决：
+**T10a 真实登录态：@chrome 的主场，但它不再孤独。** 这一格的实情是：
 
 - **能读真实登录态的**：`@chrome`、`bb-browser --port 9223`、`DevTools MCP --browserUrl 9223`——都免登录直达 GitHub 通知页、读到同一个 68 条，零写操作。@chrome 在它**唯一的主场任务**上确实零打断（扩展安全域天然在真实 profile 内）。
 - **读不到的**：`@browser`（in-app 浏览器不继承真实登录态）；`playwright-cli`（没有接入系统默认 Chrome 的机制，强行 attach 企业 9223 还会因为枚举到企业扩展的 `service_worker` target 触发 playwright-core 内部断言、daemon 直接崩）。
-- **能但不可靠的 agent-browser †**：这是补测最意外的一格。`--cdp 9223` 看似连上了，实际动作经常**静默落到 agent-browser 自起的托管浏览器**（一个没有你登录态的空白 headless Chrome）；`get url` 还返回 github，像成功，实则没碰你的真身。两轮独立实测都撞到：Codex 据此判 ❌（坚持"开箱即用必须命中 9223"），主控这轮先 `close --all` + 杀掉托管实例复位，才真连上 9223、读到 68（判 ✅）。**同一个 bug，两种评分口径**——根因都是 6.2 那个粘滞 daemon。
+- **能但不可靠的 agent-browser †**：这是这一组里最意外的一格。`--cdp 9223` 看似连上了，实际动作经常**静默落到 agent-browser 自起的托管浏览器**（一个没有你登录态的空白 headless Chrome）；`get url` 还返回 github，像成功，实则没碰你的真身。两轮独立实测都撞到：Codex 据此判 ❌（坚持"开箱即用必须命中 9223"），主控这轮先 `close --all` + 杀掉托管实例复位，才真连上 9223、读到 68（判 ✅）。**同一个 bug，两种评分口径**——根因都是 6.2 那个粘滞 daemon。
 
-**T10b 持久化：可移植状态文件完胜。** 这是旧文预告的"agent-browser 与 playwright-cli 下一个分胜负点"，补测让它打平、并把第三第四名的机制差异讲清楚：
+**T10b 持久化：可移植状态文件完胜。** agent-browser 与 playwright-cli 在这里打平，第三、第四名的机制差异也讲清楚了：
 
 - **agent-browser ✅ / playwright-cli ✅**：两者都有**可移植状态文件**（`state save/load` / `state-save/load`）。机制上打平，差别只在 ergonomics——agent-browser `--state <file> open <url>` 一步式（加载先于导航，零踩坑）；playwright-cli 必须"先 open 再 state-load 再 goto"（直接带状态文件启动会报 browser is not open）。两者一次命中、免登录读到 68。它们稳的根因是：状态文件存的是 **CDP 拿到的明文 cookie**，不依赖浏览器磁盘上的加密，跨会话、跨目录、跨实例都能用。
-- **DevTools MCP ✅\***：走"复用同一持久 userDataDir"的隐式路线，没有可移植 state 文件。补测确认它"换目录就丢"（复制 profile 即撞登录墙），而且依赖浏览器 on-disk cookie 加密可用——本机 CfT 因无 keychain，连原地复用都丢，要 `--use-mock-keychain` 兜底才持久。
+- **DevTools MCP ✅\***：走"复用同一持久 userDataDir"的隐式路线，没有可移植 state 文件，"换目录就丢"（复制 profile 即撞登录墙），而且依赖浏览器 on-disk cookie 加密可用——本机 CfT 因无 keychain，连原地复用都丢，要 `--use-mock-keychain` 兜底才持久。
 - **bb-browser △**：持久化维度最弱——**自身没有任何 state save/load，也没有 cookie 导入**（只有只读的 `cookies` 查看）。它能读到登录态，完全是 attach 了一个别人维持登录的持久浏览器，自己既不产出也不保存状态。
 
 一句话收束这三题：**T09/T11 把"能不能到特权页"立成扩展场景的真分水岭（bb-browser 在此失能）；T10a 坐实 @chrome 的真实登录态主场、也暴露 agent-browser `--cdp` 的可靠性硬伤；T10b 证明可移植状态文件（agent-browser/playwright-cli）比 userDataDir 依赖更稳。**
@@ -323,7 +307,7 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 
 它内部最值得说的，是把"命令行参数"统一降维成"配置覆盖"：跑测试时，`--headed`、`--trace`、`--retries`、`--project` 这些参数不会各自散进执行逻辑，而是先整理成一份覆盖项，再和默认配置、配置文件、项目级配置合并成唯一一份完整的内部配置对象，后面所有环节只面对这一个对象。真正执行时它用一条任务链来描述整个生命周期（全局准备 → 收集并过滤出一棵稳定的测试树 → 切成可并发的执行单元），并按项目依赖拆成一个个阶段来调度，而不是把所有测试粗暴地丢进一个并发里跑：相同环境的执行进程能复用以省启动成本，一旦出错就果断重启那个进程、避免状态污染到后面的测试。
 
-它在前面实测里"一次就点中视口外那个只露 3 像素按钮"的可靠性，来自引擎的两个核心设计。一是动作前的可执行性检查（actionability）：点击、填写之前，引擎会自动确认元素是不是存在、可见、不再移动、可交互、点击点没被浮层挡住——本质是把"一个真人此刻能不能完成这个动作"编码进了动作模型，从根上消掉了靠手写死等待带来的偶发失败；配套的断言也会自动重试到成立或超时。二是它的元素定位是一条"怎么找这个元素"的可复用规则，而不是某一刻的一次性节点引用，所以即便页面中途重新渲染、换掉了旧节点，它执行时也会按最新的 DOM 重新找回来。此外，它还新增了启动 MCP server、初始化 agent 配置这类入口，使它同时能被人、CI、MCP 和 agent 调用——这也正是第 8 节核对表里"playwright-cli 补齐了快照/引用/自动等待、综合成绩全场最佳"在工程上的来源。一句话：playwright-cli 封装的不是一层命令行外壳，而是把一个可靠的浏览器自动化引擎，组织成可安装、可录制、可调试、可并发、还能接进 CI 和 agent 流程的工程化总入口。
+它在前面实测里"一次就点中视口外那个只露 3 像素按钮"的可靠性，来自引擎的两个核心设计。一是动作前的可执行性检查（actionability）：点击、填写之前，引擎会自动确认元素是不是存在、可见、不再移动、可交互、点击点没被浮层挡住——本质是把"一个真人此刻能不能完成这个动作"编码进了动作模型，从根上消掉了靠手写死等待带来的偶发失败；配套的断言也会自动重试到成立或超时。二是它的元素定位是一条"怎么找这个元素"的可复用规则，而不是某一刻的一次性节点引用，所以即便页面中途重新渲染、换掉了旧节点，它执行时也会按最新的 DOM 重新找回来。此外，它还新增了启动 MCP server、初始化 agent 配置这类入口，使它同时能被人、CI、MCP 和 agent 调用——这也正是"playwright-cli 补齐了快照/引用/自动等待、综合成绩全场最佳"在工程上的来源。一句话：playwright-cli 封装的不是一层命令行外壳，而是把一个可靠的浏览器自动化引擎，组织成可安装、可录制、可调试、可并发、还能接进 CI 和 agent 流程的工程化总入口。
 
 ## 7. 实测修订版选型路由表
 
@@ -343,37 +327,19 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 | 排障复盘（动作↔请求因果） | bb-browser trace | trigger 关联是全场独有 |
 | 长期回归测试 | Playwright（库） | 不变；playwright-cli 让"Playwright 系"同时覆盖了 Agent 日常操作 |
 
-## 8. 理论断言核对表
+## 8. 下一步
 
-| 理论预测 | 裁决 | 原因 |
-| --- | --- | --- |
-| @chrome 的 Network 详情和有副作用 evaluate 较弱 | ✅ 证实且更绝对（4 题 ❌，@browser 同样） | 协议层 + 安全策略 |
-| agent-browser 快照短、ref 稳、适合长轮次 | ✅ 证实（8/8），且被低估——profiler/connect-anything 没写够 | — |
-| bb-browser 有通用 network route / mock | ❌ 推翻：0.14.2 无此命令 | 文档与版本失配 |
-| bb-browser 核心价值在 site adapter | ✅ 间接证实：通用操作当前全靠 eval 撑 | 实现质量 |
-| DevTools MCP 性能诊断省解释成本 | ✅ 证实：111s vs 215s，结论一致 | 产品面价值 |
-| mock/abort 可选 DevTools MCP | ❌ 推翻：无拦截工具 | 封装范围 |
-| Playwright 偏工程师脚本、Agent 要自己写 selector | ❌ 已过时：playwright-cli 补齐 snapshot/ref/auto-wait，综合成绩全场最佳 | 生态更新 |
-| 真实登录态场景 @chrome 授权成本最低 | ✅ 证实（T10a 零打断、主场）；但 bb-browser/DevTools MCP 同样能读真实登录态 | 安全策略 |
-| 扩展场景偏向能自管浏览器的工具 | ❌ 改写：真分水岭是"能不能到 chrome:// / chrome-extension:// 特权页"，bb-browser 在此失能 | 封装范围 |
-| agent-browser 薄 CLI、无独立 daemon、`--cdp` 直连可靠 | ❌ 推翻：0.27.2 有常驻原生 daemon，粘滞会话致 `--cdp` 命中真身不可靠（6.2） | 实现/可控性 |
-| agent-browser 与 playwright-cli 的 state save/load 是下一个分胜负点 | ✅ 证实并打平（T10b 均可移植状态文件成功），差别仅 ergonomics | — |
-
-理论框架本身——按层定上限、按安全域解释取舍、按任务阶段路由——全部站住了；被推翻的都是具体工具格子（这轮又多推翻三条）。这说明此类文章的保鲜期取决于工具版本，**结论应该和版本号写在一起**，连实现细节都要以实测进程为准、而非文档印象。
-
-## 9. 下一步
-
-- T09（扩展 reload）、T10（真实登录态 + 持久化）、T11（使用扩展）已于 2026-06-14 补测，见第 3 节总表 / 4.7——结果确实改写了路由表，也确认了 agent-browser 0.27.2 有常驻 daemon。
+- 扩展与真实 profile 那几道（T09–T11）受环境影响最大（企业管控 Chrome），值得在更多机器上复测取证；它们也确认了 agent-browser 0.27.2 有常驻 daemon。
 - 增加每个单元格重复次数收方差；引入弱一档模型验证 5.1 的预言。
-- 把扩展宿主的搭建本身做成可复现脚本（企业策略检测 → 干净 CfT + 正确 feature flag），因为补测里"让扩展真能跑"比测工具本身更费劲。
+- 把扩展宿主的搭建本身做成可复现脚本（企业策略检测 → 干净 CfT + 正确 feature flag），因为 T09–T11 里"让扩展真能跑"比测工具本身更费劲。
 - 值得上游提 issue：bb-browser 事件注入缺陷 + `chrome://`/`chrome-extension://` URL 归一化把特权页堵死；**agent-browser 粘滞 daemon 致 `--cdp` 静默落到自起托管浏览器**（4.7/6.2）+ 视口外静默点击 + Electron 下 connect 会话失灵；playwright-cli 不验证响应结构就 mock + attach 多扩展真实 Chrome 时 service_worker target 断言崩溃。
 
 ## 附录：基准测试站、数据与版本
 
 - 基准测试站与任务卡：`apps/browser-tool-bench/`（零依赖 Node 测试站 + T01-T11 任务卡 + 复现步骤）
 - 原始数据（T01-T08）：`results/formal-2026-06-12/`（ab vs bb）、`results/formal-2026-06-12-mcp/`（ab vs DevTools MCP）、`results/formal-2026-06-12-pw/`（playwright-cli）、`results/codex-plugins-2026-06-12/`（@chrome/@browser，Codex 宿主）
-- 原始数据（T09/T10/T11，2026-06-14 两轮独立补测）：`results/formal-2026-06-14-t09-t11-rerun/`（Claude Code 主控，含 4 工具报告 + t10b + 证据 + 环境搭建笔记）、`results/formal-2026-06-14-t09-t11-rerun-fixed-env/`（Codex 主控，含 @chrome/@browser）；两轮结论一致，差异仅评分口径（见 4.7）
-- 版本：agent-browser 0.27.2 · bb-browser 0.14.2 · chrome-devtools-mcp 1.2.0 · @playwright/cli 0.1.14 · Chrome 149（T09/T11 扩展宿主用 Chrome for Testing 149）· 模型 claude-fable-5 / claude-opus（补测轮）/ Codex 宿主
+- 原始数据（T09/T10/T11，2026-06-14 两轮独立实测）：`results/formal-2026-06-14-t09-t11-rerun/`（Claude Code 主控，含 4 工具报告 + t10b + 证据 + 环境搭建笔记）、`results/formal-2026-06-14-t09-t11-rerun-fixed-env/`（Codex 主控，含 @chrome/@browser）；两轮结论一致，差异仅评分口径（见 4.7）
+- 版本：agent-browser 0.27.2 · bb-browser 0.14.2 · chrome-devtools-mcp 1.2.0 · @playwright/cli 0.1.14 · Chrome 149（T09/T11 扩展宿主用 Chrome for Testing 149）· 模型 claude-fable-5 / claude-opus（T09–T11 轮）/ Codex 宿主
 ### 参考
 
 - [agent-browser](https://github.com/vercel-labs/agent-browser)

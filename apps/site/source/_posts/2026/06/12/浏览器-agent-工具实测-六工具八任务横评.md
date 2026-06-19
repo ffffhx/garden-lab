@@ -1,5 +1,5 @@
 ---
-title: "浏览器 Agent 工具：能力分层理论 × 六工具十一任务实测"
+title: "浏览器 Agent 工具怎么选：@chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP、playwright-cli 十一任务实测"
 updated: 2026-06-14 20:00:00
 date: 2026-06-12 21:30:00
 categories:
@@ -13,29 +13,30 @@ tags:
   - Agent
   - Playwright
   - Benchmark
-excerpt: "把理论和实测装进同一篇：先用浏览器能力分层和安全域解释每个工具的边界从哪来，再用一个有标准答案的基准测试站、互相隔离的无偏 Agent 会话实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli。八道网页任务之外，2026-06-14 又补测了扩展安全域（T09/T11）、真实登录态（T10a）与跨会话持久化（T10b）三题（Claude Code 与 Codex 两轮独立、结论一致）：扩展场景的真分水岭是能不能到 chrome:// 特权页、bb-browser 在此失能；真实登录态是 @chrome 主场、playwright-cli 出局；持久化靠可移植状态文件取胜。补测还确认 agent-browser 0.27.2 有常驻 daemon，其粘滞会话让 --cdp 命中真实 profile 不可靠。"
+excerpt: "实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli：十一道任务覆盖网页登录、Network 排障、性能诊断、扩展特权页、真实登录态与跨会话持久化。结论不是谁最强，而是什么场景该选谁：真实 profile 优先 @chrome / Chrome DevTools MCP / bb-browser，扩展与持久化优先 Chrome DevTools MCP、playwright-cli 或 agent-browser，Network 排障避开扩展层。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 
 ## 摘要
 
-判断一个浏览器 Agent 工具，问一个问题就够了：**它能让 Agent 多容易地完成任务？**
+如果你正在选浏览器 Agent 工具，先别问"哪个最强"。先问三件事：它能不能复用真实登录态，能不能拿到 Network / 性能证据，能不能进入 `chrome://` 和扩展设置页。
 
-这个"容易"里藏着一条比顺滑度更硬的分界：**它能不能复用你已经登录好的真实身份。** 大量真实任务（看自己的通知、读登录后才出现的数据、以你的账号操作）只有在真实登录态里才存在，复用不了登录态，再顺滑的操作也碰不到这些题——所以它不是友好度的普通一项，而常常是能不能开始的前置门槛。本文专门用 T10a/T10b 两题把这条线测清楚（见 4.7）。
+我用 `@chrome`、`@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP` 和 `playwright-cli` 跑了十一道有标准答案的任务：八道网页任务，加上 2026-06-14 补测的扩展安全域（T09/T11）、真实登录态（T10a）与跨会话持久化（T10b）。结论不是谁通吃，而是不同任务该选不同工具：真实 profile 优先看 `@chrome` / `Chrome DevTools MCP` / `bb-browser`，扩展与持久化优先看 `Chrome DevTools MCP`、`playwright-cli` 或 `agent-browser`，Network 排障不要指望扩展层工具给出完整证据。
 
-这篇文章把理论和实测装进同一个框架里：
+这篇文章做三件事：
 
-- **理论负责解释**：每个工具站在浏览器的哪一层、被什么安全域约束，决定了它"天生能做什么、天生做不了什么"；
-- **实测负责裁决**：一个每道题都有标准答案的本地基准测试站、八道网页任务 + 三道扩展/登录态任务（T09/T10/T11，2026-06-14 补测）、六个工具、互相隔离且不知道答案的独立 Agent 会话——理论断言累计证实七条、推翻五条，基准测试站自己的预设答案还被 Agent 用 trace 证据修正了一处。补测的三题由 Claude Code 与 Codex 两轮各自独立跑、结论一致，只在评分口径上有别。
+- **先给选型答案**：第 3 节是总表，第 7 节是按任务场景反推工具的路由表；
+- **再解释为什么**：第 1 节用浏览器能力分层和安全域解释边界，第 4-6 节逐格核对失败原因和工具实现；
+- **最后给复现材料**：基准测试站、任务卡与原始数据都在仓库 `apps/browser-tool-bench/`，可以复查每个 ✅ / ⚠️ / ❌ 的依据。
 
-被测六个工具：Codex `@chrome`、Codex `@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP`、`playwright-cli`。基准测试站、任务卡与全部原始数据在仓库 `apps/browser-tool-bench/`，可复现。
-
-全文的主线是一个从实测里提炼出来的公式：
+全文主线是一个从实测里提炼出来的公式：
 
 > **工具实际能力 = min(协议层上限, 产品封装范围, 安全策略)**
 
-总表里每一个 ❌ 和 ⚠️，都能对应到这三个因素中的一个。后文逐格验证，并在第 6 节把每个工具的实现原理一并讲透——让总表里的每条边界都能落到具体代码。
+这条公式能解释总表里的大多数边界：有的工具协议层够强，但产品封装没开放；有的能连到真实 profile，却被 Chrome 安全策略或企业管控挡住；有的操作顺滑，但拿不到响应体、trace 或扩展特权页。后文的每个 ❌ 和 ⚠️ 都会落回这三个因素之一。
+
+只想选工具，可以直接跳到 [第 7 节选型路由表](#7-实测修订版选型路由表)。想复现实测，看附录里的 `apps/browser-tool-bench/`、任务卡和原始结果目录。想理解某个工具为什么失败，从第 4 节逐格解释读起。
 
 ## 1. 理论：能力从哪一层来，边界由什么决定
 

@@ -85,6 +85,10 @@ window.COVERS = (function () {
       ["硬件成本", "模型治理", "agent 平台", "创作引擎", "数字身份"],
       "AI 的外部成本，正在进入硬件、监管、工具链和身份系统。",
       "Apple · Anthropic/G7 · AWS · Unreal MCP · Estonia AI ID"),
+    news("2026/06/20/2026-06-20-x-上-ai-与前端热点速览", "2026-06-20",
+      ["AI 人才", "模型监管", "教育禁令", "现金消耗", "硬件成本"],
+      "前沿 AI 的竞争，正在同时压向人才、监管、课堂、资本和设备价格。",
+      "John Jumper · Anthropic/G7 · Norway AI ban · OpenAI burn · Nothing RAM"),
   ];
 
   const T = [

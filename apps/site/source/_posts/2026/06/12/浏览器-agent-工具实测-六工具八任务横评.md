@@ -427,43 +427,83 @@ T12–T20 是我后来补的一组前端开发者专项题。它们的目标不�
 
 先从你能在 Chrome 里指着说出来的部位看起——浏览器大致由下面这几块组成，光是"每块谁够得着、卡在哪"，就已经能解释总表里的大半结果：
 
-| 浏览器部位 | 具体是什么 | 谁能完整拿到 | 难点 / 谁够不着 |
-| --- | --- | --- | --- |
-| 网页内容 | DOM、页面 JS runtime、输入、shadow DOM、可访问性快照、页内 fetch | 六家公共底座，全员能读能点；开完整 CDP 后的 @chrome 可用 Runtime fetch | 无完整 CDP 的 @chrome/@browser runtime 只读，连 `fetch` 都没有 |
-| 前台 tab / 窗口 / popup | 多 tab、新窗口、popup 弹出窗口（`window.open` 出来的独立网页窗口，如 OAuth 登录窗）¹ | 六家全员 ✅——四个 CDP 工具（agent-browser、bb-browser、DevTools MCP、playwright-cli）走 Target 域枚举切换，@chrome / @browser 走 `chrome.tabs` 管多 tab；这是基线能力，没有区分度 | 无实质短板，差别只在体验（@browser 是 in-app webview，独立窗口/popup 不如其余顺手） |
-| 后台 target | 扩展的 service worker / background page——不在任何 tab 里的后台 JS 环境 | 只有自管浏览器的 agent-browser、DevTools MCP、playwright-cli（自管 context）够得到（走 CDP 的 Target 域枚举/attach） | @chrome / @browser 的扩展 runtime 只认 tab、看不见后台 target；playwright-cli 一旦改成 attach 企业 Chrome，枚举到扩展的 service_worker target 反而触发内部断言、直接崩（自管时没问题） |
-| 扩展 + 特权页 | 扩展本体、`chrome://extensions`、`chrome-extension://…/options.html` | DevTools MCP、playwright-cli（自管 persistent context） | @chrome 即使开权限仍被 URL 策略拦在 `chrome://` / `chrome-extension://` 外；bb-browser 把特权页 URL 归一化堵死；企业管控 Chrome 还让"装了等于没装" |
-| 身份 / 档案 | 登录态 cookie、书签、历史、保存的密码 / 证书 | @chrome、`bb-browser --port`、`DevTools MCP --browserUrl`、agent-browser/playwright-cli 的 CDP attach（需证明 target 命中） | @browser 接不进系统默认 Chrome；真实默认 profile 的远程调试被 Chrome 136+ 收紧；playwright-cli 在多扩展真实 profile 上仍有 attach 稳定性风险 |
-| 跨会话持久化 | 把身份存下来、搬到别处、恢复（可移植 state 文件 vs 绑定 userDataDir） | agent-browser、playwright-cli（可移植 state 文件，跨目录跨实例） | DevTools MCP 只能复用同一 userDataDir、换目录就丢；bb-browser 无 save/load |
-| 调试与诊断 | 读：network 响应体留底、console、performance/trace；写：请求拦截 / mock / abort | 读靠 CDP 系工具；开完整 CDP 后的 @chrome 也能读 Network body 与 timing；写（网络层 route）只有 agent-browser、playwright-cli | 无完整 CDP 的 @chrome/@browser 无响应体、无 `performance` 对象；开完整 CDP 后的 @chrome 仍无可靠 route；DevTools MCP、bb-browser 无网络层拦截，只能在 JS 层打补丁 |
+<figure class="bench-layers ba-parts" role="group" aria-label="浏览器部位与谁够得着分层图">
+<style>.bench-layers{margin:1.7rem 0;font-family:var(--font-serif-body,system-ui)}
+.bench-layers *{box-sizing:border-box}
+.bl-head{margin-bottom:.7rem}
+.bl-title{font-weight:700;font-size:1.02rem;color:var(--ink,#1a1815)}
+.bl-hint{display:block;font-size:.8rem;color:var(--muted,#6a6155);margin-top:.2rem}
+.bl-hint .bl-ck{display:inline-block;margin-right:.5rem;padding:.02rem .3rem;border-radius:.25rem;font-weight:700;font-size:.74rem}
+.bl-ck.full{background:#e7eedd;color:#4f7233}.bl-ck.cond{background:#f4e8cc;color:#9a6516}.bl-ck.none{background:#ece7da;color:#a59b88}
+.bl-band{border:1px solid var(--hair,rgba(26,24,21,.18));border-left:4px solid var(--ink,#1a1815);border-left-color:color-mix(in srgb, var(--ink,#1a1815) calc(35% + var(--d)*9%), #c9b78a);border-radius:.5rem;padding:.55rem .7rem;margin:.4rem 0;background:var(--paper-soft,#faf6ec)}
+.bl-top{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .8rem;justify-content:space-between}
+.bl-pinfo{flex:1 1 16rem;min-width:13rem}
+.bl-pinfo b{font-size:.92rem;color:var(--ink,#1a1815)}
+.bl-pinfo small{display:block;font-size:.72rem;color:var(--muted,#6a6155);margin-top:.1rem;line-height:1.35}
+.bl-pills{display:flex;flex-wrap:wrap;gap:.28rem}
+.bl-p{font-size:.7rem;font-weight:700;padding:.08rem .36rem;border-radius:.3rem;white-space:nowrap;line-height:1.4}
+.bl-p sup{font-size:.7em;margin-left:1px}
+.bl-full{background:#e7eedd;color:#4f7233}
+.bl-cond{background:#f4e8cc;color:#9a6516}
+.bl-none{background:#ece7da;color:#b3aa97;text-decoration:line-through;text-decoration-thickness:1px}
+.bl-note{font-size:.73rem;color:var(--muted,#6a6155);margin-top:.4rem;line-height:1.45;border-top:1px dashed var(--hair,rgba(26,24,21,.15));padding-top:.35rem}
+.bl-cnt{display:inline-block;font-weight:700;color:var(--ink-soft,#3c362c);margin-right:.5rem;font-size:.72rem}</style>
+<div class="bl-head"><span class="bl-title">浏览器有哪几个部位 · 谁够得着</span><span class="bl-hint">自上而下大致从「共享」到「受限」；每块右侧六个工具：<span class="bl-ck full">✓ 完整</span><span class="bl-ck cond">~ 有条件</span><span class="bl-ck none">✕ 够不着</span>（悬停看工具全名）。</span></div>
+<div class="bl-band" style="--d:0"><div class="bl-top"><div class="bl-pinfo"><b>网页内容</b><small>DOM · 页面 runtime · 输入 · shadow DOM · a11y 快照 · 页内 fetch</small></div><div class="bl-pills"><span class="bl-p bl-cond" title="@chrome：有条件">chr<sup>~</sup></span><span class="bl-p bl-cond" title="@browser：有条件">brw<sup>~</sup></span><span class="bl-p bl-full" title="agent-browser：完整">ab<sup>✓</sup></span><span class="bl-p bl-full" title="bb-browser：完整">bb<sup>✓</sup></span><span class="bl-p bl-full" title="DevTools MCP：完整">MCP<sup>✓</sup></span><span class="bl-p bl-full" title="playwright-cli：完整">pw<sup>✓</sup></span></div></div><div class="bl-note"><span class="bl-cnt">完整 4 · 受限 2 · 无 0</span>六家公共底座，全员能读能点；无完整 CDP 的 @chrome/@browser runtime 只读，连 fetch 都没有</div></div><div class="bl-band" style="--d:1"><div class="bl-top"><div class="bl-pinfo"><b>前台 tab / 窗口 / popup</b><small>多 tab · 新窗口 · window.open 弹出窗（如 OAuth 登录窗）</small></div><div class="bl-pills"><span class="bl-p bl-full" title="@chrome：完整">chr<sup>✓</sup></span><span class="bl-p bl-cond" title="@browser：有条件">brw<sup>~</sup></span><span class="bl-p bl-full" title="agent-browser：完整">ab<sup>✓</sup></span><span class="bl-p bl-full" title="bb-browser：完整">bb<sup>✓</sup></span><span class="bl-p bl-full" title="DevTools MCP：完整">MCP<sup>✓</sup></span><span class="bl-p bl-full" title="playwright-cli：完整">pw<sup>✓</sup></span></div></div><div class="bl-note"><span class="bl-cnt">完整 5 · 受限 1 · 无 0</span>基线能力、没区分度；@browser 是 in-app webview，独立窗口/popup 不如其余顺手</div></div><div class="bl-band" style="--d:2"><div class="bl-top"><div class="bl-pinfo"><b>后台 target</b><small>扩展 service worker / background page——不在任何 tab 里的后台 JS</small></div><div class="bl-pills"><span class="bl-p bl-none" title="@chrome：够不着">chr<sup>✕</sup></span><span class="bl-p bl-none" title="@browser：够不着">brw<sup>✕</sup></span><span class="bl-p bl-full" title="agent-browser：完整">ab<sup>✓</sup></span><span class="bl-p bl-none" title="bb-browser：够不着">bb<sup>✕</sup></span><span class="bl-p bl-full" title="DevTools MCP：完整">MCP<sup>✓</sup></span><span class="bl-p bl-cond" title="playwright-cli：有条件">pw<sup>~</sup></span></div></div><div class="bl-note"><span class="bl-cnt">完整 2 · 受限 1 · 无 3</span>只有自管浏览器够得到（走 CDP Target 域）；pw 一旦 attach 企业 Chrome，枚举到扩展 service_worker 反而触发断言崩</div></div><div class="bl-band" style="--d:3"><div class="bl-top"><div class="bl-pinfo"><b>扩展 + 特权页</b><small>扩展本体 · chrome://extensions · chrome-extension://…/options.html</small></div><div class="bl-pills"><span class="bl-p bl-none" title="@chrome：够不着">chr<sup>✕</sup></span><span class="bl-p bl-none" title="@browser：够不着">brw<sup>✕</sup></span><span class="bl-p bl-cond" title="agent-browser：有条件">ab<sup>~</sup></span><span class="bl-p bl-none" title="bb-browser：够不着">bb<sup>✕</sup></span><span class="bl-p bl-full" title="DevTools MCP：完整">MCP<sup>✓</sup></span><span class="bl-p bl-full" title="playwright-cli：完整">pw<sup>✓</sup></span></div></div><div class="bl-note"><span class="bl-cnt">完整 2 · 受限 1 · 无 3</span>真分水岭是能否到特权页；bb 把特权页 URL 归一化堵死，@chrome 被 URL 策略拦，agent-browser 需先复位 daemon（†）</div></div><div class="bl-band" style="--d:4"><div class="bl-top"><div class="bl-pinfo"><b>身份 / 档案</b><small>登录态 cookie · 书签 · 历史 · 保存的密码 / 证书</small></div><div class="bl-pills"><span class="bl-p bl-full" title="@chrome：完整">chr<sup>✓</sup></span><span class="bl-p bl-none" title="@browser：够不着">brw<sup>✕</sup></span><span class="bl-p bl-cond" title="agent-browser：有条件">ab<sup>~</sup></span><span class="bl-p bl-full" title="bb-browser：完整">bb<sup>✓</sup></span><span class="bl-p bl-full" title="DevTools MCP：完整">MCP<sup>✓</sup></span><span class="bl-p bl-cond" title="playwright-cli：有条件">pw<sup>~</sup></span></div></div><div class="bl-note"><span class="bl-cnt">完整 3 · 受限 2 · 无 1</span>@browser 接不进系统默认 Chrome；默认 profile 远程调试 Chrome 136+ 收紧；pw 在多扩展真实 profile 上 attach 仍不稳</div></div><div class="bl-band" style="--d:5"><div class="bl-top"><div class="bl-pinfo"><b>跨会话持久化</b><small>把身份存下来、搬到别处、恢复（可移植 state vs 绑定 userDataDir）</small></div><div class="bl-pills"><span class="bl-p bl-cond" title="@chrome：有条件">chr<sup>~</sup></span><span class="bl-p bl-none" title="@browser：够不着">brw<sup>✕</sup></span><span class="bl-p bl-full" title="agent-browser：完整">ab<sup>✓</sup></span><span class="bl-p bl-none" title="bb-browser：够不着">bb<sup>✕</sup></span><span class="bl-p bl-cond" title="DevTools MCP：有条件">MCP<sup>~</sup></span><span class="bl-p bl-full" title="playwright-cli：完整">pw<sup>✓</sup></span></div></div><div class="bl-note"><span class="bl-cnt">完整 2 · 受限 2 · 无 2</span>可移植 state 文件（agent-browser / playwright-cli）完胜；DevTools MCP 绑 userDataDir 换目录就丢，bb 无 save/load</div></div><div class="bl-band" style="--d:6"><div class="bl-top"><div class="bl-pinfo"><b>调试与诊断</b><small>读：Network 响应体 · console · performance/trace　写：拦截 / mock / abort</small></div><div class="bl-pills"><span class="bl-p bl-cond" title="@chrome：有条件">chr<sup>~</sup></span><span class="bl-p bl-none" title="@browser：够不着">brw<sup>✕</sup></span><span class="bl-p bl-full" title="agent-browser：完整">ab<sup>✓</sup></span><span class="bl-p bl-cond" title="bb-browser：有条件">bb<sup>~</sup></span><span class="bl-p bl-cond" title="DevTools MCP：有条件">MCP<sup>~</sup></span><span class="bl-p bl-full" title="playwright-cli：完整">pw<sup>✓</sup></span></div></div><div class="bl-note"><span class="bl-cnt">完整 2 · 受限 3 · 无 1</span>读靠 CDP（开权限 @chrome 也能读 body/timing）；写（网络层 route）只有 agent-browser、playwright-cli；MCP/bb 只能 JS 层打补丁</div></div>
+</figure>
 
 > ¹ 这里的 popup 专指 `window.open` 的独立网页窗口，**不含 alert/confirm 这类原生对话框**——后者是页面触发、却在 DOM 之外、只能由 CDP 的 Page/Browser/Fetch 等 domain 单独处理的模态框，另算一种薄控制面。
 
 为什么同一个部位，有的工具能完整拿到、有的只能拿到残缺版、有的彻底碰不到？因为工具的本质区别在于**它从哪个入口接进浏览器**——入口决定了它站在哪一层、拿到的是原始能力还是被封装 / 阉割过的子集：
 
-| 能力面 | 典型入口 | 天生擅长 | 天生短板 |
-| --- | --- | --- | --- |
-| 网页面 | DOM、页面 JS Runtime | 点击、输入、读页面、页内 fetch | 只能看到页面自己暴露的东西 |
-| Chrome 扩展面 | `chrome.*` extension API | 真实 profile、真实登录态、书签历史 | 受扩展权限模型约束，无 Network 响应体、无 trace |
-| CDP 调试面 | Chrome DevTools Protocol | Network 留底、请求拦截、Runtime、Tracing | 权限极强，安全边界敏感（Chrome 136+ 收紧） |
-| DevTools 产品面 | DevTools / Lighthouse 的诊断模型 | 性能定位、LCP 分解、瀑布图洞察 | 围绕"被调试页面"，需自管浏览器 |
-| 站点适配面 | site adapter | 把具体网站封成结构化命令 | 与网站结构强绑定，要维护 |
+<figure class="bench-planes bb-planes" role="group" aria-label="五个能力面分层图">
+<style>.bench-planes{margin:1.7rem 0;font-family:var(--font-serif-body,system-ui)}
+.bench-planes *{box-sizing:border-box}
+.bp-head{margin-bottom:.6rem}
+.bp-title{font-weight:700;font-size:1.02rem;color:var(--ink,#1a1815)}
+.bp-hint{display:block;font-size:.8rem;color:var(--muted,#6a6155);margin-top:.2rem}
+.bp-stack{display:flex;flex-direction:column;gap:.3rem;position:relative}
+.bp-axis{font-size:.7rem;color:var(--muted,#6a6155);text-align:right;margin-bottom:.1rem}
+.pl-layer{display:flex;align-items:stretch;border:1px solid var(--bd);border-left:5px solid var(--fg);border-radius:.5rem;background:var(--bg);overflow:hidden}
+.pl-name{flex:0 0 9rem;display:flex;flex-direction:column;justify-content:center;padding:.5rem .7rem;font-weight:700;color:var(--fg);font-size:.9rem;border-right:1px solid var(--bd)}
+.pl-name small{font-weight:400;font-size:.66rem;color:var(--muted,#6a6155);margin-top:.15rem;line-height:1.3}
+.pl-body{flex:1;padding:.5rem .7rem;min-width:0}
+.pl-entry{font-size:.74rem;color:var(--ink-soft,#3c362c);font-family:var(--font-mono,ui-monospace,monospace);margin-bottom:.3rem}
+.pl-sw{display:flex;flex-wrap:wrap;gap:.3rem .8rem}
+.pl-good,.pl-bad{font-size:.74rem;line-height:1.35}
+.pl-good{color:#4f7233}.pl-bad{color:#8f2d20}
+.bp-side{margin-top:.5rem;border:1px dashed var(--bd2,#cf9b90);border-radius:.5rem;background:var(--bg2,#f1ddd6);padding:.5rem .7rem;display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.bp-side .s-name{font-weight:700;font-size:.88rem}
+.bp-side .s-tag{font-size:.68rem;color:var(--muted,#6a6155);font-weight:700}
+.bp-side .s-txt{font-size:.74rem;color:var(--ink-soft,#3c362c)}
+@media(max-width:560px){.pl-layer{flex-direction:column}.pl-name{flex-basis:auto;border-right:0;border-bottom:1px solid var(--bd)}}</style>
+<div class="bp-head"><span class="bp-title">工具从哪个入口接进浏览器 · 五个能力面</span><span class="bp-hint">入口决定它站在哪一层、拿到的是原始能力还是被封装的子集。</span></div>
+<div class="bp-stack"><div class="bp-axis">▲ 越往上越偏「解释 / 诊断」</div><div class="pl-layer" style="--fg:#4f7233;--bg:#e7eedd;--bd:#9ab87f"><div class="pl-name">DevTools 产品面<small>建在 CDP 原始数据之上</small></div><div class="pl-body"><div class="pl-entry">入口 · DevTools / Lighthouse 诊断模型</div><div class="pl-sw"><span class="pl-good">擅长 性能定位 · LCP 分解 · 瀑布图洞察</span><span class="pl-bad">短板 围绕「被调试页面」，需自管浏览器</span></div></div></div><div class="pl-layer" style="--fg:#3f6d79;--bg:#dcebed;--bd:#8fbcc4"><div class="pl-name">CDP 调试面</div><div class="pl-body"><div class="pl-entry">入口 · Chrome DevTools Protocol</div><div class="pl-sw"><span class="pl-good">擅长 Network 留底 · 请求拦截 · Runtime · Tracing</span><span class="pl-bad">短板 权限极强，安全边界敏感（Chrome 136+ 收紧）</span></div></div></div><div class="pl-layer" style="--fg:#9a6516;--bg:#f4e8cc;--bd:#d9b66a"><div class="pl-name">Chrome 扩展面</div><div class="pl-body"><div class="pl-entry">入口 · chrome.* extension API</div><div class="pl-sw"><span class="pl-good">擅长 真实 profile · 登录态 · 书签历史</span><span class="pl-bad">短板 受扩展权限模型约束，无 Network 响应体、无 trace</span></div></div></div><div class="pl-layer" style="--fg:#7a7264;--bg:#efe9da;--bd:#c4b9a3"><div class="pl-name">网页面<small>公共底座</small></div><div class="pl-body"><div class="pl-entry">入口 · DOM / 页面 JS Runtime</div><div class="pl-sw"><span class="pl-good">擅长 点击 · 输入 · 读页面 · 页内 fetch</span><span class="pl-bad">短板 只能看到页面自己暴露的东西</span></div></div></div><div class="bp-axis">▼ 越往下越底层 / 原始</div></div>
+<div class="bp-side" style="--bd2:#cf9b90;--bg2:#f1ddd6"><span class="s-name" style="color:#8f2d20">站点适配面</span><span class="s-tag">旁路 · 与具体网站绑定</span><span class="s-txt">入口 site adapter（按域名匹配、注入页面）；<b style="color:#4f7233">擅长</b> 把具体网站封成结构化命令；<b style="color:#8f2d20">短板</b> 与网站结构强绑定，要维护</span></div>
+</figure>
 
-这两张表是同一件事的两种切法：上表按**浏览器部位**切（你能指着说出来的东西，回答"工具碰得到哪几块"），下表按**工具入口**切（回答"碰到的是完整版还是残缺版、为什么"）。数目对不上是正常的——同一个部位会被不同入口以不同成色覆盖：比如"调试与诊断"这一块，从入口看就分成了 CDP 原始数据面和 DevTools 解释面两层；而"扩展 + 特权页"既可能从扩展面接、也可能从 CDP 面强开。
+上面两张图是同一件事的两种切法：第一张按**浏览器部位**切（你能指着说出来的东西，回答"工具碰得到哪几块"），第二张按**工具入口**切（回答"碰到的是完整版还是残缺版、为什么"）。层数对不上是正常的——同一个部位会被不同入口以不同成色覆盖：比如"调试与诊断"这一块，从入口看就分成了 CDP 原始数据面和 DevTools 解释面两层；而"扩展 + 特权页"既可能从扩展面接、也可能从 CDP 面强开。
 
 这里最容易混的是 **CDP 调试面**和 **DevTools 产品面**：CDP 给的是底层的原始数据和操作能力（原始 trace、原始网络事件，还能下点击、导航这类命令）；**DevTools 产品面则是在 CDP 原始数据之上、由 Chrome DevTools 和 Lighthouse 做的分析 / 解释层**——把原始 trace 算成"LCP 2.1 秒、主因是阻塞 CSS"这种能直接读的诊断结论。打个比方：CDP 给你体检的原始数值，DevTools 产品面给你医生的诊断报告。
 
 六个工具的站位：
 
-| 工具 | 主要站位 | 形态 |
-| --- | --- | --- |
-| @chrome / @browser | 扩展面（且只暴露其中的页面可见子集） | 宿主内插件 |
-| agent-browser | CDP 调试面（瘦 CLI + 常驻原生 daemon 连 CDP，可 connect 任意 CDP 目标） | CLI + 常驻 daemon |
-| bb-browser | CDP 调试面 + 站点适配面 | CLI |
-| Chrome DevTools MCP | CDP 调试面 + DevTools 产品面 | MCP server |
-| playwright-cli | Playwright 引擎（CDP/BiDi 之上的自动化层） | CLI |
+<figure class="bench-pos bc-pos" role="group" aria-label="六个工具的站位图">
+<style>.bench-pos{margin:1.6rem 0;font-family:var(--font-serif-body,system-ui)}
+.bench-pos *{box-sizing:border-box}
+.bo-title{font-weight:700;font-size:1.02rem;color:var(--ink,#1a1815);margin-bottom:.5rem}
+.po-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.45rem .2rem;border-bottom:1px solid var(--hair,rgba(26,24,21,.12))}
+.po-row:last-child{border-bottom:0}
+.po-tool{flex:0 0 12rem;font-weight:700;color:var(--ink,#1a1815);font-size:.86rem;line-height:1.2}
+.po-tool small{display:block;font-weight:400;font-size:.68rem;color:var(--muted,#6a6155);margin-top:.1rem;font-family:var(--font-mono,ui-monospace,monospace)}
+.po-planes{display:flex;flex-wrap:wrap;gap:.35rem;flex:1}
+.po-pl{font-size:.74rem;font-weight:700;padding:.12rem .5rem;border-radius:.35rem;border:1px solid;white-space:nowrap}
+@media(max-width:520px){.po-tool{flex-basis:100%}}</style>
+<div class="bo-title">六个工具落在这些能力面上（颜色对应上图）</div>
+<div class="po-row"><span class="po-tool">@chrome / @browser<small>宿主内插件</small></span><span class="po-planes"><span class="po-pl" style="color:#9a6516;background:#f4e8cc;border-color:#d9b66a">扩展面 · 仅页面可见子集</span></span></div><div class="po-row"><span class="po-tool">agent-browser<small>瘦 CLI + 常驻原生 daemon</small></span><span class="po-planes"><span class="po-pl" style="color:#3f6d79;background:#dcebed;border-color:#8fbcc4">CDP 调试面</span></span></div><div class="po-row"><span class="po-tool">bb-browser<small>CLI（后台常驻进程）</small></span><span class="po-planes"><span class="po-pl" style="color:#3f6d79;background:#dcebed;border-color:#8fbcc4">CDP 调试面</span><span class="po-pl" style="color:#8f2d20;background:#f1ddd6;border-color:#cf9b90">站点适配面</span></span></div><div class="po-row"><span class="po-tool">Chrome DevTools MCP<small>MCP server</small></span><span class="po-planes"><span class="po-pl" style="color:#3f6d79;background:#dcebed;border-color:#8fbcc4">CDP 调试面</span><span class="po-pl" style="color:#4f7233;background:#e7eedd;border-color:#9ab87f">DevTools 产品面</span></span></div><div class="po-row"><span class="po-tool">playwright-cli<small>CLI</small></span><span class="po-planes"><span class="po-pl" style="color:#54579a;background:#e6e7f3;border-color:#a9adcf">Playwright 引擎 · CDP/BiDi 之上</span></span></div>
+</figure>
 
-注意 playwright-cli 这一行：它的底座其实仍是 CDP/BiDi，只是 Playwright 在其上自封了一层跨浏览器的自动化引擎（Locator、自动等待等浏览器原生没有的能力），你直接面对的是这层引擎而不是裸 CDP，所以单列而没归进「CDP 调试面」。
+注意 playwright-cli 这一栏：它的底座其实仍是 CDP/BiDi，只是 Playwright 在其上自封了一层跨浏览器的自动化引擎（Locator、自动等待等浏览器原生没有的能力），你直接面对的是这层引擎而不是裸 CDP，所以单列而没归进「CDP 调试面」。
 
 #### 6.2 边界公式的三个因素
 

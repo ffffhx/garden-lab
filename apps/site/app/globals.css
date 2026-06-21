@@ -3933,3 +3933,42 @@ summary:focus-visible,
     transition: none !important;
   }
 }
+
+/* —— §6.1 三张能力分层图：悬停聚焦的交互微动效 —— */
+.article-content .bench-layers .bl-band,
+.article-content .bench-planes .pl-layer,
+.article-content .bench-pos .po-row {
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.22s ease,
+    background-color 0.22s ease;
+}
+.article-content .bench-layers .bl-band:hover,
+.article-content .bench-planes .pl-layer:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(26, 24, 21, 0.1);
+}
+.article-content .bench-pos .po-row:hover {
+  background-color: var(--paper-soft, #faf6ec);
+  border-radius: 0.4rem;
+}
+/* 悬停某条时，让同图里其它条略微退后，突出当前条 */
+.article-content .bench-planes:hover .pl-layer:not(:hover),
+.article-content .bench-layers:hover .bl-band:not(:hover) {
+  opacity: 0.66;
+}
+.article-content .bench-planes .pl-layer,
+.article-content .bench-layers .bl-band {
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.22s ease,
+    opacity 0.22s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .article-content .bench-layers .bl-band,
+  .article-content .bench-planes .pl-layer,
+  .article-content .bench-pos .po-row {
+    transition: none !important;
+    transform: none !important;
+  }
+  .article-content .bench-planes:hover .pl-layer:not(:hover),
+  .article-content .bench-layers:hover .bl-band:not(:hover) {
+    opacity: 1 !important;
+  }
+}

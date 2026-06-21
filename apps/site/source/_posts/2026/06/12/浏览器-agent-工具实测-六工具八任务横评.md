@@ -703,6 +703,62 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 加粗的几道是按 6.2 的边界公式设计的"分界题"——它们恰好把六个工具分成了几个阵营。
 
+<figure class="taskmap" data-reveal role="group" aria-label="20 道靶场题按理论维度分组的交互筛选图：点一个维度，高亮该能力层考的题，并标出分界题">
+<style>
+.taskmap{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--paper-vsoft:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--serif:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);--mono:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);--gray:#917f5c;--gray-b:#ece4d2;--cyan:#3f6d79;--cyan-b:#dcebed;--cyan-e:#8fbcc4;--red:#8f2d20;--red-b:#f1ddd6;--red-e:#cf9b90;--amb:#9a6516;--amb-b:#f4e8cc;--amb-e:#d9b66a;--pur:#54579a;--pur-b:#e6e7f3;--pur-e:#a9adcf;margin:0;padding:clamp(16px,3.4vw,28px);font-family:var(--serif);color:var(--ink);line-height:1.5;background:radial-gradient(130% 90% at 92% 0%,var(--paper-soft),transparent 60%),linear-gradient(160deg,var(--paper-vsoft),var(--paper-deep));border:1px solid var(--hair);border-radius:14px;position:relative;overflow:hidden}
+.taskmap *{box-sizing:border-box;min-width:0}
+.taskmap .tm-radio{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.taskmap .tm-head{position:relative;z-index:2;margin-bottom:12px}
+.taskmap .tm-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);display:inline-flex;align-items:center;gap:8px}
+.taskmap .tm-kicker::before{content:"";width:22px;height:1px;background:var(--cyan)}
+.taskmap .tm-title{font-size:clamp(15px,3vw,20px);font-weight:700;margin:7px 0 3px}
+.taskmap .tm-sub{font-size:12.5px;color:var(--muted);max-width:64ch}
+.taskmap .tm-sub b{color:var(--ink-soft);font-weight:600}
+.taskmap .tm-tabs{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:7px;margin:13px 0}
+.taskmap .tm-tab{font-family:var(--mono);font-size:11.5px;padding:5px 11px;border:1.5px solid var(--hair);border-radius:9px;background:var(--paper-soft);color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap;transition:border-color .2s,color .2s,background .2s,transform .15s}
+.taskmap .tm-tab .tm-d{display:inline-block;width:8px;height:8px;border-radius:3px;background:var(--tw-c,var(--ink));margin-right:6px;vertical-align:1px}
+.taskmap .tm-tab:hover{color:var(--ink-soft);border-color:var(--tw-c,var(--hair))}
+.taskmap #tm-all:checked ~ .tm-tabs .lt-all,.taskmap #tm-page:checked ~ .tm-tabs .lt-page,.taskmap #tm-cdp:checked ~ .tm-tabs .lt-cdp,.taskmap #tm-priv:checked ~ .tm-tabs .lt-priv,.taskmap #tm-login:checked ~ .tm-tabs .lt-login,.taskmap #tm-front:checked ~ .tm-tabs .lt-front{color:var(--tw-c,var(--ink));border-color:var(--tw-c,var(--ink));background:color-mix(in srgb,var(--tw-c,var(--ink)) 12%,var(--paper-soft));font-weight:700;transform:translateY(-1px)}
+.taskmap #tm-all:focus-visible ~ .tm-tabs .lt-all,.taskmap #tm-page:focus-visible ~ .tm-tabs .lt-page,.taskmap #tm-cdp:focus-visible ~ .tm-tabs .lt-cdp,.taskmap #tm-priv:focus-visible ~ .tm-tabs .lt-priv,.taskmap #tm-login:focus-visible ~ .tm-tabs .lt-login,.taskmap #tm-front:focus-visible ~ .tm-tabs .lt-front{outline:2px solid var(--tw-c,var(--ink));outline-offset:2px}
+.taskmap .tm-caps{position:relative;z-index:2;min-height:2.6em;margin-bottom:11px}
+.taskmap .tm-cap{display:none;font-size:12.5px;color:var(--ink-soft);line-height:1.6;border-left:3px solid var(--tw-c,var(--ink));padding:2px 0 2px 11px}
+.taskmap .tm-cap b{color:var(--tw-c,var(--ink));font-weight:700}
+.taskmap #tm-all:checked ~ .tm-caps .cap-all,.taskmap #tm-page:checked ~ .tm-caps .cap-page,.taskmap #tm-cdp:checked ~ .tm-caps .cap-cdp,.taskmap #tm-priv:checked ~ .tm-caps .cap-priv,.taskmap #tm-login:checked ~ .tm-caps .cap-login,.taskmap #tm-front:checked ~ .tm-caps .cap-front{display:block;animation:tm-fade .4s ease both}
+@keyframes tm-fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.taskmap .tm-grid{position:relative;z-index:2;display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.taskmap .tm-chip{position:relative;display:flex;flex-direction:column;gap:1px;border:1.5px solid var(--gc,var(--hair));border-left-width:4px;border-radius:8px;background:var(--gb,var(--paper-soft));padding:7px 9px;transition:opacity .35s ease,filter .35s ease,transform .2s ease,box-shadow .2s ease}
+.taskmap .tm-chip:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(26,24,21,.1)}
+.taskmap .tm-chip b{font-family:var(--mono);font-size:12px;color:var(--gd,var(--ink))}
+.taskmap .tm-chip small{font-size:11px;color:var(--ink-soft);line-height:1.25}
+.taskmap .tm-chip.g-page{--gc:var(--gray);--gd:var(--gray);--gb:linear-gradient(180deg,var(--gray-b),var(--paper-soft))}
+.taskmap .tm-chip.g-cdp{--gc:var(--cyan-e);--gd:var(--cyan);--gb:linear-gradient(180deg,var(--cyan-b),var(--paper-soft))}
+.taskmap .tm-chip.g-priv{--gc:var(--red-e);--gd:var(--red);--gb:linear-gradient(180deg,var(--red-b),var(--paper-soft))}
+.taskmap .tm-chip.g-login{--gc:var(--amb-e);--gd:var(--amb);--gb:linear-gradient(180deg,var(--amb-b),var(--paper-soft))}
+.taskmap .tm-chip.g-front{--gc:var(--pur-e);--gd:var(--pur);--gb:linear-gradient(180deg,var(--pur-b),var(--paper-soft))}
+.taskmap .tm-star{position:absolute;top:-8px;right:8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:#fff;background:var(--gd,var(--ink));padding:1px 6px;border-radius:20px;font-weight:700}
+.taskmap .tm-chip.is-edge{box-shadow:inset 0 0 0 1px var(--gc)}
+.taskmap #tm-page:checked ~ .tm-grid .tm-chip:not(.g-page),.taskmap #tm-cdp:checked ~ .tm-grid .tm-chip:not(.g-cdp),.taskmap #tm-priv:checked ~ .tm-grid .tm-chip:not(.g-priv),.taskmap #tm-login:checked ~ .tm-grid .tm-chip:not(.g-login),.taskmap #tm-front:checked ~ .tm-grid .tm-chip:not(.g-front){opacity:.26;filter:grayscale(.55)}
+.taskmap #tm-page:checked ~ .tm-grid .tm-chip.g-page,.taskmap #tm-cdp:checked ~ .tm-grid .tm-chip.g-cdp,.taskmap #tm-priv:checked ~ .tm-grid .tm-chip.g-priv,.taskmap #tm-login:checked ~ .tm-grid .tm-chip.g-login,.taskmap #tm-front:checked ~ .tm-grid .tm-chip.g-front{transform:translateY(-2px);box-shadow:0 4px 14px rgba(26,24,21,.12)}
+.taskmap .tm-foot{position:relative;z-index:2;margin-top:13px;border-top:1px solid var(--hair);padding-top:10px;font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 14px}
+.taskmap .tm-foot .tm-edge-key{color:var(--ink-soft)}
+.taskmap .tm-foot .tm-edge-key b{display:inline-block;color:#fff;background:var(--ink);border-radius:20px;padding:0 6px;font-size:9px}
+@media (max-width:560px){.taskmap .tm-grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}.taskmap .tm-tab{font-size:11px;padding:5px 9px}}
+@media (prefers-reduced-motion:reduce){.taskmap .tm-cap,.taskmap .tm-chip{animation:none;transition:none}}
+</style>
+<input type="radio" name="taskmap-tab" id="tm-all" class="tm-radio" checked>
+<input type="radio" name="taskmap-tab" id="tm-page" class="tm-radio">
+<input type="radio" name="taskmap-tab" id="tm-cdp" class="tm-radio">
+<input type="radio" name="taskmap-tab" id="tm-priv" class="tm-radio">
+<input type="radio" name="taskmap-tab" id="tm-login" class="tm-radio">
+<input type="radio" name="taskmap-tab" id="tm-front" class="tm-radio">
+<div class="tm-head"><span class="tm-kicker">§3 任务设计</span><div class="tm-title">20 道靶场题，其实只在考 5 类能力层</div><div class="tm-sub">每道题都按 6.2 的<b>边界公式</b>落到某一能力层。点下面的维度，看这层考了哪几题；带 <b>分界</b> 标的 7 道是<b>分界题</b>——它们恰好把六个工具切成不同阵营。</div></div>
+<div class="tm-tabs"><label class="tm-tab lt-all" for="tm-all" style="--tw-c:#1a1815"><span class="tm-d"></span>全部 20 题</label><label class="tm-tab lt-page" for="tm-page" style="--tw-c:#917f5c"><span class="tm-d"></span>页面共用底座</label><label class="tm-tab lt-cdp" for="tm-cdp" style="--tw-c:#3f6d79"><span class="tm-d"></span>CDP 调试面</label><label class="tm-tab lt-priv" for="tm-priv" style="--tw-c:#8f2d20"><span class="tm-d"></span>特权页 / 安全域</label><label class="tm-tab lt-login" for="tm-login" style="--tw-c:#9a6516"><span class="tm-d"></span>真实登录态 / 持久化</label><label class="tm-tab lt-front" for="tm-front" style="--tw-c:#54579a"><span class="tm-d"></span>前端专项</label></div>
+<div class="tm-caps"><div class="tm-cap cap-all" style="--tw-c:#1a1815">20 题按能力层分成 5 组；<b>7 道分界题</b>集中落在 CDP 调试面、特权页与真实登录态——这正是六个工具差距最大的三处。</div><div class="tm-cap cap-page" style="--tw-c:#917f5c">六个工具都接到的<b>最低一层</b>：纯页面观察与操作，全员通过，只有快照质量差异、没有能力缺口。</div><div class="tm-cap cap-cdp" style="--tw-c:#3f6d79">Network 留底、请求拦截、页面 Runtime、性能诊断、Console/SW——<b>是否开到完整 CDP</b> 在这里直接分高下。</div><div class="tm-cap cap-priv" style="--tw-c:#8f2d20">能不能进 <span style="font-family:var(--mono)">chrome://extensions</span> 和扩展 <span style="font-family:var(--mono)">options.html</span>——<b>最硬的分水岭</b>，多数工具到不了。</div><div class="tm-cap cap-login" style="--tw-c:#9a6516">复用你登录过的真实 profile、把状态搬到别处恢复——<b>一道题拆成默认 / 自管持久化 / 指定 9223 三条路线</b>。</div><div class="tm-cap cap-front" style="--tw-c:#54579a">跨源 iframe、文件上传、键盘可访问性、flake 率——<b>前端排障的长尾</b>，考的是细节覆盖面。</div></div>
+<div class="tm-grid"><span class="tm-chip g-page"><b>T01</b><small>登录与观察</small></span><span class="tm-chip g-cdp is-edge"><span class="tm-star">分界</span><b>T02</b><small>Network 排障</small></span><span class="tm-chip g-cdp is-edge"><span class="tm-star">分界</span><b>T03</b><small>性能诊断</small></span><span class="tm-chip g-cdp is-edge"><span class="tm-star">分界</span><b>T04</b><small>请求 mock</small></span><span class="tm-chip g-page"><b>T05</b><small>动态等待</small></span><span class="tm-chip g-page"><b>T06</b><small>结构化提取</small></span><span class="tm-chip g-cdp is-edge"><span class="tm-star">分界</span><b>T07</b><small>已登录 fetch</small></span><span class="tm-chip g-page"><b>T08</b><small>Shadow DOM</small></span><span class="tm-chip g-priv is-edge"><span class="tm-star">分界</span><b>T09</b><small>扩展 reload</small></span><span class="tm-chip g-login is-edge"><span class="tm-star">分界</span><b>T10</b><small>真实登录态与持久化</small></span><span class="tm-chip g-priv is-edge"><span class="tm-star">分界</span><b>T11</b><small>用扩展改徽标</small></span><span class="tm-chip g-cdp"><b>T12</b><small>Console 与 Source Map</small></span><span class="tm-chip g-cdp"><b>T13</b><small>移动端布局遮挡</small></span><span class="tm-chip g-cdp"><b>T14</b><small>SPA Hydration</small></span><span class="tm-chip g-cdp"><b>T15</b><small>SSE 实时流</small></span><span class="tm-chip g-cdp"><b>T16</b><small>Service Worker 缓存</small></span><span class="tm-chip g-front"><b>T17</b><small>跨域 iframe 授权</small></span><span class="tm-chip g-front"><b>T18</b><small>文件上传</small></span><span class="tm-chip g-front"><b>T19</b><small>键盘可访问性</small></span><span class="tm-chip g-front"><b>T20</b><small>回归稳定性</small></span></div>
+<div class="tm-foot"><span class="tm-edge-key"><b>分界</b> ＝ 按 6.2 边界公式设计、把六工具分阵营的题（共 7 道）</span><span>点维度标签筛选 · 再点「全部 20 题」复位</span></div>
+</figure>
+
+
 真实网站外场任务放在 `tasks-real/`，结果与 T01-T20 一起并进第 1 节同一张结果总表（动态字段带时间戳）：
 
 | 任务 | 真实网站 | 重点 |

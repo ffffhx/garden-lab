@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Console 调试 · Bench 靶场</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+</head>
+<body>
+  <header class="site">
+    <a class="brand" href="/">Bench 靶场</a>
+    <a href="/debug-console">Console 调试</a>
+  </header>
+  <main>
+    <div class="card">
+      <h1>结算页</h1>
+      <p class="muted">订单 CART-9A2 已选 3 件商品。点击应用优惠券会触发一个前端异常。</p>
+      <button id="apply-coupon">应用优惠券</button>
+      <p class="error" id="coupon-error" hidden></p>
+    </div>
+  </main>
+  <script src="/assets/debug-bundle.js"></script>
+</body>
+</html>

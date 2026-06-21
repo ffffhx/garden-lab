@@ -25,6 +25,7 @@ const MIME = {
   ".js": "text/javascript; charset=utf-8",
   ".svg": "image/svg+xml",
   ".json": "application/json; charset=utf-8",
+  ".map": "application/json; charset=utf-8",
 };
 
 const sessions = new Map();
@@ -70,6 +71,21 @@ const USERS = Array.from({ length: 18 }, (_, i) => ({
   role: i === 0 ? "管理员" : i % 5 === 0 ? "维护者" : "成员",
   joined: `2025-${String((i % 12) + 1).padStart(2, "0")}-0${(i % 9) + 1}`,
 }));
+
+// ---- 数据：前端调试扩展任务的 ground truth 来源（T15/T16/T20）----
+const REALTIME_EVENTS = [
+  { id: "evt-001", type: "connected", message: "SSE 通道已建立" },
+  { id: "evt-002", type: "metric", name: "checkout_latency_ms", value: 184 },
+  { id: "evt-003", type: "metric", name: "cart_items", value: 3 },
+  { id: "evt-004", type: "notice", message: "库存同步完成" },
+  { id: "evt-005", type: "alert", severity: "critical", code: "STREAM-721", message: "支付通道抖动" },
+];
+
+const LIVE_SETTINGS = {
+  theme: "green",
+  release: "live-2026.06",
+  featureFlag: "CACHE-BUST-42",
+};
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -178,6 +194,37 @@ const server = createServer(async (req, res) => {
       items: PRODUCTS.slice((page - 1) * pageSize, page * pageSize),
       hasMore: page * pageSize < PRODUCTS.length,
     });
+  }
+
+  if (path === "/api/settings") {
+    await sleep(150);
+    return sendJSON(res, 200, LIVE_SETTINGS, { "Cache-Control": "no-store" });
+  }
+
+  if (path === "/api/flake-check") {
+    const run = Number(url.searchParams.get("run") || 0);
+    await sleep(80);
+    return sendJSON(res, 200, {
+      run,
+      ok: run > 0 && run % 3 !== 0,
+      code: "FLAKE-307",
+    });
+  }
+
+  if (path === "/api/realtime-events") {
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-store",
+      Connection: "keep-alive",
+    });
+    for (const event of REALTIME_EVENTS) {
+      await sleep(220);
+      res.write(`id: ${event.id}\n`);
+      res.write(`event: ${event.type}\n`);
+      res.write(`data: ${JSON.stringify(event)}\n\n`);
+    }
+    res.end();
+    return;
   }
 
   // ---- 需要登录的页面 ----

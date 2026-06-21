@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>回归稳定性 · Bench 靶场</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+</head>
+<body>
+  <header class="site"><a class="brand" href="/">Bench 靶场</a></header>
+  <main>
+    <div class="card">
+      <h1>不稳定回归</h1>
+      <p class="muted">运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。</p>
+      <button id="run-checks">运行 10 次</button>
+      <p class="hint" id="flake-summary">尚未运行</p>
+      <table>
+        <thead><tr><th>轮次</th><th>结果</th><th>代码</th></tr></thead>
+        <tbody id="flake-rows"></tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    document.getElementById("run-checks").addEventListener("click", async () => {
+      const rows = document.getElementById("flake-rows");
+      const summary = document.getElementById("flake-summary");
+      rows.innerHTML = "";
+      const failures = [];
+      for (let run = 1; run <= 10; run += 1) {
+        const result = await fetch(`/api/flake-check?run=${run}`).then((r) => r.json());
+        if (!result.ok) failures.push(run);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${run}</td><td>${result.ok ? "PASS" : "FAIL"}</td><td>${result.code}</td>`;
+        rows.appendChild(tr);
+      }
+      summary.textContent = `通过 7/10，失败轮次 ${failures.join(",")}，稳定性代码 FLAKE-307`;
+    });
+  </script>
+</body>
+</html>

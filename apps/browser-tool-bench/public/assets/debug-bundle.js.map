@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "file": "debug-bundle.js",
+  "sources": ["webpack://bench/src/cart/coupon.ts", "webpack://bench/src/cart/checkout.ts"],
+  "sourcesContent": [
+    "export type CartState = { cartId: string; selectedCoupon: null | { couponCode: string } };\n\nexport function applySelectedCoupon(cartState: CartState) {\n  // BUG: selectedCoupon can be null when the user has not picked a coupon.\n  // Expected guard: if (!cartState.selectedCoupon) return null;\n  return cartState.selectedCoupon.couponCode.toUpperCase();\n}\n",
+    "import { applySelectedCoupon } from './coupon';\n\nexport function submitCoupon(cartState) {\n  return applySelectedCoupon(cartState);\n}\n"
+  ],
+  "names": ["applySelectedCoupon", "selectedCoupon", "couponCode"],
+  "mappings": "AAAA"
+}

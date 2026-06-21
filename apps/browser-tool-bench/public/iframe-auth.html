@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>跨域 iframe 授权 · Bench 靶场</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+  <style>
+    iframe { width: 100%; min-height: 260px; border: 1px solid #cfd3da; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <header class="site"><a class="brand" href="/">Bench 靶场</a></header>
+  <main>
+    <div class="card">
+      <h1>第三方授权</h1>
+      <p class="muted">下方 iframe 来自 127.0.0.1，与 localhost 页面不同源。</p>
+      <iframe id="auth-frame" title="第三方授权窗口"></iframe>
+      <p class="hint" id="auth-result">等待授权完成…</p>
+    </div>
+  </main>
+  <script>
+    const childOrigin = `http://127.0.0.1:${location.port || "80"}`;
+    document.getElementById("auth-frame").src = `${childOrigin}/iframe-child.html`;
+
+    window.addEventListener("message", (event) => {
+      if (event.origin !== childOrigin) return;
+      if (event.data && event.data.type === "bench-oauth") {
+        document.getElementById("auth-result").textContent =
+          `授权完成：${event.data.account} / ${event.data.code}`;
+      }
+    });
+  </script>
+</body>
+</html>

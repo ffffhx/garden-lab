@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Service Worker 缓存 · Bench 靶场</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+</head>
+<body>
+  <header class="site"><a class="brand" href="/">Bench 靶场</a></header>
+  <main>
+    <div class="card">
+      <h1>配置中心</h1>
+      <p class="muted">页面会读取 /api/settings，但 Service Worker 故意返回过期配置。</p>
+      <dl>
+        <dt>主题</dt>
+        <dd id="theme">加载中…</dd>
+        <dt>版本</dt>
+        <dd id="release">加载中…</dd>
+        <dt>Feature Flag</dt>
+        <dd id="flag">加载中…</dd>
+      </dl>
+      <p class="hint" id="sw-status">正在注册 Service Worker…</p>
+    </div>
+  </main>
+  <script>
+    async function loadSettings() {
+      const data = await fetch("/api/settings").then((r) => r.json());
+      document.getElementById("theme").textContent = data.theme;
+      document.getElementById("release").textContent = data.release;
+      document.getElementById("flag").textContent = data.featureFlag;
+    }
+
+    async function boot() {
+      if (!("serviceWorker" in navigator)) {
+        document.getElementById("sw-status").textContent = "当前浏览器不支持 Service Worker";
+        await loadSettings();
+        return;
+      }
+      await navigator.serviceWorker.register("/sw-cache.js");
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller && !sessionStorage.getItem("bench-sw-ready")) {
+        sessionStorage.setItem("bench-sw-ready", "1");
+        location.reload();
+        return;
+      }
+      document.getElementById("sw-status").textContent = "Service Worker 已控制页面";
+      await loadSettings();
+    }
+
+    boot();
+  </script>
+</body>
+</html>

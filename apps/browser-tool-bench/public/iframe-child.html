@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>第三方授权窗口</title>
+  <link rel="stylesheet" href="/assets/app.css" />
+</head>
+<body>
+  <main style="margin: 18px auto;">
+    <div class="card">
+      <h1>Bench OAuth</h1>
+      <p>账号：iframe-user@bench.dev</p>
+      <button id="approve">确认授权</button>
+      <p class="muted">授权码会通过 postMessage 发回父页面。</p>
+    </div>
+  </main>
+  <script>
+    document.getElementById("approve").addEventListener("click", () => {
+      parent.postMessage(
+        { type: "bench-oauth", account: "iframe-user@bench.dev", code: "OAUTH-314" },
+        `http://localhost:${location.port || "80"}`
+      );
+    });
+  </script>
+</body>
+</html>

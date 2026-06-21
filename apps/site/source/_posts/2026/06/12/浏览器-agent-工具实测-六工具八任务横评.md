@@ -1,6 +1,6 @@
 ---
 title: "浏览器 Agent 工具怎么选：@chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP、playwright-cli 二十任务实测"
-updated: 2026-06-19 23:31:45
+updated: 2026-06-21 00:22:25
 date: 2026-06-12 21:30:00
 categories:
   - 技术
@@ -13,7 +13,7 @@ tags:
   - Agent
   - Playwright
   - Benchmark
-excerpt: "实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli：二十道固定任务覆盖网页登录、Network 排障、性能诊断、扩展特权页、真实登录态、Source Map、Service Worker、iframe、文件上传与键盘可访问性；另补 R01-R09 真实网站外场任务，覆盖 Chrome Web Store、真实扩展注入、真实 Network 响应体、请求拦截和 HAR/trace。结论不是谁最强，而是什么场景该选谁。"
+excerpt: "实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli：二十道固定任务覆盖网页登录、Network 排障、性能诊断、扩展特权页、三种登录态路线、Source Map、Service Worker、iframe、文件上传与键盘可访问性；另已跑完 R01-R09 真实网站外场任务，覆盖 Chrome Web Store、真实扩展注入、真实 Network 响应体、请求拦截和 HAR/trace。结论不是谁最强，而是什么场景该选谁。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
@@ -22,15 +22,15 @@ coverPosition: "below-title"
 
 如果你正在选浏览器 Agent 工具，先别问"哪个最强"。先问三件事：它能不能复用真实登录态，能不能拿到 Network / 性能证据，能不能进入 `chrome://` 和扩展设置页。
 
-我用 `@chrome`、`@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP` 和 `playwright-cli` 跑了二十道有标准答案的固定任务，从网页登录、Network 排障、性能诊断，一路覆盖到扩展安全域、真实登录态、Source Map、Service Worker、iframe、文件上传与键盘可访问性。后来又补了一组 R01-R09 真实网站外场任务卡，专门覆盖 GitHub、MDN、npm、Chrome Web Store、真实扩展注入、真实 Network 响应体、请求拦截和 HAR/trace；这组还没有并入总分，原因是外部网站会变，必须按当次 URL、时间戳、profile 和证据判定。
+我用 `@chrome`、`@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP` 和 `playwright-cli` 跑了二十道有标准答案的固定任务（其中 T10 拆成默认 profile、自管持久化、指定 9223 三条登录态路线），从网页登录、Network 排障、性能诊断，一路覆盖到扩展安全域、真实登录态、Source Map、Service Worker、iframe、文件上传与键盘可访问性。后来又用每工具一个独立 Subagent 跑完 R01-R09 真实网站外场，专门覆盖 GitHub、MDN、npm、Chrome Web Store、真实扩展注入、真实 Network 响应体、请求拦截和 HAR/trace；这组并进第 1 节同一张总表（因为是同一时刻、同一批工具跑的一次快照），只是动态字段会随时间变、必须带上当次 URL、时间戳、profile 和证据。2026-06-20 追加了一轮 `@chrome` 开完整 CDP 权限后的默认 Profile 复测；2026-06-21 又把完整 CDP 关掉、只保留 extension bridge 复测，修正了早期因 Codex Chrome Extension disabled 导致的大量 N-R。
 
 这篇文章按"结论 → 过程 → 原理"三段组织：
 
-- **一、结论先行**：第 1 节是六工具 × 二十任务的结果总表，第 2 节按"你要干什么"直接给首选与加装路由；
+- **一、结论先行**：第 1 节是六工具 × T01-T20 靶场任务 + R01-R09 真实网站任务的结果总表，第 2 节按"你要干什么"直接给首选与加装路由；
 - **二、测试过程**：第 3 节是实测方法（基准测试站与任务设计），第 4 节逐格核对每个 ❌ / ⚠️ 的成因，第 5 节提炼比单格更长寿的跨工具规律；
 - **三、底层原理**：第 6 节用浏览器能力分层和安全域给出边界公式，第 7 节逐工具讲实现——边界到底来自哪里。
 
-复现材料（基准测试站、任务卡、原始数据）都在仓库 `apps/browser-tool-bench/`；固定靶场任务在 `tasks/`，真实网站外场任务在 `tasks-real/`，可以复查每个 ✅ / ⚠️ / ❌ 的依据，也能看到哪些任务只是补了评测集、尚未跑分。
+复现材料（基准测试站、任务卡、原始数据）都在仓库 `apps/browser-tool-bench/`；固定靶场任务在 `tasks/`，真实网站外场任务在 `tasks-real/`，外场首轮报告在 `results/realworld-2026-06-20-r01-r09/`，可以复查每个 ✅ / ⚠️ / ❌ 的依据。
 
 全文主线是一个从实测里提炼出来的公式：
 
@@ -44,58 +44,149 @@ coverPosition: "below-title"
 
 ### 1. 结果总表
 
-一张总表收全二十道题。图例：`*` = 依赖 eval、CDP 逃生舱或临时页面脚本补齐关键步骤；`†` = `--cdp` 命中目标 profile 不可靠、需先复位常驻 daemon（见 7.2）；`‡` = 依赖持久 userDataDir、不可移植（换目录即丢）；`△` = 工具自身无持久化机制、只能搭外部持久浏览器便车；`N/A` = 该任务对该工具不适用；`N-R` = 本轮运行时不可用或该能力未暴露。
+下面这张热力图收全 T01-T20 靶场任务和 R01-R09 真实网站任务，颜色与图例见图内；图中上标 `†` = `--cdp` 命中目标 profile 不可靠、需先复位常驻 daemon（见 7.2），`‡` = 依赖持久 userDataDir、不可移植（换目录即丢），`△` = 工具自身无持久化机制、只能搭外部持久浏览器便车，`N/A` = 该任务对该工具不适用，`N-R` = 本轮运行时不可用或该能力未暴露。
 
-| 任务 | @chrome | @browser | agent-browser | bb-browser | DevTools MCP | playwright-cli |
-| --- | --- | --- | --- | --- | --- | --- |
-| T01 登录与观察 | ✅ | ✅ | ✅ | ✅* | ✅ | ✅ |
-| T02 Network 排障 | ❌ 无响应体 | ❌ 无响应体 | ✅ | ✅*（需 trace 重放） | ✅ | ✅ |
-| T03 性能诊断 | ❌ 无 perf API | ❌ 无 perf API | ✅（自挖 profiler） | 未跑 | ✅（insight 直出） | ✅ |
-| T04 请求 mock | ❌ 无 route | ❌ 无 route | ✅ 网络层 | ⚠️* JS 层补丁 | ⚠️ JS 层 initScript | ✅ 网络层 |
-| T05 动态等待 | ✅ | ✅ | ✅ | ✅*（盲 sleep） | ✅ | ✅ |
-| T06 结构化提取 | ⚠️ 徽标混入字段 | ✅ | ✅ | ✅* | ✅ | ✅ |
-| T07 已登录 fetch | ❌ evaluate 无 fetch | ❌ fetch 被拦 | ✅ | ✅* | ✅ | ✅ |
-| T08 Shadow DOM | ✅ | ✅ | ✅ | ✅*（双重 eval） | ✅ | ✅ |
-| T09 扩展 reload | ❌ chrome:// 被策略拦 | ❌ 封死 chrome:// | ✅† | ⚠️/❌ 到不了扩展管理 | ✅ | ✅ 自管 context |
-| T10a 真实登录态（默认 profile） | ✅ 68 | ❌ 无真实登录态 | ✅† 68 | ✅ 68 | ✅ 68 | ❌ 接不进系统 Chrome |
-| T10b 登录态持久化（专用 profile） | N/A | N/A | ✅ 可移植 state 文件 | △ 仅能 attach | ✅‡ 持久 userDataDir | ✅ 可移植 state 文件 |
-| T11 用扩展（设置页改徽标） | ❌ chrome-extension:// 被拦 | ❌ | ✅† | ⚠️ 靠 CDP 强开设置页 | ✅ | ✅ 自管 context |
-| T12 Console 与 Source Map 定位 | N-R | ⚠️ raw sourcemap blocked | ✅* eval 取 map | ✅* CDP 逃生 | ✅ | ✅ |
-| T13 移动端布局遮挡 | N-R | ⚠️ 未拿确认码 | ✅* eval 补确认码 | ✅* CDP 逃生 | ✅* 临时解除遮挡 | ✅* `run-code` 补确认码 |
-| T14 SPA 状态 / Hydration 不一致 | N-R | ✅ | ✅* eval 读 store | ✅* CDP 逃生 | ✅ | ✅ |
-| T15 SSE 实时流等待 | N-R | ✅ | ✅* eval 触发 click | ✅* CDP 逃生 | ✅ | ✅ |
-| T16 Service Worker 缓存排障 | N-R | ⚠️ 未拿 live 值 | ✅* eval/SW 诊断 | ✅* CDP 逃生 | ✅ | ✅ |
-| T17 跨域 iframe 授权 | N-R | ✅ | ✅ | ✅* CDP 逃生 | ✅ | ✅ |
-| T18 文件上传与拖拽输入 | N-R | N-R no upload API | ✅ | ✅* CDP 逃生 | ✅ | ✅ |
-| T19 键盘可访问性 | N-R | ✅ | ✅* eval 补确认码 | ✅* CDP 逃生 | ✅ | ✅ |
-| T20 回归稳定性 / Flake Rate | N-R | ✅ | ✅* eval 触发 click | ✅* CDP 逃生 | ✅ | ✅ |
-| **合计（六工具可比的网页八道）** | **3✅1⚠️4❌** | **4✅4❌** | **8✅** | **6✅1⚠️**（7 题） | **7✅1⚠️** | **8✅** |
-| **合计（前端专项 T12-T20）** | **0/9 · 9 N-R** | **5✅3⚠️1 N-R** | **9✅（7*）** | **9✅*（CDP 逃生）** | **9✅** | **9✅** |
+<figure class="benchviz bv-matrix" role="group" aria-label="六工具 × 三十一任务结果热力图">
+<style>.benchviz{margin:1.8rem 0;font-family:var(--font-serif-body,system-ui)}
+.benchviz *{box-sizing:border-box}
+.bv-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem .9rem;margin-bottom:.7rem}
+.bv-title{font-weight:700;font-size:1.02rem;color:var(--ink,#1a1815)}
+.bv-hint{font-size:.82rem;color:var(--muted,#6a6155)}
+.bv-legend{display:flex;flex-wrap:wrap;gap:.35rem .7rem;margin:.2rem 0 .8rem;font-size:.78rem;color:var(--muted,#6a6155)}
+.bv-lg{display:inline-flex;align-items:center;gap:.32rem}
+.bv-dot{width:1.05rem;height:1.05rem;border-radius:.3rem;display:inline-grid;place-items:center;font-size:.72rem;font-weight:700;line-height:1}
+.bv-scroll{overflow-x:auto;border:1px solid var(--hair,rgba(26,24,21,.2));border-radius:.75rem;-webkit-overflow-scrolling:touch}
+.benchviz table.bv-grid{border-collapse:separate;border-spacing:0;width:100%;min-width:760px;font-size:.8rem;border:0;border-radius:0;overflow:visible;margin:0}
+.benchviz .bv-grid th,.benchviz .bv-grid td{border:0;border-bottom:1px solid rgba(26,24,21,.08);border-right:1px solid rgba(26,24,21,.06)}
+.benchviz .bv-grid thead th{position:sticky;top:0;z-index:3;background:var(--paper-soft,#faf6ec);padding:.5rem .45rem;text-align:center;vertical-align:bottom}
+.bv-colh b{display:block;font-size:.82rem;color:var(--ink,#1a1815);white-space:nowrap}
+.bv-sub{display:block;font-size:.66rem;color:var(--muted,#6a6155);font-weight:400;margin-top:.1rem;white-space:nowrap}
+.benchviz .bv-rowh{position:sticky;left:0;z-index:2;background:var(--paper-soft,#faf6ec);text-align:left;font-weight:600;color:var(--ink-soft,#3c362c);padding:.38rem .6rem;font-size:.76rem;white-space:nowrap;min-width:170px}
+.benchviz .bv-corner{z-index:4}
+.bv-tr.bv-real .bv-rowh{color:var(--red,#8f2d20)}
+.bv-tr:hover td{filter:brightness(.97)}
+.bv-tr:hover .bv-rowh{background:var(--paper-deep,#ece5d5)}
+.benchviz .bv-c{padding:.32rem .3rem;text-align:center;vertical-align:middle;min-width:84px}
+.bv-g{display:inline-block;font-size:1rem;font-weight:800;line-height:1.05}
+.bv-mk{font-size:.62rem;font-weight:700;margin-left:1px;opacity:.85}
+.bv-n{display:block;font-size:.62rem;line-height:1.18;margin-top:.12rem;opacity:.82;max-width:120px;margin-inline:auto}
+.bv-ok{background:#e7eedd}.bv-ok .bv-g{color:#4f7233}
+.bv-oka{background:#e7eedd}.bv-oka .bv-g{color:#5c7a3f}
+.bv-hatch{background-image:repeating-linear-gradient(45deg,rgba(79,114,51,.14)0,rgba(79,114,51,.14)3px,transparent 3px,transparent 7px)}
+.bv-warn{background:#f4e8cc}.bv-warn .bv-g{color:#9a6516}
+.bv-bad{background:#f1ddd6}.bv-bad .bv-g{color:#8f2d20}
+.bv-nr{background:#ece7da}.bv-nr .bv-g{color:#a59b88}
+.bv-na{background:repeating-linear-gradient(45deg,#ece7da 0,#ece7da 5px,#e4ddcb 5px,#e4ddcb 10px)}.bv-na .bv-g{color:#b3aa97}
+.bv-dep{background:#ece4d2}.bv-dep .bv-g{color:#917f5c}
+.bv-cov{margin-top:1rem}
+.bv-covh{font-size:.82rem;font-weight:700;color:var(--ink,#1a1815);margin-bottom:.5rem}
+.bv-covrow{display:flex;align-items:center;gap:.6rem;margin:.32rem 0}
+.bv-covname{flex:0 0 9.5rem;font-size:.76rem;color:var(--ink-soft,#3c362c);font-weight:600;line-height:1.1}
+.bv-covname small{display:block;font-size:.62rem;color:var(--muted,#6a6155);font-weight:400}
+.bv-bar{flex:1;display:flex;height:.95rem;border-radius:.3rem;overflow:hidden;background:#efe9da;min-width:120px}
+.bv-seg{display:block}
+.bv-seg.bv-ok{background:#7c9c54}.bv-seg.bv-oka{background:#7c9c54;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.45)0,rgba(255,255,255,.45)2px,transparent 2px,transparent 5px)}
+.bv-seg.bv-warn{background:#d6a64a}.bv-seg.bv-bad{background:#b4524a}.bv-seg.bv-dep{background:#bcae8e}.bv-seg.bv-nr{background:#d8cfba}.bv-seg.bv-na{background:#e4ddcb}
+.bv-covnum{flex:0 0 5.2rem;text-align:right;font-size:.74rem;color:var(--muted,#6a6155)}
+.bv-covnum b{font-size:1.02rem;color:var(--ink,#1a1815)}
+@media(max-width:640px){.bv-rowh{min-width:140px}.bv-covname{flex-basis:7rem}}</style>
+<div class="bv-head"><span class="bv-title">六工具 × 31 任务结果热力图</span><span class="bv-hint">绿=通过 · 黄=部分 · 红=失败 · 灰=不适用；斜纹=靠 eval/CDP 逃生补齐；悬停看每格说明；右滑看全部工具列。上标 <b>†</b>=--cdp 命中不可靠（见 7.2）· <b>‡</b>=持久 userDataDir 不可移植。</span></div>
+<div class="bv-legend"><span class="bv-lg"><span class="bv-dot bv-ok">✓</span>通过</span><span class="bv-lg"><span class="bv-dot bv-oka">✓*</span>通过（靠 eval/CDP 逃生）</span><span class="bv-lg"><span class="bv-dot bv-warn">◐</span>部分 / JS 层补丁</span><span class="bv-lg"><span class="bv-dot bv-bad">✕</span>失败</span><span class="bv-lg"><span class="bv-dot bv-dep">△</span>借外部浏览器</span><span class="bv-lg"><span class="bv-dot bv-nr">–</span>N-R 未暴露</span><span class="bv-lg"><span class="bv-dot bv-na">·</span>N/A 不适用</span></div>
+<div class="bv-scroll"><table class="bv-grid"><thead><tr><th class="bv-rowh bv-corner">任务 \ 工具</th><th class="bv-colh"><b>@chrome</b><span class="bv-sub">无完整CDP · 默认Profile</span></th><th class="bv-colh"><b>@chrome</b><span class="bv-sub">开权限 · 默认Profile</span></th><th class="bv-colh"><b>@browser</b><span class="bv-sub">in-app</span></th><th class="bv-colh"><b>agent-browser</b><span class="bv-sub">CDP</span></th><th class="bv-colh"><b>bb-browser</b><span class="bv-sub">CDP</span></th><th class="bv-colh"><b>DevTools MCP</b><span class="bv-sub">CDP + DevTools</span></th><th class="bv-colh"><b>playwright-cli</b><span class="bv-sub">Playwright 引擎</span></th></tr></thead><tbody><tr class="bv-tr"><th class="bv-rowh" scope="row">T01 登录与观察</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）"><span class="bv-g">✓<sup class="bv-mk">*</sup></span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T02 Network 排障</th><td class="bv-c bv-bad" title="失败：无响应体"><span class="bv-g">✕</span><span class="bv-n">无响应体</span></td><td class="bv-c bv-ok" title="通过：读响应体"><span class="bv-g">✓</span><span class="bv-n">读响应体</span></td><td class="bv-c bv-bad" title="失败：无响应体"><span class="bv-g">✕</span><span class="bv-n">无响应体</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：需 trace 重放"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">需 trace 重放</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T03 性能诊断</th><td class="bv-c bv-bad" title="失败：无 perf API"><span class="bv-g">✕</span><span class="bv-n">无 perf API</span></td><td class="bv-c bv-ok" title="通过：timing + Runtime"><span class="bv-g">✓</span><span class="bv-n">timing + Runtime</span></td><td class="bv-c bv-bad" title="失败：无 perf API"><span class="bv-g">✕</span><span class="bv-n">无 perf API</span></td><td class="bv-c bv-ok" title="通过：自挖 profiler"><span class="bv-g">✓</span><span class="bv-n">自挖 profiler</span></td><td class="bv-c bv-notrun" title="未跑：未跑"><span class="bv-g">–</span><span class="bv-n">未跑</span></td><td class="bv-c bv-ok" title="通过：insight 直出"><span class="bv-g">✓</span><span class="bv-n">insight 直出</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T04 请求 mock</th><td class="bv-c bv-bad" title="失败：无 route"><span class="bv-g">✕</span><span class="bv-n">无 route</span></td><td class="bv-c bv-bad" title="失败：无可靠 route"><span class="bv-g">✕</span><span class="bv-n">无可靠 route</span></td><td class="bv-c bv-bad" title="失败：无 route"><span class="bv-g">✕</span><span class="bv-n">无 route</span></td><td class="bv-c bv-ok" title="通过：网络层"><span class="bv-g">✓</span><span class="bv-n">网络层</span></td><td class="bv-c bv-warn" title="部分：JS 层补丁"><span class="bv-g">◐<sup class="bv-mk">*</sup></span><span class="bv-n">JS 层补丁</span></td><td class="bv-c bv-warn" title="部分：JS 层 initScript"><span class="bv-g">◐</span><span class="bv-n">JS 层 initScript</span></td><td class="bv-c bv-ok" title="通过：网络层"><span class="bv-g">✓</span><span class="bv-n">网络层</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T05 动态等待</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：盲 sleep"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">盲 sleep</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T06 结构化提取</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）"><span class="bv-g">✓<sup class="bv-mk">*</sup></span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T07 已登录 fetch</th><td class="bv-c bv-bad" title="失败：evaluate 无 fetch"><span class="bv-g">✕</span><span class="bv-n">evaluate 无 fetch</span></td><td class="bv-c bv-ok" title="通过：Runtime fetch"><span class="bv-g">✓</span><span class="bv-n">Runtime fetch</span></td><td class="bv-c bv-bad" title="失败：fetch 被拦"><span class="bv-g">✕</span><span class="bv-n">fetch 被拦</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）"><span class="bv-g">✓<sup class="bv-mk">*</sup></span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T08 Shadow DOM</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：Runtime 穿透"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">Runtime 穿透</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：双重 eval"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">双重 eval</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T09 扩展 reload</th><td class="bv-c bv-bad" title="失败：chrome:// 被策略拦"><span class="bv-g">✕</span><span class="bv-n">chrome:// 被策略拦</span></td><td class="bv-c bv-bad" title="失败：chrome:// 仍被拦"><span class="bv-g">✕</span><span class="bv-n">chrome:// 仍被拦</span></td><td class="bv-c bv-bad" title="失败：封死 chrome://"><span class="bv-g">✕</span><span class="bv-n">封死 chrome://</span></td><td class="bv-c bv-ok" title="通过：复位 daemon"><span class="bv-g">✓<sup class="bv-mk">†</sup></span><span class="bv-n">复位 daemon</span></td><td class="bv-c bv-warn" title="部分：到不了扩展管理"><span class="bv-g">◐</span><span class="bv-n">到不了扩展管理</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过：自管 context"><span class="bv-g">✓</span><span class="bv-n">自管 context</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T10a 真实登录态（默认 profile）</th><td class="bv-c bv-ok" title="通过：70 · 默认Profile"><span class="bv-g">✓</span><span class="bv-n">70 · 默认Profile</span></td><td class="bv-c bv-ok" title="通过：70 · 默认Profile"><span class="bv-g">✓</span><span class="bv-n">70 · 默认Profile</span></td><td class="bv-c bv-bad" title="失败：无真实登录态"><span class="bv-g">✕</span><span class="bv-n">无真实登录态</span></td><td class="bv-c bv-ok" title="通过：68"><span class="bv-g">✓<sup class="bv-mk">†</sup></span><span class="bv-n">68</span></td><td class="bv-c bv-ok" title="通过：68"><span class="bv-g">✓</span><span class="bv-n">68</span></td><td class="bv-c bv-ok" title="通过：68"><span class="bv-g">✓</span><span class="bv-n">68</span></td><td class="bv-c bv-bad" title="失败：本轮 attach 崩"><span class="bv-g">✕</span><span class="bv-n">本轮 attach 崩</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T10b 登录态持久化（专用 profile）</th><td class="bv-c bv-na" title="不适用 N/A"><span class="bv-g">·</span></td><td class="bv-c bv-na" title="不适用 N/A"><span class="bv-g">·</span></td><td class="bv-c bv-na" title="不适用 N/A"><span class="bv-g">·</span></td><td class="bv-c bv-ok" title="通过：可移植 state 文件"><span class="bv-g">✓</span><span class="bv-n">可移植 state 文件</span></td><td class="bv-c bv-dep" title="借车 △：仅能 attach"><span class="bv-g">△</span><span class="bv-n">仅能 attach</span></td><td class="bv-c bv-ok" title="通过：持久 userDataDir"><span class="bv-g">✓<sup class="bv-mk">‡</sup></span><span class="bv-n">持久 userDataDir</span></td><td class="bv-c bv-ok" title="通过：可移植 state 文件"><span class="bv-g">✓</span><span class="bv-n">可移植 state 文件</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T10c 指定浏览器登录态（CDP 9223）</th><td class="bv-c bv-nr" title="未暴露 N-R：无 9223 绑定"><span class="bv-g">–</span><span class="bv-n">无 9223 绑定</span></td><td class="bv-c bv-bad" title="失败：仍不能证明 9223"><span class="bv-g">✕</span><span class="bv-n">仍不能证明 9223</span></td><td class="bv-c bv-nr" title="未暴露 N-R：无外部 CDP 绑定"><span class="bv-g">–</span><span class="bv-n">无外部 CDP 绑定</span></td><td class="bv-c bv-ok" title="通过：9223 · 70/71"><span class="bv-g">✓</span><span class="bv-n">9223 · 70/71</span></td><td class="bv-c bv-ok" title="通过：9223 · 70"><span class="bv-g">✓</span><span class="bv-n">9223 · 70</span></td><td class="bv-c bv-ok" title="通过：9223 · 70"><span class="bv-g">✓</span><span class="bv-n">9223 · 70</span></td><td class="bv-c bv-ok" title="通过：attach 9223 · 71"><span class="bv-g">✓</span><span class="bv-n">attach 9223 · 71</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T11 用扩展（设置页改徽标）</th><td class="bv-c bv-bad" title="失败：options 被拦"><span class="bv-g">✕</span><span class="bv-n">options 被拦</span></td><td class="bv-c bv-bad" title="失败：options 仍被拦"><span class="bv-g">✕</span><span class="bv-n">options 仍被拦</span></td><td class="bv-c bv-bad" title="失败"><span class="bv-g">✕</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓<sup class="bv-mk">†</sup></span></td><td class="bv-c bv-warn" title="部分：靠 CDP 强开设置页"><span class="bv-g">◐</span><span class="bv-n">靠 CDP 强开设置页</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过：自管 context"><span class="bv-g">✓</span><span class="bv-n">自管 context</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T12 Console 与 Source Map</th><td class="bv-c bv-warn" title="部分：仅 console/bundle"><span class="bv-g">◐</span><span class="bv-n">仅 console/bundle</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-warn" title="部分：raw sourcemap blocked"><span class="bv-g">◐</span><span class="bv-n">raw sourcemap blocked</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：eval 取 map"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">eval 取 map</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：CDP 逃生"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">CDP 逃生</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T13 移动端布局遮挡</th><td class="bv-c bv-bad" title="失败：无 viewport"><span class="bv-g">✕</span><span class="bv-n">无 viewport</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：hit-test 后临时隐藏"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">hit-test 后临时隐藏</span></td><td class="bv-c bv-warn" title="部分：未拿确认码"><span class="bv-g">◐</span><span class="bv-n">未拿确认码</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：eval 补确认码"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">eval 补确认码</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：CDP 逃生"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">CDP 逃生</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：临时解除遮挡"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">临时解除遮挡</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：run-code 补确认码"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">run-code 补确认码</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T14 SPA 状态 / Hydration</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：eval 读 store"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">eval 读 store</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：CDP 逃生"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">CDP 逃生</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T15 SSE 实时流等待</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：eval 触发 click"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">eval 触发 click</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：CDP 逃生"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">CDP 逃生</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T16 Service Worker 缓存排障</th><td class="bv-c bv-warn" title="部分：只证旧值"><span class="bv-g">◐</span><span class="bv-n">只证旧值</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-warn" title="部分：未拿 live 值"><span class="bv-g">◐</span><span class="bv-n">未拿 live 值</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：eval/SW 诊断"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">eval/SW 诊断</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：CDP 逃生"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">CDP 逃生</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T17 跨域 iframe 授权</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：CDP 逃生"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">CDP 逃生</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T18 文件上传与拖拽输入</th><td class="bv-c bv-bad" title="失败：no upload API"><span class="bv-g">✕</span><span class="bv-n">no upload API</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R：no upload API"><span class="bv-g">–</span><span class="bv-n">no upload API</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：CDP 逃生"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">CDP 逃生</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T19 键盘可访问性</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：eval 补确认码"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">eval 补确认码</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：CDP 逃生"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">CDP 逃生</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr"><th class="bv-rowh" scope="row">T20 回归稳定性 / Flake Rate</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：eval 触发 click"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">eval 触发 click</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：CDP 逃生"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">CDP 逃生</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td></tr><tr class="bv-tr bv-real"><th class="bv-rowh" scope="row">R01 GitHub 公共仓库代码导航</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td></tr><tr class="bv-tr bv-real"><th class="bv-rowh" scope="row">R02 GitHub 真实登录态只读通知</th><td class="bv-c bv-ok" title="通过：70"><span class="bv-g">✓</span><span class="bv-n">70</span></td><td class="bv-c bv-ok" title="通过：70"><span class="bv-g">✓</span><span class="bv-n">70</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td></tr><tr class="bv-tr bv-real"><th class="bv-rowh" scope="row">R03 MDN 文档结构化阅读</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td></tr><tr class="bv-tr bv-real"><th class="bv-rowh" scope="row">R04 npm 包页面元数据</th><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td></tr><tr class="bv-tr bv-real"><th class="bv-rowh" scope="row">R05 Chrome Web Store 扩展详情</th><td class="bv-c bv-bad" title="失败：Web Store 不可脚本化"><span class="bv-g">✕</span><span class="bv-n">Web Store 不可脚本化</span></td><td class="bv-c bv-bad" title="失败：detached"><span class="bv-g">✕</span><span class="bv-n">detached</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td></tr><tr class="bv-tr bv-real"><th class="bv-rowh" scope="row">R06 扩展注入真实网站</th><td class="bv-c bv-warn" title="部分：可见注入，options 不可达"><span class="bv-g">◐</span><span class="bv-n">可见注入，options 不可达</span></td><td class="bv-c bv-warn" title="部分：可见注入，options 不可达"><span class="bv-g">◐</span><span class="bv-n">可见注入，options 不可达</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td><td class="bv-c bv-warn" title="部分：实为 ✅，见下"><span class="bv-g">◐</span><span class="bv-n">实为 ✅，见下</span></td><td class="bv-c bv-bad" title="失败"><span class="bv-g">✕</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td></tr><tr class="bv-tr bv-real"><th class="bv-rowh" scope="row">R07 真实网站 Network 响应体</th><td class="bv-c bv-bad" title="失败：无响应体"><span class="bv-g">✕</span><span class="bv-n">无响应体</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td></tr><tr class="bv-tr bv-real"><th class="bv-rowh" scope="row">R08 真实网站请求拦截</th><td class="bv-c bv-nr" title="未暴露 N-R：无 route"><span class="bv-g">–</span><span class="bv-n">无 route</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）：URL block"><span class="bv-g">✓<sup class="bv-mk">*</sup></span><span class="bv-n">URL block</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td><td class="bv-c bv-oka bv-hatch" title="通过（逃生）"><span class="bv-g">✓<sup class="bv-mk">*</sup></span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td></tr><tr class="bv-tr bv-real"><th class="bv-rowh" scope="row">R09 真实网站 HAR 与性能快照</th><td class="bv-c bv-bad" title="失败：无 timing"><span class="bv-g">✕</span><span class="bv-n">无 timing</span></td><td class="bv-c bv-ok" title="通过：timing"><span class="bv-g">✓</span><span class="bv-n">timing</span></td><td class="bv-c bv-warn" title="部分"><span class="bv-g">◐</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-warn" title="部分"><span class="bv-g">◐</span></td><td class="bv-c bv-ok" title="通过"><span class="bv-g">✓</span></td><td class="bv-c bv-nr" title="未暴露 N-R"><span class="bv-g">–</span></td></tr></tbody></table></div>
+<div class="bv-cov"><div class="bv-covh">能力覆盖（同口径 31 格，含 R01-R09 外场）</div><div class="bv-covrow"><span class="bv-covname">@chrome<small>无完整CDP · 默认Profile</small></span><span class="bv-bar"><span class="bv-seg bv-ok" style="flex:14" title="通过 14"></span><span class="bv-seg bv-warn" style="flex:3" title="部分 3"></span><span class="bv-seg bv-bad" style="flex:11" title="失败 11"></span><span class="bv-seg bv-nr" style="flex:2" title="未暴露 N-R 2"></span><span class="bv-seg bv-na" style="flex:1" title="不适用 N/A 1"></span></span><span class="bv-covnum"><b>14</b><small>/30 通过</small></span></div><div class="bv-covrow"><span class="bv-covname">@chrome<small>开权限 · 默认Profile</small></span><span class="bv-bar"><span class="bv-seg bv-ok" style="flex:21" title="通过 21"></span><span class="bv-seg bv-oka" style="flex:3" title="通过（逃生） 3"></span><span class="bv-seg bv-warn" style="flex:1" title="部分 1"></span><span class="bv-seg bv-bad" style="flex:5" title="失败 5"></span><span class="bv-seg bv-na" style="flex:1" title="不适用 N/A 1"></span></span><span class="bv-covnum"><b>24</b><small>/30 通过</small></span></div><div class="bv-covrow"><span class="bv-covname">@browser<small>in-app</small></span><span class="bv-bar"><span class="bv-seg bv-ok" style="flex:13" title="通过 13"></span><span class="bv-seg bv-warn" style="flex:4" title="部分 4"></span><span class="bv-seg bv-bad" style="flex:7" title="失败 7"></span><span class="bv-seg bv-nr" style="flex:6" title="未暴露 N-R 6"></span><span class="bv-seg bv-na" style="flex:1" title="不适用 N/A 1"></span></span><span class="bv-covnum"><b>13</b><small>/30 通过</small></span></div><div class="bv-covrow"><span class="bv-covname">agent-browser<small>CDP</small></span><span class="bv-bar"><span class="bv-seg bv-ok" style="flex:23" title="通过 23"></span><span class="bv-seg bv-oka" style="flex:7" title="通过（逃生） 7"></span><span class="bv-seg bv-warn" style="flex:1" title="部分 1"></span></span><span class="bv-covnum"><b>30</b><small>/31 通过</small></span></div><div class="bv-covrow"><span class="bv-covname">bb-browser<small>CDP</small></span><span class="bv-bar"><span class="bv-seg bv-ok" style="flex:8" title="通过 8"></span><span class="bv-seg bv-oka" style="flex:15" title="通过（逃生） 15"></span><span class="bv-seg bv-warn" style="flex:4" title="部分 4"></span><span class="bv-seg bv-bad" style="flex:1" title="失败 1"></span><span class="bv-seg bv-dep" style="flex:1" title="借车 △ 1"></span><span class="bv-seg bv-nr" style="flex:2" title="未暴露 N-R 2"></span></span><span class="bv-covnum"><b>23</b><small>/30 通过</small></span></div><div class="bv-covrow"><span class="bv-covname">DevTools MCP<small>CDP + DevTools</small></span><span class="bv-bar"><span class="bv-seg bv-ok" style="flex:28" title="通过 28"></span><span class="bv-seg bv-oka" style="flex:2" title="通过（逃生） 2"></span><span class="bv-seg bv-warn" style="flex:1" title="部分 1"></span></span><span class="bv-covnum"><b>30</b><small>/31 通过</small></span></div><div class="bv-covrow"><span class="bv-covname">playwright-cli<small>Playwright 引擎</small></span><span class="bv-bar"><span class="bv-seg bv-ok" style="flex:20" title="通过 20"></span><span class="bv-seg bv-oka" style="flex:1" title="通过（逃生） 1"></span><span class="bv-seg bv-bad" style="flex:1" title="失败 1"></span><span class="bv-seg bv-nr" style="flex:9" title="未暴露 N-R 9"></span></span><span class="bv-covnum"><b>21</b><small>/31 通过</small></span></div></div>
+</figure>
 
-同宿主（claude -p）三列的过程成本：
+过程成本怎么量？我用**两个不同的 Agent 宿主**各跑了一轮"每工具一个独立 subagent、顺序跑"的统一成本测，分开列、别混着比。
 
-| 指标 | agent-browser | DevTools MCP | playwright-cli |
-| --- | --- | --- | --- |
-| 操作数（8 题） | 94 | **48** | 70 |
-| 实际耗时 | 14.5 min | **11.1 min** | 12.1 min |
-| 成本 | $8.21 | $7.43 | **$6.08** |
-| eval 自救 | 1 次 | 3 次 | **0 次** |
+**① Claude Code 轮（Opus 4.8 · 4 工具 · token 可量）**：同一批 30 道题（靶场 21 卡 + 外场 9），每工具一个独立 workflow（3 chunk）严格顺序跑，agent-browser / bb-browser / devtools-mcp 连 9223、playwright-cli 用自管浏览器（attach 装扩展的 9223 本轮崩）。
 
-bb-browser（7 题，子 Agent 宿主）：235 条命令、26.3 分钟，7 个单元格全部依赖 eval 自救——约 agent-browser 的 2.3 倍成本，差额全部来自一个工具缺陷（4.5）。
+<figure class="benchcost bc-claude" role="group" aria-label="成本对比 ① Claude Code 轮（Opus 4.8 · 4 工具 · 30 题 · 连 9223）">
+<style>.benchcost{margin:1.6rem 0;font-family:var(--font-serif-body,system-ui)}
+.benchcost *{box-sizing:border-box}
+.bc-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem .9rem;margin-bottom:.6rem}
+.bc-title{font-weight:700;font-size:1rem;color:var(--ink,#1a1815)}
+.bc-hint{font-size:.8rem;color:var(--muted,#6a6155)}
+.bc-scroll{overflow-x:auto;border:1px solid var(--hair,rgba(26,24,21,.2));border-radius:.75rem}
+.benchcost table.bc-tab{border-collapse:separate;border-spacing:0;width:100%;min-width:680px;font-size:.82rem;border:0;border-radius:0;overflow:visible;margin:0}
+.benchcost .bc-tab th,.benchcost .bc-tab td{border:0;border-bottom:1px solid rgba(26,24,21,.08);padding:.42rem .6rem;text-align:left;vertical-align:middle}
+.benchcost .bc-tab thead th{background:var(--paper-soft,#faf6ec);position:sticky;top:0;font-size:.74rem;color:var(--ink-soft,#3c362c);white-space:nowrap}
+.bc-tab tbody tr:hover td{background:rgba(26,24,21,.025)}
+.bc-tool{font-weight:700;color:var(--ink,#1a1815);white-space:nowrap}
+.bc-tool small{display:block;font-weight:400;font-size:.66rem;color:var(--muted,#6a6155)}
+.bc-mode{font-size:.72rem;color:var(--muted,#6a6155);white-space:nowrap}
+.bc-res{display:flex;flex-wrap:wrap;gap:.2rem}
+.bc-chip{font-size:.68rem;font-weight:700;padding:.05rem .34rem;border-radius:.3rem;line-height:1.35;white-space:nowrap}
+.bc-chip.ok{background:#e7eedd;color:#4f7233}.bc-chip.warn{background:#f4e8cc;color:#9a6516}.bc-chip.bad{background:#f1ddd6;color:#8f2d20}.bc-chip.nr{background:#ece7da;color:#a59b88}
+.bc-num{position:relative;min-width:108px}
+.bc-fill{position:absolute;left:0;top:0;bottom:0;border-radius:0 .25rem .25rem 0;opacity:.32;z-index:0}
+.bc-v{position:relative;z-index:1;font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink,#1a1815)}
+.bc-v small{font-weight:400;color:var(--muted,#6a6155);font-size:.72em}
+.bc-best .bc-v{color:#4f7233}.bc-worst .bc-v{color:#8f2d20}
+.bc-flag{font-size:.64rem;margin-left:.25rem;font-weight:700}
+.bc-foot{font-size:.74rem;color:var(--muted,#6a6155);margin-top:.5rem;line-height:1.45}</style>
+<div class="bc-head"><span class="bc-title">成本对比 ① Claude Code 轮（Opus 4.8 · 4 工具 · 30 题 · 连 9223）</span><span class="bc-hint">柱越长越贵；<b style="color:#4f7233">▼省</b> / <b style="color:#8f2d20">▲贵</b> 标该列最优/最差。</span></div>
+<div class="bc-scroll"><table class="bc-tab"><thead><tr><th>工具</th><th>浏览器</th><th>结果（30 题）</th><th>耗时<small> min</small></th><th>token</th><th>工具调用</th><th>browserOps</th><th>eval 自救</th></tr></thead><tbody><tr><td class="bc-tool">agent-browser<small>0.27.2</small></td><td class="bc-mode">9223</td><td><span class="bc-res"><span class="bc-chip ok">29✅</span></span></td><td class="bc-num "><span class="bc-fill" style="width:54%;background:#c08a3e"></span><span class="bc-v">25.8</span></td><td class="bc-num bc-best"><span class="bc-fill" style="width:59%;background:#7a86b8"></span><span class="bc-v">190.6<span class="bc-flag" style="color:#4f7233">▼省</span></span></td><td class="bc-num bc-best"><span class="bc-fill" style="width:66%;background:#9a8ab0"></span><span class="bc-v">183<span class="bc-flag" style="color:#4f7233">▼省</span></span></td><td class="bc-num "><span class="bc-fill" style="width:89%;background:#6f9aa8"></span><span class="bc-v">218</span></td><td class="bc-num bc-best"><span class="bc-fill" style="width:63%;background:#c0795f"></span><span class="bc-v">24<span class="bc-flag" style="color:#4f7233">▼省</span></span></td></tr><tr><td class="bc-tool">bb-browser<small>0.14.2</small></td><td class="bc-mode">9223</td><td><span class="bc-res"><span class="bc-chip ok">22✅</span><span class="bc-chip warn">3⚠️</span><span class="bc-chip bad">4❌</span><span class="bc-chip nr">1 N-R</span></span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#c08a3e"></span><span class="bc-v">47.9<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td><td class="bc-num "><span class="bc-fill" style="width:84%;background:#7a86b8"></span><span class="bc-v">271.9</span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#9a8ab0"></span><span class="bc-v">277<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#6f9aa8"></span><span class="bc-v">244<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td><td class="bc-num "><span class="bc-fill" style="width:87%;background:#c0795f"></span><span class="bc-v">33</span></td></tr><tr><td class="bc-tool">chrome-devtools-mcp</td><td class="bc-mode">9223</td><td><span class="bc-res"><span class="bc-chip ok">28✅</span><span class="bc-chip warn">1⚠️</span><span class="bc-chip nr">1 N-R</span></span></td><td class="bc-num bc-best"><span class="bc-fill" style="width:53%;background:#c08a3e"></span><span class="bc-v">25.5<span class="bc-flag" style="color:#4f7233">▼省</span></span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#7a86b8"></span><span class="bc-v">322.7<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td><td class="bc-num "><span class="bc-fill" style="width:83%;background:#9a8ab0"></span><span class="bc-v">230</span></td><td class="bc-num bc-best"><span class="bc-fill" style="width:69%;background:#6f9aa8"></span><span class="bc-v">169<span class="bc-flag" style="color:#4f7233">▼省</span></span></td><td class="bc-num "><span class="bc-fill" style="width:66%;background:#c0795f"></span><span class="bc-v">25</span></td></tr><tr><td class="bc-tool">playwright-cli<small>0.1.14</small></td><td class="bc-mode">自管</td><td><span class="bc-res"><span class="bc-chip ok">24✅</span><span class="bc-chip warn">1⚠️</span><span class="bc-chip bad">2❌</span><span class="bc-chip nr">3 N-R</span></span></td><td class="bc-num "><span class="bc-fill" style="width:55%;background:#c08a3e"></span><span class="bc-v">26.4</span></td><td class="bc-num "><span class="bc-fill" style="width:63%;background:#7a86b8"></span><span class="bc-v">203.7</span></td><td class="bc-num "><span class="bc-fill" style="width:68%;background:#9a8ab0"></span><span class="bc-v">188</span></td><td class="bc-num "><span class="bc-fill" style="width:75%;background:#6f9aa8"></span><span class="bc-v">184</span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#c0795f"></span><span class="bc-v">38<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td></tr></tbody></table></div>
+<div class="bc-foot">token 为单工具总量（未拆 input/output）；playwright-cli 自管浏览器有 5 题快速失败，低耗时/低 token 不等于“完成同样多题”。原始数据 <code>results/unified-2026-06-20-claude-4tools/</code>。</div>
+</figure>
 
-T09/T10/T11 把战场从 localhost 网页挪到真实登录态与扩展安全域，其中涉及真实登录态的几格由两轮互相独立的隔离子 Agent 实测（一轮 Claude Code 主控、一轮 Codex），结论一致，差异只在评分口径（详见 4.7）。
+四条读数：① **bb-browser 是成本黑洞**——47.9min ≈ agent-browser 的 1.86×，调用/操作数最高却结果最差（4❌），根因还是 4.6 那个 click 事件 bug 逼出的处处 eval 重试——纯工具缺陷把成本顶上去。② **devtools-mcp 操作最省（169）、token 最贵（322.7k）**——MCP 每次回传冗长 a11y 快照/网络体，单 op 很贵，但能力最稳（28✅、零 ❌）。③ **agent-browser 综合最省**（耗时+token 双低、结果最全），代价是 24 次 eval 逃生。④ **playwright-cli 的低成本要打折看**：它有 5 题是自管浏览器没真实登录态/扩展、或被 npm 拦（R02/R06/T10a N-R、R04/R07 ❌），这些快速失败反而压低了耗时/token。
 
-关键前置（影响上表 T09/T10/T11 怎么读）：目标机器的系统默认 Chrome（CDP 9223）是**企业管控**的，会在运行时拦截"加载已解压扩展"（扩展自身 `chrome-extension://` 资源返回 `ERR_BLOCKED_BY_CLIENT`、content script 不注入），所以 T09/T11 的扩展宿主改用一台**干净的 Chrome for Testing**（`--disable-features=DisableLoadExtensionCommandLineSwitch --load-extension` 才能让 137+ 真正加载扩展）；T10a 仍在企业 9223 上测真实登录态。未读数读到 **68**（66/67/68 的差异只是 GitHub 实时状态，非能力差异）。
+> 三点诚实声明：(a) harness 每工具只给一个 token 总量、未拆 input/output，无法精确折 $（按 Opus 4.8 输出价粗估单工具约 $14–24、含 input 更高），故这里以 **token 总量**作成本口径；(b) **eval 自救是软指标**——各 subagent 对"eval 读数据"算不算逃生口径不一，跨工具只看趋势别逐个抠；(c) **公平性**：playwright-cli 宿主与另三者不同、且有 5 题快速失败，其低耗时不能与"完成同样多题"等价比。原始数据见 `results/unified-2026-06-20-claude-4tools/`。
+
+**② Codex 轮（gpt-5.5 / xhigh · 6 工具 · 含 @chrome/@browser）**：用同样的"顺序 + 独立 subagent"方式，多测了 Codex 专属的 `@chrome` / `@browser`，任务格按 31 格口径（`T10` 拆 a/b/c）。**它的 subagent 环境没暴露逐 agent token/$，成本列记 `unavailable`**，所以这轮只有耗时/操作/逃生可比、没有 token 数。
+
+<figure class="benchcost bc-codex" role="group" aria-label="成本对比 ② Codex 轮（gpt-5.5 / xhigh · 6 工具 · 31 格）">
+<style>.benchcost{margin:1.6rem 0;font-family:var(--font-serif-body,system-ui)}
+.benchcost *{box-sizing:border-box}
+.bc-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem .9rem;margin-bottom:.6rem}
+.bc-title{font-weight:700;font-size:1rem;color:var(--ink,#1a1815)}
+.bc-hint{font-size:.8rem;color:var(--muted,#6a6155)}
+.bc-scroll{overflow-x:auto;border:1px solid var(--hair,rgba(26,24,21,.2));border-radius:.75rem}
+.benchcost table.bc-tab{border-collapse:separate;border-spacing:0;width:100%;min-width:680px;font-size:.82rem;border:0;border-radius:0;overflow:visible;margin:0}
+.benchcost .bc-tab th,.benchcost .bc-tab td{border:0;border-bottom:1px solid rgba(26,24,21,.08);padding:.42rem .6rem;text-align:left;vertical-align:middle}
+.benchcost .bc-tab thead th{background:var(--paper-soft,#faf6ec);position:sticky;top:0;font-size:.74rem;color:var(--ink-soft,#3c362c);white-space:nowrap}
+.bc-tab tbody tr:hover td{background:rgba(26,24,21,.025)}
+.bc-tool{font-weight:700;color:var(--ink,#1a1815);white-space:nowrap}
+.bc-tool small{display:block;font-weight:400;font-size:.66rem;color:var(--muted,#6a6155)}
+.bc-mode{font-size:.72rem;color:var(--muted,#6a6155);white-space:nowrap}
+.bc-res{display:flex;flex-wrap:wrap;gap:.2rem}
+.bc-chip{font-size:.68rem;font-weight:700;padding:.05rem .34rem;border-radius:.3rem;line-height:1.35;white-space:nowrap}
+.bc-chip.ok{background:#e7eedd;color:#4f7233}.bc-chip.warn{background:#f4e8cc;color:#9a6516}.bc-chip.bad{background:#f1ddd6;color:#8f2d20}.bc-chip.nr{background:#ece7da;color:#a59b88}
+.bc-num{position:relative;min-width:108px}
+.bc-fill{position:absolute;left:0;top:0;bottom:0;border-radius:0 .25rem .25rem 0;opacity:.32;z-index:0}
+.bc-v{position:relative;z-index:1;font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink,#1a1815)}
+.bc-v small{font-weight:400;color:var(--muted,#6a6155);font-size:.72em}
+.bc-best .bc-v{color:#4f7233}.bc-worst .bc-v{color:#8f2d20}
+.bc-flag{font-size:.64rem;margin-left:.25rem;font-weight:700}
+.bc-foot{font-size:.74rem;color:var(--muted,#6a6155);margin-top:.5rem;line-height:1.45}</style>
+<div class="bc-head"><span class="bc-title">成本对比 ② Codex 轮（gpt-5.5 / xhigh · 6 工具 · 31 格）</span><span class="bc-hint">subagent 环境未暴露逐 agent token/$，成本只比耗时/操作/逃生。</span></div>
+<div class="bc-scroll"><table class="bc-tab"><thead><tr><th>工具</th><th>浏览器模式</th><th>31 格结果</th><th>耗时<small> min</small></th><th>tool_calls</th><th>browserOps</th><th>eval 自救</th></tr></thead><tbody><tr><td class="bc-tool">@chrome</td><td class="bc-mode">默认 Profile fallback</td><td><span class="bc-res"><span class="bc-chip ok">13✅</span><span class="bc-chip warn">5⚠️</span><span class="bc-chip bad">10❌</span><span class="bc-chip nr">2 N-R</span></span></td><td class="bc-num "><span class="bc-fill" style="width:38%;background:#c08a3e"></span><span class="bc-v">9.5</span></td><td class="bc-num "><span class="bc-fill" style="width:17%;background:#9a8ab0"></span><span class="bc-v">55</span></td><td class="bc-num "><span class="bc-fill" style="width:76%;background:#6f9aa8"></span><span class="bc-v">221</span></td><td class="bc-num "><span class="bc-fill" style="width:35%;background:#c0795f"></span><span class="bc-v">36</span></td></tr><tr><td class="bc-tool">@browser</td><td class="bc-mode">in-app browser</td><td><span class="bc-res"><span class="bc-chip ok">12✅</span><span class="bc-chip warn">5⚠️</span><span class="bc-chip bad">8❌</span><span class="bc-chip nr">5 N-R</span></span></td><td class="bc-num "><span class="bc-fill" style="width:51%;background:#c08a3e"></span><span class="bc-v">12.7</span></td><td class="bc-num bc-best"><span class="bc-fill" style="width:12%;background:#9a8ab0"></span><span class="bc-v">40<span class="bc-flag" style="color:#4f7233">▼省</span></span></td><td class="bc-num "><span class="bc-fill" style="width:78%;background:#6f9aa8"></span><span class="bc-v">226</span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#c0795f"></span><span class="bc-v">104<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td></tr><tr><td class="bc-tool">agent-browser</td><td class="bc-mode">CDP 9223</td><td><span class="bc-res"><span class="bc-chip ok">28✅</span><span class="bc-chip warn">2⚠️</span></span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#c08a3e"></span><span class="bc-v">25<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#9a8ab0"></span><span class="bc-v">326<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td><td class="bc-num "><span class="bc-fill" style="width:89%;background:#6f9aa8"></span><span class="bc-v">259</span></td><td class="bc-num bc-best"><span class="bc-fill" style="width:29%;background:#c0795f"></span><span class="bc-v">30<span class="bc-flag" style="color:#4f7233">▼省</span></span></td></tr><tr><td class="bc-tool">bb-browser</td><td class="bc-mode">CDP 9223</td><td><span class="bc-res"><span class="bc-chip ok">20✅</span><span class="bc-chip warn">1⚠️</span><span class="bc-chip bad">7❌</span><span class="bc-chip nr">1 N-R</span></span></td><td class="bc-num "><span class="bc-fill" style="width:86%;background:#c08a3e"></span><span class="bc-v">21.6</span></td><td class="bc-num "><span class="bc-fill" style="width:68%;background:#9a8ab0"></span><span class="bc-v">221</span></td><td class="bc-num "><span class="bc-fill" style="width:63%;background:#6f9aa8"></span><span class="bc-v">184</span></td><td class="bc-num "><span class="bc-fill" style="width:64%;background:#c0795f"></span><span class="bc-v">67</span></td></tr><tr><td class="bc-tool">Chrome DevTools MCP</td><td class="bc-mode">CDP 9223</td><td><span class="bc-res"><span class="bc-chip ok">27✅</span><span class="bc-chip warn">1⚠️</span><span class="bc-chip nr">1 N-R</span></span></td><td class="bc-num bc-best"><span class="bc-fill" style="width:16%;background:#c08a3e"></span><span class="bc-v">4<span class="bc-flag" style="color:#4f7233">▼省</span></span></td><td class="bc-num "><span class="bc-fill" style="width:98%;background:#9a8ab0"></span><span class="bc-v">318</span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#6f9aa8"></span><span class="bc-v">291<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td><td class="bc-num "><span class="bc-fill" style="width:33%;background:#c0795f"></span><span class="bc-v">34</span></td></tr><tr><td class="bc-tool">playwright-cli</td><td class="bc-mode">CDP 9223</td><td><span class="bc-res"><span class="bc-chip ok">30✅</span></span></td><td class="bc-num bc-worst"><span class="bc-fill" style="width:100%;background:#c08a3e"></span><span class="bc-v">25<span class="bc-flag" style="color:#8f2d20">▲贵</span></span></td><td class="bc-num "><span class="bc-fill" style="width:25%;background:#9a8ab0"></span><span class="bc-v">82</span></td><td class="bc-num bc-best"><span class="bc-fill" style="width:8%;background:#6f9aa8"></span><span class="bc-v">23<span class="bc-flag" style="color:#4f7233">▼省</span></span></td><td class="bc-num "><span class="bc-fill" style="width:33%;background:#c0795f"></span><span class="bc-v">34</span></td></tr></tbody></table></div>
+<div class="bc-foot"><b>耗时不可跨宿主比</b>：DevTools MCP 的 4.0min 几乎肯定是宿主计时口径差异，不能解读成“快 6 倍”。@browser 的 eval 自救 104 次几乎全是 in-app browser 只读取数所迫。原始数据 <code>results/unified-9223-2026-06-21-6tools/</code>。</div>
+</figure>
+
+两轮交叉印证 + 两处差异（这才是放两张表的意义）：
+
+- **结论一致**：agent-browser / DevTools MCP / playwright-cli 三家两轮都接近满格、零或极少 ❌；bb-browser 两轮都垫底（Codex 7❌ / Claude 4❌）；`@chrome` / `@browser`（只有 Codex 能测）受扩展安全域限制双双 10❌/8❌，且 `@browser` 的逃生高达 **104 次**——几乎全是只读 eval 提取（in-app browser 只能这么取数，不是 raw CDP 能力）。
+- **差异①（重要）**：playwright-cli 在 **Codex 轮成功 attach 9223**（用唯一 URL 在 `/json/list` 证明命中、拿到 30✅），而 Claude 轮 attach 9223 崩、改自管浏览器。这正好坐实"能否 attach 装了扩展的 9223 不是稳定结论"，跟环境/扩展集/工具版本有关（与前文 T10c 单题 attach 成功一致）——别把"playwright-cli 接不进 9223"当成铁律。
+- **差异②**：Codex 轮 DevTools MCP 仅 **4.0 min**、全场最快，和 Claude 轮 25.5min 差得离谱，几乎肯定是两个宿主的计时/记账口径不同，**不能解读成"DevTools MCP 快 6 倍"**——这也正是为什么 token/耗时只在同一宿主内可比、跨宿主只看趋势。
+
+Codex 轮原始数据见 `results/unified-9223-2026-06-21-6tools/`。
+
+T09/T10/T11 把战场从 localhost 网页挪到真实登录态与扩展安全域，其中涉及真实登录态的几格由两轮互相独立的隔离子 Agent 实测（一轮 Claude Code 主控、一轮 Codex），结论一致，差异只在评分口径（详见 4.7）。2026-06-20 又追加了 T10c，专门测“工具能否绑定用户指定的现成 9223 profile”，避免把默认 profile、自管 state 和指定 CDP profile 混成一个概念。
+
+关键前置（影响上表 T09/T10/T11 怎么读）：目标机器的系统默认 Chrome（CDP 9223）是**企业管控**的，会在运行时拦截"加载已解压扩展"（扩展自身 `chrome-extension://` 资源返回 `ERR_BLOCKED_BY_CLIENT`、content script 不注入），所以 T09/T11 的扩展宿主改用一台**干净的 Chrome for Testing**（`--disable-features=DisableLoadExtensionCommandLineSwitch --load-extension` 才能让 137+ 真正加载扩展）；T10a/T10c 仍在企业 9223 上测真实登录态。GitHub 未读数是动态字段：早期 T10a 读到 **68**，T10c 运行时从 **70** 变为 **71**。
 
 T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具一个独立子 Agent，实际靶场跑在 `http://localhost:4400/`（任务卡里的 `4399` 是旧端口；当时 4399 已被占用）。这一组不再只测"能不能点页面"，而是测前端排障里最常见的九类证据链：Console + sourcemap、移动端遮挡、hydration、SSE、Service Worker、跨源 iframe、文件上传、键盘可访问性和 flake 统计。
 
-读者指出这一版仍然偏"靶场"之后，我又把真实网站外场任务补成 R01-R09：GitHub 公共仓库导航、GitHub 登录态只读通知、MDN 文档、npm 包页、Chrome Web Store 扩展详情、扩展注入真实线上文章、真实 Network 响应体、真实网站请求拦截，以及线上文章 HAR/trace。它们不改写上表结论，因为还没有按六工具独立子 Agent 跑完；但下一轮外场实测会专门回答"这些能力放进真实网站会不会稳定"。
+读者指出这一版仍然偏"靶场"之后，我又把真实网站外场任务补成 R01-R09，并直接合进上面这张总表。**这组是真实网站**：动态字段（GitHub 未读数、npm 版本、资源耗时等）会变，所以每格都带了观察时间、最终 URL、profile 和证据（详见第 3 节）。`N-R` 在这里表示运行时不可用或该能力未暴露，不等于网站本身失败；`✅*` 表示用 URL block 或启动参数证明了网络层阻断，但不是运行时 route API。
+
+上表主体为 2026-06-19/20 Codex 单轮；`@chrome（开权限）`列是 2026-06-20 对系统默认 Chrome Profile 的追加复测，不再使用 9223；`@chrome（无完整 CDP）`列是 2026-06-21 在同一默认 Profile 上关闭完整 CDP 后的复测。无完整 CDP 时，`@chrome` 不再是 9/9 N-R：页面级操作、默认 Profile 登录态、Shadow DOM、iframe、SSE、GitHub/MDN/npm 阅读都能做；缺的是 Network body、Performance timing、route/mock、viewport、file upload、特权页和 9223 绑定。开完整 CDP 后，Network body、Runtime fetch、Performance timing、文件上传等能力明显放开；用户手动把 Bench Badge 装进默认 Profile 后，R06 至少能证明真实线上文章出现 `BENCH EXT v1.0.0`，但 `chrome-extension://.../options.html` 仍被 URL policy 拦住，所以不能把徽标改成 `REAL-SITE-2026`，只能记 ⚠️。2026-06-20 我又用 Claude Code 主控、每工具一个干净 Subagent，把外场 R01-R09 和靶场 T01-T20 **各独立复跑两轮**收方差：**agent-browser R06 两轮实测都是 ✅**（上表那笔 ⚠️ 只是 Codex Subagent 观察漏判）、playwright-cli 在外场 attach 9223 两轮确定性崩溃、动态字段两轮吻合（GitHub 未读 70 等），两轮明细见第 3 节"两轮独立复跑校准"。注意这不等于 playwright-cli 永远接不进 9223：T10c 单题用 `attach --cdp=http://127.0.0.1:9223` 已经成功。外场没有推翻推荐，反而更强化了"前端开发者首选 DevTools MCP"这个结论。
 
 ### 2. 选型路由：按任务场景反推工具
 
-没人会把六个工具都装上。大多数人——尤其是前端开发者——只需要一个**综合最顺手、又能复用真实登录态**的工具。把"复用真实登录态"定成硬前提（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用），候选立刻从六个收敛到三个：**@chrome、bb-browser、Chrome DevTools MCP**——playwright-cli 接不进系统 Chrome、@browser 不继承真实登录态、agent-browser 的 `--cdp` 命中真身不可靠（7.2），都先出局。后续追加的前端开发者专项测试没有推翻这个结论，反而把理由补强了：前端排障最常见的 console、source map、Service Worker、iframe、file input、键盘可访问性，DevTools MCP 全部能拿到证据。
+没人会把六个工具都装上。大多数人——尤其是前端开发者——只需要一个**综合最顺手、又能复用真实登录态**的工具。把"复用真实登录态"定成硬前提（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用），候选会先分成两档：DevTools MCP、agent-browser、bb-browser 这三类能在本轮接到 9223 或受管持久 profile；playwright-cli 在 T10c 单题里也能 `attach --cdp` 复用 9223，但外场轮在带多扩展的真实 profile 上触发过 service worker target 断言，稳定性还没达到“真实 profile 主工具”的级别；@browser 不继承真实登录态；`@chrome（开权限）` 已经能通过默认 Chrome Profile 做大量 CDP 观察，但 T10c 仍证明不了它落在用户指定的 9223。agent-browser 在严格 `connect 9223` + `get cdp-url` 复核后可以稳定跑一轮真实外场，所以它不该被简单排除；但如果只能给前端开发者推荐**一款**，我仍然选 **Chrome DevTools MCP**。后续追加的前端专项、真实网站外场、`@chrome` 开权限复测与 T10c 没有推翻这个结论，反而把理由补强了：前端排障最常见的 console、source map、Service Worker、iframe、file input、键盘可访问性、真实 Network body、扩展 options、指定 profile 和性能 trace，DevTools MCP 都能拿到证据。
 
-三选一里，**前端开发者首选 Chrome DevTools MCP**。
+在这些候选里，**前端开发者首选 Chrome DevTools MCP**。
 
 **为什么是它**：它本质就是"把你天天用的 F12 调试流程包成了一个 Agent 工具"——
 
@@ -106,12 +197,13 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 - **前端排障证据链基本全覆盖**：console/source map、hydration、SSE、SW、iframe、file input、键盘可访问性和 flake 统计都能落证据；
 - 综合表现领先、操作数全场最少——对已经熟悉 DevTools 心智模型的前端，几乎零学习成本（每一项对应的逐格判定见第 1 节总表）。
 
-**为什么不是另外两个能读真实登录态的**：
+**为什么不是另外两个常见候选**：
 
-- **@chrome**：复用真实登录态零打断，可惜它把前端最需要的能力恰好都阉割了——拿不到 Network 响应体、没有 `performance` 对象、evaluate 只读。对"想排接口、看性能"的前端，等于缺了半个 F12。
-- **bb-browser**：能用 `--port` 读真实登录态，但 0.14.2 的 click 事件注入有 bug、又到不了 `chrome://` 特权页，通用操作得频繁靠 eval 兜底，不够稳。
+- **@chrome**：要分清“bridge 可用但无完整 CDP”和“开完整 CDP”。无完整 CDP 时它已经不是不可用：默认 Profile 登录态、页面点击、DOM/Shadow/iframe、SSE、GitHub/MDN/npm 阅读都能跑；但 Network body、Runtime fetch、Performance timing、viewport、file upload、route/mock 都缺。开完整 CDP 后，T02/T03/T07/T18 等会翻盘，但三条硬边界还在：不能证明绑定用户指定的 9223 profile，不能进入 `chrome://extensions` / `chrome-extension://.../options.html`，也没有可靠 route/mock API。对前端排障来说，它是默认 Profile 的轻量观察器，但还不是完整 F12。
+- **agent-browser**：这轮真实网站跑得很好，是我会保留的 CLI 备选；但它更像自动化工具，需要自己守住 `--cdp 9223` 连接、route/HAR/状态清理这些工程细节，性能解释和 DevTools 面板式诊断不如 MCP 直观。
+- **bb-browser**：能用 `--port` 读真实登录态，但 0.14.2 的 click 事件注入有 bug、又到不了 `chrome://` / `chrome-extension://` 特权页，通用操作得频繁靠 eval 兜底，不够稳。
 
-> playwright-cli 的纯自动化能力仍然最稳（综合通过率最高、几乎零 eval 自救），但它**接不进系统 Chrome**，"真实登录态"这关直接过不去——是这条硬性要求把它筛掉的。如果你哪天不需要真实登录、只做自启浏览器的自动化或回归测试，它才是首选。
+> playwright-cli 的纯自动化能力仍然最稳（综合通过率最高、几乎零 eval 自救）。T10c 证明它可以 attach 到 9223 并读到登录态；但外场 R01-R09 里它在带多扩展的真实 profile 上 attach 崩过，两轮复现，所以我不会把它当“真实 profile 排障”的首选。如果你主要做自启浏览器的自动化或回归测试，它才是首选。
 
 **装它之前要知道的四个短板**：
 
@@ -135,7 +227,7 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 ### 3. 实测方法：基准测试站与任务设计
 
-本地零依赖的基准测试站，每页埋一个已知答案的坑。固定靶场负责可复现：网站不会变、登录态可控、标准答案能机械核对。真实网站负责外场真实性：它能暴露站点改版、登录态差异、Chrome Web Store 限制、真实 Network 波动、扩展注入线上页面这些靶场刻意压掉的变量。两者不能混成一张总分表，否则动态网站的偶发变化会污染工具能力判断。
+本地零依赖的基准测试站，每页埋一个已知答案的坑。固定靶场负责可复现：网站不会变、登录态可控、标准答案能机械核对。真实网站负责外场真实性：它能暴露站点改版、登录态差异、Chrome Web Store 限制、真实 Network 波动、扩展注入线上页面这些靶场刻意压掉的变量。两者维度不同，但既然是同一时刻、同一批工具跑的一次快照，就合进第 1 节同一张结果总表——代价是动态网站那几列的绝对值带时间戳、换时间复跑要重测，同一轮内仍可横比。
 
 | 任务 | 坑 | 标准答案 | 考的理论维度 |
 | --- | --- | --- | --- |
@@ -148,7 +240,7 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 | T07 已登录 fetch | /api/me 仅带 cookie 可访问 | plan = team-pro-2026 | **页面 Runtime 可写性** |
 | T08 Shadow DOM | open shadow 里的按钮和兑换码 | SHADOW-99 | 快照穿透、事件注入 |
 | T09 扩展 reload | 加载本地解压扩展，需进 `chrome://extensions` 重新加载 | 扩展 reload 成功、特权页可达 | **特权页可达性 / 安全策略** |
-| T10 真实登录态与持久化 | GitHub 通知页需真实登录态，并要求跨会话、跨目录恢复 | 免登录读到 68 条未读；专用 profile 可移植恢复 | **复用真实 profile / 跨会话持久化** |
+| T10 真实登录态与持久化 | GitHub 通知页需真实登录态，并拆成默认 profile、自管持久化、指定 9223 三条路线 | 免登录读到当次未读数；专用 profile 可移植恢复；指定 9223 必须命中 target | **复用真实 profile / 跨会话持久化 / 指定 CDP profile** |
 | T11 用扩展（设置页改徽标） | 需进 `chrome-extension://…/options.html` 改设置 | 在扩展设置页成功改掉徽标 | **特权页操作 / 产品封装范围** |
 | T12 Console 与 Source Map | bundle 报错，真实源码藏在 sourcemap | `coupon.ts` / `applySelectedCoupon` / 空值 guard | **Console + Source Map 取证** |
 | T13 移动端布局遮挡 | 移动端底部帮助条覆盖支付按钮 | `.mobile-support-bar` 覆盖，确认码 `MOBILE-39` | **viewport / hit-test / CSS 诊断** |
@@ -162,7 +254,7 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 加粗的几道是按 6.2 的边界公式设计的"分界题"——它们恰好把六个工具分成了几个阵营。
 
-真实网站外场任务单独放在 `tasks-real/`，不并入上面的 T01-T20 总分：
+真实网站外场任务放在 `tasks-real/`，结果与 T01-T20 一起并进第 1 节同一张结果总表（动态字段带时间戳）：
 
 | 任务 | 真实网站 | 重点 |
 | --- | --- | --- |
@@ -178,7 +270,39 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 这组任务的答案不能像 T01-T20 那样全部写死：GitHub 通知数、npm 当前版本、Chrome Web Store 按钮文案、资源耗时都会变。任务卡里写的是"答案生成规则"：必须记录观察时间、最终 URL、profile、工具版本和截图 / Network / trace 证据；任何会写真实网站状态的动作都直接判失败。
 
-正式数据全部来自独立会话：每个单元格（任务 × 工具）由一个全新上下文、既不知道答案也不知道工具已知 bug 的无偏 Agent 执行（Claude Code 无头 `claude -p` 进程或 Codex 隔离子 Agent），提示词只含任务原文、工具限定与约 25 次操作止损线，禁止 curl/读源码旁路，单元格之间重启基准测试站清状态——这样测到的是真实用户要付的成本，而非熟练者的最优解。每个单元格记录判定（✅/⚠️/❌ 按任务卡标准）、操作数、轮数、耗时、成本，以及 **eval 自救次数**（Agent 被迫弃用工具原语、改用 eval 直接执行 JS 才能推进的次数，见 5.2）。需如实声明的局限：每个单元格基本只跑一次（agent-browser 同日两轮），方差未收敛；@chrome/@browser 跑在 Codex 宿主内，时间/调用数只能粗比，但**能力判定不受宿主影响**；基准测试站全在 localhost，版本钉死见附录。R01-R09 外场任务目前只补了任务卡和判定口径，尚未按这一套独立子 Agent 方法跑完，因此不会混入本文总分。
+这轮外场的实际结果矩阵已与 T01-T20 并列放在[第 1 节结果总表](#1-结果总表)，此处不再重复。`N-R` 表示运行时不可用或该能力未暴露，不等于网站本身失败；`✅*` 表示 DevTools MCP 用 daemon 启动参数阻断指定资源，能证明网络层阻断，但不是运行时 route API。
+
+几条关键解释：早期 @chrome 在 R01-R09 轮曾因 Codex Chrome Extension 在 selected profile 里 disabled 被记成 N-R；2026-06-21 复测证明，这不是“无完整 CDP 权限”的真实上限。bridge 可用但无完整 CDP 时，@chrome 的 R01/R02/R03/R04 可跑，R06 能验证 content script 注入，真正过不去的是 Web Store 特殊页、Network response body、route/HAR 和扩展 options。T10c 再测时 plugin 已可连，但它打开的唯一 URL 没有出现在 9223 target 列表，所以仍不能算“指定 9223 profile”成功。@browser 是 in-app browser，不能绑定 9223，所以登录态、扩展、Network body、route/HAR 都不能算通过；playwright-cli 在 R01-R09 按约束不能自启浏览器，attach 9223 又被现有扩展 service worker target 断言打断，但 T10c 单题 attach 9223 成功。agent-browser 的 R06 记 ⚠️：它写扩展 options 和线上页面注入实际成功，主控复核 DOM 为 `REAL-SITE-2026 · v1.0.0`，但该 Subagent 自己观察漏判。
+
+#### R01-R09 与 T01-T20 的两轮独立复跑（2026-06-20 校准）
+
+第 1 节那两张结果总表（T01-T20 与 R01-R09）都只跑了一轮（agent-browser 同日两轮）。"下一步"里那条"重复轮次收方差"已经补上：2026-06-20 我用 **Claude Code 主控、每工具一个干净 Subagent、顺序复用同一台 9223 测试 Chrome**（playwright-cli 在这轮因 attach 装了扩展的 9223 必崩、改用自管浏览器），把外场 R01-R09 和靶场 T01-T20 **各独立跑了两轮**专门收方差。这轮只比四个真实 CLI/MCP 工具（Codex 专属 `@chrome`/`@browser` 无等价物，未纳入），与同日 Codex 轮互不参考。
+
+**外场 R01-R09（×2 轮，全 9223）：**
+
+| 工具 | 第1轮 | 第2轮 | 关键校准 |
+| --- | --- | --- | --- |
+| agent-browser | 9✅ | 9✅ | **R06 两轮实测都是 ✅（非上表 ⚠️）**——经 options UI 改徽标并在真实页验证 `REAL-SITE-2026 · v1.0.0`，坐实上表那笔 ⚠️ 只是 Codex Subagent 观察漏判 |
+| chrome-devtools-mcp | 8✅+1 N-R | 8✅+1⚠️* | **R08 无运行时 route**：这轮 gh server 已在运行、用不上 daemon 的 `--blockedUrlPattern` 启动入口，只能 JS 层降级 → 判 N-R/⚠️*，比上表 ✅*（启动级阻断）更严，但方向一致——它没有运行时拦截 API |
+| bb-browser | 7✅+1⚠️+1 N-R | 7✅+1❌+1 N-R | R06 在 ⚠️↔❌ 间抖动（chrome-extension URL 改写 bug 这轮够不着逃生通道）；R08 无 route 原语稳定 N-R |
+| playwright-cli | 9 N-R | 9 N-R | 两轮稳定复现 `connectOverCDP` 撞扩展 `service_worker` target 断言、连接建不起来 |
+
+**靶场 T01-T20（21 卡含 T10a/b，×2 轮，混合浏览器）：**
+
+| 工具 | 第1轮 | 第2轮 |
+| --- | --- | --- |
+| chrome-devtools-mcp | 21✅（零逃生） | 20✅+1⚠️(T10b) |
+| agent-browser | 20✅+1⚠️(T10b) | 21✅ |
+| playwright-cli | 20✅+1 N-R(T10a) | 18✅+1⚠️(T09)+2 N-R(T10a/b) |
+| bb-browser | 16✅+4❌(T04/T09/T11/T17)+1 N-R | 14✅+4❌+3⚠️ |
+
+**一致性**：外场 36 格里 34 格两轮一致；靶场 84 格里 77 格一致（91.7%）、**0 格事实错误**，7 处抖动全落在 T09/T10b/T13/T18 这类"逃生能否兜底 / 持久化口径 / unpacked reload flake"的边界格。所有动态字段两轮完全吻合，可作为这一时点的权威观测：GitHub 未读 **70**、npm `@playwright/test` **v1.61.0** / 周下载 **42,613,659** / Apache-2.0、React DevTools 评分 **4.0（1,633）** / **5,000,000** 用户、靶场标准答案（BENCH-7341 / SKU-8821 / hero.svg / 雷霆工作站 15999 / SHADOW-99 / STREAM-721 / CACHE-BUST-42 / OAUTH-314 / FLAKE-307 等）全部答对。
+
+**一个必须记录的环境坑**：靶场第 1 轮里 T15/T16/T17/T20 四工具集体失败，根因是**环境而非工具**——运行中的靶场服务进程是更早启动的旧版本、缺后来才加的 `/api/realtime-events`·`/api/settings`·`/api/flake-check` 路由（404）；且 T17 跨域 iframe 子页走的 `127.0.0.1:4399` 被另一个本机服务占用。重启 `server.mjs`、把占端口的服务迁走之后四题重跑：T15/T16/T20 四工具全 ✅，T17 三工具 ✅、bb-browser ❌（缺跨域 OOPIF 切换/坐标点击，是真实工具短板）。这条提醒任何复现者：**跑靶场前先确认服务是当前版本、4399 没被别的进程抢**。
+
+**结论没变，只是更扎实**：两轮下来，**chrome-devtools-mcp 仍是最稳、零逃生的前端排障首选**（靶场两轮 21✅/20✅、外场只差一个运行时 route）；**agent-browser 是能力最全的全能选手**——若抛开 7.2 那个粘滞 daemon 的 `--cdp` 可靠性硬伤，它在"运行时 route + HAR + 扩展 options + 专用 profile 持久化"上的覆盖面其实是四家里最广的，是最接近"一个工具全包"的候选；**playwright-cli 自管浏览器、CI 友好，T10c 能 attach 9223，但多扩展真实 profile 外场 attach 仍不稳**；**bb-browser 读取类够快，但 mock / 扩展设置页 / 跨域 iframe / 网络拦截四类硬短板叠加 URL 归一化 bug，仍是修一处能改命、但当前最弱的一个**。
+
+正式数据全部来自独立会话：每个单元格（任务 × 工具）由一个全新上下文、既不知道答案也不知道工具已知 bug 的无偏 Agent 执行（Claude Code 无头 `claude -p` 进程或 Codex 隔离子 Agent），提示词只含任务原文、工具限定与约 25 次操作止损线，禁止 curl/读源码旁路，单元格之间重启基准测试站清状态——这样测到的是真实用户要付的成本，而非熟练者的最优解。每个单元格记录判定（✅/⚠️/❌ 按任务卡标准）、操作数、轮数、耗时、成本，以及 **eval 自救次数**（Agent 被迫弃用工具原语、改用 eval 直接执行 JS 才能推进的次数，见 5.2）。需如实声明的局限：第一批单元格基本只跑一次，后续又用 Claude 独立轮对 R01-R09 和 T01-T20 收过一次方差；@chrome/@browser 跑在 Codex 宿主内，时间/调用数只能粗比，但**能力判定不受宿主影响**；固定基准测试站全在 localhost，版本钉死见附录；R01-R09 外场只代表 2026-06-19/20 这一次真实网站状态，本文只把它作为同一快照的单独分栏并入总览，不拿动态答案和靶场静态答案互相替代。
 
 ### 4. 逐维度拆解：每道题的结果与边界成因
 
@@ -200,9 +324,9 @@ T06 的 ⚠️ 是个有价值的反例：@chrome 把"缺货"徽标拼进了商�
 
 #### 4.2 Network 响应体（T02）：协议层上限划出的第一道分界线
 
-响应体留底是 CDP Network domain 的能力，扩展 API 层根本没有读取其他请求响应体的接口——@chrome 和 @browser 因此双双 ❌，子 Agent 们能拿到的只有页面错误文案和 console 里的 traceId，状态码和响应体彻底无门；CDP 阵营四家全部 ✅。这条分界比想象中更绝对。
+响应体留底是 CDP Network domain 的能力。无完整 CDP 权限的 `@chrome` 和 `@browser` 只能看到页面错误文案和 console traceId，拿不到状态码与 body；开完整 CDP 后的 `@chrome` 暴露了 raw CDP，T02 直接用 `Network.getResponseBody` 读到 `INSUFFICIENT_INVENTORY / SKU-8821`，这格从 ❌ 翻成 ✅。所以这里的边界不是“Chrome 插件永远读不到 body”这么简单，而是：**产品给不给 Agent 暴露 CDP Network 面**。
 
-**原因**：@chrome/@browser 的 ❌ 是**协议层上限**——`chrome.webRequest` 只能看请求元数据，读不到 body，这是扩展安全模型的根本设计，产品再封装也变不出来。这是整张总表里最"硬"的一组 ❌。
+`@browser` 仍然是 ❌，因为它是 in-app browser，不继承真实 Chrome 的插件通道；无完整 CDP 的 `@chrome` 也仍是 ❌，只能看到页面笼统错误和 console traceId。开完整 CDP 后 `@chrome` 的 Network 观察能力已经接近 CDP 系工具，但这不自动带来 route/mock 能力，T04 仍失败。
 
 CDP 阵营内部还有一层封装差异：agent-browser / DevTools MCP / playwright-cli 是**被动留底、事后可查**（点击前不需要任何准备）；bb-browser 把响应体封进了 trace 体系——必须 `trace start` 之后**重放动作**才能 `trace body`，多付一次重放成本。这是**产品封装范围**因素的教科书案例：同一个协议层，封装方式决定了排障的成本结构。bb 换来的独有回报是 trace 时间线带因果关联（`request … trigger:25 → click #order-btn`），"哪个动作引发了哪个请求"这条信息其他五家都给不了。
 
@@ -210,7 +334,7 @@ CDP 阵营内部还有一层封装差异：agent-browser / DevTools MCP / playwr
 
 性能分析需要的不止 timing 数字，而是"能解释问题的诊断模型"——这是 DevTools 产品面独有的，DevTools MCP 因此最省解释成本，且差距能报出具体倍数：用 `performance_start_trace` + `performance_analyze_insight`（LCPBreakdown/RenderBlocking）6 次调用、111 秒直出结构化的原因分析；agent-browser 没有诊断模型，但 子 Agent 从工具文档自己挖出 `profiler` 命令导出原始 trace、用 python 解析、再用 PerformanceObserver 交叉验证，**结论完全一致**——代价是 215 秒和全场最贵的单个单元格成本。一句话：**MCP 把"解释"内置在工具里，CLI 把"解释"外包给模型**。模型强时殊途同归，弱模型下差距会以失败形式放大。
 
-@chrome/@browser 双 ❌：evaluate 环境里连 `performance` 对象都没有——**安全策略**因素（Runtime 被阉割）顺带砍掉了性能取证的全部入口。
+无完整 CDP 时，@chrome/@browser 双 ❌：evaluate 环境里连 `performance` 对象都没有，性能取证入口被安全策略砍掉。开完整 CDP 后的 `@chrome` 可以读 Performance timing 和资源瀑布，T03 已经能定位 blocking.css + heavy.js 的串行瓶颈；但它没有 DevTools MCP 那种 `performance_analyze_insight`，所以仍是“自己挖 timing”，不是 DevTools 原生洞察。
 
 这道题还发生了全评测最有意思的事：**三个独立 Agent 用 trace 证据一致推翻了基准测试站的预设答案**。我出题时写的是"hero.svg（延迟 1.5s）对 LCP 影响最大"，时间线证明：阻塞 CSS（1.2s TTFB）卡住首绘、又按规范卡住其后同步脚本（800ms 长任务），两者**串行** ≈ 2.1s 才是 LCP 真相；hero.svg 与它们**并行**加载、首绘前早已完成，是"看起来最慢但不背锅"的干扰项。"最慢的资源"和"拖慢页面的资源"是两回事。任务卡已修正，"会不会被最慢资源带偏"升格为正式考点——**有标准答案的基准测试站加无偏 Agent，连出题人的错误都测得出来**。
 
@@ -221,15 +345,15 @@ CDP 阵营内部还有一层封装差异：agent-browser / DevTools MCP / playwr
 - **agent-browser、playwright-cli ✅**：原生 `network route` / `route`，真正的网络层拦截。
 - **DevTools MCP ⚠️**：没有任何拦截工具。CDP 的 Fetch domain 明明支持——这是**产品封装范围**因素：协议有，产品没包。子 Agent 的自救很体面（`navigate_page` 的 initScript 在页面脚本运行前补丁 fetch/XHR），但补丁在 JS 层：mock 跨域接口、abort 流量这类升级需求就绕不过去了。
 - **bb-browser ⚠️**：0.14.2 里**没有 `network route` 这类命令**，子 Agent 确认无 mock/intercept 命令后，在页面里直接改写了 `window.fetch`。
-- **@chrome/@browser ❌**：扩展层理论上有 `declarativeNetRequest` 可改写请求，但产品没封装，Runtime 又只读连补丁都打不了——**封装范围和安全策略两个因素叠加**，一条路都不剩。
+- **@chrome/@browser ❌**：无完整 CDP 时，扩展层理论上有 `declarativeNetRequest` 可改写请求，但产品没封装，Runtime 又只读连补丁都打不了；开完整 CDP 后的 `@chrome` 虽然能发 raw CDP，但 `Fetch.enable` / `Network.setRequestInterception` / `Page.addScriptToEvaluateOnNewDocument` 都被 Browser Use 收口，无法可靠做网络层 mock。结论仍是 ❌，只是失败原因从“没有观察面”变成“有观察面但无 route 面”。
 
 #### 4.5 已登录 fetch（T07）与逃生舱：安全策略因素的明码标价
 
-@chrome 的 `evaluate` 是只读的页面作用域，"Console 式请求"做不了——evaluate 环境里**连 `fetch` 函数都没有**；@browser 同样，子 Agent 试图直接导航到 /api/me 还被策略拦截。四个 CDP 系工具则一句 `eval "fetch('/api/me')"` 解决（页面 Runtime 里发请求自动带 cookie）。
+无完整 CDP 的 @chrome 的 `evaluate` 是只读的页面作用域，"Console 式请求"做不了——evaluate 环境里**连 `fetch` 函数都没有**；@browser 同样，子 Agent 试图直接导航到 /api/me 还被策略拦截。开完整 CDP 后的 `@chrome` 已经能走 CDP Runtime，在页面会话里 `fetch('/api/me')` 并自动带 cookie，T07 从 ❌ 翻成 ✅。四个 CDP 系工具也都是一句 `eval "fetch('/api/me')"` 解决。
 
-**原因与代价**：这是纯粹的**安全策略**因素。技术上扩展的 content script 完全可以注入任意 JS，OpenAI 有意焊死——因为 @chrome 活在你的真实 Chrome、真实登录态里，可写的 Runtime 意味着 Agent 能以"你"的身份做任何事。所以这格 ❌ 的正确读法不是"@chrome 不行"，而是一笔交易：**真实登录态与 Runtime 可写性，当前你只能二选一。**
+**原因与代价**：这格变化很能说明 Browser Use 的策略不是一条静态线。无完整 CDP 时，OpenAI 明显把真实登录态和 Runtime 可写性隔开；开完整 CDP 后，Runtime 可写性放开了一部分，页面内 fetch 能做。但 `chrome://`、`chrome-extension://` 和网络 route 仍被拦住，说明产品把“页面 Runtime 调试”和“浏览器/扩展管理”分成了不同风险等级。
 
-这个维度还撑起了整个评测的一个更上层的规律：**eval（可写的页面 Runtime）是所有工具共同的"万能逃生舱"**——凡是页面自己能做的事，eval 都能做。bb-browser 的 click 全坏照样答对 7 题，靠的全是它。而 @chrome/@browser 是六家中唯一没有逃生舱的，于是工具缺陷直接表现为 ❌ 而非成本倍数——总表里 ❌ 集中在这两列的根本原因就在这里。逃生舱也有硬边界：它拿不到"过去"的响应体（那是 CDP Network 层的留底，见 4.2），只能重放请求拿"现在"的、预埋钩子抓"未来"的。
+这个维度还撑起了整个评测的一个更上层的规律：**eval（可写的页面 Runtime）是所有工具共同的"万能逃生舱"**——凡是页面自己能做的事，eval 都能做。bb-browser 的 click 全坏照样答对 7 题，靠的全是它；开权限后的 @chrome 也因为拿到 Runtime，T12-T20 大幅翻盘。逃生舱也有硬边界：它改不了浏览器特权页策略，拿不到被产品拦住的扩展 options，也不能替代真正的网络层 route。
 
 #### 4.6 bb-browser 的事件注入缺陷：不是边界问题，是质量问题
 
@@ -239,7 +363,7 @@ bb-browser 0.14.2 的 `click`/`press Enter` 报告成功但页面事件监听器
 
 #### 4.7 扩展安全域与真实登录态（T09/T10/T11）：边界从"页面"挪到"特权页与 profile"
 
-T09–T11 把战场从网页面挪到两个新地方——`chrome://` / `chrome-extension://` 这类**特权页**（T09 调试扩展、T11 使用扩展），和**复用真实登录态 / 跨会话持久化 profile**（T10a/T10b）。它们分别对应边界公式里的"安全策略"和"产品封装范围"，分界线比页面任务画得更清楚。
+T09–T11 把战场从网页面挪到两个新地方——`chrome://` / `chrome-extension://` 这类**特权页**（T09 调试扩展、T11 使用扩展），和**复用真实登录态 / 跨会话持久化 / 指定现成 profile**（T10a/T10b/T10c）。它们分别对应边界公式里的"安全策略"和"产品封装范围"，分界线比页面任务画得更清楚。
 
 **T09/T11 扩展：真正的分水岭不是"自带浏览器"，而是"能不能到特权页"。** 只要给 attach 类工具一个**扩展真能跑的浏览器**，分胜负的就是**到达 `chrome://extensions` 和 `chrome-extension://…/options.html` 的能力**，而不是谁自带浏览器。
 
@@ -247,14 +371,14 @@ T09–T11 把战场从网页面挪到两个新地方——`chrome://` / `chrome-
 - **playwright-cli ✅**：走自管 persistent context 路线，`launchPersistentContext` 加载本地扩展（注意要用 bundled Chromium 而非 `channel: chrome`，否则又撞企业策略），在自家 chrome://extensions reload、打开 options 页，全链路可控。
 - **agent-browser ✅†**：复位 daemon 后能进 chrome://extensions、reload、开 options 页（扩展 ID 走 shadow DOM 的 eval 穿透拿到）——能力存在，但被 `--cdp` 可靠性问题拖累（见下与 7.2）。
 - **bb-browser ❌/⚠️**：致命短板暴露无遗——`open`/`goto` 给 `chrome://`、`chrome-extension://` 无脑加 `https://` 前缀并把 `://` 折叠（`chrome://extensions/` → `https://chrome//extensions/` → chrome-error），**自身根本到不了任何特权页**。T11 只能靠外部 CDP 强开 options 页 target 才让 bb-browser 能 fill/click（记 ⚠️）；T09 退用页面内 `chrome.runtime.reload()` 反而把 unpacked 扩展弄成失效态（记 ❌）。继 4.6 的 click bug 之后，这是它第二处"协议层够得着、产品封装却把路堵死"。
-- **@chrome / @browser ❌**：和 4.5 同源的**安全策略**因素——Browser Use 的 URL policy 直接拦住 `chrome://` 与 `chrome-extension://`，即使外部把扩展装好也没有 reload/options 通道。它们本身就是扩展，却被产品的封装边界挡在扩展管理之外。
+- **@chrome / @browser ❌**：和 4.5 同源的**安全策略**因素——Browser Use 的 URL policy 直接拦住 `chrome://` 与 `chrome-extension://`。开权限后的 @chrome 变强的是页面 Runtime / Network 观察面，不是扩展管理面；即使用户手动把 Bench Badge 装进默认 Profile，它也只能在本地页和真实线上页验证 `BENCH EXT v1.0.0` 的 content script 注入，仍没有 reload/options 通道。它们本身就是扩展，却被产品的封装边界挡在扩展管理之外。
 
 **这里还埋着一个比工具更硬的环境坑：企业管控 Chrome 会让"装了等于没装"。** 目标机器的系统 Chrome 受企业策略管控，把"加载已解压扩展"在运行时拦死——扩展能出现在列表里、显示已启用，但 content script 不注入、扩展自身资源 `ERR_BLOCKED_BY_CLIENT`。这意味着任何"复用你真实 profile 跑扩展"的方案在这类机器上直接失效，扩展测试只能改用干净的 Chrome for Testing（且 137+ 还要 `--disable-features=DisableLoadExtensionCommandLineSwitch` 才认 `--load-extension`，CDP 的 `Extensions.loadUnpacked` 只进注册表、不激活 content script）。这条对"在公司电脑上用 Agent 操作扩展"的现实预期是一盆冷水。
 
 **T10a 真实登录态：@chrome 的主场，但它不再孤独。** 这一格的实情是：
 
-- **能读真实登录态的**：`@chrome`、`bb-browser --port 9223`、`DevTools MCP --browserUrl 9223`——都免登录直达 GitHub 通知页、读到同一个 68 条，零写操作。@chrome 在它**唯一的主场任务**上确实零打断（扩展安全域天然在真实 profile 内）。
-- **读不到的**：`@browser`（in-app 浏览器不继承真实登录态）；`playwright-cli`（没有接入系统默认 Chrome 的机制，强行 attach 企业 9223 还会因为枚举到企业扩展的 `service_worker` target 触发 playwright-core 内部断言、daemon 直接崩）。
+- **能读真实登录态的**：`@chrome`、`bb-browser --port 9223`、`DevTools MCP --browserUrl 9223`——都免登录直达 GitHub 通知页。早期 T10a 读到同一个 68 条；开权限后的 @chrome 默认 Profile 复测读到 70 条。@chrome 在它**唯一的主场任务**上确实零打断（扩展安全域天然在真实 profile 内），但默认 Profile 登录态不等于 T10c 要求的“指定 9223 profile”。
+- **读不到的**：`@browser`（in-app 浏览器不继承真实登录态）；`playwright-cli` 在这轮 T10a/R01-R09 约束下失败（强行 attach 企业 9223 时枚举到企业扩展的 `service_worker` target，触发 playwright-core 内部断言、daemon 直接崩）。但这不是“永远不能 attach 9223”的结论，后面的 T10c 单题已经证明 `attach --cdp=http://127.0.0.1:9223` 可以成功。
 - **能但不可靠的 agent-browser †**：这是这一组里最意外的一格。`--cdp 9223` 看似连上了，实际动作经常**静默落到 agent-browser 自起的托管浏览器**（一个没有你登录态的空白 headless Chrome）；`get url` 还返回 github，像成功，实则没碰你的真身。两轮独立实测都撞到：Codex 据此判 ❌（坚持"开箱即用必须命中 9223"），主控这轮先 `close --all` + 杀掉托管实例复位，才真连上 9223、读到 68（判 ✅）。**同一个 bug，两种评分口径**——根因都是 7.2 那个粘滞 daemon。
 
 **T10b 持久化：可移植状态文件完胜。** agent-browser 与 playwright-cli 在这里打平，第三、第四名的机制差异也讲清楚了：
@@ -263,7 +387,13 @@ T09–T11 把战场从网页面挪到两个新地方——`chrome://` / `chrome-
 - **DevTools MCP ✅\***：走"复用同一持久 userDataDir"的隐式路线，没有可移植 state 文件，"换目录就丢"（复制 profile 即撞登录墙），而且依赖浏览器 on-disk cookie 加密可用——本机 CfT 因无 keychain，连原地复用都丢，要 `--use-mock-keychain` 兜底才持久。
 - **bb-browser △**：持久化维度最弱——**自身没有任何 state save/load，也没有 cookie 导入**（只有只读的 `cookies` 查看）。它能读到登录态，完全是 attach 了一个别人维持登录的持久浏览器，自己既不产出也不保存状态。
 
-一句话收束这三题：**T09/T11 把"能不能到特权页"立成扩展场景的真分水岭（bb-browser 在此失能）；T10a 坐实 @chrome 的真实登录态主场、也暴露 agent-browser `--cdp` 的可靠性硬伤；T10b 证明可移植状态文件（agent-browser/playwright-cli）比 userDataDir 依赖更稳。**
+**T10c 指定 9223：登录态和 profile 绑定是两件事。** 这一格是后来补的，因为前两轮容易把“某个浏览器有登录态”和“用户指定的 9223 profile 有登录态”混掉。判定标准很硬：工具必须先证明自己控制的是 `http://127.0.0.1:9223`，再读 GitHub notifications；只读到 GitHub 不算。
+
+- **agent-browser / bb-browser / DevTools MCP / playwright-cli ✅**：四者都能拿出 9223 绑定证据。agent-browser 的 `get cdp-url` 返回 `ws://127.0.0.1:9223/...`；bb-browser 的 status 显示 `cdpConnected=true` / `cdpPort=9223`；DevTools MCP daemon args 包含 `--browser-url http://127.0.0.1:9223`；playwright-cli 这次 `attach --cdp=http://127.0.0.1:9223` 成功。四者打开的唯一 URL 都能在 `/json/list` 里命中 9223 target。
+- **@chrome ❌**：这次 Codex Chrome plugin 已经能连上，也能读到 GitHub 登录态；但它打开的唯一 URL 没出现在 9223 target 列表。也就是说，它证明了“@chrome 控制的某个 Chrome 有登录态”，没证明“控制的是用户指定的 9223 profile”。这也解释了扩展 popup 里的 `Disconnected`：它是 Codex plugin bridge 状态，不是 CDP 9223 状态。
+- **@browser N-R**：in-app browser 没有绑定外部 CDP endpoint 的能力，不能用自己的独立浏览器代跑。
+
+一句话收束这三题：**T09/T11 把"能不能到特权页"立成扩展场景的真分水岭（bb-browser 在此失能）；T10a 测默认真实 profile，T10b 测工具自管持久化，T10c 测用户指定 9223 profile。三者不能互相替代。**
 
 #### 4.8 前端专项（T12-T20）：DevTools MCP 和 playwright-cli 拉开第二梯队
 
@@ -276,14 +406,14 @@ T12–T20 是我后来补的一组前端开发者专项题。它们的目标不�
 - **agent-browser 9/9 ✅，但 7 题带 `*`**：连上 9223 之后答案全对，T17/T18 还很干净；但 T12/T14 的 console 展开、T15/T20 的按钮触发、T19 的 focus/keyboard 都需要 eval 补齐。它适合复用常驻 profile 做流程操作，不适合被当成"纯前端调试面板"。
 - **bb-browser 9/9 ✅\***：这轮答案也全对，但必须把星号读大——原生命令受端点漂移影响，最后靠同一 bb profile 的 CDP/eval 逃生完成。它证明"这份 profile 里的浏览器能完成"，不能证明"bb-browser 原语能完成"。
 - **@browser 5✅3⚠️1 N-R**：普通 DOM、iframe、SSE 完成态、可访问性、表格统计都能做；但 raw asset/source map 被拦、Service Worker live bypass 拿不到、文件上传没有 API。它适合轻量观察，不适合完整前端调试。
-- **@chrome 9 N-R**：本轮不是网页任务失败，而是 Codex Chrome Extension 在 selected profile 中 disabled，runtime 不可用。公平起见没有用其他工具代跑。
+- **@chrome（无完整 CDP）4✅2⚠️3❌，开完整 CDP 后 9/9**：早期前端专项轮的 9 N-R 是 Codex Chrome Extension disabled，不是无完整 CDP 的真实上限。2026-06-21 关掉完整 CDP 后复测，T14/T15/T17/T19/T20 这类页面级任务能跑，T12/T16 只能部分定位；T13 缺 viewport，T18 缺 upload API，T07/T02/T03 这类 DevTools 面仍失败。开完整 CDP 后默认 Profile 复测把 T12-T20 全部跑通，其中 T13 仍需要 hit-test 后临时隐藏遮挡层。这个变化很关键：@chrome 的上限取决于当前权限开关，而不是工具名本身。
 
-这组补测把第 2 节的推荐从"理论上更像 F12"变成了"实测九个前端专项仍然第一"：**DevTools MCP 是前端排障首选；playwright-cli 是自动化回归首选；agent-browser 是真实 profile 流程操作的补充；@browser/@chrome 受宿主策略限制，不适合作为完整调试工具。**
+这组补测把第 2 节的推荐从"理论上更像 F12"变成了"实测九个前端专项仍然第一"：**DevTools MCP 是前端排障首选；playwright-cli 是自动化回归首选；agent-browser 是真实 profile 流程操作的补充；开权限后的 @chrome 是默认 Profile 里的轻量 CDP 观察器，但仍缺扩展特权页、指定 9223 证明和可靠 route/mock。**
 
 ### 5. 跨工具规律：比单格结论更长寿的部分
 
 1. **强模型把工具缺陷变成成本倍数，而不是失败**。有逃生舱的四家答案正确率几乎满分，差距体现在 1~2.5 倍操作数和时间。前提有二：模型强到能想出绕行方案；逃生舱存在。给弱模型选工具时应更看重原语可靠性而非能力上限。
-2. **eval 自救次数是一行就能算的工具体检值**：前八道网页题里，playwright-cli 0 < agent-browser 1 < DevTools MCP 3 < bb-browser 7（单元格全覆盖）< @chrome/@browser（无逃生舱，直接 ❌）。T12–T20 又补了一层：DevTools MCP 和 playwright-cli 虽然都 9/9，但 DevTools MCP 在 hit-test、SW、文件状态诊断里仍会用 `evaluate_script`；agent-browser 9 题里 7 题要靠 eval 补齐；bb-browser 全靠 CDP 逃生。这个序基本就是"原语质量 × 能力覆盖"的序——逃生舱被迫用得越勤，正规命令质量越差。
+2. **eval 自救次数是一行就能算的工具体检值**：前八道网页题里，playwright-cli 0 < agent-browser 1 < DevTools MCP 3 < bb-browser 7（单元格全覆盖）< 无完整 CDP 的 @chrome/@browser（无逃生舱，直接 ❌）。T12–T20 又补了一层：DevTools MCP 和 playwright-cli 虽然都 9/9，但 DevTools MCP 在 hit-test、SW、文件状态诊断里仍会用 `evaluate_script`；agent-browser 9 题里 7 题要靠 eval 补齐；bb-browser 全靠 CDP 逃生；开完整 CDP 后的 @chrome 则证明“给了 Runtime/CDP，结果会立刻翻盘”。这个序基本就是"原语质量 × 能力覆盖"的序——逃生舱被迫用得越勤，正规命令质量越差。
 3. **静默失败是 Agent 最大的敌人**。本轮最贵的时间黑洞全部来自"报成功但无事发生"（bb 的 click、agent-browser 的视口外点击）：Agent 看到"已点击"不会怀疑工具，会先怀疑自己，然后烧轮次验证一切。对工具作者：动作后验证状态、失败就明说，比十个新功能都值钱。
 4. **粗粒度组合动作 vs 细粒度原语**。DevTools MCP 用一半操作数完赛（fill_form 一次填整张表、wait_for 等待确认合一），但预想流程之外就得绕路；CLI 细原语常规路径多走几步，却能拼出作者没想到的流程。微软给 playwright-cli 的官方定位（"CLI 给高吞吐编码 Agent，MCP 给持久状态场景"）与实测互相印证。
 5. **无偏成本约为熟练者的 2~4 倍**。评测报告里的数字应该以无偏 Agent 为准——那才是真实用户要付的价格。
@@ -299,13 +429,13 @@ T12–T20 是我后来补的一组前端开发者专项题。它们的目标不�
 
 | 浏览器部位 | 具体是什么 | 谁能完整拿到 | 难点 / 谁够不着 |
 | --- | --- | --- | --- |
-| 网页内容 | DOM、页面 JS runtime、输入、shadow DOM、可访问性快照、页内 fetch | 六家公共底座，全员能读能点 | @chrome/@browser 的 runtime 只读，连 `fetch` 都没有 |
+| 网页内容 | DOM、页面 JS runtime、输入、shadow DOM、可访问性快照、页内 fetch | 六家公共底座，全员能读能点；开完整 CDP 后的 @chrome 可用 Runtime fetch | 无完整 CDP 的 @chrome/@browser runtime 只读，连 `fetch` 都没有 |
 | 前台 tab / 窗口 / popup | 多 tab、新窗口、popup 弹出窗口（`window.open` 出来的独立网页窗口，如 OAuth 登录窗）¹ | 六家全员 ✅——四个 CDP 工具（agent-browser、bb-browser、DevTools MCP、playwright-cli）走 Target 域枚举切换，@chrome / @browser 走 `chrome.tabs` 管多 tab；这是基线能力，没有区分度 | 无实质短板，差别只在体验（@browser 是 in-app webview，独立窗口/popup 不如其余顺手） |
 | 后台 target | 扩展的 service worker / background page——不在任何 tab 里的后台 JS 环境 | 只有自管浏览器的 agent-browser、DevTools MCP、playwright-cli（自管 context）够得到（走 CDP 的 Target 域枚举/attach） | @chrome / @browser 的扩展 runtime 只认 tab、看不见后台 target；playwright-cli 一旦改成 attach 企业 Chrome，枚举到扩展的 service_worker target 反而触发内部断言、直接崩（自管时没问题） |
-| 扩展 + 特权页 | 扩展本体、`chrome://extensions`、`chrome-extension://…/options.html` | DevTools MCP、playwright-cli（自管 persistent context） | @chrome/@browser 被 URL 策略拦在 `chrome://` 外；bb-browser 把特权页 URL 归一化堵死；企业管控 Chrome 还让"装了等于没装" |
-| 身份 / 档案 | 登录态 cookie、书签、历史、保存的密码 / 证书 | @chrome、`bb-browser --port`、`DevTools MCP --browserUrl`（直连真实 profile） | @browser/playwright-cli 接不进系统默认 Chrome；真实默认 profile 的远程调试被 Chrome 136+ 收紧 |
+| 扩展 + 特权页 | 扩展本体、`chrome://extensions`、`chrome-extension://…/options.html` | DevTools MCP、playwright-cli（自管 persistent context） | @chrome 即使开权限仍被 URL 策略拦在 `chrome://` / `chrome-extension://` 外；bb-browser 把特权页 URL 归一化堵死；企业管控 Chrome 还让"装了等于没装" |
+| 身份 / 档案 | 登录态 cookie、书签、历史、保存的密码 / 证书 | @chrome、`bb-browser --port`、`DevTools MCP --browserUrl`、agent-browser/playwright-cli 的 CDP attach（需证明 target 命中） | @browser 接不进系统默认 Chrome；真实默认 profile 的远程调试被 Chrome 136+ 收紧；playwright-cli 在多扩展真实 profile 上仍有 attach 稳定性风险 |
 | 跨会话持久化 | 把身份存下来、搬到别处、恢复（可移植 state 文件 vs 绑定 userDataDir） | agent-browser、playwright-cli（可移植 state 文件，跨目录跨实例） | DevTools MCP 只能复用同一 userDataDir、换目录就丢；bb-browser 无 save/load |
-| 调试与诊断 | 读：network 响应体留底、console、performance/trace；写：请求拦截 / mock / abort | 读靠 CDP 系四家；写（网络层 route）只有 agent-browser、playwright-cli | @chrome/@browser 无响应体、无 `performance` 对象；DevTools MCP、bb-browser 无网络层拦截，只能在 JS 层打补丁 |
+| 调试与诊断 | 读：network 响应体留底、console、performance/trace；写：请求拦截 / mock / abort | 读靠 CDP 系工具；开完整 CDP 后的 @chrome 也能读 Network body 与 timing；写（网络层 route）只有 agent-browser、playwright-cli | 无完整 CDP 的 @chrome/@browser 无响应体、无 `performance` 对象；开完整 CDP 后的 @chrome 仍无可靠 route；DevTools MCP、bb-browser 无网络层拦截，只能在 JS 层打补丁 |
 
 > ¹ 这里的 popup 专指 `window.open` 的独立网页窗口，**不含 alert/confirm 这类原生对话框**——后者是页面触发、却在 DOM 之外、只能由 CDP 的 Page/Browser/Fetch 等 domain 单独处理的模态框，另算一种薄控制面。
 
@@ -341,7 +471,7 @@ T12–T20 是我后来补的一组前端开发者专项题。它们的目标不�
 
 1. **协议层上限**：所在层的协议根本没有这个能力。例：扩展 API 里没有任何接口能读到其他请求的响应体（`webRequest` 只能看元数据）——这是最硬的边界，产品再努力也封不出来。
 2. **产品封装范围**：协议有，但工具没包成命令。例：CDP 的 Fetch domain 支持请求拦截，但 chrome-devtools-mcp 没有暴露 mock 工具——边界是产品选择，不是协议限制。
-3. **安全策略**：协议有、产品也能做，但有意焊死。例：@chrome 活在用户真实 Chrome 里，把 evaluate 阉割成只读、环境里连 `fetch` 都不给——这是"复用真实登录态"这个卖点旁边必须立的防火墙。Chrome 136+ 对默认 profile 的 remote debugging 收紧、144+ 的逐会话确认，属于浏览器厂商在同一因素上的动作。
+3. **安全策略**：协议有、产品也能做，但有意收口。例：无完整 CDP 时的 @chrome 活在用户真实 Chrome 里，却把 evaluate 压到近似只读、环境里连 `fetch` 都不给；开完整 CDP 后页面 Runtime 和 Network 观察面放开了，但 `chrome://`、`chrome-extension://`、网络 route/mock 和指定 9223 绑定仍被挡住。这说明"复用真实登录态"旁边的防火墙不是一条静态线，而是一组按风险分层的能力开关。Chrome 136+ 对默认 profile 的 remote debugging 收紧、144+ 的逐会话确认，属于浏览器厂商在同一因素上的动作。
 
 #### 6.3 Agent 友好度：决定"考什么"
 
@@ -357,7 +487,7 @@ T12–T20 是我后来补的一组前端开发者专项题。它们的目标不�
 
 它没有完整开源——这点要先讲清楚，因为它直接决定了我们能断言到哪一步。截至写作时，公开的 `openai/codex` 仓库里搜不到 Browser Use 的本体：没有相关插件目录、没有浏览器运行时、没有 `agent.browser.*` 这类浏览器 API 的实现，也没有"内置浏览器后端如何接动作、管标签页、截图、生成页面快照"的源码，开源的只是承载它的那层平台。能找到的最硬的几条公开证据是：其一，`codex-rs/features/src/lib.rs` 把 `BrowserUse` 和 `InAppBrowser`、`ComputerUse` 并列定义成一等能力（标为稳定、默认开启），但它是个"只认远端配置"的开关——最终开不开由组织、产品、账号的远端配置说了算，这正好解释了为什么同一个版本的 Codex 在不同账号下能力会不一样；其二，Codex 的插件系统本身是开源的，一个插件可以同时贡献 skill、MCP server 和 app 三类能力，Browser Use 最合理的落点就是一个随 App 一起分发的内置插件；其三，沙箱测试 `seatbelt_tests.rs` 专门把 `/tmp/codex-browser-use` 这条 Unix socket 加进了 macOS 沙箱的放行名单——如果它只是普通网页请求或屏幕级点击，根本不需要专门放行一条名字这么明确的本地通道。
 
-这套"安全收口为先"的实现取向，正是前面那一串 ❌ 的根源：能力被一层层关进能力开关、远端配置、沙箱放行名单里，动作只能经受控后端代为执行，于是它天然只能在页面可见的范围里活动、`evaluate` 偏只读——4.5 那笔"真实登录态和可写运行时只能二选一"的交易，在代码层面就是这么焊死的。需要强调：以上是从公开代码推断出的边界，不等于对官方实现细节的证实，真正驱动浏览器的那层代码并不在公开仓库里。另外，Browser Use 和 Computer Use 是两条不同的路径——前者贴着浏览器运行时，对象是标签页、DOM、页面结构，对网页语义理解更细；后者贴着操作系统界面和截图，能跨任意应用，但对网页内部状态没那么精细。
+这套"安全收口为先"的实现取向，正是早期那一串 ❌ 的根源：能力被一层层关进能力开关、远端配置、沙箱放行名单里，动作只能经受控后端代为执行。开权限复测之后，这句话要说得更精确：Browser Use 不是天然只能只读页面，而是默认把高风险面关得很紧；授权放大后，页面 Runtime / Network 读能力可以打开，T02/T03/T07/T12-T20 立刻翻盘，但特权 URL、扩展 options、route/mock 和用户指定 9223 仍没有放开。需要强调：以上是从公开代码和本轮实测共同推断出的边界，不等于对官方实现细节的证实，真正驱动浏览器的那层代码并不在公开仓库里。另外，Browser Use 和 Computer Use 是两条不同的路径——前者贴着浏览器运行时，对象是标签页、DOM、页面结构，对网页语义理解更细；后者贴着操作系统界面和截图，能跨任意应用，但对网页内部状态没那么精细。
 
 #### 7.2 agent-browser：Rust 瘦 CLI + 常驻原生 daemon（直连调试协议）
 
@@ -415,9 +545,9 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 
 ## 下一步
 
-- 扩展与真实 profile 那几道（T09–T11）受环境影响最大（企业管控 Chrome），值得在更多机器上复测取证；它们也确认了 agent-browser 0.27.2 有常驻 daemon。
+- 扩展与真实 profile 那几道（T09–T11，加上 T10c 指定 9223）受环境影响最大（企业管控 Chrome），值得在更多机器上复测取证；它们也确认了 agent-browser 0.27.2 有常驻 daemon。
 - 增加每个单元格重复次数收方差；引入弱一档模型验证 5.1 的预言。
-- T12–T20 这组前端专项已经覆盖了主要调试面；真实网站侧已经补了 R01-R09 外场任务，下一步应按每工具一个独立子 Agent 跑完，特别看 Chrome Web Store、扩展注入真实页面、真实 Network 响应体、route / abort、HAR/trace 这几类。
+- T12–T20 这组前端专项已经覆盖了主要调试面；真实网站侧 R01-R09 已按每工具独立 Subagent 跑完，T10c 也补了指定 9223 profile。**"重复轮次收方差"已完成**：2026-06-20 Claude 独立轮把外场 R01-R09 与靶场 T01-T20 各又跑两轮（见 1 节"两轮独立复跑校准"），外场 34/36、靶场 84 格 77 稳定、0 事实错误，方差主要落在逃生/持久化边界格。校准结论：agent-browser R06 实为 ✅（上表 ⚠️ 系观察漏判）；bb-browser 特权 URL / route 缺口、跨域 OOPIF 缺失稳定复现；playwright-cli 在外场多扩展 9223 上 attach 崩溃两轮复现，但 T10c 单题 attach 成功——这几条已可作为可复现上游反馈。
 - 靶场侧仍可继续补原生 dialog、下载、拖拽、多窗口 OAuth popup、WebSocket 二进制帧；这些应留在可控靶场里，避免真实账号授权和下载状态污染结果。
 - 把扩展宿主的搭建本身做成可复现脚本（企业策略检测 → 干净 CfT + 正确 feature flag），因为 T09–T11 里"让扩展真能跑"比测工具本身更费劲。
 - 值得上游提 issue：bb-browser 事件注入缺陷 + `chrome://`/`chrome-extension://` URL 归一化把特权页堵死；**agent-browser 粘滞 daemon 致 `--cdp` 静默落到自起托管浏览器**（4.7/7.2）+ 视口外静默点击 + Electron 下 connect 会话失灵；playwright-cli 不验证响应结构就 mock + attach 多扩展真实 Chrome 时 service_worker target 断言崩溃。
@@ -427,9 +557,14 @@ playwright-cli 站在 Playwright 引擎之上（这个引擎本身又架在调�
 - 基准测试站与任务卡：`apps/browser-tool-bench/`（零依赖 Node 测试站 + T01-T20 固定任务卡 + `tasks-real/R01-R09` 真实网站外场任务卡 + 复现步骤）
 - 原始数据（T01-T08）：`results/formal-2026-06-12/`（ab vs bb）、`results/formal-2026-06-12-mcp/`（ab vs DevTools MCP）、`results/formal-2026-06-12-pw/`（playwright-cli）、`results/codex-plugins-2026-06-12/`（@chrome/@browser，Codex 宿主）
 - 原始数据（T09/T10/T11，2026-06-14 两轮独立实测）：`results/formal-2026-06-14-t09-t11-rerun/`（Claude Code 主控，含 4 工具报告 + t10b + 证据 + 环境搭建笔记）、`results/formal-2026-06-14-t09-t11-rerun-fixed-env/`（Codex 主控，含 @chrome/@browser）；两轮结论一致，差异仅评分口径（见 4.7）
+- 原始数据（T10c，2026-06-20 指定 9223 profile）：`results/t10c-cdp9223-2026-06-20/`（每工具一个 Codex Subagent，`gpt-5.5` / `xhigh`，顺序复用同一个 9223 测试 Chrome profile）
 - 原始数据（T12-T20，2026-06-19 前端专项）：`results/frontdev-2026-06-19-t12-t20/`（每个工具一个 subagent，含六份工具报告与总报告；实际靶场端口为 `4400`）
-- 外场任务（R01-R09，待跑）：`tasks-real/`（GitHub、MDN、npm、Chrome Web Store、真实扩展注入、Network 响应体、请求拦截、HAR/trace；动态答案按当次证据判定）
-- 版本：agent-browser 0.27.2 · bb-browser 0.14.2 · chrome-devtools-mcp 1.2.0 · playwright-cli 0.1.14 · Chrome 149（T09/T11 扩展宿主用 Chrome for Testing 149）· 模型 claude-fable-5 / claude-opus（T09–T11 轮）/ Codex 宿主
+- 原始数据（R01-R09，2026-06-19/20 真实网站外场）：`results/realworld-2026-06-20-r01-r09/`（每个工具一个 Codex Subagent，`gpt-5.5` / `xhigh`，顺序复用 9223 测试 Chrome profile；动态答案按当次证据判定）
+- 原始数据（@chrome 无完整 CDP 默认 Profile 复测，2026-06-21）：`results/chrome-default-profile-no-cdp-rerun-2026-06-21/`（Codex `@chrome` / Chrome extension bridge，系统默认 Profile；关闭完整 CDP 后复测 T01-T20 + R01-R09，修正早期 bridge disabled 导致的大量 N-R）
+- 原始数据（@chrome 开权限后默认 Profile 复测，2026-06-20）：`results/chrome-default-profile-rerun-2026-06-20/`（Codex `@chrome` / Chrome extension bridge，系统默认 Profile；T01-T20 排除 T10 的完整复测 + R01-R09 外场复测；手动安装 Bench Badge 后又补验本地页和线上页均出现 `BENCH EXT v1.0.0`，但 options 页仍被 URL policy 拦截）
+- 原始数据（2026-06-20 Claude 独立两轮复跑，收方差）：外场 `results/realworld-2026-06-20-claude-r01-r09/` 与 `…-round2/`；靶场 `results/targetrange-2026-06-20-claude-t01-t20-round1/`（含环境修复补丁）与 `…-round2/`；总览 `results/CLAUDE-ROUND-2026-06-20-SUMMARY.md`。每工具一个干净 Subagent、顺序复用 9223（playwright-cli 自管浏览器），与 Codex 轮互不参考
+- 原始数据（2026-06-20/21 全量统一成本测，Opus 4.8）：`results/unified-2026-06-20-claude-4tools/`（4 工具 × 30 题，每工具一个独立 workflow 顺序跑，逐工具耗时/token/操作数/eval 自救对齐，见 1 节成本表）
+- 版本：agent-browser 0.27.2 · bb-browser 0.14.2 · chrome-devtools-mcp 1.3.0（早期靶场轮为 1.2.0）· playwright-cli 0.1.14 · Chrome 149（T09/T11 扩展宿主用 Chrome for Testing 149；R01-R09 外场与 T10c 用 9223 测试 Chrome profile）· 模型 claude-fable-5 / claude-opus（T09–T11 轮）/ Codex 宿主 / gpt-5.5（R01-R09 外场与 T10c）
 ### 参考
 
 - [agent-browser](https://github.com/vercel-labs/agent-browser)

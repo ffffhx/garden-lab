@@ -139,7 +139,12 @@ export function compileMarkdown(source: string, assetBasePath: string) {
     unified()
       .use(remarkParse)
       .use(remarkGfm)
-      .use(remarkRehype)
+      // allowDangerousHtml lets authored posts embed raw HTML/CSS figures
+      // (color-coded heatmaps, bar charts) that remark-rehype would otherwise
+      // drop. Raw nodes pass through untouched by the element-only plugins
+      // below and are serialized verbatim by rehypeStringify (also flagged).
+      // Posts are first-party trusted content, so no sanitizer is needed.
+      .use(remarkRehype, { allowDangerousHtml: true })
       .use(rehypeSlug)
       .use(rehypeImageAttributes)
       .use(
@@ -153,7 +158,7 @@ export function compileMarkdown(source: string, assetBasePath: string) {
           fallbackLanguage: "text",
         }
       )
-      .use(rehypeStringify)
+      .use(rehypeStringify, { allowDangerousHtml: true })
       .processSync(content)
   );
 

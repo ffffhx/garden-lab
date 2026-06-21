@@ -3,6 +3,7 @@ import React from "react";
 import { ArticleAiChat } from "@/components/article-ai-chat";
 import { ArticleSelectionTooltip } from "@/components/article-selection-tooltip";
 import { BenchHeatmapTooltip } from "@/components/bench-heatmap-tooltip";
+import { BenchReveal } from "@/components/bench-reveal";
 import { PrivateFeatureGate } from "@/components/private-feature-access";
 import type { ContentImageSize, Heading } from "@/lib/content/types";
 
@@ -44,6 +45,7 @@ export function ArticleBody({
         />
       </ArticleSelectionTooltip>
       <BenchHeatmapTooltip articleContentId={articleContentId} />
+      <BenchReveal articleContentId={articleContentId} />
       {enableAiChat ? (
         <PrivateFeatureGate>
           <ArticleAiChat

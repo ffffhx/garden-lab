@@ -38,6 +38,117 @@ coverPosition: "below-title"
 
 这条公式能解释总表里的大多数边界：有的工具协议层够强，但产品封装没开放；有的能连到真实 profile，却被 Chrome 安全策略或企业管控挡住；有的操作顺滑，但拿不到响应体、trace 或扩展特权页。后文的每个 ❌ 和 ⚠️ 都会落回这三个因素之一。
 
+<figure class="capformula" role="group" aria-label="工具能力边界公式动画图">
+  <style>
+    .capformula{
+      --paper-soft:#faf6ec; --paper-deep:#ece5d5; --paper-mute:#f7f1e4;
+      --ink:#1a1815; --ink-soft:#3c362c; --muted:#6a6155;
+      --hair:rgba(26,24,21,.18);
+      --serif:var(--font-serif-body,"Noto Serif SC",Georgia,"Songti SC",serif);
+      --mono:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);
+      --cdp-d:#3f6d79; --cdp-l:#6f9aa3; --cdp-b:#dcebed; --cdp-e:#8fbcc4;
+      --grn-d:#4f7233; --grn-l:#7c9c54; --grn-b:#e7eedd;
+      --red-d:#8f2d20; --red-l:#b4524a; --red-b:#f1ddd6; --red-e:#cf9b90;
+      margin:0; padding:clamp(18px,3.4vw,30px);
+      background: radial-gradient(120% 80% at 50% -10%, var(--paper-mute), transparent 60%), linear-gradient(180deg,var(--paper-soft),var(--paper-deep));
+      border:1px solid var(--hair); border-radius:14px;
+      color:var(--ink); font-family:var(--serif);
+      position:relative; overflow:hidden; line-height:1.5;
+    }
+    .capformula *{box-sizing:border-box;}
+    .capformula::before{
+      content:""; position:absolute; inset:0; pointer-events:none;
+      background-image:linear-gradient(var(--hair) 1px,transparent 1px);
+      background-size:100% 30px; opacity:.05;
+    }
+    .capformula .cf-title{
+      position:relative; z-index:2; text-align:center;
+      font-family:var(--mono); font-size:clamp(12.5px,2.5vw,16px);
+      line-height:1.95; letter-spacing:.2px; color:var(--ink-soft);
+      margin:0 auto clamp(16px,3vw,24px); max-width:640px;
+      overflow-wrap:break-word; word-break:break-word;
+    }
+    .capformula .cf-title b{display:inline-block; font-weight:600; padding:.05em .3em; border-radius:3px;}
+    .capformula .cf-eq{color:var(--muted);}
+    .capformula .cf-min{color:var(--muted); font-style:italic; font-family:var(--serif);}
+    .capformula .t-cdp{color:var(--cdp-d); background:var(--cdp-b);}
+    .capformula .t-grn{color:var(--grn-d); background:var(--grn-b);}
+    .capformula .t-red{color:var(--red-d); background:var(--red-b);}
+    .capformula .cf-stage{position:relative; z-index:2; max-width:520px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:0;}
+    .capformula .cf-drop-rail{position:relative; width:100%; height:clamp(26px,5vw,34px); display:flex; justify-content:center; align-items:flex-end;}
+    .capformula .cf-source{font-family:var(--mono); font-size:11px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase; margin-bottom:6px;}
+    .capformula .cf-layers{position:relative; width:100%; display:flex; flex-direction:column; align-items:center; gap:clamp(7px,1.6vw,11px);}
+    .capformula .cf-layer{
+      position:relative; height:clamp(38px,7.2vw,50px); border-radius:7px; border:1px solid var(--hair);
+      display:flex; align-items:center; justify-content:space-between; padding:0 12px; overflow:hidden;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.45); transition:transform .5s ease, box-shadow .5s ease;
+    }
+    .capformula .cf-l1{width:100%;   background:var(--cdp-b); border-color:var(--cdp-e);}
+    .capformula .cf-l2{width:72%;    background:var(--grn-b); border-color:#bcd0a4;}
+    .capformula .cf-l3{width:46%;    background:var(--red-b); border-color:var(--red-e);}
+    .capformula .cf-tag{font-family:var(--serif); font-size:clamp(11px,2.3vw,13px); font-weight:600; white-space:nowrap;}
+    .capformula .cf-l1 .cf-tag{color:var(--cdp-d);}
+    .capformula .cf-l2 .cf-tag{color:var(--grn-d);}
+    .capformula .cf-l3 .cf-tag{color:var(--red-d);}
+    .capformula .cf-w{font-family:var(--mono); font-size:10.5px; color:var(--muted); opacity:.85; white-space:nowrap;}
+    .capformula .cf-block{position:absolute; left:50%; top:0; width:62%; height:200%; transform:translate(-50%,-110%); border-radius:5px; opacity:0; mix-blend-mode:multiply;}
+    .capformula .cf-l1 .cf-block{background:linear-gradient(180deg,var(--cdp-d),var(--cdp-l)); animation:cf-pass 9s cubic-bezier(.55,.05,.45,1) infinite;}
+    .capformula .cf-l2 .cf-block{background:linear-gradient(180deg,var(--grn-d),var(--grn-l)); animation:cf-pass 9s cubic-bezier(.55,.05,.45,1) infinite; animation-delay:1.05s;}
+    .capformula .cf-l3 .cf-block{background:linear-gradient(180deg,var(--red-d),var(--red-l)); animation:cf-pass 9s cubic-bezier(.55,.05,.45,1) infinite; animation-delay:2.1s;}
+    @keyframes cf-pass{ 0%{transform:translate(-50%,-110%);opacity:0} 8%{opacity:.92} 26%{transform:translate(-50%,-2%);opacity:.92} 40%{transform:translate(-50%,42%);opacity:.92} 62%{transform:translate(-50%,108%);opacity:.85} 72%{opacity:0} 100%{transform:translate(-50%,160%);opacity:0} }
+    .capformula .cf-sweep{position:absolute; inset:0; pointer-events:none; background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%); transform:translateX(-120%); animation:cf-sweep 9s ease-in-out infinite;}
+    .capformula .cf-l1 .cf-sweep{animation-delay:.2s;}
+    .capformula .cf-l2 .cf-sweep{animation-delay:1.25s;}
+    .capformula .cf-l3 .cf-sweep{animation-delay:2.3s;}
+    @keyframes cf-sweep{ 0%,22%{transform:translateX(-120%)} 40%{transform:translateX(120%)} 100%{transform:translateX(120%)} }
+    .capformula .cf-tick{width:1px; height:clamp(7px,1.6vw,11px); background:var(--hair);}
+    .capformula .cf-out{position:relative; width:46%; margin-top:clamp(10px,2vw,14px); display:flex; flex-direction:column; align-items:center; gap:8px;}
+    .capformula .cf-funnel{width:100%; height:3px; border-radius:2px; background:linear-gradient(90deg,transparent,var(--ink-soft),transparent); position:relative; overflow:hidden;}
+    .capformula .cf-flow{position:absolute; top:0; left:0; height:100%; width:34%; background:linear-gradient(90deg,transparent,#fff,transparent); animation:cf-flow 9s linear infinite; animation-delay:2.6s; opacity:.9;}
+    @keyframes cf-flow{ 0%,28%{transform:translateX(-120%);opacity:0} 34%{opacity:.9} 60%{transform:translateX(330%);opacity:.9} 66%,100%{opacity:0;transform:translateX(330%)} }
+    .capformula .cf-result{font-family:var(--mono); font-size:clamp(10.5px,2.2vw,12px); color:var(--red-d); letter-spacing:.3px; text-align:center; background:var(--red-b); border:1px solid var(--red-e); padding:5px 12px; border-radius:6px; white-space:nowrap; box-shadow:0 1px 0 rgba(255,255,255,.4);}
+    .capformula .cf-result b{font-weight:600;}
+    .capformula .cf-cap{text-align:center; font-size:clamp(11px,2.3vw,12.5px); color:var(--muted); margin:clamp(14px,2.6vw,18px) auto 0; max-width:440px;}
+    .capformula.in-view .cf-l3{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 10px rgba(143,45,32,.13);}
+    .capformula.is-playing .cf-layer[data-step]{transform:translateY(0);}
+    @media (max-width:560px){
+      .capformula .cf-l2{width:80%;}
+      .capformula .cf-l3{width:58%;}
+      .capformula .cf-block{width:70%;}
+      .capformula .cf-out{width:58%;}
+      .capformula .cf-w{display:none;}
+    }
+    @media (prefers-reduced-motion:reduce){
+      .capformula .cf-block, .capformula .cf-sweep, .capformula .cf-flow{animation:none !important;}
+      .capformula .cf-l3 .cf-block{opacity:.9; transform:translate(-50%,42%);}
+      .capformula .cf-l1 .cf-block, .capformula .cf-l2 .cf-block{opacity:.55; transform:translate(-50%,42%);}
+      .capformula .cf-flow{opacity:.9; left:33%;}
+    }
+  </style>
+  <p class="cf-title" aria-hidden="true">
+    工具实际能力 <span class="cf-eq">=</span> <span class="cf-min">min</span>(
+    <b class="t-cdp">协议层上限</b> ,
+    <b class="t-grn">产品封装范围</b> ,
+    <b class="t-red">安全策略</b> )
+  </p>
+  <div class="cf-stage">
+    <div class="cf-drop-rail" aria-hidden="true"><span class="cf-source">能力 · 自上而下穿层</span></div>
+    <div class="cf-layers">
+      <div class="cf-layer cf-l1" data-step="1"><span class="cf-tag">协议层上限</span><span class="cf-w" aria-hidden="true">ceiling 100%</span><span class="cf-block" aria-hidden="true"></span><span class="cf-sweep" aria-hidden="true"></span></div>
+      <div class="cf-tick" aria-hidden="true"></div>
+      <div class="cf-layer cf-l2" data-step="2"><span class="cf-tag">产品封装范围</span><span class="cf-w" aria-hidden="true">ceiling 72%</span><span class="cf-block" aria-hidden="true"></span><span class="cf-sweep" aria-hidden="true"></span></div>
+      <div class="cf-tick" aria-hidden="true"></div>
+      <div class="cf-layer cf-l3" data-step="3"><span class="cf-tag">安全策略</span><span class="cf-w" aria-hidden="true">ceiling 46%</span><span class="cf-block" aria-hidden="true"></span><span class="cf-sweep" aria-hidden="true"></span></div>
+    </div>
+    <div class="cf-out" data-step="4">
+      <div class="cf-funnel" aria-hidden="true"><span class="cf-flow"></span></div>
+      <div class="cf-result"><b>实际能力</b> = min · 最窄那层</div>
+    </div>
+  </div>
+  <p class="cf-cap">能力色块逐层穿过，被每层裁到该层宽度；流出底部的细条，就是三者取最小后的真实可用范围。</p>
+</figure>
+
+
 只想选工具，可以直接跳到 [第 2 节选型路由](#2-选型路由按任务场景反推工具)。想复现实测，仓库 `apps/browser-tool-bench/` 里有测试站、任务卡和原始结果。想理解某个工具为什么失败，从第 4 节逐格解释读起。
 
 ## 一、结论先行：读者最关心的
@@ -202,6 +313,329 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 没人会把六个工具都装上。大多数人——尤其是前端开发者——只需要一个**综合最顺手、又能复用真实登录态**的工具。把"复用真实登录态"定成硬前提（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用），候选会先分成两档：DevTools MCP、agent-browser、bb-browser 这三类能在本轮接到 9223 或受管持久 profile；playwright-cli 在 T10c 单题里也能 `attach --cdp` 复用 9223，但外场轮在带多扩展的真实 profile 上触发过 service worker target 断言，稳定性还没达到“真实 profile 主工具”的级别；@browser 不继承真实登录态；`@chrome（开权限）` 已经能通过默认 Chrome Profile 做大量 CDP 观察，但 T10c 仍证明不了它落在用户指定的 9223。agent-browser 在严格 `connect 9223` + `get cdp-url` 复核后可以稳定跑一轮真实外场，所以它不该被简单排除；但如果只能给前端开发者推荐**一款**，我仍然选 **Chrome DevTools MCP**。后续追加的前端专项、真实网站外场、`@chrome` 开权限复测与 T10c 没有推翻这个结论，反而把理由补强了：前端排障最常见的 console、source map、Service Worker、iframe、file input、键盘可访问性、真实 Network body、扩展 options、指定 profile 和性能 trace，DevTools MCP 都能拿到证据。
 
 在这些候选里，**前端开发者首选 Chrome DevTools MCP**。
+
+
+<figure class="pickflow" role="group" aria-label="第二节 浏览器工具选型路由图：先过登录态硬前提，默认首选 Chrome DevTools MCP，再按四类额外需求加装其它工具">
+<style>
+.pickflow{
+  --pf-paper-soft: var(--paper-soft, #faf6ec);
+  --pf-paper-deep: var(--paper-deep, #ece5d5);
+  --pf-paper-vsoft: #f7f1e4;
+  --pf-ink: var(--ink, #1a1815);
+  --pf-ink-soft: var(--ink-soft, #3c362c);
+  --pf-muted: var(--muted, #6a6155);
+  --pf-hair: var(--hair, rgba(26,24,21,.2));
+  --pf-serif: var(--font-serif-body, "Songti SC", "Source Han Serif SC", Georgia, serif);
+  --pf-mono: var(--font-mono, ui-monospace, "SFMono-Regular", monospace);
+  --pf-green-d:#4f7233; --pf-green-l:#7c9c54; --pf-green-bg:#e7eedd;
+  --pf-cyan:#3f6d79; --pf-cyan-bg:#dcebed; --pf-cyan-bd:#8fbcc4;
+  --pf-amb:#9a6516; --pf-amb-l:#d6a64a; --pf-amb-bg:#f4e8cc; --pf-amb-bd:#d9b66a;
+  --pf-pur:#54579a; --pf-pur-bg:#e6e7f3; --pf-pur-bd:#a9adcf;
+  --pf-gray:#917f5c; --pf-gray-bg:#ece4d2;
+  margin:0;
+  font-family:var(--pf-serif);
+  color:var(--pf-ink);
+  background:
+    radial-gradient(120% 90% at 12% 0%, var(--pf-paper-soft), transparent 60%),
+    linear-gradient(160deg, var(--pf-paper-vsoft), var(--pf-paper-deep));
+  border:1px solid var(--pf-hair);
+  border-radius:14px;
+  padding:clamp(18px,4vw,30px);
+  box-sizing:border-box;
+  position:relative;
+  overflow:hidden;
+  line-height:1.5;
+  container-type:inline-size;
+  container-name:pf;
+}
+.pickflow *{ box-sizing:border-box; min-width:0; }
+.pickflow .pf-grain{
+  position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background-image:radial-gradient(var(--pf-hair) .5px, transparent .5px);
+  background-size:16px 16px;
+  -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,.35), transparent 70%);
+  mask-image:linear-gradient(180deg, rgba(0,0,0,.35), transparent 70%);
+}
+.pickflow .pf-head{ position:relative; z-index:2; margin-bottom:clamp(14px,3vw,22px); }
+.pickflow .pf-kicker{
+  font-family:var(--pf-mono);
+  font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--pf-cyan);
+  display:inline-flex; align-items:center; gap:8px;
+}
+.pickflow .pf-kicker::before{
+  content:""; width:22px; height:1px; background:var(--pf-cyan); display:inline-block;
+}
+.pickflow .pf-title{
+  font-size:clamp(17px,3.4vw,22px); font-weight:700; color:var(--pf-ink);
+  margin:8px 0 4px; letter-spacing:.01em;
+}
+.pickflow .pf-sub{ font-size:13px; color:var(--pf-muted); max-width:60ch; }
+.pickflow .pf-stage{ position:relative; z-index:2; display:flex; flex-direction:column; }
+.pickflow .pf-row{ display:flex; align-items:stretch; gap:clamp(10px,2.4vw,18px); }
+.pickflow .pf-spine{
+  flex:0 0 clamp(96px,18%,150px);
+  position:relative;
+  align-self:stretch;
+}
+.pickflow .pf-spine::before{
+  content:""; position:absolute; top:0; bottom:14px; right:0; width:3px; border-radius:2px;
+  background:linear-gradient(180deg,
+     var(--pf-cyan) 0 40%, transparent 40% 60%, var(--pf-cyan) 60% 100%);
+  background-size:100% 12px;
+  animation:pf-stream 2.6s linear infinite;
+  opacity:.85;
+}
+.pickflow .pf-spine::after{
+  content:"按额外需求"; position:absolute; top:2px; right:12px;
+  font-family:var(--pf-mono); font-size:9.5px; letter-spacing:.16em;
+  color:var(--pf-muted); writing-mode:vertical-rl; white-space:nowrap;
+}
+.pickflow .pf-branches{ flex:1 1 auto; display:flex; flex-direction:column; gap:10px; justify-content:center; }
+.pickflow .pf-flow{
+  position:relative; height:26px; margin:2px auto;
+  width:3px; border-radius:2px;
+  background:linear-gradient(180deg,
+     var(--pf-cyan) 0 40%, transparent 40% 60%, var(--pf-cyan) 60% 100%);
+  background-size:100% 12px;
+  animation:pf-stream 2.6s linear infinite;
+  opacity:.85;
+}
+@keyframes pf-stream{ from{background-position:0 0;} to{background-position:0 12px;} }
+.pickflow .pf-flow-h{
+  flex:0 0 clamp(20px,4vw,46px);
+  align-self:center;
+  height:3px; border-radius:2px;
+  background:linear-gradient(90deg,
+     currentColor 0 40%, transparent 40% 60%, currentColor 60% 100%);
+  background-size:12px 100%;
+  animation:pf-stream-h 2.6s linear infinite;
+  opacity:.85;
+  position:relative;
+}
+.pickflow .pf-flow-h::after{
+  content:""; position:absolute; right:0; top:50%; transform:translateY(-50%);
+  border-left:6px solid currentColor; border-top:4px solid transparent; border-bottom:4px solid transparent;
+}
+@keyframes pf-stream-h{ from{background-position:0 0;} to{background-position:12px 0;} }
+.pickflow .pf-node{
+  position:relative;
+  border:1.5px solid var(--pf-hair);
+  border-radius:11px;
+  padding:11px 13px;
+  background:var(--pf-paper-soft);
+  box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 2px 8px rgba(26,24,21,.05);
+  opacity:.55;
+  transform:translateY(4px);
+  animation:pf-rise .9s ease forwards;
+}
+@keyframes pf-rise{ to{opacity:1; transform:translateY(0);} }
+.pickflow .pf-tag{
+  font-family:var(--pf-mono); font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--pf-muted); display:block; margin-bottom:3px;
+}
+.pickflow .pf-node b{ font-size:14px; font-weight:700; color:var(--pf-ink); display:block; }
+.pickflow .pf-node small{ font-size:11.5px; color:var(--pf-ink-soft); display:block; margin-top:3px; }
+.pickflow .pf-gate{
+  border-color:var(--pf-amb-bd);
+  background:linear-gradient(180deg, var(--pf-amb-bg), var(--pf-paper-soft));
+  animation-delay:.05s;
+}
+.pickflow .pf-gate .pf-tag{ color:var(--pf-amb); }
+.pickflow .pf-gate::before{
+  content:""; position:absolute; left:0; top:12px; bottom:12px; width:3px; border-radius:3px;
+  background:var(--pf-amb-l);
+}
+.pickflow .pf-hero{
+  border:2px solid var(--pf-green-d);
+  background:linear-gradient(155deg, var(--pf-green-bg), var(--pf-cyan-bg));
+  padding:15px 16px; margin-top:4px;
+  animation:pf-rise .9s ease .35s forwards, pf-breathe 8s ease-in-out 1.2s infinite;
+}
+.pickflow .pf-hero .pf-tag{ color:var(--pf-green-d); }
+.pickflow .pf-hero b{ font-size:16px; color:var(--pf-green-d); }
+.pickflow .pf-hero small{ color:var(--pf-ink-soft); }
+.pickflow .pf-hero .pf-pill{
+  display:inline-block; margin-top:9px;
+  font-family:var(--pf-mono); font-size:10px; letter-spacing:.04em;
+  color:var(--pf-cyan); background:var(--pf-paper-soft);
+  border:1px solid var(--pf-cyan-bd); border-radius:20px; padding:3px 10px;
+}
+.pickflow .pf-hero::after{
+  content:"首选"; position:absolute; top:-9px; right:14px;
+  font-family:var(--pf-mono); font-size:10px; letter-spacing:.15em;
+  color:var(--pf-paper-soft); background:var(--pf-green-d);
+  padding:3px 9px; border-radius:20px;
+  box-shadow:0 2px 6px rgba(79,114,51,.35);
+}
+@keyframes pf-breathe{
+  0%,100%{ box-shadow:0 0 0 0 rgba(79,114,51,0), 0 4px 14px rgba(26,24,21,.07); }
+  50%{ box-shadow:0 0 0 4px rgba(124,156,84,.15), 0 6px 18px rgba(26,24,21,.10); }
+}
+.pickflow .pf-hero-halo{
+  position:absolute; inset:-2px; border-radius:11px; pointer-events:none;
+  border:2px solid transparent;
+  background:linear-gradient(120deg, transparent, rgba(124,156,84,.5), transparent) border-box;
+  -webkit-mask:linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  background-size:220% 100%;
+  animation:pf-halo 5s linear 1.4s infinite;
+  opacity:.9;
+}
+@keyframes pf-halo{ from{background-position:200% 0;} to{background-position:-60% 0;} }
+.pickflow .pf-b1{ border-color:var(--pf-cyan-bd); background:linear-gradient(180deg,var(--pf-cyan-bg),var(--pf-paper-soft)); }
+.pickflow .pf-b2{ border-color:var(--pf-cyan-bd); background:linear-gradient(180deg,var(--pf-cyan-bg),var(--pf-paper-soft)); }
+.pickflow .pf-b3{ border-color:var(--pf-hair); background:linear-gradient(180deg,#e6e0d2,var(--pf-paper-soft)); }
+.pickflow .pf-b4{ border-color:var(--pf-pur-bd); background:linear-gradient(180deg,var(--pf-pur-bg),var(--pf-paper-soft)); }
+.pickflow .pf-b1 .pf-tag,.pickflow .pf-b2 .pf-tag{ color:var(--pf-cyan); }
+.pickflow .pf-b3 .pf-tag{ color:var(--pf-gray); }
+.pickflow .pf-b4 .pf-tag{ color:var(--pf-pur); }
+.pickflow .pf-chips{ display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.pickflow .pf-chip{
+  display:inline-block;
+  font-family:var(--pf-mono); font-size:10px; letter-spacing:.02em;
+  padding:2px 8px; border-radius:6px; white-space:nowrap;
+}
+.pickflow .pf-chip.c-cyan{ color:var(--pf-cyan); background:var(--pf-cyan-bg); border:1px solid var(--pf-cyan-bd); }
+.pickflow .pf-chip.c-pur{ color:var(--pf-pur); background:var(--pf-pur-bg); border:1px solid var(--pf-pur-bd); }
+.pickflow .pf-chip.c-gray{ color:var(--pf-gray); background:var(--pf-gray-bg); border:1px solid var(--pf-hair); }
+.pickflow .pf-bhead{
+  font-family:var(--pf-mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--pf-muted); margin:6px 0 4px;
+  display:flex; align-items:center; gap:9px;
+}
+.pickflow .pf-bhead::before{ content:""; flex:0 0 18px; height:1px; background:var(--pf-hair); }
+.pickflow .pf-bhead::after{ content:""; flex:1 1 auto; height:1px; background:var(--pf-hair); }
+.pickflow .pf-unit{ display:flex; align-items:stretch; color:var(--pf-cyan); position:relative; }
+.pickflow .pf-unit .pf-node{ flex:1 1 auto; }
+.pickflow .pf-u1 .pf-node{ animation-delay:.9s; } .pickflow .pf-u1 .pf-flow-h{ animation-delay:.8s; }
+.pickflow .pf-u2 .pf-node{ animation-delay:1.25s; } .pickflow .pf-u2 .pf-flow-h{ animation-delay:1.15s; }
+.pickflow .pf-u3 .pf-node{ animation-delay:1.6s; } .pickflow .pf-u3 .pf-flow-h{ animation-delay:1.5s; }
+.pickflow .pf-u4 .pf-node{ animation-delay:1.95s; } .pickflow .pf-u4 .pf-flow-h{ animation-delay:1.85s; }
+.pickflow .pf-u3{ color:var(--pf-gray); }
+.pickflow .pf-u4{ color:var(--pf-pur); }
+.pickflow .pf-foot{
+  position:relative; z-index:2; margin-top:clamp(14px,3vw,20px);
+  display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center;
+  border-top:1px dashed var(--pf-hair); padding-top:12px;
+  font-size:11px; color:var(--pf-muted);
+}
+.pickflow .pf-leg{ display:inline-flex; align-items:center; gap:6px; font-family:var(--pf-mono); letter-spacing:.04em; }
+.pickflow .pf-dot{ width:9px; height:9px; border-radius:3px; display:inline-block; border:1px solid var(--pf-hair); }
+.pickflow .d-green{ background:var(--pf-green-l); } .pickflow .d-cyan{ background:var(--pf-cyan); }
+.pickflow .d-pur{ background:var(--pf-pur); } .pickflow .d-gray{ background:var(--pf-gray); }
+.pickflow .d-amb{ background:var(--pf-amb-l); }
+.pickflow.in-view .pf-node{ animation-play-state:running; }
+.pickflow.is-playing .pf-node.pf-active{ outline:2px solid var(--pf-cyan); outline-offset:2px; }
+@container pf (max-width:520px){
+  .pickflow .pf-row{ flex-direction:column; gap:6px; }
+  .pickflow .pf-spine{ display:none; }
+  .pickflow .pf-flow-h{ display:none; }
+  .pickflow .pf-unit{ flex-direction:column; }
+  .pickflow .pf-unit .pf-node{ width:100%; }
+  .pickflow .pf-branches{ gap:8px; }
+  .pickflow .pf-hero::after{ right:12px; }
+}
+@media (max-width:560px){
+  .pickflow .pf-row{ flex-direction:column; gap:6px; }
+  .pickflow .pf-spine{ display:none; }
+  .pickflow .pf-flow-h{ display:none; }
+  .pickflow .pf-unit{ flex-direction:column; }
+  .pickflow .pf-unit .pf-node{ width:100%; }
+  .pickflow .pf-branches{ gap:8px; }
+  .pickflow .pf-hero::after{ right:12px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .pickflow .pf-node,.pickflow .pf-hero{ animation:none !important; opacity:1 !important; transform:none !important; }
+  .pickflow .pf-flow,.pickflow .pf-flow-h,.pickflow .pf-spine::before,.pickflow .pf-hero-halo{ animation:none !important; }
+  .pickflow .pf-flow,.pickflow .pf-spine::before{ background:var(--pf-cyan); opacity:.55; }
+  .pickflow .pf-flow-h{ background:currentColor; opacity:.55; }
+  .pickflow .pf-hero{ box-shadow:0 4px 14px rgba(26,24,21,.07); }
+  .pickflow .pf-hero-halo{ opacity:.45; background-position:50% 0; }
+}
+</style>
+<span class="pf-grain" aria-hidden="true"></span>
+<div class="pf-head">
+  <span class="pf-kicker">§2 选型路由</span>
+  <div class="pf-title">按任务场景反推工具</div>
+  <div class="pf-sub">先过一道硬前提，落到前端默认首选，再按额外需求逐项加装。</div>
+</div>
+<div class="pf-stage">
+  <div class="pf-node pf-gate" data-step="1">
+    <span class="pf-tag" aria-hidden="true">硬前提 · GATE</span>
+    <b>要复用真实登录态？</b>
+    <small>你登录过的 GitHub / 内网 / 在调应用——Agent 直接接着用，免重登。</small>
+  </div>
+  <div class="pf-flow" aria-hidden="true"></div>
+  <div class="pf-node pf-hero" data-step="2">
+    <span class="pf-hero-halo" aria-hidden="true"></span>
+    <span class="pf-tag" aria-hidden="true">前端默认 · MAIN</span>
+    <b>Chrome DevTools MCP</b>
+    <small>把 F12 调试流程包成 Agent 工具：Network 响应体、性能诊断直出、扩展特权页、直连真实 Chrome 全覆盖，操作数最少。</small>
+    <span class="pf-pill">满足需求即收手，不用再加装</span>
+  </div>
+  <div class="pf-flow" aria-hidden="true"></div>
+  <div class="pf-bhead" aria-hidden="true">额外需求 → 加装</div>
+  <div class="pf-row">
+    <div class="pf-spine" aria-hidden="true"></div>
+    <div class="pf-branches">
+      <div class="pf-unit pf-u1">
+        <span class="pf-flow-h" aria-hidden="true"></span>
+        <div class="pf-node pf-b1" data-step="3">
+          <span class="pf-tag" aria-hidden="true">流量层 · route</span>
+          <b>要 mock / 拦截 / 改写流量</b>
+          <span class="pf-chips">
+            <span class="pf-chip c-cyan">agent-browser</span>
+            <span class="pf-chip c-pur">playwright-cli</span>
+          </span>
+          <small>唯二真正在网络层做 route 的工具。</small>
+        </div>
+      </div>
+      <div class="pf-unit pf-u2">
+        <span class="pf-flow-h" aria-hidden="true"></span>
+        <div class="pf-node pf-b2" data-step="4">
+          <span class="pf-tag" aria-hidden="true">可移植 · state</span>
+          <b>跨机器 / 跨目录免登录</b>
+          <span class="pf-chips">
+            <span class="pf-chip c-cyan">agent-browser</span>
+            <span class="pf-chip c-pur">playwright-cli</span>
+          </span>
+          <small>导出可移植的 state 文件，换台机器照样带登录态。</small>
+        </div>
+      </div>
+      <div class="pf-unit pf-u3">
+        <span class="pf-flow-h" aria-hidden="true"></span>
+        <div class="pf-node pf-b3" data-step="5">
+          <span class="pf-tag" aria-hidden="true">封装 · site adapter</span>
+          <b>把固定网站封成稳定命令</b>
+          <span class="pf-chips">
+            <span class="pf-chip c-gray">bb-browser</span>
+          </span>
+          <small>用 site adapter 把常用站点固化成可复用命令。</small>
+        </div>
+      </div>
+      <div class="pf-unit pf-u4">
+        <span class="pf-flow-h" aria-hidden="true"></span>
+        <div class="pf-node pf-b4" data-step="6">
+          <span class="pf-tag" aria-hidden="true">回归 · headless</span>
+          <b>纯自启浏览器 · 长期回归测试</b>
+          <span class="pf-chips">
+            <span class="pf-chip c-pur">Playwright 库</span>
+          </span>
+          <small>不依赖真实登录态时，自启浏览器跑稳定回归。</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="pf-foot" aria-hidden="true">
+  <span class="pf-leg"><span class="pf-dot d-amb"></span>硬前提</span>
+  <span class="pf-leg"><span class="pf-dot d-green"></span>首选 MCP</span>
+  <span class="pf-leg"><span class="pf-dot d-cyan"></span>agent-browser</span>
+  <span class="pf-leg"><span class="pf-dot d-pur"></span>playwright</span>
+  <span class="pf-leg"><span class="pf-dot d-gray"></span>bb-browser</span>
+</div>
+</figure>
 
 **为什么是它**：它本质就是"把你天天用的 F12 调试流程包成了一个 Agent 工具"——
 

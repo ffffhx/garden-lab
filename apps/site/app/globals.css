@@ -3860,3 +3860,76 @@ summary:focus-visible,
     transform: none;
   }
 }
+
+/* —— 文章内图表「滚动入场」动效（由 BenchReveal 组件驱动） ——
+   渐进增强：仅当 JS 给 <figure> 加上 .bench-anim 后才进入隐藏初始态，
+   随后 IntersectionObserver 加 .in-view 触发入场。无 JS 时图表完全可见。 */
+.article-content figure.bench-anim {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: opacity, transform;
+}
+.article-content figure.bench-anim.in-view {
+  opacity: 1;
+  transform: none;
+}
+/* 子元素逐行错落入场：热力图行、能力分层条、能力面层、站位行、覆盖条 */
+.article-content figure.bench-anim .bv-tr,
+.article-content figure.bench-anim .bl-band,
+.article-content figure.bench-anim .pl-layer,
+.article-content figure.bench-anim .po-row,
+.article-content figure.bench-anim .bv-covrow {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.article-content figure.bench-anim.in-view .bv-tr,
+.article-content figure.bench-anim.in-view .bl-band,
+.article-content figure.bench-anim.in-view .pl-layer,
+.article-content figure.bench-anim.in-view .po-row,
+.article-content figure.bench-anim.in-view .bv-covrow {
+  opacity: 1;
+  transform: none;
+}
+/* 分层条用已有的 --d 做步进；其余用 nth-child 错峰 */
+.article-content figure.bench-anim .bl-band {
+  transition-delay: calc(var(--d, 0) * 65ms);
+}
+.article-content figure.bench-anim .pl-layer:nth-child(2) { transition-delay: 60ms; }
+.article-content figure.bench-anim .pl-layer:nth-child(3) { transition-delay: 120ms; }
+.article-content figure.bench-anim .pl-layer:nth-child(4) { transition-delay: 180ms; }
+.article-content figure.bench-anim .pl-layer:nth-child(5) { transition-delay: 240ms; }
+.article-content figure.bench-anim .po-row:nth-child(2) { transition-delay: 50ms; }
+.article-content figure.bench-anim .po-row:nth-child(3) { transition-delay: 100ms; }
+.article-content figure.bench-anim .po-row:nth-child(4) { transition-delay: 150ms; }
+.article-content figure.bench-anim .po-row:nth-child(5) { transition-delay: 200ms; }
+.article-content figure.bench-anim .po-row:nth-child(6) { transition-delay: 250ms; }
+.article-content figure.bench-anim .bv-covrow:nth-child(2) { transition-delay: 60ms; }
+.article-content figure.bench-anim .bv-covrow:nth-child(3) { transition-delay: 120ms; }
+.article-content figure.bench-anim .bv-covrow:nth-child(4) { transition-delay: 180ms; }
+.article-content figure.bench-anim .bv-covrow:nth-child(5) { transition-delay: 240ms; }
+.article-content figure.bench-anim .bv-covrow:nth-child(6) { transition-delay: 300ms; }
+/* 热力图行错峰（取前若干行，足够覆盖视觉重点） */
+.article-content figure.bench-anim .bv-tr:nth-child(2) { transition-delay: 40ms; }
+.article-content figure.bench-anim .bv-tr:nth-child(3) { transition-delay: 80ms; }
+.article-content figure.bench-anim .bv-tr:nth-child(4) { transition-delay: 120ms; }
+.article-content figure.bench-anim .bv-tr:nth-child(5) { transition-delay: 160ms; }
+.article-content figure.bench-anim .bv-tr:nth-child(6) { transition-delay: 200ms; }
+.article-content figure.bench-anim .bv-tr:nth-child(7) { transition-delay: 240ms; }
+.article-content figure.bench-anim .bv-tr:nth-child(8) { transition-delay: 280ms; }
+
+/* 尊重「减少动效」偏好：BenchReveal 在 reduce 下根本不加 .bench-anim，
+   这里再兜一层，确保任何情况下都不隐藏、不位移 */
+@media (prefers-reduced-motion: reduce) {
+  .article-content figure.bench-anim,
+  .article-content figure.bench-anim .bv-tr,
+  .article-content figure.bench-anim .bl-band,
+  .article-content figure.bench-anim .pl-layer,
+  .article-content figure.bench-anim .po-row,
+  .article-content figure.bench-anim .bv-covrow {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

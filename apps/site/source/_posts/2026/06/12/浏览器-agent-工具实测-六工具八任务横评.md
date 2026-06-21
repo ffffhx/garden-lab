@@ -173,6 +173,21 @@ coverPosition: "below-title"
 
 Codex 轮原始数据见 `results/unified-9223-2026-06-21-6tools-rerun2/`（下午 rerun2，含 token）。
 
+#### 成本 × 能力 × 速度：只装一款选谁
+
+把三轴一起看（**速度只用 Claude 同宿主可比的两轮**；Codex 耗时是 subagent 自报、跨宿主不可比，不参与排速度）：
+
+- **速度**：agent-browser / DevTools MCP / playwright-cli 三家挤在 **~24.6–26.1 min**，彼此差 ~1.5 min（落在轮次噪声里）、**实质平手**；真正慢的只有 bb-browser（**~45 min ≈ 1.8×**）。
+- **token**：agent-browser **最省（~198k）**，DevTools MCP **最贵（~325k ≈ 1.6×）**，两者做的是同样多的活——这是三轴里**唯一拉得开差距**的一项。
+- **能力**：agent-browser 与 DevTools MCP 并列最强；agent-browser 还独占运行时 route + HAR + 扩展 options + 可移植登录态。
+
+速度既是平手，决定权就落在 **token + 能力**——两者都指向 agent-browser。
+
+<div class="bv-pick" style="margin:1.4rem 0;padding:.9rem 1.1rem;border-left:4px solid #4f7233;background:var(--paper-soft,#faf6ec);border-radius:.5rem;font-size:.92rem;line-height:1.65">
+<b>只装一款 → agent-browser。</b> 三轴里它：能力第一梯队、token 最省（≈ DevTools MCP 的 60%）、速度与最快者打平——等于<b>花最少的 token、用差不多的时间，把最全的活干了</b>。代价是一次性的 <code>--cdp</code> daemon 接入坑（先 <code>close --all</code> 复位一次，见 7.2）+ 少数任务掉 eval 兜底。<br>
+<b style="color:#8f2d20">唯一例外</b>：如果你的活<b>纯粹是前端调试</b>（perf / Console / source map / 网络面板）、追求最稳零逃生、<b>且不在乎 token</b> → 选 <b>Chrome DevTools MCP</b>（快一丢丢、最稳，但每轮多烧 ≈60% token、且没有运行时 route）。按具体任务场景细分见下面第 2 节。
+</div>
+
 T09/T10/T11 把战场从 localhost 网页挪到真实登录态与扩展安全域，其中涉及真实登录态的几格由两轮互相独立的隔离子 Agent 实测（一轮 Claude Code 主控、一轮 Codex），结论一致，差异只在评分口径（详见 4.7）。2026-06-20 又追加了 T10c，专门测“工具能否绑定用户指定的现成 9223 profile”，避免把默认 profile、自管 state 和指定 CDP profile 混成一个概念。
 
 关键前置（影响上表 T09/T10/T11 怎么读）：目标机器的系统默认 Chrome（CDP 9223）是**企业管控**的，会在运行时拦截"加载已解压扩展"（扩展自身 `chrome-extension://` 资源返回 `ERR_BLOCKED_BY_CLIENT`、content script 不注入），所以 T09/T11 的扩展宿主改用一台**干净的 Chrome for Testing**（`--disable-features=DisableLoadExtensionCommandLineSwitch --load-extension` 才能让 137+ 真正加载扩展）；T10a/T10c 仍在企业 9223 上测真实登录态。GitHub 未读数是动态字段：早期 T10a 读到 **68**，T10c 运行时从 **70** 变为 **71**。

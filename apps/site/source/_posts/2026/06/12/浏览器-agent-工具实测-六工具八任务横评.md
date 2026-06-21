@@ -970,6 +970,77 @@ T12–T20 是我后来补的一组前端开发者专项题。它们的目标不�
 
 前五节用"站在哪一层 + 三个因素"解释了每个 ✅/⚠️/❌。这一节再往下钻一层，把六个工具的内部实现讲清楚：它们各自怎么连上浏览器、用什么把能力包装出来、为什么会出现前面看到的那些边界。读完这一节，前面总表里每一格的结果，都能对应到具体的代码机制。
 
+<figure class="toolwire" data-reveal role="group" aria-label="五种工具实现链路交互对比图：点选工具，查看它的指令如何一路流到 Chrome、卡在哪一层、为什么">
+<style>
+.toolwire{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--paper-vsoft:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--serif:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);--mono:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);--grn:#4f7233;--grn-b:#e7eedd;--grn-e:#9ab87f;--cyan:#3f6d79;--cyan-b:#dcebed;--cyan-e:#8fbcc4;--amb:#9a6516;--amb-l:#d6a64a;--amb-b:#f4e8cc;--amb-e:#d9b66a;--red:#8f2d20;--red-b:#f1ddd6;--red-e:#cf9b90;--pur:#54579a;--pur-b:#e6e7f3;--pur-e:#a9adcf;--gray:#917f5c;--gray-b:#ece4d2;margin:0;padding:clamp(16px,3.4vw,28px);font-family:var(--serif);color:var(--ink);line-height:1.5;background:radial-gradient(130% 90% at 8% 0%,var(--paper-soft),transparent 60%),linear-gradient(160deg,var(--paper-vsoft),var(--paper-deep));border:1px solid var(--hair);border-radius:14px;position:relative;overflow:hidden}
+.toolwire *{box-sizing:border-box;min-width:0}
+.toolwire .tw-radio{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.toolwire .tw-head{position:relative;z-index:2;margin-bottom:clamp(12px,2.6vw,18px)}
+.toolwire .tw-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);display:inline-flex;align-items:center;gap:8px}
+.toolwire .tw-kicker::before{content:"";width:22px;height:1px;background:var(--cyan)}
+.toolwire .tw-title{font-size:clamp(16px,3.2vw,21px);font-weight:700;color:var(--ink);margin:7px 0 3px}
+.toolwire .tw-sub{font-size:12.5px;color:var(--muted);max-width:62ch}
+.toolwire .tw-sub b{color:var(--ink-soft);font-weight:600}
+.toolwire .tw-tabs{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.toolwire .tw-tab{font-family:var(--mono);font-size:12px;letter-spacing:.01em;padding:6px 11px;border:1.5px solid var(--hair);border-radius:9px;background:var(--paper-soft);color:var(--muted);cursor:pointer;user-select:none;transition:transform .15s ease,border-color .2s ease,color .2s ease,background .2s ease;white-space:nowrap}
+.toolwire .tw-tab:hover{color:var(--ink-soft);border-color:var(--tw-c)}
+.toolwire .tw-tab .tw-dot{display:inline-block;width:8px;height:8px;border-radius:3px;background:var(--tw-c);margin-right:6px;vertical-align:1px}
+.toolwire #tw-r1:checked ~ .tw-tabs .lab1,.toolwire #tw-r2:checked ~ .tw-tabs .lab2,.toolwire #tw-r3:checked ~ .tw-tabs .lab3,.toolwire #tw-r4:checked ~ .tw-tabs .lab4,.toolwire #tw-r5:checked ~ .tw-tabs .lab5{color:var(--tw-c);border-color:var(--tw-c);background:color-mix(in srgb,var(--tw-c) 12%,var(--paper-soft));font-weight:700;box-shadow:0 2px 8px color-mix(in srgb,var(--tw-c) 22%,transparent);transform:translateY(-1px)}
+.toolwire #tw-r1:focus-visible ~ .tw-tabs .lab1,.toolwire #tw-r2:focus-visible ~ .tw-tabs .lab2,.toolwire #tw-r3:focus-visible ~ .tw-tabs .lab3,.toolwire #tw-r4:focus-visible ~ .tw-tabs .lab4,.toolwire #tw-r5:focus-visible ~ .tw-tabs .lab5{outline:2px solid var(--tw-c);outline-offset:2px}
+.toolwire .tw-panels{position:relative;z-index:2}
+.toolwire .tw-panel{display:none;animation:tw-fade .45s ease both}
+@keyframes tw-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.toolwire #tw-r1:checked ~ .tw-panels .pan1,.toolwire #tw-r2:checked ~ .tw-panels .pan2,.toolwire #tw-r3:checked ~ .tw-panels .pan3,.toolwire #tw-r4:checked ~ .tw-panels .pan4,.toolwire #tw-r5:checked ~ .tw-panels .pan5{display:block}
+.toolwire .tw-pane-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.toolwire .tw-pane-name{font-size:15px;font-weight:700;color:var(--tw-c)}
+.toolwire .tw-pane-arch{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--muted);border:1px solid var(--hair);border-radius:20px;padding:2px 9px}
+.toolwire .tw-steps{position:relative;display:flex;flex-direction:column;gap:0}
+.toolwire .tw-step{position:relative;border:1.5px solid var(--hair);border-left:4px solid var(--tw-c);border-radius:9px;background:var(--paper-soft);padding:9px 12px;display:flex;flex-direction:column;gap:1px}
+.toolwire .tw-step b{font-size:13.5px;font-weight:700;color:var(--ink)}
+.toolwire .tw-step small{font-size:11.5px;color:var(--ink-soft)}
+.toolwire .tw-mono{font-family:var(--mono);font-size:.92em;color:var(--muted);background:color-mix(in srgb,var(--ink) 5%,transparent);padding:0 4px;border-radius:4px}
+.toolwire .tw-link{align-self:center;width:3px;height:22px;border-radius:2px;background:linear-gradient(180deg,var(--tw-c) 0 42%,transparent 42% 58%,var(--tw-c) 58% 100%);background-size:100% 11px;animation:tw-stream 2.4s linear infinite;opacity:.8}
+@keyframes tw-stream{from{background-position:0 0}to{background-position:0 11px}}
+.toolwire .tw-step.is-star{border-color:var(--grn-e);background:linear-gradient(180deg,var(--grn-b),var(--paper-soft))}
+.toolwire .tw-step.is-star b{color:var(--grn)}
+.toolwire .tw-step.is-warn{border-color:var(--amb-e);background:linear-gradient(180deg,var(--amb-b),var(--paper-soft))}
+.toolwire .tw-step.is-warn b{color:var(--amb)}
+.toolwire .tw-step.is-bad{border-color:var(--red-e);background:linear-gradient(180deg,var(--red-b),var(--paper-soft))}
+.toolwire .tw-step.is-bad b{color:var(--red)}
+.toolwire .tw-step.is-warn,.toolwire .tw-step.is-bad{animation:tw-pulse 3.2s ease-in-out infinite}
+@keyframes tw-pulse{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--fl,#9a6516) 16%,transparent)}}
+.toolwire .tw-flag{position:absolute;top:-9px;right:11px;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--paper-soft);padding:2px 8px;border-radius:20px;font-weight:700}
+.toolwire .tw-flag.good{background:var(--grn);--fl:#4f7233}
+.toolwire .tw-flag.warn{background:var(--amb);--fl:#9a6516}
+.toolwire .tw-flag.bad{background:var(--red);--fl:#8f2d20}
+.toolwire .tw-step.is-warn{--fl:#9a6516}.toolwire .tw-step.is-bad{--fl:#8f2d20}.toolwire .tw-step.is-star{--fl:#4f7233}
+.toolwire .tw-why{margin-top:13px;border-top:1px dashed var(--hair);padding-top:11px;font-size:12.5px;color:var(--ink-soft);line-height:1.62}
+.toolwire .tw-why b{color:var(--tw-c);font-weight:700}
+.toolwire .tw-foot{position:relative;z-index:2;margin-top:14px;font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.02em;display:flex;flex-wrap:wrap;gap:6px 14px;border-top:1px solid var(--hair);padding-top:10px}
+.toolwire .tw-leg{display:inline-flex;align-items:center;gap:6px}
+.toolwire .tw-chip{width:10px;height:10px;border-radius:3px;display:inline-block;border:1px solid var(--hair)}
+.toolwire .lc-good{background:var(--grn-b);border-color:var(--grn-e)}.toolwire .lc-warn{background:var(--amb-b);border-color:var(--amb-e)}.toolwire .lc-bad{background:var(--red-b);border-color:var(--red-e)}
+@media (max-width:560px){.toolwire .tw-tab{font-size:11px;padding:5px 9px}.toolwire .tw-sub{font-size:12px}}
+@media (prefers-reduced-motion:reduce){.toolwire .tw-link{animation:none;background:var(--tw-c);opacity:.5}.toolwire .tw-step.is-warn,.toolwire .tw-step.is-bad{animation:none}.toolwire .tw-panel{animation:none}}
+</style>
+<input type="radio" name="toolwire-tab" id="tw-r1" class="tw-radio" checked>
+<input type="radio" name="toolwire-tab" id="tw-r2" class="tw-radio">
+<input type="radio" name="toolwire-tab" id="tw-r3" class="tw-radio">
+<input type="radio" name="toolwire-tab" id="tw-r4" class="tw-radio">
+<input type="radio" name="toolwire-tab" id="tw-r5" class="tw-radio">
+<div class="tw-head"><span class="tw-kicker">§7 实现链路</span><div class="tw-title">点一个工具，看它的指令怎么流到 Chrome、卡在哪一层</div><div class="tw-sub">每个工具的本质区别，就是<b>从哪个入口接进浏览器</b>——入口决定它站在哪一层、拿到的是原始能力还是被封装/收口的子集。下面把六个工具的内部链路画成同一种"自上而下的流水线"，<b>红/黄那格就是它的边界</b>，绿格是它的差异化亮点。</div></div>
+<div class="tw-tabs"><label class="tw-tab lab1" for="tw-r1" style="--tw-c:#9a6516"><span class="tw-dot"></span>@chrome / @browser</label><label class="tw-tab lab2" for="tw-r2" style="--tw-c:#3f6d79"><span class="tw-dot"></span>agent-browser</label><label class="tw-tab lab3" for="tw-r3" style="--tw-c:#917f5c"><span class="tw-dot"></span>bb-browser</label><label class="tw-tab lab4" for="tw-r4" style="--tw-c:#4f7233"><span class="tw-dot"></span>DevTools MCP</label><label class="tw-tab lab5" for="tw-r5" style="--tw-c:#54579a"><span class="tw-dot"></span>playwright-cli</label></div>
+<div class="tw-panels">
+<section class="tw-panel pan1" style="--tw-c:#9a6516" aria-label="@chrome / @browser 实现链路"><div class="tw-pane-h"><span class="tw-pane-name">Codex @chrome / @browser</span><span class="tw-pane-arch">宿主内插件 · 受控后端</span></div><div class="tw-steps"><div class="tw-step"><b>你的指令</b><small>Agent 跑在一个<b>受限沙箱</b>里，自己不握有浏览器控制权</small></div><div class="tw-link"></div><div class="tw-step"><b>本地通道</b><small>unix socket <span class="tw-mono">/tmp/codex-browser-use</span>（macOS 沙箱专门放行了这条命名通道）</small></div><div class="tw-link"></div><div class="tw-step is-bad"><span class="tw-flag bad">安全收口</span><b>浏览器控制进程</b><small>受控后端代为管标签页 · 截图 · 读页面 · 执行动作；高风险面默认关紧</small></div><div class="tw-link"></div><div class="tw-step"><b>Codex 内置浏览器</b><small>不是你系统里的 Chrome，而是 Codex 自带的那一层</small></div></div><div class="tw-why"><b>为什么是这样：</b>Browser Use 把能力关进"能力开关＋远端配置＋沙箱白名单"，所以同一版本在不同账号下能力都不同。授权放大后页面 Runtime / Network 读能力能打开（T02/T03/T07/T12–T20 立刻翻盘），但特权 URL、扩展 options、route/mock、指定 9223 仍不放开——边界来自<b>安全策略</b>，不是协议或产品做不到。</div></section>
+<section class="tw-panel pan2" style="--tw-c:#3f6d79" aria-label="agent-browser 实现链路"><div class="tw-pane-h"><span class="tw-pane-name">agent-browser</span><span class="tw-pane-arch">Rust 瘦 CLI + 常驻原生 daemon</span></div><div class="tw-steps"><div class="tw-step"><b>你的指令</b><small>每条命令都发给背后的常驻 daemon</small></div><div class="tw-link"></div><div class="tw-step"><b>瘦 CLI（无状态客户端）</b><small>本体几乎不做事，只负责转发</small></div><div class="tw-link"></div><div class="tw-step"><b>unix socket</b><small><span class="tw-mono">~/.agent-browser/default.sock</span></small></div><div class="tw-link"></div><div class="tw-step is-warn"><span class="tw-flag warn">卡点</span><b>常驻 Rust daemon</b><small>原生二进制 · PPID=1 · 持有<b>粘滞会话</b>＋当前 CDP 连接</small></div><div class="tw-link"></div><div class="tw-step"><b>Chrome · CDP 端口</b><small>真实浏览器（理想情况下是你指定的 9223）</small></div></div><div class="tw-why"><b>为什么是这样：</b>daemon 的会话是"粘滞"的——一旦它先把会话绑到自起的托管浏览器（空白 headless Chrome），后续即使带 <span class="tw-mono">--cdp 9223</span> 也不会可靠切过去，命令<b>静默落到旧浏览器</b>（<span class="tw-mono">get url</span> 还返回你要的页面，像成功）。要稳：先 <span class="tw-mono">tab</span> 核对目标，不对就 <span class="tw-mono">close --all</span> 再重连（见 7.2）。</div></section>
+<section class="tw-panel pan3" style="--tw-c:#917f5c" aria-label="bb-browser 实现链路"><div class="tw-pane-h"><span class="tw-pane-name">bb-browser</span><span class="tw-pane-arch">三入口 + 后台常驻进程 + 站点适配器</span></div><div class="tw-steps"><div class="tw-step"><b>你的指令</b><small>CLI · MCP server · provider 三个入口，谁都不直接连 Chrome</small></div><div class="tw-link"></div><div class="tw-step"><b>本地 HTTP</b><small><span class="tw-mono">127.0.0.1:19824</span></small></div><div class="tw-link"></div><div class="tw-step is-star"><span class="tw-flag good">因果链</span><b>常驻 node daemon</b><small>唯一一条 CDP 长连接＋每 tab 事件缓存（网 500 / 控 200 / 错 100，带递增编号）</small></div><div class="tw-link"></div><div class="tw-step is-bad"><span class="tw-flag bad">卡点</span><b>Chrome · CDP 端口</b><small>注入快照、同源 eval；但 click 事件派发链路有 bug、特权页 URL 被归一化堵死</small></div></div><div class="tw-why"><b>为什么是这样：</b>它的信条是"你的浏览器就是 API"——直接进真实 tab 上下文跑代码，请求天然带当前账号 Cookie，可复用页面前端逻辑（这也是它点击坏了还能靠 eval 答对 7 题的底气）。代价：click 派发链路的 bug（4.5）＋够不到 <span class="tw-mono">chrome://</span> 特权页，让它在通用操作上频繁靠 eval 兜底。</div></section>
+<section class="tw-panel pan4" style="--tw-c:#4f7233" aria-label="Chrome DevTools MCP 实现链路"><div class="tw-pane-h"><span class="tw-pane-name">Chrome DevTools MCP</span><span class="tw-pane-arch">MCP server + Puppeteer + DevTools 引擎</span></div><div class="tw-steps"><div class="tw-step"><b>你的指令</b><small>Agent 经进程 stdio 调 MCP server</small></div><div class="tw-link"></div><div class="tw-step"><b>MCP server（懒启动）</b><small>只列工具清单不拉起 Chrome，首个浏览器工具被调时才启动/连接</small></div><div class="tw-link"></div><div class="tw-step"><b>Puppeteer</b><small>启动 · 连接 · 开页面 · 语义定位元素 · 录 trace · 截图</small></div><div class="tw-link"></div><div class="tw-step is-star"><span class="tw-flag good">诊断直出</span><b>Chrome 调试会话</b><small>直接复用 DevTools 前端的轨迹分析引擎与洞察生成器</small></div></div><div class="tw-why"><b>为什么是这样：</b>性能分析不自己造指标解释器，而是复用 Chrome DevTools 自己那套洞察生成器——录完 trace 直接给"LCP 分解 / 渲染阻塞"结论（4.3 只花 111s）。反面：它本质是一个<b>调试面</b>而非全自动产品，遇到移动端遮挡、SW 绕行、file input 这类问题会自然滑向 <span class="tw-mono">evaluate_script</span>，像前端在 Console 里自查。</div></section>
+<section class="tw-panel pan5" style="--tw-c:#54579a" aria-label="playwright-cli 实现链路"><div class="tw-pane-h"><span class="tw-pane-name">playwright-cli</span><span class="tw-pane-arch">工程化总入口 · Playwright 引擎之上</span></div><div class="tw-steps"><div class="tw-step"><b>你的指令</b><small>人 · CI · MCP · agent 都能调同一个入口</small></div><div class="tw-link"></div><div class="tw-step"><b>三个包</b><small>core ＋ playwright ＋ @playwright/test；命令行参数统一降维成一份配置覆盖</small></div><div class="tw-link"></div><div class="tw-step is-star"><span class="tw-flag good">可执行性检查</span><b>Playwright 引擎</b><small>actionability：动作前自动确认元素存在 · 可见 · 不再移动 · 没被遮挡；locator 每次按最新 DOM 重新找回</small></div><div class="tw-link"></div><div class="tw-step"><b>CDP / BiDi</b><small>底层协议层</small></div><div class="tw-link"></div><div class="tw-step is-warn"><span class="tw-flag warn">外场卡点</span><b>Chrome（自启浏览器）</b><small>attach 多扩展真实 profile 时会撞 service_worker target 断言</small></div></div><div class="tw-why"><b>为什么是这样：</b>把"一个真人此刻能不能完成这个动作"编码进动作模型，从根上消掉手写死等待的偶发失败——这就是它一次点中视口外只露 3px 按钮的底气，综合成绩全场最佳。短板在外场：attach 装了多个扩展的真实 9223 profile 时，枚举到扩展的 <span class="tw-mono">service_worker</span> target 会触发断言、连接建不起来（所以它更适合自启浏览器的回归测试）。</div></section>
+</div>
+<div class="tw-foot"><span class="tw-leg"><span class="tw-chip lc-good"></span>绿格＝差异化亮点</span><span class="tw-leg"><span class="tw-chip lc-warn"></span>黄格＝可控性/外场卡点</span><span class="tw-leg"><span class="tw-chip lc-bad"></span>红格＝硬边界</span><span class="tw-leg">流水线自上而下：你的指令 → 中转层 → Chrome</span></div>
+</figure>
+
+
 #### 7.1 Codex `@chrome` / `@browser`：被层层安全约束收口的能力
 
 `@chrome` / `@browser` 对应 Codex 的 Browser Use 能力，接的是 Codex 自带的内置浏览器那一层，而不是直接驱动你系统里的 Chrome。从公开代码能推断出的执行链路是这样：Agent 跑在一个受限的执行环境里，自己并不直接握有浏览器控制权，而是通过一条本地 Unix socket（线索是 `/tmp/codex-browser-use`）和一个独立的浏览器控制进程通信，由后者真正去管标签页、截图、读页面、执行动作。

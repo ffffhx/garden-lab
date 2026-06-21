@@ -1,0 +1,21 @@
+T20 · 回归稳定性 / Flake Rate — devtools-mcp (chrome-devtools-gh, CDP 9223) — 2026-06-20 (patch)
+
+页面: http://localhost:4399/flake
+操作: 点击 "运行 10 次"。页面对 /api/flake-check?run=1..10 各发一次请求(Network 确认 reqid 244-253，全部 [200])。
+
+页面汇总: "通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307"
+
+逐轮结果表(DOM):
+  run1 PASS, run2 PASS, run3 FAIL, run4 PASS, run5 PASS,
+  run6 FAIL, run7 PASS, run8 PASS, run9 FAIL, run10 PASS
+
+Network 响应体交叉验证:
+  /api/flake-check?run=3 -> {"run":3,"ok":false,"code":"FLAKE-307"}
+  /api/flake-check?run=7 -> {"run":7,"ok":true,"code":"FLAKE-307"}
+
+统计:
+- 通过 7/10
+- 失败 3/10
+- 失败轮次 = 3, 6, 9 (稳定失败)
+- 稳定性代码 = FLAKE-307
+- flake rate = 30% -> 检查不稳定 (unstable)

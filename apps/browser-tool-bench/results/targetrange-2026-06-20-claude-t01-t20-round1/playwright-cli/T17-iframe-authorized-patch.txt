@@ -1,0 +1,22 @@
+### Page
+- Page URL: http://localhost:4399/iframe-auth
+- Page Title: 跨域 iframe 授权 · Bench 靶场
+### Snapshot
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - link "Bench 靶场" [ref=e3] [cursor=pointer]:
+      - /url: /
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - heading "第三方授权" [level=1] [ref=e6]
+      - paragraph [ref=e7]: 下方 iframe 来自 127.0.0.1，与 localhost 页面不同源。
+      - iframe [active] [ref=e8]:
+        - main [ref=f1e2]:
+          - generic [ref=f1e3]:
+            - heading "Bench OAuth" [level=1] [ref=f1e4]
+            - paragraph [ref=f1e5]: 账号：iframe-user@bench.dev
+            - button "确认授权" [active] [ref=f1e6] [cursor=pointer]
+            - paragraph [ref=f1e7]: 授权码会通过 postMessage 发回父页面。
+      - paragraph [ref=e9]: 授权完成：iframe-user@bench.dev / OAUTH-314
+```

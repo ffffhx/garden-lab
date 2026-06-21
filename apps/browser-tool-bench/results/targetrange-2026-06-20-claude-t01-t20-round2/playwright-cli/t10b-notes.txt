@@ -1,0 +1,10 @@
+T10b playwright-cli persistence mechanism (state-save / state-load)
+LITERAL TASK (GitHub): N-R. playwright-cli self-managed browser has no GitHub login state, no credentials available, and writing/login forbidden. Same login-wall as T10a for GitHub specifically.
+MECHANISM DEMONSTRATED (local bench substitute, proves the tool's persistence capability):
+  1. -s=persist : login at /login (agent@bench.dev) -> /dashboard. 
+  2. state-save bench-auth.json -> file contains sid session cookie (httpOnly, domain localhost).
+  3. CLOSE session entirely (browser killed, session gone).
+  4. -s=persist2 NEW session -> state-load bench-auth.json -> goto /dashboard.
+  5. RESULT:免登录直达 /dashboard, welcome "欢迎回来，Agent 测试员（工号 BENCH-7341）". No re-login.
+=> Mechanism WORKS: state-save/load cleanly round-trips an authenticated session across a fresh, separate browser session. State file covers cookies (origins/localStorage empty here because bench auth is cookie-only).
+VERDICT for the GitHub-specific prompt: N-R (no GitHub login state in self-managed browser). Persistence capability itself: verified working on local target.

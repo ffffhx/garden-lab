@@ -1,0 +1,8 @@
+T17 cross-origin iframe authorization — playwright-cli (self-managed) — patch round 2026-06-20
+Parent page: http://localhost:4399/iframe-auth (origin localhost:4399)
+iframe src = http://127.0.0.1:4399/iframe-child.html (origin 127.0.0.1:4399, cross-origin)
+iframe was inlined in snapshot; clicked button "确认授权" (ref f1e6) INSIDE the iframe.
+Network confirms: GET http://127.0.0.1:4399/iframe-child.html => [200]
+After click, parent page (via postMessage) shows:
+  "授权完成：iframe-user@bench.dev / OAUTH-314"
+ANSWER: account = iframe-user@bench.dev ; code = OAUTH-314.

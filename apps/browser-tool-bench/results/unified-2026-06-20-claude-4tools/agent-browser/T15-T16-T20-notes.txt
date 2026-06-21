@@ -1,0 +1,3 @@
+T15 SSE: 5 events; ids evt-001..evt-005; last=evt-005; alert code STREAM-721; page status "接收完成：5 条事件，关键告警 STREAM-721"
+T16 SW: controller=/sw-cache.js (activated, scope localhost:4399/). cached /api/settings = theme blue / release cached-2025.11 / featureFlag STALE-CACHE-17. live /api/settings?live=1 = theme green / release live-2026.06 / featureFlag CACHE-BUST-42. Fix: update/unregister SW or fix fetch-handler cache strategy.
+T20 Flake: 10 runs; FAIL on rounds 3,6,9; pass 7/10 fail 3/10; code FLAKE-307; flake rate 30% (unstable). Page summary: "通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307"

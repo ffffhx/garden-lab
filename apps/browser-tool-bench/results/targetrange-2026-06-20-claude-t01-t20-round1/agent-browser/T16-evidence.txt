@@ -1,0 +1,5 @@
+=== T16 evidence ===
+SW: /sw-cache.js active, controls scope http://localhost:4399/ (state=activated)
+Stale (SW respondWith for /api/settings w/o ?live): theme=blue, release=cached-2025.11, featureFlag=STALE-CACHE-17 (X-Bench-Cache: service-worker-stale)
+Live bypass /api/settings?live=1 => HTTP 404 text/html (stale server PID1762 lacks /api/settings route; cannot retrieve real green/live-2026.06/CACHE-BUST-42 from network)
+Fix: update/unregister the Service Worker (or fix sw-cache.js fetch handler) and re-activate.

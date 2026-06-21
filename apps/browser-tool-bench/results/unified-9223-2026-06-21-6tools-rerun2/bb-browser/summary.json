@@ -1,0 +1,278 @@
+{
+  "tool": "bb-browser",
+  "model": "gpt-5.5",
+  "reasoning_effort": "xhigh",
+  "strict_cdp": "http://127.0.0.1:9223",
+  "browser_mode": "cdp-9223-with-daemon-status-drift",
+  "cdp_proof": "9223 preflight returned Chrome/149.0.7827.116 and ws://127.0.0.1:9223/devtools/browser/6ee5961f-a2d4-4022-8578-6f6ccabbc724. bb-browser opened unique URL http://localhost:4399/?bb_rerun2_resume_proof=20260621T1725; /json/list showed it on ws://127.0.0.1:9223/devtools/page/083C0A976CA9A9E8DFC76FBD345A3A88. bb-browser status intermittently reported cdpPort=9224, so /json/list target proof is treated as authoritative.",
+  "elapsed_ms": 1800000,
+  "tool_calls": 242,
+  "browserOps": 198,
+  "escapes": {
+    "total": 69,
+    "eval_read": 50,
+    "eval_action": 19,
+    "cdp_escape": 0,
+    "init_script": 0,
+    "notes": "Conservative count from parsed rollout plus resume tail. bb-browser often required eval for DOM reads and several actions; no raw CDP or initScript was used."
+  },
+  "tokens": "unavailable",
+  "cost_usd": "unavailable",
+  "tally": {
+    "pass": 19,
+    "warn": 4,
+    "fail": 5,
+    "nr": 1,
+    "na": 2
+  },
+  "results": [
+    {
+      "task": "T01",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": "Logged in as BENCH-7341, but the final submit path needed eval/requestSubmit after normal fill/click became unstable.",
+      "evidence": "/login accepted agent@bench.dev / bench-2026 and dashboard showed BENCH-7341 after eval-assisted submit.",
+      "notes": "Partial because core login completed only after eval action fallback."
+    },
+    {
+      "task": "T02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "POST /api/orders failed with INSUFFICIENT_INVENTORY; SKU-8821 stock was 0.",
+      "evidence": "Network/response evidence from the rollout contained error INSUFFICIENT_INVENTORY and SKU-8821 inventory failure.",
+      "notes": ""
+    },
+    {
+      "task": "T03",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "blocking.css and hero.svg were the slow resources; heavy.js executed crunchAnalytics.",
+      "evidence": "Trace/resource evidence showed blocking.css around 1214 ms, hero.svg around 1532 ms, and heavy.js with crunchAnalytics.",
+      "notes": ""
+    },
+    {
+      "task": "T04",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "Could not mock /api/users to the empty state.",
+      "evidence": "Route attempt left routeCount: 0 and the page still showed 18 members.",
+      "notes": "bb-browser route primitive did not produce the requested mock behavior."
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Loaded 12 feed items; final code LIVE-512.",
+      "evidence": "/livefeed showed 12 loaded items and final announcement code LIVE-512.",
+      "notes": ""
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Most expensive item was 雷霆工作站 at 15999.",
+      "evidence": "Catalog pagination and sorting evidence showed 12 products; descending top was 雷霆工作站 15999.",
+      "notes": ""
+    },
+    {
+      "task": "T07",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Plan from /api/me was team-pro-2026.",
+      "evidence": "Read eval/fetch evidence on the dashboard returned plan team-pro-2026.",
+      "notes": ""
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Shadow DOM reward code SHADOW-99.",
+      "evidence": "Eval-assisted shadow DOM interaction exposed reward code SHADOW-99.",
+      "notes": "Passed, but relied on eval because element targeting was unstable."
+    },
+    {
+      "task": "T09",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "Could not reload the unpacked extension from chrome://extensions.",
+      "evidence": "bb-browser rewrote chrome://extensions to https://chrome://extensions/ and could not operate the extension management page.",
+      "notes": "No manifest write was performed in this rerun2 bb-browser segment."
+    },
+    {
+      "task": "T10a",
+      "verdict": "N/A",
+      "escape": false,
+      "answer": "Not applicable for the strict 9223/default-profile split in this bb-browser run.",
+      "evidence": "The run was evaluated against the shared 9223 profile rather than a separate default-profile route.",
+      "notes": ""
+    },
+    {
+      "task": "T10b",
+      "verdict": "N/A",
+      "escape": false,
+      "answer": "Not applicable because user required using the prepared 9223 profile, not bb-browser self-managed persistence.",
+      "evidence": "No self-started or self-managed bb-browser profile was used for scoring.",
+      "notes": ""
+    },
+    {
+      "task": "T10c",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "GitHub notifications in the 9223 profile were visible; Inbox count was 70 and top repos included garden-lab and open-token-board.",
+      "evidence": "GitHub notification tab was operated under the 9223 target list; page showed Inbox 70 and notification repo rows.",
+      "notes": "Read-only real account evidence."
+    },
+    {
+      "task": "T11",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Bench Badge options could set HELLO-2026 · v1.0.0 and was restored to BENCH EXT v1.0.0.",
+      "evidence": "Original rollout changed the badge via the existing options page target. Main thread later verified local page badge text was BENCH EXT v1.0.0 after restore.",
+      "notes": "Current resume also confirmed extension ID jkmndkochpgaleoechlemhdhbikdecnf."
+    },
+    {
+      "task": "T12",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Original source was webpack://bench/src/cart/coupon.ts; failing function applySelectedCoupon; missing guard for cartState.selectedCoupon.",
+      "evidence": "Console/source-map evidence identified coupon.ts, applySelectedCoupon, and selectedCoupon null access.",
+      "notes": ""
+    },
+    {
+      "task": "T13",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": "Located the mobile overlap bug and confirmation code MOBILE-39, but bb-browser could not set a true 390px mobile viewport.",
+      "evidence": "CSS/DOM evidence located .mobile-support-bar[data-bug=\"overlaps-pay-button\"] and the pay confirmation code.",
+      "notes": "Partial because viewport emulation was unavailable."
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Hydration mismatch trace HYD-908 in TaskSummary; SSR pendingTasks 8/starter vs client pendingTasks 9/team-pro.",
+      "evidence": "Console and read eval evidence captured TaskSummary, HYD-908, and the SSR/client state mismatch.",
+      "notes": ""
+    },
+    {
+      "task": "T15",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "SSE delivered 5 events; final alert STREAM-721, last event evt-005.",
+      "evidence": "/realtime page and EventSource evidence showed five received events and STREAM-721.",
+      "notes": ""
+    },
+    {
+      "task": "T16",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Service worker stale cache returned STALE-CACHE-17; live bypass returned CACHE-BUST-42.",
+      "evidence": "Cache page showed stale blue/cached-2025.11 state and live green/live-2026.06 state with CACHE-BUST-42.",
+      "notes": ""
+    },
+    {
+      "task": "T17",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "Could not complete cross-origin iframe authorization.",
+      "evidence": "The iframe target appeared in 9223 /json/list, but bb-browser could not operate that iframe/page target as required.",
+      "notes": ""
+    },
+    {
+      "task": "T18",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": "Uploaded upload-token.txt and got UPLOAD-448, but only through DataTransfer/File eval fallback.",
+      "evidence": "Page showed upload-token.txt, 36 bytes, token UPLOAD-448 after eval-created file input data.",
+      "notes": "Partial because the tool lacked a real file-upload primitive."
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Keyboard trap skipped the save control; mouse click saved with code A11Y-204.",
+      "evidence": "Focus reads showed save-preferences was a div role=button without tabindex and not reached by tabbing; mouse click produced A11Y-204.",
+      "notes": ""
+    },
+    {
+      "task": "T20",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "7/10 passed; failed rounds 3,6,9; flake code FLAKE-307.",
+      "evidence": "/flake output showed 通过 7/10, 失败轮次 3,6,9, 稳定性代码 FLAKE-307.",
+      "notes": ""
+    },
+    {
+      "task": "R01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Playwright docs actionability page listed Locator.click checks: Visible, Stable, Receives Events, Enabled.",
+      "evidence": "Official Playwright docs page docs/src/actionability.md / actionability table evidence.",
+      "notes": "Read-only real-site task."
+    },
+    {
+      "task": "R02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "GitHub notifications were readable in 9223; Inbox count 70 and first rows were mostly garden-lab plus open-token-board.",
+      "evidence": "Reused current-run GitHub notifications evidence from T10c.",
+      "notes": "Read-only real account task."
+    },
+    {
+      "task": "R03",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "MDN Fetch API page was readable; interface section began with Window.fetch()/WorkerGlobalScope.fetch(), Window.fetchLater(), DeferredRequestInit, and browser compatibility was present.",
+      "evidence": "MDN Fetch API page DOM/read evidence captured interface headings and compatibility section.",
+      "notes": "Read-only real-site task."
+    },
+    {
+      "task": "R04",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "npm @playwright/test showed version 1.61.0, Apache-2.0 license, and 41,880,590 weekly downloads in the original rollout.",
+      "evidence": "npm package page DOM/read evidence captured version, license, weekly downloads, and missing unpacked-size field.",
+      "notes": "The original rollout observed target drift for a new tab but retained page evidence."
+    },
+    {
+      "task": "R05",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Chrome Web Store React Developer Tools: ID fmkadmapgofadopljbjfkapdkoienihi, Meta, 4.0 rating, 1,633 ratings, 5,000,000 users, version 7.0.1, size 789KiB.",
+      "evidence": "Chrome Web Store DOM/read evidence captured title, publisher, rating, user count, install button, version, and size.",
+      "notes": "Read-only real-site task."
+    },
+    {
+      "task": "R06",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "Could not complete custom Bench Badge validation on a real site in the resumed state.",
+      "evidence": "Original R06 set options to REAL-SITE-2026 but real article page badge was null. Resume retest showed bb-browser rewrites chrome-extension://jkmndkochpgaleoechlemhdhbikdecnf/options.html to https://chrome-extension://..., so it could not reopen options to complete the scenario.",
+      "notes": "Main thread restored the badge to BENCH EXT v1.0.0 afterward with agent-browser."
+    },
+    {
+      "task": "R07",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": "Captured npm @playwright/test page and Network request metadata, but could not read the response body through bb-browser trace.",
+      "evidence": "Page showed version 1.61.0, Apache-2.0, 42,302,116 weekly downloads. Network metadata showed document request 200 text/html and provenance request 200 application/json, but bb-browser trace body returned No trace session.",
+      "notes": "Partial because required response-body/package-version evidence was unavailable."
+    },
+    {
+      "task": "R08",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "No route/intercept/abort primitive available.",
+      "evidence": "bb-browser route --help exposed only global help and did not provide a usable request-abort operation.",
+      "notes": ""
+    },
+    {
+      "task": "R09",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "Could not collect the required article performance/network evidence.",
+      "evidence": "Fresh navigation to the Garden Lab article showed a Chrome network error page and networkRequests stayed empty; existing article tab eval/trace attempts failed with socket hangup or empty network evidence.",
+      "notes": "No valid HAR/trace/performance evidence was produced."
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+T15 · SSE 实时流等待 — devtools-mcp (chrome-devtools-gh, CDP 9223) — 2026-06-20 (patch)
+
+页面: http://localhost:4399/realtime
+操作: 点击 "开始接收"，EventSource 连接 GET /api/realtime-events (Network reqid=209, [200],
+content-type: text/event-stream)。等待流接收完成。
+
+页面汇总: "接收完成：5 条事件，关键告警 STREAM-721"
+DOM 事件列表:
+  evt-001 · connected · SSE 通道已建立
+  evt-002 · metric · checkout_latency_ms
+  evt-003 · metric · cart_items
+  evt-004 · notice · 库存同步完成
+  evt-005 · alert · STREAM-721
+
+Network 流响应体(完整 SSE):
+  evt-001 connected
+  evt-002 metric checkout_latency_ms=184
+  evt-003 metric cart_items=3
+  evt-004 notice 库存同步完成
+  evt-005 alert severity=critical code=STREAM-721 message=支付通道抖动
+
+结果:
+- 总事件数 = 5
+- 最后一条事件 id = evt-005
+- 关键告警 code = STREAM-721 (type=alert, severity=critical)
+
+工具能直接观察 EventSource / streaming response 全文(list_network_requests + get_network_request)。

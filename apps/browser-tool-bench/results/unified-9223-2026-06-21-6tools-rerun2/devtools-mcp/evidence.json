@@ -1,0 +1,686 @@
+{
+  "cdpProof": {
+    "url": "http://localhost:4399/?devtools_mcp_rerun2_proof=1782034553656",
+    "title": "Bench 靶场 · 首页"
+  },
+  "T01": {
+    "login": {
+      "status": 200,
+      "ok": true
+    },
+    "dashboard": {
+      "url": "http://localhost:4399/dashboard?devtools_fix=1782036189854",
+      "greeting": "欢迎回来，Agent 测试员（工号 BENCH-7341）"
+    }
+  },
+  "T02": {
+    "body": {
+      "status": 500,
+      "data": {
+        "error": "INSUFFICIENT_INVENTORY",
+        "message": "SKU-8821 库存不足，剩余 0 件",
+        "traceId": "tr-8b8812d3e024"
+      }
+    },
+    "requestLine": "reqid=8 POST http://localhost:4399/api/orders [500]",
+    "requestsHead": "## Network requests\nShowing 1-8 of 8 (Page 1 of 1).\nreqid=1 GET http://localhost:4399/dashboard?devtools_rerun2=1782034558014 [200]\nreqid=2 GET http://localhost:4399/assets/app.css [200]\nreqid=3 GET chrome-extension://bpoadfkcbjbfhfodiogcnhhhpibjhbnh/content_main.js [200]\nreqid=4 GET http://localhost:4399/api/me [200]\nreqid=5 GET chrome-extension://ngbeieahpajgaoakojeamhkacekiicfk/js/inject.min.js [200]\nreqid=6 GET chrome-extension://bpoadfkcbjbfhfodiogcnhhhpibjhbnh/default_config.content.json [200]\nreqid=7 GET chrome-extension://idgpnmonknjnojddfkpgkljpfnnfcklj/assets/src/js/service/content_script_vite-c387a50d.js [200]\nreqid=8 POST http://localhost:4399/api/orders [500]"
+  },
+  "T03": {
+    "resources": [
+      {
+        "name": "http://localhost:4399/assets/blocking.css",
+        "type": "link",
+        "duration": 1215,
+        "responseEnd": 1225
+      },
+      {
+        "name": "http://localhost:4399/assets/heavy.js",
+        "type": "script",
+        "duration": 10,
+        "responseEnd": 20
+      },
+      {
+        "name": "http://localhost:4399/assets/hero.svg",
+        "type": "img",
+        "duration": 1514,
+        "responseEnd": 1524
+      }
+    ],
+    "longTasks": [
+      {
+        "name": "self",
+        "startTime": 1226,
+        "duration": 800
+      }
+    ],
+    "bodyHead": "Bench 靶场\n夏季大促，全场五折起\n\n活动时间：6 月 12 日 - 6 月 20 日。所有自营商品参与，叠加优惠券更划算。\n\n立即抢购"
+  },
+  "T04": {
+    "text": "Bench 靶场\n控制台\n团队成员\n🪴\n\n暂无成员，去邀请第一位伙伴吧\n\n邀请成员"
+  },
+  "T05": {
+    "itemCount": 12,
+    "text": "Bench 靶场\n控制台\n团队动态\n小林 发布了新文档《季度复盘》\n构建流水线 #4821 通过\n阿芳 评论了你的合并请求\n监控告警已恢复：api-gateway 延迟\n新成员 莫莫 加入了团队\n周报机器人推送了上周摘要\n设计稿《新版首页》更新到 v7\n数据库备份任务完成\n老张 关闭了工单 #233\n灰度发布已扩量到 50%\n客服值班表已更新\n系统公告：今日口令 LIVE-512\n\n已加载 12 条（没有更多了）"
+  },
+  "T06": {
+    "total": 12,
+    "rows": [
+      {
+        "name": "雷霆工作站",
+        "stock": 2,
+        "price": 15999
+      },
+      {
+        "name": "全画幅扫描仪",
+        "stock": 3,
+        "price": 3699
+      },
+      {
+        "name": "4K 专业显示器",
+        "stock": 7,
+        "price": 2499
+      },
+      {
+        "name": "人体工学椅",
+        "stock": 0,
+        "price": 1899
+      },
+      {
+        "name": "会议级摄像头",
+        "stock": 11,
+        "price": 1599
+      },
+      {
+        "name": "桌面监听音箱",
+        "stock": 5,
+        "price": 1299
+      },
+      {
+        "name": "降噪耳机 Pro",
+        "stock": 41,
+        "price": 899
+      },
+      {
+        "name": "便携 SSD 1TB",
+        "stock": 16,
+        "price": 749
+      },
+      {
+        "name": "USB-C 扩展坞",
+        "stock": 64,
+        "price": 549
+      },
+      {
+        "name": "电竞鼠标",
+        "stock": 0,
+        "price": 459
+      },
+      {
+        "name": "静音机械键盘",
+        "stock": 23,
+        "price": 399
+      },
+      {
+        "name": "智能护眼台灯",
+        "stock": 88,
+        "price": 329
+      }
+    ],
+    "mostExpensive": {
+      "name": "雷霆工作站",
+      "stock": 2,
+      "price": 15999
+    }
+  },
+  "T07": {
+    "user": "Agent 测试员",
+    "badge": "BENCH-7341",
+    "plan": "team-pro-2026",
+    "loginAt": "2026-06-21T09:35:57.996Z"
+  },
+  "T08": {
+    "code": "兑换码：SHADOW-99"
+  },
+  "T10c": {
+    "url": "https://github.com/notifications?query=is%3Aunread&t10c=devtools-rerun2-1782034577280",
+    "title": "Notifications",
+    "inbox": "70",
+    "head": "Skip to content\nNotifications\nType / to search\nNotifications\nFolders\nInbox\n70\nSaved\nDone\nFilters\n🎯 Assigned\n💬 Participating\n2\n✋ Mentioned\n🙌 Team mentioned\n👀 Review requested\n Add new filter\nRepositories\nffffhx/garden-lab\n58\nffffhx/codex-snapshots\n7\nffffhx/profilepilot\n4\nffffhx/open-token-board\n1\nvercel-labs/agent-browser\nManage notifications\nAll\nUnread\nSearch notifications\nis:unread \nClear\nSort by: Newest to oldest\nGroup by: Date\nClear out the clutter.\n\nGet the most out of your new inbox by quickly and easily marking all of your previously read notifications as done.\n\nDismiss\nGet started\nNotifications by date\nSingle sign-on\n Select all\n\nffffhx/garden-lab – CI #387\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #386\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #376\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #375\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/open-token-board – CI #41\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/profilepilot – Build Release Packages #7\n\nBuild Release Packages workflow run failed for main branch\n\nci activity\n\nffffhx/profile"
+  },
+  "T11": {
+    "saved": {
+      "value": "HELLO-2026",
+      "status": "",
+      "url": "chrome-extension://jkmndkochpgaleoechlemhdhbikdecnf/options.html"
+    },
+    "badge": {
+      "url": "http://localhost:4399/?t11=devtools-rerun2-1782034582690",
+      "title": "Bench 靶场 · 首页",
+      "badge": "HELLO-2026 · v1.0.0",
+      "bodyHead": "Bench 靶场\n登录\n成员\n商品目录\n动态\n活动页（慢）\n浏览器 Agent 工具对比靶场\n\n这个站点的每个页面都埋了一个有标准答案的\"坑\"，用来横向对比浏览器自动化工具。任务卡见仓库 apps/browser-tool-bench/tasks/。\n\n/login —— 登录页（T01 页面观察与表单操作）\n/dashboard —— 控制台（T02 接口排障 · T07 已登录 fetch · T08 Shadow DOM）\n/users —— 成员列表（T04 请求 mock 与空状态）\n/livefeed —— 动态流（T05 动态渲染与等待）\n/catalog —— 商品目录（T06 结构化提取）\n/slow —— 营销活动页（T03 性能诊断）\n/debug-console —— Console 与 source map 定位（T12）\n/layout-mobile —— 移动端布局遮挡（T13）\n/hydration —— SPA hydration 状态不一致（T14）\n/realtime —— SSE 实时事件流（T15）\n/cache —— Service Work"
+    },
+    "restored": {
+      "value": "",
+      "status": "",
+      "url": "chrome-extension://jkmndkochpgaleoechlemhdhbikdecnf/options.html"
+    },
+    "finalBadge": {
+      "url": "http://localhost:4399/?t11_restore=devtools-rerun2-1782034583671",
+      "title": "Bench 靶场 · 首页",
+      "badge": "BENCH EXT v1.0.0",
+      "bodyHead": "Bench 靶场\n登录\n成员\n商品目录\n动态\n活动页（慢）\n浏览器 Agent 工具对比靶场\n\n这个站点的每个页面都埋了一个有标准答案的\"坑\"，用来横向对比浏览器自动化工具。任务卡见仓库 apps/browser-tool-bench/tasks/。\n\n/login —— 登录页（T01 页面观察与表单操作）\n/dashboard —— 控制台（T02 接口排障 · T07 已登录 fetch · T08 Shadow DOM）\n/users —— 成员列表（T04 请求 mock 与空状态）\n/livefeed —— 动态流（T05 动态渲染与等待）\n/catalog —— 商品目录（T06 结构化提取）\n/slow —— 营销活动页（T03 性能诊断）\n/debug-console —— Console 与 source map 定位（T12）\n/layout-mobile —— 移动端布局遮挡（T13）\n/hydration —— SPA hydration 状态不一致（T14）\n/realtime —— SSE 实时事件流（T15）\n/cache —— Service Work"
+    }
+  },
+  "T12": {
+    "consoleMessages": "## Console messages\nShowing 1-3 of 3 (Page 1 of 1).\nmsgid=1 [log] 当前浏览器已安装埋点验证插件true (1 args)\nmsgid=2 [error] checkout coupon crash [object Object] (2 args)\nmsgid=3 [info] This page uses Chrome's Built-In AI features (LanguageDetector)! We're always improving our models; please submit your feedback here: https://issues.chromium.org/issues/new?component=1583316 (0 args)",
+    "sourceMap": {
+      "source": "webpack://bench/src/cart/coupon.ts",
+      "sourceText": "export type CartState = { cartId: string; selectedCoupon: null | { couponCode: string } };\n\nexport function applySelectedCoupon(cartState: CartState) {\n  // BUG: selectedCoupon can be null when the user has not picked a coupon.\n  // Expected guard: if (!cartState.selectedCoupon) return null;\n  return cartState.selectedCoupon.couponCode.toUpperCase();\n}\n"
+    }
+  },
+  "T13": {
+    "hit": {
+      "hitText": "移动端帮助条错误覆盖了支付按钮。",
+      "hitTag": "DIV",
+      "buttonRect": {
+        "top": 766,
+        "bottom": 804,
+        "left": 20,
+        "right": 370
+      },
+      "barSelector": ".mobile-support-bar[data-bug=\"overlaps-pay-button\"]",
+      "actionsZ": "10",
+      "barZ": "20",
+      "barHeight": "118px"
+    },
+    "code": {
+      "code": "支付确认码：MOBILE-39"
+    }
+  },
+  "T14": {
+    "store": {
+      "traceId": "HYD-908",
+      "component": "TaskSummary",
+      "clientState": {
+        "pendingTasks": 9,
+        "planName": "team-pro"
+      },
+      "ssrState": {
+        "pendingTasks": 8,
+        "planName": "starter"
+      }
+    },
+    "text": "Bench 靶场\n任务概览\n\n待办数量：9\n\n套餐：team-pro\n\n客户端已接管，traceId=HYD-908"
+  },
+  "T15": {
+    "data": {
+      "status": "接收完成：5 条事件，关键告警 STREAM-721",
+      "items": [
+        "evt-001 · connected · SSE 通道已建立",
+        "evt-002 · metric · checkout_latency_ms",
+        "evt-003 · metric · cart_items",
+        "evt-004 · notice · 库存同步完成",
+        "evt-005 · alert · STREAM-721"
+      ]
+    },
+    "requests": "## Network requests\nShowing 1-1 of 1 (Page 1 of 1).\nreqid=7 GET http://localhost:4399/api/realtime-events [200]"
+  },
+  "T16": {
+    "controller": "http://localhost:4399/sw-cache.js",
+    "text": "Bench 靶场\n配置中心\n\n页面会读取 /api/settings，但 Service Worker 故意返回过期配置。\n\n主题\nblue\n版本\ncached-2025.11\nFeature Flag\nSTALE-CACHE-17\n\nService Worker 已控制页面",
+    "live": {
+      "theme": "green",
+      "release": "live-2026.06",
+      "featureFlag": "CACHE-BUST-42"
+    }
+  },
+  "T17": {
+    "uid": "2_12",
+    "snapshotHead": "## Latest page snapshot\nuid=2_0 RootWebArea \"跨域 iframe 授权 · Bench 靶场\" url=\"http://localhost:4399/iframe-auth?devtools_fix=1782036190299\"\n  uid=2_1 banner\n    uid=2_2 link \"Bench 靶场\" url=\"http://localhost:4399/\"\n      uid=2_3 StaticText \"Bench 靶场\"\n  uid=2_4 main\n    uid=2_5 heading \"第三方授权\" level=\"1\"\n    uid=2_6 StaticText \"下方 iframe 来自 127.0.0.1，与 localhost 页面不同源。\"\n    uid=2_7 Iframe \"第三方授权窗口\"\n      uid=2_8 RootWebArea \"第三方授权窗口\" url=\"http://127.0.0.1:4399/iframe-child.html\"\n        uid=2_9 main\n          uid=2_10 heading \"Bench OAuth\" level=\"1\"\n          uid=2_11 StaticText \"账号：iframe-user@bench.dev\"\n          uid=2_12 button \"确认授权\"\n          uid=2_13 StaticText \"授权码会通过 postMessage 发回父页面。\"\n    uid=2_14 StaticText \"等待授权完成…\"\n  uid=2_15 StaticText \"BENCH EXT v1.0.0\"\n",
+    "data": {
+      "text": "Bench 靶场\n第三方授权\n\n下方 iframe 来自 127.0.0.1，与 localhost 页面不同源。\n\n授权完成：iframe-user@bench.dev / OAUTH-314"
+    }
+  },
+  "T18": {
+    "uid": "4_13",
+    "data": {
+      "value": "C:\\fakepath\\upload-token.txt",
+      "filesLength": 1,
+      "file0": {
+        "name": "upload-token.txt",
+        "size": 36
+      },
+      "result": "文件 upload-token.txt，36 bytes，token=UPLOAD-448"
+    }
+  },
+  "T19": {
+    "opened": {
+      "opened": true
+    },
+    "sequence": [
+      {
+        "id": "close-modal",
+        "tag": "BUTTON",
+        "text": "关闭"
+      },
+      {
+        "id": "notify-email",
+        "tag": "INPUT",
+        "text": ""
+      },
+      {
+        "id": "close-modal",
+        "tag": "BUTTON",
+        "text": "关闭"
+      },
+      {
+        "id": "notify-email",
+        "tag": "INPUT",
+        "text": ""
+      }
+    ],
+    "attrs": {
+      "tag": "DIV",
+      "role": "button",
+      "tabindex": null,
+      "hasKeydown": false,
+      "inTrap": false
+    },
+    "saved": {
+      "result": "保存成功：A11Y-204"
+    }
+  },
+  "T20": {
+    "summary": "通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307",
+    "rows": [
+      [
+        "1",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "2",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "3",
+        "FAIL",
+        "FLAKE-307"
+      ],
+      [
+        "4",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "5",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "6",
+        "FAIL",
+        "FLAKE-307"
+      ],
+      [
+        "7",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "8",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "9",
+        "FAIL",
+        "FLAKE-307"
+      ],
+      [
+        "10",
+        "PASS",
+        "FLAKE-307"
+      ]
+    ]
+  },
+  "R01": {
+    "url": "https://playwright.dev/docs/actionability?r01=devtools-rerun2-1782034617660",
+    "title": "Auto-waiting | Playwright",
+    "h1": "Auto-waiting",
+    "clickRow": [
+      "locator.click()",
+      "Yes",
+      "Yes",
+      "Yes",
+      "Yes",
+      "-"
+    ]
+  },
+  "R02": {
+    "url": "https://github.com/notifications?query=is%3Aunread&t10c=devtools-rerun2-1782034577280",
+    "title": "Notifications",
+    "inbox": "70",
+    "head": "Skip to content\nNotifications\nType / to search\nNotifications\nFolders\nInbox\n70\nSaved\nDone\nFilters\n🎯 Assigned\n💬 Participating\n2\n✋ Mentioned\n🙌 Team mentioned\n👀 Review requested\n Add new filter\nRepositories\nffffhx/garden-lab\n58\nffffhx/codex-snapshots\n7\nffffhx/profilepilot\n4\nffffhx/open-token-board\n1\nvercel-labs/agent-browser\nManage notifications\nAll\nUnread\nSearch notifications\nis:unread \nClear\nSort by: Newest to oldest\nGroup by: Date\nClear out the clutter.\n\nGet the most out of your new inbox by quickly and easily marking all of your previously read notifications as done.\n\nDismiss\nGet started\nNotifications by date\nSingle sign-on\n Select all\n\nffffhx/garden-lab – CI #387\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #386\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #376\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #375\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/open-token-board – CI #41\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/profilepilot – Build Release Packages #7\n\nBuild Release Packages workflow run failed for main branch\n\nci activity\n\nffffhx/profile"
+  },
+  "R03": {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API?r03=devtools-rerun2-1782034619396",
+    "h1": "Fetch API",
+    "interfaces": [
+      "Window.fetch() and WorkerGlobalScope.fetch()",
+      "Window.fetchLater()",
+      "DeferredRequestInit"
+    ],
+    "hasCompatibility": true
+  },
+  "R04": {
+    "url": "https://www.npmjs.com/package/@playwright/test?r04=devtools-rerun2-1782034622084",
+    "title": "@playwright/test - npm",
+    "version": "1.61.0",
+    "license": "Apache-2.0",
+    "weekly": "42,302,116",
+    "repository": "github.com/microsoft/playwright",
+    "head": "skip to:contentpackage searchsign in\nPro\nTeams\nPricing\nDocumentation\nnpm\nSearch\nSign Up\nSign In\n@playwright/test\n1.61.0 • Public • Published 6 days ago\n Readme\nCode Beta\n1 Dependency\n862 Dependents\n3,247 Versions\n🎭 Playwright\n\n    \n\nDocumentation | API reference\n\nPlaywright is a framework for web automation and testing. It drives Chromium, Firefox, and WebKit with a single API — in your tests, in your scripts, and as a tool for AI agents.\n\nGet Started\n\nChoose the path that fits your workflow:\n\n\tBest for\tInstall\nPlaywright Test\tEnd-to-end testing\tnpm init playwright@latest\nPlaywright CLI\tCoding agents (Claude Code, Copilot)\tnpm i -g @playwright/cli@latest\nPlaywright MCP\tAI agents and LLM-driven automation\tnpx @playwright/mcp@latest\nPlaywright Library\tBrowser automation scripts\tnpm i playwright\nVS Code Extension\tTest authoring and debugging in VS Code\tInstall from Marketplace\nPlaywright Test\n\nPlaywright Test is a full-featured test runner built for end-to-end testing. It runs tests across Chromium, Firefox, and WebKit with full browser isolation, auto-waiting, and web-first assertions.\n\nInstall\nnpm init playwright@latest\n\nOr add manually:\n\nnpm i -D @playwright/test\nnpx playwright in"
+  },
+  "R05": {
+    "url": "https://chromewebstore.google.com/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi?r05=devtools-rerun2-1782034626642",
+    "title": "React Developer Tools - Chrome 应用商店",
+    "hasName": true,
+    "hasMeta": true,
+    "rating": "4.0",
+    "ratings": "1,633 个评分",
+    "users": "5,000,000 用户",
+    "button": "添加至 Chrome",
+    "head": "跳到主要内容\nchrome 应用商店\n探索\n扩展程序\n主题\nReact Developer Tools\n精选\n4.0\n(\n\n1,633 个评分\n\n)\n分享\n扩展程序\n开发者工具\n5,000,000 用户\n添加至 Chrome\n概述\n\nAdds React debugging tools to the Chrome Developer Tools.\n\nCreated from revision 3cde211b0c on 10/20/2025.\n\nReact Developer Tools is a Chrome DevTools extension for the open-source React JavaScript library. It allows you to inspect the React component hierarchies in the Chrome Developer Tools.\n\nYou will get two new tabs in your Chrome DevTools: \"Components ⚛\" and \"Profiler ⚛\".\n\nThe Components tab shows you the root React components that were rendered on the page, as well as the subcomponents that they ended up rendering.\n\nBy selecting one of the components in the tree, you can inspect and edit its current props and state in the panel on the right. In the breadcrumbs you can inspect the selected component, the component that created it, the component that created that one, and so on.\n\nIf you inspect a React element on the page using the regular Elements tab, then switch over to the React tab, that element will be automatically selected in the React tree.\n\nThe Profiler tab allows you to record performance information.\n\nThis extension requires permissions to access the page's React tree, but it does not transmit any data remotely. It is fully open source, and you can find its source code at https://github.com/facebook/react/tree/main/packages/react-devtools-extensions.\n\n查看更多\n4.0 星（5 星制）\n1,633 个评分\n\n详细了解结果和评价。\n\n查看所有评价\n详情\n版本\n7.0.1 (10/20/2025)\n上次更新日期\n2025年10月22日\n举报问题\n提供方\nMeta\n大小\n789KiB\n语言\nEnglish\n开发者\nMeta Platforms, INC.\n1 Meta Way Menlo Park, CA 94025 US\n邮箱\n电话\n交易者"
+  },
+  "R06": {
+    "initial": {
+      "url": "chrome-error://chromewebdata/",
+      "title": "ffffhx.github.io",
+      "badge": null,
+      "bodyHead": "无法访问此网站\n\nffffhx.github.io 意外终止了连接。\n\n请试试以下办法：\n\n检查网络连接\n检查代理服务器和防火墙\nERR_CONNECTION_CLOSED\n重新加载\n详情"
+    },
+    "saved": {
+      "value": "REAL-SITE-2026",
+      "status": "",
+      "url": "chrome-extension://jkmndkochpgaleoechlemhdhbikdecnf/options.html"
+    },
+    "custom": {
+      "url": "chrome-error://chromewebdata/",
+      "title": "ffffhx.github.io",
+      "badge": null,
+      "bodyHead": "无法访问此网站\n\nffffhx.github.io 意外终止了连接。\n\n请试试以下办法：\n\n检查网络连接\n检查代理服务器和防火墙\nERR_CONNECTION_CLOSED\n重新加载\n详情"
+    },
+    "restored": {
+      "value": "",
+      "status": "",
+      "url": "chrome-extension://jkmndkochpgaleoechlemhdhbikdecnf/options.html"
+    },
+    "finalBadge": {
+      "url": "http://localhost:4399/?r06_restore=devtools-rerun2-1782034677453",
+      "title": "Bench 靶场 · 首页",
+      "badge": "BENCH EXT v1.0.0",
+      "bodyHead": "Bench 靶场\n登录\n成员\n商品目录\n动态\n活动页（慢）\n浏览器 Agent 工具对比靶场\n\n这个站点的每个页面都埋了一个有标准答案的\"坑\"，用来横向对比浏览器自动化工具。任务卡见仓库 apps/browser-tool-bench/tasks/。\n\n/login —— 登录页（T01 页面观察与表单操作）\n/dashboard —— 控制台（T02 接口排障 · T07 已登录 fetch · T08 Shadow DOM）\n/users —— 成员列表（T04 请求 mock 与空状态）\n/livefeed —— 动态流（T05 动态渲染与等待）\n/catalog —— 商品目录（T06 结构化提取）\n/slow —— 营销活动页（T03 性能诊断）\n/debug-console —— Console 与 source map 定位（T12）\n/layout-mobile —— 移动端布局遮挡（T13）\n/hydration —— SPA hydration 状态不一致（T14）\n/realtime —— SSE 实时事件流（T15）\n/cache —— Service Work"
+    }
+  },
+  "R07": {
+    "line": "reqid=1 GET https://www.npmjs.com/package/@playwright/test?r07=devtools-rerun2-1782034678005 [200]",
+    "reqid": 1,
+    "detailHead": "## Request https://www.npmjs.com/package/@playwright/test?r07=devtools-rerun2-1782034678005\nStatus: 200\n### Request Headers\n- upgrade-insecure-requests:1\n- user-agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36\n- sec-ch-ua:\"Google Chrome\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"\n- sec-ch-ua-mobile:?0\n- sec-ch-ua-platform:\"macOS\"\n- :authority:www.npmjs.com\n- :method:GET\n- :path:/package/@playwright/test?r07=devtools-rerun2-1782034678005\n- :scheme:https\n- accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\n- accept-encoding:gzip, deflate, br, zstd\n- accept-language:zh-CN,zh;q=0.9,en;q=0.8\n- cookie:wub=Fe26.2**6683b3700bdd18c9be56966ef81544b0ebf86009dadcb77742fe97941558e696*O5D2tfjhihb5WvOgtQuEbQ*TyZc4WPxhV_Ac2qnU5XQhc9gTll8CMXFSwEM4PIIdeZJd3tzmSs0N9l4THZyiEP1DQPjXbTDjH52fsumzaob1Yft6iXjqiOb-Dm9YSsCjl8KKweIgObB3_2wWk0yc7EP**c6ab65a08f30bf8b0e7cd8802d8ee8e2e63a5bfc6e41893f629da78d303eedb0*SmsRW71c49Utn3BAaVng4956DYuxaLxFgv1y5IGIahg; __cf_bm=PfWdvDzProLG4ydiMRSkIAvAU1PYxJnZGBGsmnoKnHs-1782034622.8101099-1.0.1.1-QpcvjYHfFBkGW0fbTGBeRgBneXTQQw41WELSe3xU_Q8GpgC2hl5aEeiXfCP2UV9jBXyV_yRgSGLiHUTY_0T5CgFPZWneLBjHmsadQ7iL5EVOTRDjRJWxV9uI_88uxFXp; _cfuvid=olUzlS7X_5CX2L4pbSYvMVEKjIqZVZaYAXV4IuMBx6A-1782034622.8101099-1.0.1.1-t0cre.rSklH0TFA.i7um8qjcH0wH5K42_h4tpFRglcE\n- priority:u=0, i\n- sec-fetch-dest:document\n- sec-fetch-mode:navigate\n- sec-fetch-site:none\n- sec-fetch-user:?1\n### Response Headers\n- cf-cache-status:",
+    "pageVersion": {
+      "version": "1.61.0"
+    }
+  },
+  "R08": {
+    "verdict": "N-R",
+    "reason": "Chrome DevTools MCP 1.2.0 exposes network read tools but no request route/abort/block primitive in the listed tools."
+  },
+  "R09": {
+    "navError": null,
+    "perf": {
+      "url": "chrome-error://chromewebdata/",
+      "title": "ffffhx.github.io",
+      "h1": "\n            无法访问此网站\n          ",
+      "entries": []
+    },
+    "pages": "## Pages\n1: https://ffffhx.github.io/garden-lab/post/agent/ [selected]\n## Extension Service Workers\nsw-1: chrome-extension://ngbeieahpajgaoakojeamhkacekiicfk/js/background.min.js\nsw-2: chrome-extension://hehggadaopoacecdllhhajmbjkdcmajg/background.js",
+    "reused": {
+      "url": "https://ffffhx.github.io/garden-lab/post/agent/",
+      "title": "浏览器 Agent 工具怎么选：@chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP、playwright-cli 二十任务实测 | Garden Lab",
+      "h1": "浏览器 Agent 工具怎么选：@chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP、playwright-cli 二十任务实测",
+      "entries": [
+        {
+          "url": "https://ffffhx.github.io/garden-lab/images/icon-192.png",
+          "type": "other",
+          "duration": 9559,
+          "responseEnd": 10015
+        },
+        {
+          "url": "https://8-218-149-148.anyip.dev/token-board/api/auth/me",
+          "type": "fetch",
+          "duration": 163,
+          "responseEnd": 581
+        },
+        {
+          "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/app/post/%5Bslug%5D/page-29aefa01488dacdc.js",
+          "type": "script",
+          "duration": 19,
+          "responseEnd": 109
+        },
+        {
+          "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/42-228cfaa1f6e390a1.js",
+          "type": "script",
+          "duration": 18,
+          "responseEnd": 108
+        },
+        {
+          "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/app/layout-5ce7bee09b11075e.js",
+          "type": "script",
+          "duration": 18,
+          "responseEnd": 109
+        },
+        {
+          "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/654-1c2818613cc4b3bc.js",
+          "type": "script",
+          "duration": 18,
+          "responseEnd": 109
+        },
+        {
+          "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/d99d8e6a-80443bd3c9d31f50.js",
+          "type": "script",
+          "duration": 17,
+          "responseEnd": 107
+        },
+        {
+          "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/main-app-ca700f8821109cef.js",
+          "type": "script",
+          "duration": 17,
+          "responseEnd": 108
+        },
+        {
+          "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/483-365ef981704e3b0f.js",
+          "type": "script",
+          "duration": 17,
+          "responseEnd": 108
+        },
+        {
+          "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/webpack-98bad5c3540ee390.js",
+          "type": "link",
+          "duration": 16,
+          "responseEnd": 106
+        }
+      ]
+    }
+  },
+  "finalBadge": {
+    "url": "http://localhost:4399/?final_badge=devtools-rerun2-1782034693602",
+    "title": "Bench 靶场 · 首页",
+    "badge": "BENCH EXT v1.0.0",
+    "bodyHead": "Bench 靶场\n登录\n成员\n商品目录\n动态\n活动页（慢）\n浏览器 Agent 工具对比靶场\n\n这个站点的每个页面都埋了一个有标准答案的\"坑\"，用来横向对比浏览器自动化工具。任务卡见仓库 apps/browser-tool-bench/tasks/。\n\n/login —— 登录页（T01 页面观察与表单操作）\n/dashboard —— 控制台（T02 接口排障 · T07 已登录 fetch · T08 Shadow DOM）\n/users —— 成员列表（T04 请求 mock 与空状态）\n/livefeed —— 动态流（T05 动态渲染与等待）\n/catalog —— 商品目录（T06 结构化提取）\n/slow —— 营销活动页（T03 性能诊断）\n/debug-console —— Console 与 source map 定位（T12）\n/layout-mobile —— 移动端布局遮挡（T13）\n/hydration —— SPA hydration 状态不一致（T14）\n/realtime —— SSE 实时事件流（T15）\n/cache —— Service Work"
+  },
+  "T09": {
+    "originalVersion": "1.0.0",
+    "manifestPath": "/Users/bytedance/Code/garden-lab/apps/browser-tool-bench/extension-sample/manifest.json",
+    "baseline": {
+      "url": "http://localhost:4399/?t09_devtools_baseline=1782036267566",
+      "title": "Bench 靶场 · 首页",
+      "badge": "BENCH EXT v1.0.0",
+      "bodyHead": "Bench 靶场\n登录\n成员\n商品目录\n动态\n活动页（慢）\n浏览器 Agent 工具对比靶场\n\n这个站点的每个页面都埋了一个有标准答案的\"坑\"，用来横向对比浏览器自动化工具。任务卡见仓库 apps/browser-tool-bench/tasks/。\n\n/login —— 登录页（T01 页面观察与表单操作）\n/dashboard —— 控制台（T02 接口排障 · T07 已登录 fetch · T08 Shadow DOM）\n/users —— 成员列表（T04 请求 mock 与空状态）\n/livefeed —— 动态流（T05 动态渲染与等待）\n/catalog —— 商品目录（T06 结构化提取）\n/slow —— 营销活动页（T03 性能诊断）\n/debug-console —— Console 与 source map 定位（T12）\n/layout-mobile —— 移动端布局遮挡（T13）\n/hydration —— SPA hydration 状态不一致（T14）\n/realtime —— SSE 实时事件流（T15）\n/cache —— Service Work"
+    },
+    "reloadTo101": {
+      "label": "reload-to-1.0.1",
+      "before": [
+        {
+          "tag": "DIV",
+          "id": "a11yAssociation",
+          "text": "已与“Bench Badge”关联"
+        },
+        {
+          "tag": "DIV",
+          "id": "card",
+          "text": "Bench Badge\n1.0.0\n在靶场页面右下角显示徽标。T09 测 reload（改版本号），T11 测使用扩展（设置页改徽标文字）。\nID：jkmndkochpgaleoechlemhdhbikdecnf\n详情\n移除"
+        },
+        {
+          "tag": "DIV",
+          "id": "main",
+          "text": "Bench Badge\n1.0.0\n在靶场页面右下角显示徽标。T09 测 reload（改版本号），T11 测使用扩展（设置页改徽标文字）。\nID：jkmndkochpgaleoechlemhdhbikdecnf"
+        },
+        {
+          "tag": "DIV",
+          "id": "content",
+          "text": "Bench Badge\n1.0.0\n在靶场页面右下角显示徽标。T09 测 reload（改版本号），T11 测使用扩展（设置页改徽标文字）。\nID：jkmndkochpgaleoechlemhdhbikdecnf"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "text": "Bench Badge\n1.0.0"
+        },
+        {
+          "tag": "DIV",
+          "id": "name-and-version",
+          "text": "Bench Badge\n1.0.0"
+        },
+        {
+          "tag": "DIV",
+          "id": "name",
+          "text": "Bench Badge"
+        }
+      ],
+      "reloadResult": {
+        "clicked": true,
+        "label": "重新加载",
+        "hostTag": "DIV",
+        "hostId": "card"
+      }
+    },
+    "badge101": {
+      "url": "http://localhost:4399/?t09_devtools_101=1782036272452",
+      "title": "Bench 靶场 · 首页",
+      "badge": "BENCH EXT v1.0.1",
+      "bodyHead": "Bench 靶场\n登录\n成员\n商品目录\n动态\n活动页（慢）\n浏览器 Agent 工具对比靶场\n\n这个站点的每个页面都埋了一个有标准答案的\"坑\"，用来横向对比浏览器自动化工具。任务卡见仓库 apps/browser-tool-bench/tasks/。\n\n/login —— 登录页（T01 页面观察与表单操作）\n/dashboard —— 控制台（T02 接口排障 · T07 已登录 fetch · T08 Shadow DOM）\n/users —— 成员列表（T04 请求 mock 与空状态）\n/livefeed —— 动态流（T05 动态渲染与等待）\n/catalog —— 商品目录（T06 结构化提取）\n/slow —— 营销活动页（T03 性能诊断）\n/debug-console —— Console 与 source map 定位（T12）\n/layout-mobile —— 移动端布局遮挡（T13）\n/hydration —— SPA hydration 状态不一致（T14）\n/realtime —— SSE 实时事件流（T15）\n/cache —— Service Work"
+    },
+    "reloadTo100": {
+      "label": "reload-to-1.0.0",
+      "before": [
+        {
+          "tag": "DIV",
+          "id": "a11yAssociation",
+          "text": "已与“Bench Badge”关联"
+        },
+        {
+          "tag": "DIV",
+          "id": "card",
+          "text": "Bench Badge\n1.0.1\n在靶场页面右下角显示徽标。T09 测 reload（改版本号），T11 测使用扩展（设置页改徽标文字）。\nID：jkmndkochpgaleoechlemhdhbikdecnf\n详情\n移除"
+        },
+        {
+          "tag": "DIV",
+          "id": "main",
+          "text": "Bench Badge\n1.0.1\n在靶场页面右下角显示徽标。T09 测 reload（改版本号），T11 测使用扩展（设置页改徽标文字）。\nID：jkmndkochpgaleoechlemhdhbikdecnf"
+        },
+        {
+          "tag": "DIV",
+          "id": "content",
+          "text": "Bench Badge\n1.0.1\n在靶场页面右下角显示徽标。T09 测 reload（改版本号），T11 测使用扩展（设置页改徽标文字）。\nID：jkmndkochpgaleoechlemhdhbikdecnf"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "text": "Bench Badge\n1.0.1"
+        },
+        {
+          "tag": "DIV",
+          "id": "name-and-version",
+          "text": "Bench Badge\n1.0.1"
+        },
+        {
+          "tag": "DIV",
+          "id": "name",
+          "text": "Bench Badge"
+        }
+      ],
+      "reloadResult": {
+        "clicked": true,
+        "label": "重新加载",
+        "hostTag": "DIV",
+        "hostId": "card"
+      }
+    },
+    "badge100": {
+      "url": "http://localhost:4399/?t09_devtools_restore=1782036277176",
+      "title": "Bench 靶场 · 首页",
+      "badge": "BENCH EXT v1.0.0",
+      "bodyHead": "Bench 靶场\n登录\n成员\n商品目录\n动态\n活动页（慢）\n浏览器 Agent 工具对比靶场\n\n这个站点的每个页面都埋了一个有标准答案的\"坑\"，用来横向对比浏览器自动化工具。任务卡见仓库 apps/browser-tool-bench/tasks/。\n\n/login —— 登录页（T01 页面观察与表单操作）\n/dashboard —— 控制台（T02 接口排障 · T07 已登录 fetch · T08 Shadow DOM）\n/users —— 成员列表（T04 请求 mock 与空状态）\n/livefeed —— 动态流（T05 动态渲染与等待）\n/catalog —— 商品目录（T06 结构化提取）\n/slow —— 营销活动页（T03 性能诊断）\n/debug-console —— Console 与 source map 定位（T12）\n/layout-mobile —— 移动端布局遮挡（T13）\n/hydration —— SPA hydration 状态不一致（T14）\n/realtime —— SSE 实时事件流（T15）\n/cache —— Service Work"
+    },
+    "finalManifest": {
+      "manifest_version": 3,
+      "name": "Bench Badge",
+      "version": "1.0.0",
+      "description": "在靶场页面右下角显示徽标。T09 测 reload（改版本号），T11 测使用扩展（设置页改徽标文字）。",
+      "permissions": [
+        "storage"
+      ],
+      "options_ui": {
+        "page": "options.html",
+        "open_in_tab": true
+      },
+      "content_scripts": [
+        {
+          "matches": [
+            "http://localhost:4399/*",
+            "http://127.0.0.1:4399/*",
+            "https://ffffhx.github.io/garden-lab/*"
+          ],
+          "js": [
+            "content.js"
+          ]
+        }
+      ]
+    },
+    "restoredManifestAfterFinally": {
+      "manifest_version": 3,
+      "name": "Bench Badge",
+      "version": "1.0.0",
+      "description": "在靶场页面右下角显示徽标。T09 测 reload（改版本号），T11 测使用扩展（设置页改徽标文字）。",
+      "permissions": [
+        "storage"
+      ],
+      "options_ui": {
+        "page": "options.html",
+        "open_in_tab": true
+      },
+      "content_scripts": [
+        {
+          "matches": [
+            "http://localhost:4399/*",
+            "http://127.0.0.1:4399/*",
+            "https://ffffhx.github.io/garden-lab/*"
+          ],
+          "js": [
+            "content.js"
+          ]
+        }
+      ]
+    }
+  }
+}

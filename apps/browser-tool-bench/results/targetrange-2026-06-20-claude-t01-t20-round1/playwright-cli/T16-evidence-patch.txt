@@ -1,0 +1,28 @@
+T16 Service Worker cache — playwright-cli (self-managed browser) — patch round 2026-06-20
+Page: http://localhost:4399/cache
+
+SW control (browser eval navigator.serviceWorker):
+  controller scriptURL = http://localhost:4399/sw-cache.js
+  registration active scriptURL = http://localhost:4399/sw-cache.js
+  => page IS controlled by Service Worker /sw-cache.js
+
+Page DOM displayed (STALE, served by SW intercept):
+  theme        = blue
+  release(版本) = cached-2025.11
+  featureFlag  = STALE-CACHE-17
+
+SW-intercepted fetch('/api/settings') (browser):
+  {"theme":"blue","release":"cached-2025.11","featureFlag":"STALE-CACHE-17"}
+
+Bypass fetch('/api/settings?live=1') (browser, real network value):
+  {"theme":"green","release":"live-2026.06","featureFlag":"CACHE-BUST-42"}
+
+Diagnosis: Stale config is caused by Service Worker /sw-cache.js intercepting
+/api/settings and returning a cached/hardcoded stale response (NOT plain HTTP cache,
+NOT page bug). Confirmed because controller==sw-cache.js and the ?live=1 bypass returns
+different (fresh) values than the intercepted request.
+
+Fix action: update/unregister the Service Worker (navigator.serviceWorker
+getRegistrations -> unregister), or correct the sw-cache.js fetch handler caching
+policy for /api/settings (network-first / no-cache) and re-activate (skipWaiting +
+clients.claim) so the fresh /api/settings (green/live-2026.06/CACHE-BUST-42) is served.

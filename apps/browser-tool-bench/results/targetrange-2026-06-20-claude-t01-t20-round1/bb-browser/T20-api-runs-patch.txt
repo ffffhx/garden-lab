@@ -1,0 +1,41 @@
+网络请求 (13 条):
+
+GET chrome-extension://bpoadfkcbjbfhfodiogcnhhhpibjhbnh/default_config.content.json
+  类型: Fetch, 状态: 200 OK
+
+GET chrome-extension://ngbeieahpajgaoakojeamhkacekiicfk/js/inject.min.js
+  类型: Script, 状态: 200 OK
+
+GET chrome-extension://idgpnmonknjnojddfkpgkljpfnnfcklj/assets/src/js/service/content_script_vite-c387a50d.js
+  类型: Script, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=1
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=2
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=3
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=4
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=5
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=6
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=7
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=8
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=9
+  类型: Fetch, 状态: 200 OK
+
+GET http://localhost:4399/api/flake-check?run=10
+  类型: Fetch, 状态: 200 OK
+

@@ -1,0 +1,4 @@
+save button: <div class='fake-button save-preferences' role='button' id='save-preferences'> tabindex=null (missing tabindex=0), no Enter/Space handler
+focus trap [data-trap-focus]: #notify-email (INPUT), #close-modal (BUTTON) -- save NOT included
+Tab cycle observed: notify-email <-> close-modal only; save-preferences never focused
+mouse click save -> 保存成功：A11Y-204

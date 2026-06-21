@@ -1,0 +1,1 @@
+"Bench 靶场\n实时事件流\n\n点击开始后，页面会通过 EventSource 接收 5 条事件。\n\n开始接收\n\n接收完成：5 条事件，关键告警 STREAM-721\n\nevt-001 · connected · SSE 通道已建立\nevt-002 · metric · checkout_latency_ms\nevt-003 · metric · cart_items\nevt-004 · notice · 库存同步完成\nevt-005 · alert · STREAM-721"

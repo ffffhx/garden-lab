@@ -1,0 +1,19 @@
+不稳定回归
+
+运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。
+
+运行 10 次
+
+通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307
+
+轮次	结果	代码
+1	PASS	FLAKE-307
+2	PASS	FLAKE-307
+3	FAIL	FLAKE-307
+4	PASS	FLAKE-307
+5	PASS	FLAKE-307
+6	FAIL	FLAKE-307
+7	PASS	FLAKE-307
+8	PASS	FLAKE-307
+9	FAIL	FLAKE-307
+10	PASS	FLAKE-307

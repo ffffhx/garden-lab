@@ -1,0 +1,2 @@
+{"user":"Agent 测试员","badge":"BENCH-7341","plan":"team-pro-2026","loginAt":"2026-06-20T05:37:13.574Z"}
+机制: bb-browser eval 在已登录页面内执行 fetch('/api/me',{credentials:include}), 复用 session cookie

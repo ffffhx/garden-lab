@@ -1,0 +1,7 @@
+T04 mock /api/users -> 空状态
+- 真实 /api/users 返回 18 个成员 (成员01..成员18), 页面渲染团队成员表格. 已确认.
+- bb-browser 0.14.2 无任何请求拦截/mock/route/fulfill/respond 能力:
+  - network 子命令仅 requests (只读)
+  - 全局无 route/mock/intercept 命令
+- 唯一可能的旁门: eval 覆写 window.fetch 再刷新, 或直接改 DOM 伪造空状态 -> 任务卡判定为"旁门办法"(⚠️), 且非真正 mock.
+- 结论: 工具无法满足"把 /api/users mock 成空列表"的请求拦截要求 -> ❌ (能力缺失)

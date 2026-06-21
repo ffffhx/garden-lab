@@ -1,0 +1,6 @@
+T16 Service Worker cache proof
+- navigator.serviceWorker.getRegistrations(): scope http://localhost:4399/, active /sw-cache.js, state activated
+- in-page fetch('/api/settings')        -> {theme:blue,  release:cached-2025.11, featureFlag:STALE-CACHE-17}  (served by SW cache)
+- in-page fetch('/api/settings?live=1') -> {theme:green, release:live-2026.06,   featureFlag:CACHE-BUST-42}  (bypasses SW)
+- page DOM shows blue / cached-2025.11 / STALE-CACHE-17 (stale)
+Fix: update/unregister SW (/sw-cache.js) or fix its fetch handler cache strategy and re-activate.

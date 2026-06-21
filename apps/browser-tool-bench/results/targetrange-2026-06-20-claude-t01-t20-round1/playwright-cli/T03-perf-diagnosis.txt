@@ -1,0 +1,20 @@
+T03 性能诊断 /slow — playwright-cli (resource timing + longtask + paint via Performance API)
+
+navigation: domContentLoaded=2053ms, loadEvent=2053ms
+paint: first-paint = first-contentful-paint = 2420ms
+LCP API: largest-contentful-paint entries empty in this run (LCP element is text; FCP≈2420ms used as render proxy)
+
+Resource timing (startTime / TTFB / responseEnd):
+- blocking.css : start 44ms, TTFB ~1203ms, responseEnd 1248ms  -> 渲染阻塞 CSS（服务端延迟~1200ms）
+- app.css      : start 44ms, TTFB 2ms,    responseEnd 46ms
+- heavy.js     : start 44ms, TTFB 2ms,    responseEnd 46ms（网络很快，问题在执行）
+- hero.svg     : start 44ms, TTFB ~1504ms, responseEnd 1548ms -> 单资源最慢，但并行加载、首绘前完成（干扰项）
+
+Long task: 1 个 longtask，startTime=1248ms, duration=800ms
+  -> 恰好在 blocking.css responseEnd(1248ms) 之后开始执行（heavy.js 的 crunchAnalytics 同步长任务），二者串联。
+
+结论:
+- LCP/首绘主因 = blocking.css（~1200ms 服务端延迟的渲染阻塞 CSS，阻塞其后同步脚本）。
+- 次因 = heavy.js 同步长任务（~800ms，在 CSS 返回后才开始，与 CSS 串联）。
+- hero.svg 虽单资源耗时最长(~1500ms)，但并行且首绘前完成，对 LCP 基本无影响 = 干扰项。
+- 渲染链: blocking.css(0->1248) -> heavy.js longtask(1248->2048) -> FCP 2420ms。

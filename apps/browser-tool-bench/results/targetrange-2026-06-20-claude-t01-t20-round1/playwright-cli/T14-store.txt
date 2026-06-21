@@ -1,0 +1,6 @@
+### Result
+"{\"traceId\":\"HYD-908\",\"component\":\"TaskSummary\",\"clientState\":{\"pendingTasks\":9,\"planName\":\"team-pro\"},\"ssrState\":{\"pendingTasks\":8,\"planName\":\"starter\"}}"
+### Ran Playwright code
+```js
+await page.evaluate('() => JSON.stringify(window.__BENCH_STORE__)');
+```

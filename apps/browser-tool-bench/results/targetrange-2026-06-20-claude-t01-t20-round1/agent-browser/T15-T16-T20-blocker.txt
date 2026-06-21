@@ -1,0 +1,17 @@
+=== T15/T16/T20 ENVIRONMENT BLOCKER EVIDENCE ===
+Two servers on :4399 — localhost(::1)->PID1762 server.mjs (real bench), 127.0.0.1->PID74361 codex-snapshot (unrelated)
+
+file mtime: Jun 19 20:36:44 2026
+PID1762 start: 五  6/12 19:59:25 2026     
+
+API probes via localhost (PID1762):
+  /api/me => 401
+  /api/users => 200
+  /api/feed => 200
+  /api/products => 200
+  /api/settings => 404
+  /api/settings?live=1 => 404
+  /api/flake-check?run=1 => 404
+  /api/realtime-events => 404
+
+Conclusion: running server predates the settings/flake-check/realtime-events routes (added Jun19). Routes exist on disk (lines 199-228) but not in the live process. T15/T16/T20 blocked without a server restart (task-external infra change, not permitted).

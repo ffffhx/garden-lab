@@ -1,0 +1,5 @@
+T04 BLOCKED: bb-browser has no route/mock primitive and no addInitScript.
+/users uses MPA full-reload navigation (nav links are real <a href>, each route = full page load).
+eval fetch-patch is wiped on every navigation/reload; page fetches /api/users on initial mount before any patch can apply.
+No refresh/retry button on /users; focus/visibilitychange do not trigger refetch.
+Only way to fake empty state = delete DOM rows (card marks this as 旁门/⚠️). Verdict: cannot truly mock => ❌.

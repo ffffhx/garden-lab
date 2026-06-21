@@ -1,0 +1,2 @@
+POST /api/orders -> 500 Internal Server Error
+body: {"error":"INSUFFICIENT_INVENTORY","message":"SKU-8821 库存不足，剩余 0 件","traceId":"tr-f5358d8375b3"}

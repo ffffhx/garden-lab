@@ -1,0 +1,20 @@
+T16 · Service Worker 缓存排障 — devtools-mcp (chrome-devtools-gh, CDP 9223) — 2026-06-20 (patch)
+
+页面: http://localhost:4399/cache
+DOM 显示(旧值): 主题=blue / 版本=cached-2025.11 / Feature Flag=STALE-CACHE-17
+页面提示: "Service Worker 已控制页面"
+
+navigator.serviceWorker 检查:
+- registration scriptURL = http://localhost:4399/sw-cache.js, scope=http://localhost:4399/, state=activated
+- controller = http://localhost:4399/sw-cache.js  (确认 SW 正在控制本页)
+
+fetch('/api/settings')  ← 被 SW 拦截，返回过期缓存:
+  { "theme":"blue", "release":"cached-2025.11", "featureFlag":"STALE-CACHE-17" }
+
+fetch('/api/settings?live=1')  ← 绕过 SW 拦截，真实网络值:
+  { "theme":"green", "release":"live-2026.06", "featureFlag":"CACHE-BUST-42" }
+
+结论: 旧值确实由 Service Worker (/sw-cache.js) 缓存拦截导致，不是普通 HTTP cache 或页面 bug。
+修复动作: 更新/注销该 Service Worker (unregister + reload)，或修正 sw-cache.js fetch handler
+的缓存策略(对 /api/settings 改用 network-first / 不缓存)并重新激活，使页面读到真实值
+green / live-2026.06 / CACHE-BUST-42。

@@ -1,0 +1,5 @@
+T09 FAILED: bb-browser cannot reload unpacked extension.
+- No extension-management primitive/API.
+- chrome://extensions navigation blocked by URL-normalization bug: `goto chrome://extensions` => `https://chrome://extensions` => chrome-error://chromewebdata/
+- eval location.href='chrome://extensions/' blocked by browser security (page cannot navigate to chrome://).
+Badge stayed BENCH EXT v1.0.0; manifest bumped to 1.0.1 then reverted to 1.0.0 (no reload ever applied). Verdict ❌.

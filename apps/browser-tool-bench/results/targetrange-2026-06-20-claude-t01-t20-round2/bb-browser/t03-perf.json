@@ -1,0 +1,44 @@
+{
+  "domInteractive": 2024,
+  "loadEnd": 2195,
+  "resources": [
+    {
+      "name": "blocking.css",
+      "start": 12,
+      "ttfb": 1208,
+      "dur": 1209,
+      "end": 1222
+    },
+    {
+      "name": "app.css",
+      "start": 13,
+      "ttfb": 7,
+      "dur": 8,
+      "end": 20
+    },
+    {
+      "name": "heavy.js",
+      "start": 13,
+      "ttfb": 8,
+      "dur": 8,
+      "end": 21
+    },
+    {
+      "name": "hero.svg",
+      "start": 13,
+      "ttfb": 1510,
+      "dur": 1510,
+      "end": 1523
+    }
+  ]
+}
+
+--- 长任务/分析 (PerformanceObserver longtask, 之前一次加载) ---
+longtask: start=1275ms dur=800ms  (紧接 blocking.css end=1275 之后开始, 即 heavy.js 的 crunchAnalytics 同步执行)
+source grep crunchAnalytics: /assets/heavy.js 含 function crunchAnalytics() + 调用
+诊断:
+- LCP 主因: blocking.css (render-blocking, TTFB ~1208-1212ms), 阻塞渲染并阻塞其后同步 heavy.js 执行
+- 次因: heavy.js 同步长任务 ~800ms (crunchAnalytics), CSS 返回后串联执行
+- 干扰项: hero.svg TTFB ~1510ms 最慢单资源, 但 start=13 与上述并行加载, 非阻塞, 首绘前完成, 对 LCP 基本无影响
+LCP数值: 渲染链 ~1.2s(css)+0.8s(js)=~2.0-2.4s; domInteractive~2024ms
+注: bb-browser 无 performance trace/insight 工具, buffered LCP 在其隔离 eval 世界取不到具体 LCP 元素; 结论由 ResourceTiming + longtask + source grep 原始数据推得

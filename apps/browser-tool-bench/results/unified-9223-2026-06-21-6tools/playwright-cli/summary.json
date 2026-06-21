@@ -1,0 +1,279 @@
+{
+  "tool": "playwright-cli",
+  "model": "gpt-5",
+  "reasoning_effort": "xhigh",
+  "strict_cdp": "http://127.0.0.1:9223",
+  "browser_mode": "cdp-9223",
+  "cdp_proof": "curl /json/version returned Chrome/149.0.7827.116 with ws://127.0.0.1:9223/devtools/browser/...; playwright-cli 0.1.14 attach --cdp http://127.0.0.1:9223 succeeded; unique target http://localhost:4399/?pw_cdp_proof=playwright-cli-1781982360001 appeared in /json/list with ws://127.0.0.1:9223/devtools/page/B795910D6574C7B32237B70FB4797922; T10c notifications URL also appeared in /json/list with hits=1.",
+  "elapsed_ms": 1500000,
+  "tool_calls": 82,
+  "browserOps": 23,
+  "browserOps_notes": "23 playwright-cli browser subcommands. Most work used run-code scripts, so each subcommand may contain multiple Playwright page actions; estimate is CLI-command based.",
+  "escapes": {
+    "total": 34,
+    "eval_read": 29,
+    "eval_action": 4,
+    "cdp_escape": 0,
+    "init_script": 1,
+    "notes": "eval_read includes DOM/performance/source-map/SW/GitHub/npm/MDN extraction via page.evaluate. eval_action includes T13 pay-button click after overlay diagnosis, T19 modal-open workaround, and T09 chrome://extensions reload clicks. init_script was used once for T03 LCP/longtask observers. No direct raw CDP protocol calls were used."
+  },
+  "tokens": "unavailable",
+  "cost_usd": "unavailable",
+  "tally": {
+    "pass": 30,
+    "warn": 0,
+    "fail": 0,
+    "nr": 0,
+    "na": 1
+  },
+  "results": [
+    {
+      "task": "T01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "BENCH-7341",
+      "evidence": "evidence/local-cdp-output.json; evidence/T01-dashboard.png",
+      "notes": "Logged in through /login and read dashboard greeting."
+    },
+    {
+      "task": "T02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "POST /api/orders returned 500 with INSUFFICIENT_INVENTORY / SKU-8821 库存不足，剩余 0 件.",
+      "evidence": "evidence/local-cdp-output.json; evidence/T02-order-failure.png",
+      "notes": "Response body was captured from browser Network before reporting."
+    },
+    {
+      "task": "T03",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "blocking.css was the LCP-critical blocker (~1219 ms, renderBlockingStatus=blocking), heavy.js added an ~800 ms long task after CSS, hero.svg was slow (~1518 ms) but non-blocking/parallel.",
+      "evidence": "evidence/local-cdp-output.json",
+      "notes": "Used one initScript for LCP/longtask observers and PerformanceResourceTiming."
+    },
+    {
+      "task": "T04",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Mocked /api/users as {\"users\":[]} and captured the empty state.",
+      "evidence": "evidence/local-cdp-output.json; evidence/T04-empty-users.png",
+      "notes": "Used Playwright route fulfill, then unroute."
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "12 dynamics; last token LIVE-512.",
+      "evidence": "evidence/local-cdp-output.json",
+      "notes": "Waited for Load more and final LIVE-512 item."
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "12 products sorted by numeric price; most expensive 雷霆工作站, 15999.",
+      "evidence": "evidence/local-cdp-output.json",
+      "notes": "Used browser Network responses for /api/products?page=1 and page=2."
+    },
+    {
+      "task": "T07",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "team-pro-2026",
+      "evidence": "evidence/local-cdp-output.json",
+      "notes": "Used page runtime fetch('/api/me') inside the logged-in page as required."
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "SHADOW-99",
+      "evidence": "evidence/local-cdp-output.json; evidence/T08-shadow-reward.png",
+      "notes": "Clicked the open shadow-root button with Playwright role locator."
+    },
+    {
+      "task": "T09",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "After manifest version was changed to 1.0.1, chrome://extensions reload updated the page badge to BENCH EXT v1.0.1.",
+      "evidence": "evidence/t09-v101.json; evidence/T09-extensions-reload-v101.png; evidence/T09-badge-v101.png; evidence/t09-restore-v100.json; evidence/T09-badge-restored-v100.png",
+      "notes": "Used 9223 chrome://extensions shadow DOM to click the unpacked extension reload button. Restored manifest version and badge to BENCH EXT v1.0.0."
+    },
+    {
+      "task": "T10a",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "GitHub unread notifications: 70; first five: ffffhx/garden-lab CI #387, #386, #376, #375; ffffhx/open-token-board CI #41.",
+      "evidence": "evidence/t10c-notifications-probe.json; evidence/notifications-parsed.json; evidence/T10c-notifications-probe.png",
+      "notes": "Under this unified run, playwright-cli used the attached 9223 logged-in profile, not a self-managed browser."
+    },
+    {
+      "task": "T10b",
+      "verdict": "N/A",
+      "escape": false,
+      "answer": "Not run in this strict-9223 pass.",
+      "evidence": "Task card plus SHARED-BRIEF strict-9223 rule.",
+      "notes": "T10b needs a tool-managed dedicated profile with a pre-saved GitHub login state. No phase-one saved state was provided, and self-starting a profile would not test the specified 9223 browser."
+    },
+    {
+      "task": "T10c",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Bound to 9223, opened GitHub notifications, unread total 70, first five notification subjects listed.",
+      "evidence": "evidence/notifications-parsed.json; /json/list proof hits=1 for t10c=pw-notif-1781983100001",
+      "notes": "Unique URL was visible in 9223 /json/list with ws://127.0.0.1:9223/devtools/page/6348F23F6F6C6179FDE884EF798F0DFA."
+    },
+    {
+      "task": "T11",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "HELLO-2026 · v1.0.0",
+      "evidence": "evidence/t11.json; evidence/T11-options-hello.png; evidence/T11-badge-hello.png; evidence/T11-badge-restored.png",
+      "notes": "Used chrome-extension://jkmndkochpgaleoechlemhdhbikdecnf/options.html UI and restored default badge."
+    },
+    {
+      "task": "T12",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "webpack://bench/src/cart/coupon.ts; applySelectedCoupon; cartState.selectedCoupon.couponCode where selectedCoupon is null; guard if (!cartState.selectedCoupon) return null;",
+      "evidence": "evidence/local-cdp-output.json; evidence/T12-debug-console.png",
+      "notes": "Console error and source map were read in the browser context."
+    },
+    {
+      "task": "T13",
+      "verdict": "✅",
+      "escape": true,
+      "answer": ".mobile-support-bar[data-bug=\"overlaps-pay-button\"] covers the fixed .checkout-actions button because z-index 20 beats z-index 10; confirmation code MOBILE-39.",
+      "evidence": "evidence/local-cdp-output.json; evidence/T13-mobile-overlay.png",
+      "notes": "Normal click timed out; after diagnosing overlay, a page-context click was used only to confirm the code."
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "TaskSummary; traceId HYD-908; SSR pendingTasks=8 planName=starter; client pendingTasks=9 planName=team-pro; final DOM shows 9/team-pro.",
+      "evidence": "evidence/local-cdp-output.json; evidence/T14-hydration.png",
+      "notes": "Used console event and window.__BENCH_STORE__ read."
+    },
+    {
+      "task": "T15",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "5 events; last id evt-005; alert code STREAM-721.",
+      "evidence": "evidence/local-cdp-output.json; evidence/T15-realtime.png",
+      "notes": "Captured EventSource request and final DOM event list."
+    },
+    {
+      "task": "T16",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Service Worker cache caused stale theme=blue release=cached-2025.11 featureFlag=STALE-CACHE-17; live API returns green/live-2026.06/CACHE-BUST-42; fix is update/unregister SW or change fetch cache strategy.",
+      "evidence": "evidence/local-cdp-output.json; evidence/T16-cache.png",
+      "notes": "Read navigator.serviceWorker controller/registrations and fetched /api/settings?live=1."
+    },
+    {
+      "task": "T17",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "iframe-user@bench.dev / OAUTH-314",
+      "evidence": "evidence/local-cdp-output.json; evidence/T17-iframe-auth.png",
+      "notes": "Used frameLocator on the cross-origin iframe and verified parent postMessage result."
+    },
+    {
+      "task": "T18",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "upload-token.txt, 36 bytes, UPLOAD-448",
+      "evidence": "evidence/local-cdp-output.json; evidence/T18-upload.png",
+      "notes": "Used real file input upload with the repository fixture path."
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Keyboard cannot reach/activate #save-preferences because it is a div role=button without tabindex=0, not in data-trap-focus, and lacks keyboard handlers; mouse save code A11Y-204.",
+      "evidence": "evidence/local-cdp-output.json; evidence/T19-a11y-modal.png",
+      "notes": "Opening the modal required a page-context click because the page's hidden backdrop CSS intercepted pointer events; keyboard diagnosis used real key presses."
+    },
+    {
+      "task": "T20",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "7/10 pass, 3/10 fail, failed runs 3/6/9, FLAKE-307, flake rate 30%, unstable.",
+      "evidence": "evidence/local-cdp-output.json; evidence/T20-flake.png",
+      "notes": "Waited for all 10 result rows."
+    },
+    {
+      "task": "R01",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Final page title Auto-waiting; locator.click() requires Visible, Stable, Receives Events, Enabled; Editable is not required.",
+      "evidence": "evidence/real-cdp-output.json; evidence/R01-actionability.png",
+      "notes": "Started from github.com/microsoft/playwright and finished on https://playwright.dev/docs/actionability."
+    },
+    {
+      "task": "R02",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Unread total 70; first five repos/subjects match T10c parsed notifications.",
+      "evidence": "evidence/notifications-parsed.json; evidence/T10c-notifications-probe.png",
+      "notes": "Read-only; no notification controls were clicked."
+    },
+    {
+      "task": "R03",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Fetch API; first current Interfaces entries read from the page include Window.fetch() and WorkerGlobalScope.fetch(), Window.fetchLater(), DeferredRequestInit; page contains Browser compatibility.",
+      "evidence": "evidence/real-cdp-output.json; evidence/r03-r04-fix.json; evidence/R03-mdn-fetch.png",
+      "notes": "Used MDN search URL then the MDN Fetch API document."
+    },
+    {
+      "task": "R04",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "@playwright/test version 1.61.0; license Apache-2.0; weekly downloads 41,880,590; repository github.com/microsoft/playwright; unpacked size not visible in page evidence.",
+      "evidence": "evidence/real-cdp-output.json; evidence/r03-r04-fix.json; evidence/R04-npm-package.png",
+      "notes": "Initial link heuristic found a README link, so a second browser read verified the Repository line."
+    },
+    {
+      "task": "R05",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "ID fmkadmapgofadopljbjfkapdkoienihi; React Developer Tools; provider Meta; rating 4.0 / 1,633 ratings; 5,000,000 users; primary button 添加至 Chrome.",
+      "evidence": "evidence/real-cdp-output.json; evidence/R05-webstore.png",
+      "notes": "Read-only; did not click install."
+    },
+    {
+      "task": "R06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Default real-site badge BENCH EXT v1.0.0; after options UI save REAL-SITE-2026 · v1.0.0; restored BENCH EXT v1.0.0.",
+      "evidence": "evidence/r06.json; evidence/R06-real-site-before.png; evidence/R06-options-real-site.png; evidence/R06-real-site-after.png; evidence/R06-real-site-restored.png",
+      "notes": "Used the 9223 Bench Badge extension options UI and restored storage."
+    },
+    {
+      "task": "R07",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Browser Network document response https://www.npmjs.com/package/@playwright/test returned 200 text/html; response body contains @playwright/test and latest version 1.61.0, matching page version 1.61.0.",
+      "evidence": "evidence/real-cdp-output.json; evidence/r07-fix.json; evidence/R07-npm-network.png",
+      "notes": "npm page exposed package metadata in the HTML document/provenance responses rather than a separate package JSON request in this run."
+    },
+    {
+      "task": "R08",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Blocked MDN image/SVG resources via route.abort while the Fetch API document still loaded.",
+      "evidence": "evidence/real-cdp-output.json; evidence/R08-mdn-block-images.png",
+      "notes": "Blocked examples include /static/client/menu...svg and /static/client/chevron-right...svg."
+    },
+    {
+      "task": "R09",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "PerformanceResourceTiming top slow resources: chunk 42 JS ~929 ms, font e02f...woff2 ~882 ms, manifest.webmanifest ~875 ms; document load was ~2834 ms. JS/CSS affect hydration/render path; fonts can affect text paint; manifest is not first-screen critical.",
+      "evidence": "evidence/real-cdp-output.json; evidence/R09-garden-performance.png",
+      "notes": "Playwright request.timing values mixed absolute and relative timestamps, so final judgement used in-page PerformanceResourceTiming."
+    }
+  ]
+}

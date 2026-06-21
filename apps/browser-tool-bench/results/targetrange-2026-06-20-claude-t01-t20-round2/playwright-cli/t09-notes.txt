@@ -1,0 +1,9 @@
+T09 playwright-cli (self-managed Chromium persistent context + --load-extension)
+- Launch with config (browser.launchOptions.args: --load-extension/--disable-extensions-except, userDataDir, headed, cli.persistent=true) => extension loaded.
+- manifest.json version set to 1.0.1 BEFORE launch.
+- At launch, target page http://localhost:4399/ badge = "BENCH EXT v1.0.1"  (disk version change reflected). [verified via #bench-ext-badge innerText]
+- chrome://extensions REACHABLE; extension enumerable via shadow DOM:
+    id=jkmndkochpgaleoechlemhdhbikdecnf name="Bench Badge" ver=1.0.1, reload button present.
+- Clicked the chrome://extensions #dev-reload-button (the actual reload control) -> after reload the content script no longer injected; extension toggled to enabled:false; badge => NO-BADGE.
+- Programmatic re-enable via cr-toggle .click() did not reliably persist (enabled:false again).
+VERDICT: PARTIAL. Reached extension mgmt + verified v1.0.1 badge at load, but the in-session reload round-trip broke content-script injection (left ext disabled). playwright-cli has no first-class extension-reload command; reload only via chrome://extensions shadow-DOM UI, which proved unstable for unpacked ext in persistent context.

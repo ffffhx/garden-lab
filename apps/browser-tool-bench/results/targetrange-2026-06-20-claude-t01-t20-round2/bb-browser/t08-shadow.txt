@@ -1,0 +1,5 @@
+T08 Shadow DOM 领取奖励
+- snap -i 能穿透 open shadow root: 按钮显示为 button [ref=5] "领取今日奖励"
+- bb-browser click @5 未触发 reward 处理(同 T01/T05 的 click 短板) -> 改用 eval shadowRoot.querySelector('button').click()
+- 结果 shadow root 文本出现: 兑换码：SHADOW-99
+兑换码 = SHADOW-99

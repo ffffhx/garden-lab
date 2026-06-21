@@ -1,0 +1,6 @@
+T10a: GitHub notifications on 9223 profile (ffffhx), read-only, zero auth prompts.
+Unread count = 70 (Inbox counter; 25+25+20 across 3 pages of is:unread filter).
+Breakdown: garden-lab 58, codex-snapshots 7, profilepilot 4, open-token-board 1.
+Mostly CI/Deploy/Sync Token Usage workflow failure notifications for ffffhx repos,
+plus 2 PRs in codex-snapshots (#2 Refactor snapshot runtime, #1 Refactor site to React TS Tailwind).
+Full 70 titles captured in transcript. Verdict ✅.

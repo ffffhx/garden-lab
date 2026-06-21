@@ -1,0 +1,22 @@
+=== ENVIRONMENT DEFECT: running bench server is stale (Jun 12 / Jun 14), missing API routes ===
+
+Two processes listen on :4399:
+  PID 1762  IPv6 *:4399  -> node .../server.mjs  started Fri Jun 12 19:59 (localhost resolves here)
+  PID 74361 IPv4 127.0.0.1:4399 -> node dist/cli/codex-snapshot.mjs serve --port 4399  started Jun 14
+
+server.mjs on disk modified Jun 19 20:36 (AFTER PID 1762 started) and DOES define:
+  /api/settings (line 199), /api/flake-check (204), /api/realtime-events (214)
+
+But BOTH running servers return 404 for these three routes (verified via curl on both localhost and 127.0.0.1,
+and via same-origin fetch in the CDP-9223 browser):
+  /api/feed           -> 200 (works, older route)
+  /api/products       -> 200 (works, older route)
+  /api/users          -> 200 (works)
+  /api/settings       -> 404 on network (browser sees 200 ONLY because a leftover Service Worker sw-cache.js intercepts it with stale data)
+  /api/settings?live=1-> 404
+  /api/flake-check    -> 404
+  /api/realtime-events-> 404
+
+Impact: T15 (SSE 5 events / evt-005 / STREAM-721), T16 real live value (green/live-2026.06/CACHE-BUST-42),
+T20 (flake 7/10, 3/6/9, FLAKE-307) cannot be verified against the live backend — the routes 404.
+Not restarting server (out of scope / shared infra). Recorded as N-R env-blocked with evidence.

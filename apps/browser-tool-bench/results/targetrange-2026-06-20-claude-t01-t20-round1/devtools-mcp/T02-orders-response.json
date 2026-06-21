@@ -1,0 +1,2 @@
+POST http://localhost:4399/api/orders -> 500
+{"error":"INSUFFICIENT_INVENTORY","message":"SKU-8821 库存不足，剩余 0 件","traceId":"tr-fc0ea1eeea4f"}

@@ -1,0 +1,10 @@
+### Result
+1. [GET] https://www.npmjs.com/package/@playwright/test => [403] 
+3. [GET] blob:https://www.npmjs.com/a8346244-265c-46c1-b59e-1dbff114efed
+5. [POST] https://www.npmjs.com/cdn-cgi/challenge-platform/h/g/flow/ov1/1122805475:1782032421:fZ9ojpNtTQXi5KqB_aARgehJWNaiNgeAN76CSJ4m4ao/a0f22b448f07d59a/G.06Quu7PpUNC9q2ytseQdhWtD.iqVM.HEEG3sRLtG8-1782036055-1.2.1.1-Zl01jqO3m1ad07SCx55HUX5zeM1mjxPWRBVE8.a.JSn5Wvr.wu9JpExIWFLh5lGb => [200] 
+9. [GET] blob:https://challenges.cloudflare.com/91c66f14-e69a-4d6c-a300-a9662cb757f8
+10. [POST] https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/flow/ov1/2600181048:1782032423:Jw8ELBEM1UMXpEFCJf_mBR4PT1u6enMlbDnKYpuUskA/a0f22b4b2d025fdb/8XThT3VN1QQO6uLg6dvaJMhOVMx_Y2TY74P9qYWmGaQ-1782036056-1.2.1.1-bjbOEPsaixPM8gmIAN8rlRVawA6Db9hEsNan7FOJkNmNo66qMhGby9DKCO_PkbYJ => [200] 
+13. [GET] https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/pat/a0f22b4b2d025fdb/1782036057108/1e149df8bbd1fcf56ee852306b67a47d91449c62a551238f9578abdbf9d23bd7/QGBjYla_VNi3coH => [401] 
+15. [POST] https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/flow/ov1/2600181048:1782032423:Jw8ELBEM1UMXpEFCJf_mBR4PT1u6enMlbDnKYpuUskA/a0f22b4b2d025fdb/8XThT3VN1QQO6uLg6dvaJMhOVMx_Y2TY74P9qYWmGaQ-1782036056-1.2.1.1-bjbOEPsaixPM8gmIAN8rlRVawA6Db9hEsNan7FOJkNmNo66qMhGby9DKCO_PkbYJ => [200] 
+
+Note: 9 static requests not shown, run with --static option to see them.

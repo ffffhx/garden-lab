@@ -1,0 +1,12 @@
+=== /assets/debug-bundle.js (9 matches) ===
+  const state = { cartId: "CART-9A2", selectedCoupon: null };
+  function applySelectedCoupon(cartState) {
+  return cartState.selectedCoupon.couponCode.toUpperCase();
+  const errorEl = document.getElementById("coupon-error");
+  console.error("checkout coupon crash", {
+  originalSource: "src/cart/coupon.ts:12",
+  functionName: "applySelectedCoupon",
+  document.getElementById("apply-coupon").addEventListener("click", () => {
+  applySelectedCoupon(state);
+
+9 matches in 1 files

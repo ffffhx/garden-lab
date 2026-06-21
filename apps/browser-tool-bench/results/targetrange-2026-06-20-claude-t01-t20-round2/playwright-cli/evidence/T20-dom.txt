@@ -1,0 +1,6 @@
+### Result
+"不稳定回归\n\n运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\n\n运行 10 次\n\n通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307\n\n轮次\t结果\t代码\n1\tPASS\tFLAKE-307\n2\tPASS\tFLAKE-307\n3\tFAIL\tFLAKE-307\n4\tPASS\tFLAKE-307\n5\tPASS\tFLAKE-307\n6\tFAIL\tFLAKE-307\n7\tPASS\tFLAKE-307\n8\tPASS\tFLAKE-307\n9\tFAIL\tFLAKE-307\n10\tPASS\tFLAKE-307"
+### Ran Playwright code
+```js
+await page.evaluate('() => document.querySelector(\'main\').innerText');
+```

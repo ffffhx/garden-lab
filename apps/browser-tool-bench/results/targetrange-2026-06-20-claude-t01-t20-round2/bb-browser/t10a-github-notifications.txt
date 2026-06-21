@@ -1,0 +1,31 @@
+{
+  "inbox": "70",
+  "visibleUnreadRows": 25,
+  "rows": [
+    "ffffhx/garden-lab – CI #387 :: CI workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #386 :: CI workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #376 :: CI workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #375 :: CI workflow run failed for main branch",
+    "ffffhx/open-token-board – CI #41 :: CI workflow run failed for main branch",
+    "ffffhx/profilepilot – Build Release Packages #7 :: Build Release Packages workflow run failed for main branch",
+    "ffffhx/profilepilot – Build Release Packages #3 :: Build Release Packages workflow run failed for v0.1.0 branch",
+    "ffffhx/profilepilot – Build Release Packages #2 :: Build Release Packages workflow run failed for v0.1.0 branch",
+    "ffffhx/profilepilot – Build Release Packages #1 :: Build Release Packages workflow run failed for v0.1.0 branch",
+    "ffffhx/codex-snapshots – CI #18 :: CI workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #340 :: CI workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #339 :: CI workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #338 :: CI workflow run failed for main branch",
+    "ffffhx/codex-snapshots – CI #17 :: CI workflow run failed for main branch",
+    "ffffhx/codex-snapshots – CI #16 :: CI workflow run failed for main branch",
+    "ffffhx/codex-snapshots #2 :: Refactor snapshot runtime and secure local publishing",
+    "ffffhx/codex-snapshots #1 :: Refactor site to React TypeScript Tailwind",
+    "ffffhx/garden-lab – CI #325 :: CI workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #300 :: CI workflow run failed for main branch",
+    "ffffhx/codex-snapshots – Deploy Pages #2 :: Deploy Pages workflow run failed for main branch",
+    "ffffhx/codex-snapshots – Deploy Pages #1 :: Deploy Pages workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #268 :: CI workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #228 :: CI workflow run failed for main branch",
+    "ffffhx/garden-lab – Deploy To GitHub Pages #109 :: Deploy To GitHub Pages workflow run failed for main branch",
+    "ffffhx/garden-lab – CI #227 :: CI workflow run failed for main branch"
+  ]
+}

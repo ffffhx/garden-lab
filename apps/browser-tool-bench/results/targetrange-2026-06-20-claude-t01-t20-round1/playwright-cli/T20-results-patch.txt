@@ -1,0 +1,63 @@
+### Page
+- Page URL: http://localhost:4399/flake
+- Page Title: 回归稳定性 · Bench 靶场
+### Snapshot
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - link "Bench 靶场" [ref=e3] [cursor=pointer]:
+      - /url: /
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - heading "不稳定回归" [level=1] [ref=e6]
+      - paragraph [ref=e7]: 运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。
+      - button "运行 10 次" [active] [ref=e8] [cursor=pointer]
+      - paragraph [ref=e9]: 通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307
+      - table [ref=e10]:
+        - rowgroup [ref=e11]:
+          - row "轮次 结果 代码" [ref=e12]:
+            - columnheader "轮次" [ref=e13]
+            - columnheader "结果" [ref=e14]
+            - columnheader "代码" [ref=e15]
+        - rowgroup [ref=e16]:
+          - row "1 PASS FLAKE-307" [ref=e17]:
+            - cell "1" [ref=e18]
+            - cell "PASS" [ref=e19]
+            - cell "FLAKE-307" [ref=e20]
+          - row "2 PASS FLAKE-307" [ref=e21]:
+            - cell "2" [ref=e22]
+            - cell "PASS" [ref=e23]
+            - cell "FLAKE-307" [ref=e24]
+          - row "3 FAIL FLAKE-307" [ref=e25]:
+            - cell "3" [ref=e26]
+            - cell "FAIL" [ref=e27]
+            - cell "FLAKE-307" [ref=e28]
+          - row "4 PASS FLAKE-307" [ref=e29]:
+            - cell "4" [ref=e30]
+            - cell "PASS" [ref=e31]
+            - cell "FLAKE-307" [ref=e32]
+          - row "5 PASS FLAKE-307" [ref=e33]:
+            - cell "5" [ref=e34]
+            - cell "PASS" [ref=e35]
+            - cell "FLAKE-307" [ref=e36]
+          - row "6 FAIL FLAKE-307" [ref=e37]:
+            - cell "6" [ref=e38]
+            - cell "FAIL" [ref=e39]
+            - cell "FLAKE-307" [ref=e40]
+          - row "7 PASS FLAKE-307" [ref=e41]:
+            - cell "7" [ref=e42]
+            - cell "PASS" [ref=e43]
+            - cell "FLAKE-307" [ref=e44]
+          - row "8 PASS FLAKE-307" [ref=e45]:
+            - cell "8" [ref=e46]
+            - cell "PASS" [ref=e47]
+            - cell "FLAKE-307" [ref=e48]
+          - row "9 FAIL FLAKE-307" [ref=e49]:
+            - cell "9" [ref=e50]
+            - cell "FAIL" [ref=e51]
+            - cell "FLAKE-307" [ref=e52]
+          - row "10 PASS FLAKE-307" [ref=e53]:
+            - cell "10" [ref=e54]
+            - cell "PASS" [ref=e55]
+            - cell "FLAKE-307" [ref=e56]
+```

@@ -1,0 +1,31 @@
+{
+  "observation_time": "2026-06-21T03:18:20+08:00",
+  "final_url": "https://github.com/notifications?query=is%3Aunread&t10c=pw-notif-1781983100001",
+  "title": "Notifications",
+  "unread_total": 70,
+  "first5": [
+    {
+      "repo_or_subject": "ffffhx/garden-lab – CI #387",
+      "title": "CI workflow run failed for main branch"
+    },
+    {
+      "repo_or_subject": "ffffhx/garden-lab – CI #386",
+      "title": "CI workflow run failed for main branch"
+    },
+    {
+      "repo_or_subject": "ffffhx/garden-lab – CI #376",
+      "title": "CI workflow run failed for main branch"
+    },
+    {
+      "repo_or_subject": "ffffhx/garden-lab – CI #375",
+      "title": "CI workflow run failed for main branch"
+    },
+    {
+      "repo_or_subject": "ffffhx/open-token-board – CI #41",
+      "title": "CI workflow run failed for main branch"
+    }
+  ],
+  "login": true,
+  "cdp_unique_url": "https://github.com/notifications?query=is%3Aunread&t10c=pw-notif-1781983100001",
+  "cdp_list_proof": "targets 112; hits 1; ws://127.0.0.1:9223/devtools/page/6348F23F6F6C6179FDE884EF798F0DFA"
+}

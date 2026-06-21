@@ -1,0 +1,20 @@
+T03 /slow performance diagnosis (agent-browser trace + Performance API)
+
+Resource timing (Performance API, reload on active /slow tab):
+  blocking.css  start=23  responseStart=1235  responseEnd=1237  dur=1213ms  (render-blocking CSS, ~1200ms server delay)
+  hero.svg      start=24  responseStart=1533  responseEnd=1534  dur=1510ms  (1500ms server delay; slowest single resource, but PARALLEL)
+  heavy.js      downloaded fast (dur~10ms) but executes synchronously
+  app.css       dur=11ms
+
+Navigation timing:
+  first-paint / FCP = 2064ms
+  domContentLoaded = 2046ms ; loadEvent = 2100ms
+
+Trace (t03-trace.json) main-thread:
+  EvaluateScript dur=800ms url=http://localhost:4399/assets/heavy.js  (synchronous long task = crunchAnalytics)
+  HTMLDocumentParser::ExecuteScriptsWaitingForResources 800ms -> script blocked by pending CSS, runs only AFTER blocking.css returns
+
+Conclusion:
+  - LCP main cause = blocking.css (render-blocking, ~1200ms TTFB). Per spec it also blocks the following synchronous heavy.js.
+  - 2nd = heavy.js 800ms synchronous long task, serially chained after CSS (~1237 + 800 ~= 2064 FCP).
+  - hero.svg 1500ms is the slowest single resource but loads in parallel and finishes before first paint -> distractor, NOT the bottleneck.

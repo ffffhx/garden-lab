@@ -1,0 +1,11 @@
+T15 SSE realtime stream — playwright-cli (self-managed) — patch round 2026-06-20
+Page: http://localhost:4399/realtime ; clicked "开始接收".
+Network: GET http://localhost:4399/api/realtime-events => [200] (EventSource/SSE)
+Page summary after stream completed: "接收完成：5 条事件，关键告警 STREAM-721"
+Event list (DOM):
+  evt-001 · connected · SSE 通道已建立
+  evt-002 · metric · checkout_latency_ms
+  evt-003 · metric · cart_items
+  evt-004 · notice · 库存同步完成
+  evt-005 · alert · STREAM-721
+ANSWER: 5 events total; last event id = evt-005; critical alert code = STREAM-721.

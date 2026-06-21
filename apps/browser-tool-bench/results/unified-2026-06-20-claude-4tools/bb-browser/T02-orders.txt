@@ -1,0 +1,2 @@
+T02 evidence: POST /api/orders 500 INSUFFICIENT_INVENTORY SKU-8821 库存不足
+{"error":"INSUFFICIENT_INVENTORY","message":"SKU-8821 库存不足，剩余 0 件","traceId":"tr-038736491444"}

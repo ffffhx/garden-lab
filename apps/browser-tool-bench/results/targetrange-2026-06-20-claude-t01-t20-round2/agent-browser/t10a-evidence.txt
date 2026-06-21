@@ -1,0 +1,16 @@
+T10a GitHub notifications (9223 default profile, agent-browser attached via CDP, zero auth interruptions)
+
+URL: https://github.com/notifications?query=is%3Aunread  (no login wall hit)
+Sidebar unread breakdown (authoritative):
+  Inbox 70
+  Participating 2
+  ffffhx/garden-lab 58
+  ffffhx/codex-snapshots 7
+  ffffhx/profilepilot 4
+  ffffhx/open-token-board 1
+  => 58+7+4+1 = 70 total unread (== Inbox 70)
+
+Visible rows on first page: 25 (paginated; mostly CI workflow run failed notifications for ffffhx/garden-lab main branch, plus profilepilot/codex-snapshots build/deploy failures, dated May-Jun 2026).
+
+Note: Ground Truth requires a human-recorded count at execution time; the page itself authoritatively reports 70 unread.
+Human打断次数 = 0 (CDP was pre-attached to 9223; no Allow prompt, no chrome://inspect step, no re-login).

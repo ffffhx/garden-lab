@@ -1,0 +1,643 @@
+{
+  "generatedAt": "2026-06-21T10:11:15.919Z",
+  "note": "Dollar cost is not present in local rollout logs; token usage is recorded.",
+  "previousRuns": [
+    {
+      "tool": "chrome",
+      "summaryExists": true,
+      "browserMode": "default-profile-fallback",
+      "cdpProof": "Failed: @chrome opened http://localhost:4399/?chromeProof=chrome-plugin-1781976570555 and listed it in Chrome plugin tabs, but curl http://127.0.0.1:9223/json/list did not contain that URL. 9223 itself was reachable as Chrome/149.0.7827.116.",
+      "summaryElapsedMs": 569098,
+      "summaryElapsedMin": 9.5,
+      "tally": {
+        "pass": 13,
+        "warn": 5,
+        "fail": 10,
+        "nr": 2,
+        "na": 1
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T01-28-08-019ee613-5a27-7f60-8578-4ba2d87eef41.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-20T17:28:08.785Z",
+        "lastTime": "2026-06-20T17:39:12.258Z",
+        "elapsedMs": 663473,
+        "elapsedMin": 11.1,
+        "model": "gpt-5.5",
+        "compacted": false,
+        "responseItems": 199,
+        "toolCalls": 65,
+        "tokenUsage": {
+          "input_tokens": 3436415,
+          "cached_input_tokens": 3159680,
+          "output_tokens": 38896,
+          "reasoning_output_tokens": 12855,
+          "total_tokens": 3475311
+        }
+      }
+    },
+    {
+      "tool": "browser",
+      "summaryExists": true,
+      "browserMode": "in-app",
+      "cdpProof": "9223 was reachable by curl /json/version and /json/list, but @browser in-app proof URL http://localhost:4399/?cdp_proof=browser-iab-proof-1781977267640 did not appear in 9223 /json/list. agent.browsers.list exposed extension and iab backends; per Browser skill the run used iab, so strict 9223 binding was not proven.",
+      "summaryElapsedMs": 760000,
+      "summaryElapsedMin": 12.7,
+      "tally": {
+        "pass": 12,
+        "warn": 5,
+        "fail": 8,
+        "nr": 5,
+        "na": 1
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T01-39-53-019ee61e-1c3b-74b0-b21b-f419c98bcaf2.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-20T17:39:53.784Z",
+        "lastTime": "2026-06-20T17:54:25.271Z",
+        "elapsedMs": 871487,
+        "elapsedMin": 14.5,
+        "model": "gpt-5.5",
+        "compacted": false,
+        "responseItems": 178,
+        "toolCalls": 54,
+        "tokenUsage": {
+          "input_tokens": 3821940,
+          "cached_input_tokens": 3645440,
+          "output_tokens": 47021,
+          "reasoning_output_tokens": 16655,
+          "total_tokens": 3868961
+        }
+      }
+    },
+    {
+      "tool": "agent-browser",
+      "summaryExists": true,
+      "browserMode": "cdp-9223",
+      "cdpProof": "curl /json/version returned Chrome/149.0.7827.116 and ws://127.0.0.1:9223/devtools/browser/88daa777-7389-4a89-8aad-df77b2877f3b; agent-browser --cdp 9223 connect 9223 returned Done; get cdp-url returned the same ws://127.0.0.1:9223 browser endpoint; unique GitHub notifications URL appeared in 9223 /json/list.",
+      "summaryElapsedMs": 1500000,
+      "summaryElapsedMin": 25,
+      "tally": {
+        "pass": 28,
+        "warn": 2,
+        "fail": 0,
+        "nr": 0,
+        "na": 1
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T01-54-51-019ee62b-d122-7b51-afb0-4f5a73161326.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-20T17:54:52.049Z",
+        "lastTime": "2026-06-20T18:14:08.354Z",
+        "elapsedMs": 1156305,
+        "elapsedMin": 19.3,
+        "model": "gpt-5.5",
+        "compacted": false,
+        "responseItems": 379,
+        "toolCalls": 111,
+        "tokenUsage": {
+          "input_tokens": 9256262,
+          "cached_input_tokens": 8975744,
+          "output_tokens": 39789,
+          "reasoning_output_tokens": 14281,
+          "total_tokens": 9296051
+        }
+      }
+    },
+    {
+      "tool": "bb-browser",
+      "summaryExists": true,
+      "browserMode": "cdp-9223",
+      "cdpProof": {
+        "daemon": "After clearing one stale bb-browser daemon process, bb-browser daemon start --port 9223 reported cdpConnected:true and cdpPort:9223.",
+        "unique_url": "http://localhost:4399/?bb_proof=bb-browser-20260621021542",
+        "tab": "af54",
+        "target_id": "D0E1882FDE3951B2094E1E0B4ED8AF54",
+        "json_list_evidence": "http://127.0.0.1:9223/json/list contained the unique URL and ws://127.0.0.1:9223/devtools/page/D0E1882FDE3951B2094E1E0B4ED8AF54"
+      },
+      "summaryElapsedMs": 1293165,
+      "summaryElapsedMin": 21.6,
+      "tally": {
+        "pass": 20,
+        "warn": 1,
+        "fail": 7,
+        "nr": 1,
+        "na": 2
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T02-14-36-019ee63d-e5e9-7e01-a9e1-94df8e6825d8.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-20T18:14:37.017Z",
+        "lastTime": "2026-06-20T18:40:55.799Z",
+        "elapsedMs": 1578782,
+        "elapsedMin": 26.3,
+        "model": "gpt-5.5",
+        "compacted": true,
+        "responseItems": 722,
+        "toolCalls": 246,
+        "tokenUsage": {
+          "input_tokens": 17708839,
+          "cached_input_tokens": 17225344,
+          "output_tokens": 53391,
+          "reasoning_output_tokens": 14680,
+          "total_tokens": 17762230
+        }
+      }
+    },
+    {
+      "tool": "devtools-mcp",
+      "summaryExists": true,
+      "browserMode": "cdp-9223",
+      "cdpProof": "MCP new_page opened http://localhost:4399/?devtools_mcp_proof=20260620184923; /json/list contains id=E17EAA4744DEC05445C977039E52BF79 url=http://localhost:4399/?devtools_mcp_proof=20260620184923; /json/version webSocketDebuggerUrl=ws://127.0.0.1:9223/devtools/browser/88daa777-7389-4a89-8aad-df77b2877f3b",
+      "summaryElapsedMs": 241194,
+      "summaryElapsedMin": 4,
+      "tally": {
+        "pass": 27,
+        "warn": 1,
+        "fail": 0,
+        "nr": 1,
+        "na": 2
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T02-41-30-019ee656-83ee-7e03-800c-61acec1abbfd.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-20T18:41:30.298Z",
+        "lastTime": "2026-06-20T19:03:42.379Z",
+        "elapsedMs": 1332081,
+        "elapsedMin": 22.2,
+        "model": "gpt-5.5",
+        "compacted": false,
+        "responseItems": 214,
+        "toolCalls": 66,
+        "tokenUsage": {
+          "input_tokens": 5791938,
+          "cached_input_tokens": 5544704,
+          "output_tokens": 63073,
+          "reasoning_output_tokens": 19147,
+          "total_tokens": 5855011
+        }
+      }
+    },
+    {
+      "tool": "playwright-cli",
+      "summaryExists": true,
+      "browserMode": "cdp-9223",
+      "cdpProof": "curl /json/version returned Chrome/149.0.7827.116 with ws://127.0.0.1:9223/devtools/browser/...; playwright-cli 0.1.14 attach --cdp http://127.0.0.1:9223 succeeded; unique target http://localhost:4399/?pw_cdp_proof=playwright-cli-1781982360001 appeared in /json/list with ws://127.0.0.1:9223/devtools/page/B795910D6574C7B32237B70FB4797922; T10c notifications URL also appeared in /json/list with hits=1.",
+      "summaryElapsedMs": 1500000,
+      "summaryElapsedMin": 25,
+      "tally": {
+        "pass": 30,
+        "warn": 0,
+        "fail": 0,
+        "nr": 0,
+        "na": 1
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T03-04-13-019ee66b-52a7-7350-9705-1639d271cf44.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-20T19:04:14.019Z",
+        "lastTime": "2026-06-20T19:22:50.736Z",
+        "elapsedMs": 1116717,
+        "elapsedMin": 18.6,
+        "model": "gpt-5.5",
+        "compacted": false,
+        "responseItems": 348,
+        "toolCalls": 107,
+        "tokenUsage": {
+          "input_tokens": 11174926,
+          "cached_input_tokens": 10988928,
+          "output_tokens": 55757,
+          "reasoning_output_tokens": 20607,
+          "total_tokens": 11230683
+        }
+      }
+    }
+  ],
+  "rerun2Runs": [
+    {
+      "tool": "chrome",
+      "summaryExists": true,
+      "browserMode": "default-profile-fallback",
+      "cdpProof": "CDP 9223 reachable by curl /json/version, but @chrome proof URL http://localhost:4399/?chrome-proof-1782008530563=1 did not appear in http://127.0.0.1:9223/json/list; continued with system default Profile fallback per brief.",
+      "summaryElapsedMs": 711915,
+      "summaryElapsedMin": 11.9,
+      "tally": {
+        "pass": 15,
+        "warn": 2,
+        "fail": 1,
+        "nr": 12,
+        "na": 1
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T10-20-55-019ee7fb-20f9-7f41-adc0-5f1af3292e38.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-21T02:20:55.634Z",
+        "lastTime": "2026-06-21T02:34:16.156Z",
+        "elapsedMs": 800522,
+        "elapsedMin": 13.3,
+        "model": "gpt-5.5",
+        "compacted": false,
+        "responseItems": 212,
+        "toolCalls": 61,
+        "tokenUsage": {
+          "input_tokens": 5426851,
+          "cached_input_tokens": 5086976,
+          "output_tokens": 44739,
+          "reasoning_output_tokens": 17306,
+          "total_tokens": 5471590
+        }
+      }
+    },
+    {
+      "tool": "browser",
+      "summaryExists": true,
+      "browserMode": "in-app",
+      "cdpProof": "Browser proof URL http://localhost:4399/?browser_proof=browser-rerun2-1782009310019 opened in Browser tab, but it was absent from http://127.0.0.1:9223/json/list; therefore Browser did not prove control of 9223 and this run uses in-app fallback.",
+      "summaryElapsedMs": 656250,
+      "summaryElapsedMin": 10.9,
+      "tally": {
+        "pass": 14,
+        "warn": 2,
+        "fail": 0,
+        "nr": 14,
+        "na": 1
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T10-34-31-019ee807-9432-7632-a8ac-b34a1949eef3.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-21T02:34:31.665Z",
+        "lastTime": "2026-06-21T02:46:33.870Z",
+        "elapsedMs": 722205,
+        "elapsedMin": 12,
+        "model": "gpt-5.5",
+        "compacted": false,
+        "responseItems": 248,
+        "toolCalls": 70,
+        "tokenUsage": {
+          "input_tokens": 6580276,
+          "cached_input_tokens": 6325888,
+          "output_tokens": 40871,
+          "reasoning_output_tokens": 14353,
+          "total_tokens": 6621147
+        }
+      }
+    },
+    {
+      "tool": "agent-browser",
+      "summaryExists": true,
+      "browserMode": "cdp-9223",
+      "cdpProof": "curl /json/version returned Chrome 149.0.7827.116 with ws://127.0.0.1:9223/devtools/browser/88daa777-7389-4a89-8aad-df77b2877f3b; dedicated agent-browser session agent-browser-rerun2 get cdp-url returned the same 9223 browser websocket; unique URL http://localhost:4399/?agent_browser_worker=unified-9223-rerun2-1782010101 appeared in /json/list on ws://127.0.0.1:9223/devtools/page/...",
+      "summaryElapsedMs": 1050000,
+      "summaryElapsedMin": 17.5,
+      "tally": {
+        "pass": 30,
+        "warn": 0,
+        "fail": 0,
+        "nr": 0,
+        "na": 1
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T10-46-50-019ee812-d9bf-79b3-9a47-5575617c54b7.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-21T02:46:50.293Z",
+        "lastTime": "2026-06-21T03:06:57.717Z",
+        "elapsedMs": 1207424,
+        "elapsedMin": 20.1,
+        "model": "gpt-5.5",
+        "compacted": true,
+        "responseItems": 544,
+        "toolCalls": 167,
+        "tokenUsage": {
+          "input_tokens": 14710764,
+          "cached_input_tokens": 14289152,
+          "output_tokens": 49262,
+          "reasoning_output_tokens": 16540,
+          "total_tokens": 14760026
+        }
+      }
+    },
+    {
+      "tool": "bb-browser",
+      "summaryExists": true,
+      "browserMode": "cdp-9223-with-daemon-status-drift",
+      "cdpProof": "9223 preflight returned Chrome/149.0.7827.116 and ws://127.0.0.1:9223/devtools/browser/6ee5961f-a2d4-4022-8578-6f6ccabbc724. bb-browser opened unique URL http://localhost:4399/?bb_rerun2_resume_proof=20260621T1725; /json/list showed it on ws://127.0.0.1:9223/devtools/page/083C0A976CA9A9E8DFC76FBD345A3A88. bb-browser status intermittently reported cdpPort=9224, so /json/list target proof is treated as authoritative.",
+      "summaryElapsedMs": 1800000,
+      "summaryElapsedMin": 30,
+      "tally": {
+        "pass": 19,
+        "warn": 4,
+        "fail": 5,
+        "nr": 1,
+        "na": 2
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": "/Users/bytedance/.codex/sessions/2026/06/21/rollout-2026-06-21T11-07-12-019ee825-8076-7ac1-902f-bc9614761332.jsonl",
+        "exists": true,
+        "firstTime": "2026-06-21T03:07:12.683Z",
+        "lastTime": "2026-06-21T03:27:13.772Z",
+        "elapsedMs": 1201089,
+        "elapsedMin": 20,
+        "model": "gpt-5.5",
+        "compacted": true,
+        "responseItems": 435,
+        "toolCalls": 125,
+        "tokenUsage": {
+          "input_tokens": 14608060,
+          "cached_input_tokens": 14398080,
+          "output_tokens": 37575,
+          "reasoning_output_tokens": 11988,
+          "total_tokens": 14645635
+        }
+      }
+    },
+    {
+      "tool": "devtools-mcp",
+      "summaryExists": true,
+      "browserMode": "cdp-9223",
+      "cdpProof": {
+        "url": "http://localhost:4399/?devtools_mcp_rerun2_proof=1782034553656",
+        "title": "Bench 靶场 · 首页"
+      },
+      "summaryElapsedMs": 300000,
+      "summaryElapsedMin": 5,
+      "tally": {
+        "pass": 26,
+        "warn": 1,
+        "fail": 1,
+        "nr": 1,
+        "na": 2
+      },
+      "resultCount": 31,
+      "summaryTokens": null,
+      "summaryCostUsd": null,
+      "rollout": {
+        "file": null,
+        "exists": false
+      }
+    },
+    {
+      "tool": "playwright-cli",
+      "summaryExists": true,
+      "browserMode": "cdp-9223",
+      "cdpProof": "playwright-cli 0.1.14 attached to http://127.0.0.1:9223. Unique proof URL http://localhost:4399/?pw_rerun2_proof=1782033708449 appeared in /json/list as ws://127.0.0.1:9223/devtools/page/0005C536DC61EE9516823CE54D5C4EC7. T09 restore URL and T10c GitHub URL also appeared in /json/list under 9223.",
+      "summaryElapsedMs": 1560000,
+      "summaryElapsedMin": 26,
+      "tally": {
+        "pass": 28,
+        "warn": 1,
+        "fail": 1,
+        "nr": 0,
+        "na": 1
+      },
+      "resultCount": 31,
+      "summaryTokens": "unavailable",
+      "summaryCostUsd": "unavailable",
+      "rollout": {
+        "file": null,
+        "exists": false
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "tool": "chrome",
+      "changed": [
+        {
+          "task": "R05",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "R06",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "R07",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "R09",
+          "before": "⚠️",
+          "after": "N-R"
+        },
+        {
+          "task": "T03",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T04",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T07",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T09",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T10a",
+          "before": "⚠️",
+          "after": "✅"
+        },
+        {
+          "task": "T11",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T13",
+          "before": "⚠️",
+          "after": "N-R"
+        },
+        {
+          "task": "T18",
+          "before": "❌",
+          "after": "✅"
+        }
+      ]
+    },
+    {
+      "tool": "browser",
+      "changed": [
+        {
+          "task": "R04",
+          "before": "❌",
+          "after": "✅"
+        },
+        {
+          "task": "R07",
+          "before": "⚠️",
+          "after": "N-R"
+        },
+        {
+          "task": "R09",
+          "before": "⚠️",
+          "after": "N-R"
+        },
+        {
+          "task": "T02",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T03",
+          "before": "⚠️",
+          "after": "N-R"
+        },
+        {
+          "task": "T04",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T07",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T09",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T11",
+          "before": "❌",
+          "after": "N-R"
+        },
+        {
+          "task": "T13",
+          "before": "⚠️",
+          "after": "✅"
+        },
+        {
+          "task": "T16",
+          "before": "❌",
+          "after": "⚠️"
+        },
+        {
+          "task": "T18",
+          "before": "❌",
+          "after": "N-R"
+        }
+      ]
+    },
+    {
+      "tool": "agent-browser",
+      "changed": [
+        {
+          "task": "T08",
+          "before": "⚠️",
+          "after": "✅"
+        },
+        {
+          "task": "T10a",
+          "before": "⚠️",
+          "after": "✅"
+        }
+      ]
+    },
+    {
+      "tool": "bb-browser",
+      "changed": [
+        {
+          "task": "R07",
+          "before": "✅",
+          "after": "⚠️"
+        },
+        {
+          "task": "R09",
+          "before": "✅",
+          "after": "❌"
+        },
+        {
+          "task": "T11",
+          "before": "❌",
+          "after": "✅"
+        },
+        {
+          "task": "T13",
+          "before": "❌",
+          "after": "⚠️"
+        },
+        {
+          "task": "T18",
+          "before": "❌",
+          "after": "⚠️"
+        }
+      ]
+    },
+    {
+      "tool": "devtools-mcp",
+      "changed": [
+        {
+          "task": "R06",
+          "before": "✅",
+          "after": "❌"
+        },
+        {
+          "task": "R09",
+          "before": "✅",
+          "after": "⚠️"
+        },
+        {
+          "task": "T18",
+          "before": "⚠️",
+          "after": "✅"
+        }
+      ]
+    },
+    {
+      "tool": "playwright-cli",
+      "changed": [
+        {
+          "task": "R06",
+          "before": "✅",
+          "after": "❌"
+        },
+        {
+          "task": "R09",
+          "before": "✅",
+          "after": "⚠️"
+        }
+      ]
+    }
+  ]
+}

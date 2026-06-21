@@ -1,0 +1,283 @@
+{
+  "tool": "Chrome DevTools MCP",
+  "model": "gpt-5",
+  "reasoning_effort": "high",
+  "strict_cdp": "http://127.0.0.1:9223",
+  "browser_mode": "cdp-9223",
+  "cdp_proof": "MCP new_page opened http://localhost:4399/?devtools_mcp_proof=20260620184923; /json/list contains id=E17EAA4744DEC05445C977039E52BF79 url=http://localhost:4399/?devtools_mcp_proof=20260620184923; /json/version webSocketDebuggerUrl=ws://127.0.0.1:9223/devtools/browser/88daa777-7389-4a89-8aad-df77b2877f3b",
+  "elapsed_ms": 241194,
+  "tool_calls": 318,
+  "browserOps": 291,
+  "mcp_tool_calls": 291,
+  "shell_preflight_tool_calls_estimate": 24,
+  "escapes": {
+    "total": 34,
+    "eval_read": 30,
+    "eval_action": 3,
+    "cdp_escape": 0,
+    "init_script": 1,
+    "notes": "eval_read/eval_action counted for Chrome DevTools MCP evaluate_script; init_script counted for navigate_page initScript mock in T04. No raw CDP calls outside MCP. Rerun added targeted补跑 counts; extra_probe_browserOps_estimate covers MCP probes outside the first main runner. Final manual result correction used previously collected MCP browser evidence for T06/T18."
+  },
+  "tokens": "unavailable",
+  "cost_usd": "unavailable",
+  "tool_version": "chrome-devtools-mcp 1.2.0; Chrome 149.0.7827.116",
+  "tally": {
+    "pass": 27,
+    "warn": 1,
+    "fail": 0,
+    "nr": 1,
+    "na": 2
+  },
+  "results": [
+    {
+      "task": "T01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "工号 BENCH-7341",
+      "evidence": "登录后 snapshot: heading \"欢迎回来，Agent 测试员（工号 BENCH-7341）\" level=\"1\"",
+      "notes": ""
+    },
+    {
+      "task": "T02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "POST /api/orders，HTTP 500，INSUFFICIENT_INVENTORY / SKU-8821 库存不足",
+      "evidence": "Network line: reqid=28 POST http://localhost:4399/api/orders [500]; response: ## Request http://localhost:4399/api/orders\nStatus: 500\n### Request Headers\n- sec-ch-ua-platform:\"macOS\"\n- referer:http://localhost:4399/dashboard?t02=devtools\n- user-agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36\n- sec-ch-ua:\"Google Chrome\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"\n- sec-ch-ua-mobile:?0\n- accept:*/*\n- accept-encoding:gzip, deflate, br, zstd\n- accept-language:zh-CN,zh;q=0.9,en;q=0.8\n- connection:keep-alive\n- conten ...",
+      "notes": "点击前未显式开启 Network；DevTools MCP 仍能读取本次导航后的请求与响应体。"
+    },
+    {
+      "task": "T03",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "主因是 blocking.css 约 1.2s 的渲染阻塞；heavy.js 的 crunchAnalytics 约 0.8s 长任务串在其后；hero.svg 虽约 1.5s 但并行且非 LCP 主因。",
+      "evidence": "Trace file: /Users/bytedance/Code/garden-lab/apps/browser-tool-bench/results/unified-9223-2026-06-21-6tools/devtools-mcp/T03-trace-20260620184923.json.gz; trace: The raw trace data was saved to /Users/bytedance/Code/garden-lab/apps/browser-tool-bench/results/unified-9223-2026-06-21-6tools/devtools-mcp/T03-trace-20260620184923.json.json.gz.\nThe performance trace has been stopped.\n## Summary of Performance trace findings:\nURL: http://localhost:4399/slow?t03=devtools\nTrace bounds: {min: 1266002175568µs, max: 1266009285177µs}\nCPU throttling: 1x\nNetwork throttling: none\n\n# Available insight sets\n\nThe following is a list of insight sets. An insight set covers  ...; insight: ; resource timing: [{\"name\":\"http://localhost:4399/assets/blocking.css\",\"initiatorType\":\"link\",\"start\":14,\"duration\":1214,\"responseEnd\":1228},{\"name\":\"http://localhost:4399/assets/heavy.js\",\"initiatorType\":\"script\",\"start\":14,\"duration\":15,\"responseEnd\":29},{\"name\":\"http://localhost:4399/assets/hero.svg\",\"initiatorType\":\"img\",\"start\":15,\"duration\":1519,\"responseEnd\":1533}]",
+      "notes": "结论主要来自 performance trace，补充用 PerformanceResourceTiming 读数。"
+    },
+    {
+      "task": "T04",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "已把 /api/users mock 成 {\"users\":[]}，截图为空状态。",
+      "evidence": "snapshot 包含: 暂无成员，去邀请第一位伙伴吧\"; screenshot: /Users/bytedance/Code/garden-lab/apps/browser-tool-bench/results/unified-9223-2026-06-21-6tools/devtools-mcp/T04-empty-state.png",
+      "notes": "使用 navigate_page initScript monkeypatch fetch；DevTools MCP 1.2.0 没有 route/fulfill 一等工具，计 init_script escape。"
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "最终 12 条动态，最后口令 LIVE-512。",
+      "evidence": "snapshot includes LIVE-512=true; DOM count=12; text snippet=Bench 靶场\n控制台\n团队动态\n小林 发布了新文档《季度复盘》\n构建流水线 #4821 通过\n阿芳 评论了你的合并请求\n监控告警已恢复：api-gateway 延迟\n新成员 莫莫 加入了团队\n周报机器人推送了上周摘要\n设计稿《新版首页》更新到 v7\n数据库备份任务完成\n老张 关闭了工单 #233\n灰度发布已扩量到 50%\n客服值班表已更新\n系统公告：今日口令 LIVE-512\n\n已加载 12 条（没有更多了）",
+      "notes": "使用 snapshot 轮询等待按钮和最终口令。"
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "[{\"name\":\"雷霆工作站\",\"price\":15999,\"stock\":2},{\"name\":\"全画幅扫描仪\",\"price\":3699,\"stock\":3},{\"name\":\"4K 专业显示器\",\"price\":2499,\"stock\":7},{\"name\":\"人体工学椅\",\"price\":1899,\"stock\":0},{\"name\":\"会议级摄像头\",\"price\":1599,\"stock\":11},{\"name\":\"桌面监听音箱\",\"price\":1299,\"stock\":5},{\"name\":\"降噪耳机 Pro\",\"price\":899,\"stock\":41},{\"name\":\"便携 SSD 1TB\",\"price\":749,\"stock\":16},{\"name\":\"USB-C 扩展坞\",\"price\":549,\"stock\":64},{\"name\":\"电竞鼠标\",\"price\":459,\"stock\":0},{\"name\":\"静音机械键盘\",\"price\":399,\"stock\":23},{\"name\":\"智能护眼台灯\",\"price\":329,\"stock\":88}]；最贵：雷霆工作站，15999 元。",
+      "evidence": "补跑用 DevTools MCP 点击“加载第 2 页”后，页面 DOM text 显示 12 件商品，包含“雷霆工作站 / 库存 2 件 / ¥ 15,999.00”、“全画幅扫描仪 / ¥ 3,699.00”、“会议级摄像头 / ¥ 1,599.00”等；排序和数字清洗在报告生成侧完成。",
+      "notes": "第一次补跑猜错 /api/products 参数返回空数组；最终以浏览器页面 DOM 证据提取，price/stock 清洗为数字。"
+    },
+    {
+      "task": "T07",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "plan = team-pro-2026",
+      "evidence": "evaluate_script in page fetch('/api/me') returned {\"user\":\"Agent 测试员\",\"badge\":\"BENCH-7341\",\"plan\":\"team-pro-2026\",\"loginAt\":\"2026-06-20T18:49:30.501Z\"}",
+      "notes": "使用页面 Runtime 内 fetch，复用 session cookie。"
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "兑换码 SHADOW-99",
+      "evidence": "a11y snapshot 可见 Shadow DOM button；点击后 snapshot: SHADOW-99\"",
+      "notes": ""
+    },
+    {
+      "task": "T09",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "reload 后徽标 BENCH EXT v1.0.1",
+      "evidence": "extension id=jkmndkochpgaleoechlemhdhbikdecnf; list_extensions after reload: ## Extensions\nid=fojafabhljdngfcjlodcnjdfkadchofa \"Coze Test Account Switcher\" v0.1.0 Enabled\nid=jkmndkochpgaleoechlemhdhbikdecnf \"Bench Badge\" v1.0.1 Enabled\nid=pleonbjpldabbmdpfhnlibdddhjejlag \"bot-studio开发助手\" v0.0.5 Enabled; page evidence: BENCH EXT v1.0.1",
+      "notes": "使用 DevTools MCP reload_extension；manifest 在 finally 恢复。"
+    },
+    {
+      "task": "T10a",
+      "verdict": "N/A",
+      "escape": false,
+      "answer": "本轮严格绑定 --browserUrl http://127.0.0.1:9223，未测试系统默认 Profile autoConnect。",
+      "evidence": "Chrome DevTools MCP 1.2.0 支持 --autoConnect 默认 Profile，但本轮用户要求必须连接 9223；不能切换默认 Profile 代跑。",
+      "notes": "用 T10c 覆盖“用户指定现成 profile”路线。"
+    },
+    {
+      "task": "T10b",
+      "verdict": "N/A",
+      "escape": false,
+      "answer": "本轮未启动 DevTools MCP 自管 userDataDir；严格 9223 下无法表达专用持久 profile 两阶段保存/恢复。",
+      "evidence": "T10b 需要工具自管持久 userDataDir；本轮禁止自启或替换 9223。",
+      "notes": "按 SHARED-BRIEF 对 T10b 记 N/A。"
+    },
+    {
+      "task": "T10c",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "观察时间 2026/6/21 03:01:10；页面 unread notification rows=23；前 5 条：ffffhx/garden-lab – CI #387 5 days ago CI workflow run failed for main branch | ffffhx/garden-lab – CI #386 last week CI workflow run failed for main branch | ffffhx/garden-lab – CI #376 last week CI workflow run failed for main branch | ffffhx/garden-lab – CI #375 last week CI workflow run failed for main branch | ffffhx/open-token-board – CI #41 last week CI workflow run failed for main branch；final URL https://github.com/notifications?query=is%3Aunread&t10c_devtools_rerun=devtools-mcp-1781982063042",
+      "evidence": "9223 /json/list target: https://github.com/notifications?query=is%3Aunread&t10c_devtools_rerun=devtools-mcp-1781982063042 id=A5A6B42988E1130E9D619B0849937E4C; snapshot length=28574; first repositories=ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/open-token-board",
+      "notes": "只读；未点击 Done/Mark as read/Subscribe/Save 等会写状态的控件。GitHub 页面未显示独立总数字段，按 unread 过滤页 snapshot 中的通知行计数。"
+    },
+    {
+      "task": "T11",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "徽标完整内容 HELLO-2026 · v1.0.0",
+      "evidence": "extension id=jkmndkochpgaleoechlemhdhbikdecnf; options page id=32; target snapshot contains HELLO-2026 · v1.0.0\"",
+      "notes": "通过 chrome-extension:// options UI 设置，再在靶场页验证。"
+    },
+    {
+      "task": "T12",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "原始文件 webpack://bench/src/cart/coupon.ts；函数 applySelectedCoupon；出错字段 cartState.selectedCoupon.couponCode（selectedCoupon 为 null）；guard: if (!cartState.selectedCoupon) return null;",
+      "evidence": "console list: ## Console messages\nShowing 1-5 of 5 (Page 1 of 1).\nmsgid=26 [log] 当前浏览器已安装埋点验证插件true (1 args)\nmsgid=27 [info] This page uses Chrome's Built-In AI features (LanguageDetector)! We're always improving our models; please submit your feedback here: https://issues.chromium.org/issues/new?component=1583316 (0 args)\nmsgid=28 [log] 当前浏览器已安装埋点验证插件true (1 args) [2 times]\nmsgid=30 [error] checkout coupon crash [object Object] (2 args)\nmsgid=31 [info] This page uses Chrome's Built-In AI features (LanguageDe ...; console detail: ID: 30\nMessage: error> checkout coupon crash [object Object]\n### Arguments\nArg #0: checkout coupon crash\nArg #1: {\"cartId\":\"CART-9A2\",\"originalSource\":\"src/cart/coupon.ts:12\",\"functionName\":\"applySelectedCoupon\",\"error\":{}}\n### Stack trace\nat renderCheckoutFailure (coupon.ts:1:1)\nat  (coupon.ts:1:1)\nNote: line and column numbers use 1-based indexing",
+      "notes": "使用 Console message/stack 证据；source map 信息在异常详情中映射到原始 coupon.ts。"
+    },
+    {
+      "task": "T13",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "遮挡元素 .mobile-support-bar[data-bug=\"overlaps-pay-button\"]；position:fixed;height:118px;z-index:20 覆盖 .checkout-actions bottom:40px;z-index:10；正常点击确认码 MOBILE-39。",
+      "evidence": "emulate viewport=390x844x2,mobile,touch; hit-test/computed={\"buttonRect\":{\"left\":20,\"top\":766,\"width\":350,\"height\":38,\"bottom\":804,\"right\":370},\"barRect\":{\"left\":0,\"top\":726,\"width\":390,\"height\":118,\"bottom\":844,\"right\":390},\"hitTag\":\"DIV\",\"hitClass\":\"\",\"hitText\":\"移动端帮助条错误覆盖了支付按钮。\",\"actions\":{\"position\":\"fixed\",\"bottom\":\"40px\",\"zIndex\":\"10\"},\"bar\":{\"selector\":\".mobile-support-bar[data-bug=\\\"overlaps-pay-button\\\"]\",\"position\":\"fixed\",\"height\":\"118px\",\"zIndex\":\"20\"}}; final contains MOBILE-39=true",
+      "notes": "先验证点击被遮挡，再临时关闭遮挡层 pointer-events 以确认正常按钮结果；计 eval_action。"
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "组件 TaskSummary；traceId HYD-908；SSR pendingTasks=8/planName=starter，Client pendingTasks=9/planName=team-pro；最终显示 9 个待办、team-pro 套餐。",
+      "evidence": "console: ## Console messages\nShowing 1-8 of 8 (Page 1 of 1).\nmsgid=29 [log] 当前浏览器已安装埋点验证插件true (1 args)\nmsgid=30 [error] checkout coupon crash [object Object] (2 args)\nmsgid=31 [info] This page uses Chrome's Built-In AI features (LanguageDetector)! We're always improving our models; please submit your feedback here: https://issues.chromium.org/issues/new?component=1583316 (0 args)\nmsgid=32 [log] 当前浏览器已安装埋点验证插件true (1 args)\nmsgid=33 [info] This page uses Chrome's Built-In AI features (LanguageDetector)! We're always improving our models; please submit your feedback here: https://issues.chromium.org/issues/new?component=1583316 (0 args)\nmsgid=34 [log] 当前浏览器已安装埋点验证插件true (1 args)\nmsgid=35 [info] This pa ...; window/body state: {\"store\":{\"traceId\":\"HYD-908\",\"component\":\"TaskSummary\",\"clientState\":{\"pendingTasks\":9,\"planName\":\"team-pro\"},\"ssrState\":{\"pendingTasks\":8,\"planName\":\"starter\"}},\"text\":\"Bench 靶场\\n任务概览\\n\\n待办数量：9\\n\\n套餐：team-pro\\n\\n客户端已接管，traceId=HYD-908\"}",
+      "notes": "读取 Console 和 window.__BENCH_STORE__/DOM 接管后状态。"
+    },
+    {
+      "task": "T15",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "共 5 条事件；最后事件 id=evt-005；关键告警 code=STREAM-721。",
+      "evidence": "snapshot: ## Latest page snapshot\nuid=31_0 RootWebArea \"SSE 实时流 · Bench 靶场\" url=\"http://localhost:4399/realtime?t15=devtools\"\n  uid=31_1 banner\n    uid=31_2 link \"Bench 靶场\" url=\"http://localhost:4399/\"\n      uid=31_3 StaticText \"Bench 靶场\"\n  uid=31_4 main\n    uid=31_5 heading \"实时事件流\" level=\"1\"\n    uid=31_6 StaticText \"点击开始后，页面会通过 EventSource 接收 5 条事件。\"\n    uid=31_7 button \"开始接收\" focusable focused\n    uid=32_0 StaticText \"接收完成：5 条事件，关键告警 STREAM-721\"\n    uid=32_1 StaticText \"evt-001 · connected · SSE 通道已建立\"\n    uid=32_2 StaticText \"evt-002 · metric · checkout_latency_ms\"\n    uid=32_3 StaticText \"evt-003 · metric · cart_items\"\n    uid=32_4 StaticText \"evt-004 · notice · 库存同步完成\"\n    uid=32_5 StaticText \"ev ...; EventSource network: ## Network requests\nShowing 1-1 of 1 (Page 1 of 1).\nreqid=398 GET http://localhost:4399/api/realtime-events [200]",
+      "notes": "等待完整 SSE DOM 汇总，并用 Network 看到 /api/realtime-events eventsource。"
+    },
+    {
+      "task": "T16",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "是 Service Worker 缓存导致。页面旧值 theme=blue, release=cached-2025.11, featureFlag=STALE-CACHE-17；实时接口 theme=green, release=live-2026.06, featureFlag=CACHE-BUST-42；修复：更新/注销 SW 或修正 fetch handler 缓存策略并重新激活。",
+      "evidence": "snapshot: ## Latest page snapshot\nuid=34_0 RootWebArea \"Service Worker 缓存 · Bench 靶场\" url=\"http://localhost:4399/cache?t16=devtools\"\n  uid=34_1 banner\n    uid=34_2 link \"Bench 靶场\" url=\"http://localhost:4399/\"\n      uid=34_3 StaticText \"Bench 靶场\"\n  uid=34_4 main\n    uid=34_5 heading \"配置中心\" level=\"1\"\n    uid=34_6 StaticText \"页面会读取 /api/settings，但 Service Worker 故意返回过期配置。\"\n    uid=34_7 StaticText \"主题\"\n    uid=34_8 StaticText \"blue\"\n    uid=34_9 StaticText \"版本\"\n    uid=34_10 StaticText \"cached-2025.11\"\n    ui ...; service workers: ## Pages\n1: chrome-error://chromewebdata/\n2: https://github.com/microsoft/playwright\n3: http://localhost:4399/\n4: chrome-error://chromewebdata/\n5: https://ffffhx.github.io/garden-lab/post/agent/\n6: http://localhost:4399/slow\n7: http://localhost:4399/flake\n8: http://localhost:4399/cache\n9: https://ffffhx.github.io/garden-lab/post/agent/\n10: http://localhost:4399/\n11: http://localhost:4399/input-lab\n12: http://localhost:4399/layout-mobile\n13: https://ffffhx.github.io/garden-lab/post/agent/?r09=bb- ...; live fetch: {\"controller\":\"http://localhost:4399/sw-cache.js\",\"live\":{\"theme\":\"green\",\"release\":\"live-2026.06\",\"featureFlag\":\"CACHE-BUST-42\"},\"text\":\"Bench 靶场\\n配置中心\\n\\n页面会读取 /api/settings，但 Service Worker 故意返回过期配置。\\n\\n主题\\nblue\\n版本\\ncached-2025.11\\nFeature Flag\\nSTALE-CACHE-17\\n\\nService Worker 已控制页面\"}",
+      "notes": "未注销 SW，只做只读诊断和 live bypass 请求。"
+    },
+    {
+      "task": "T17",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "授权账号 iframe-user@bench.dev，授权码 OAUTH-314。",
+      "evidence": "snapshot 内联 iframe button 并触发 postMessage: ## Latest page snapshot\nuid=36_0 RootWebArea \"跨域 iframe 授权 · Bench 靶场\" url=\"http://localhost:4399/iframe-auth?t17=devtools\"\n  uid=36_1 banner\n    uid=36_2 link \"Bench 靶场\" url=\"http://localhost:4399/\"\n      uid=36_3 StaticText \"Bench 靶场\"\n  uid=36_4 main\n    uid=36_5 heading \"第三方授权\" level=\"1\"\n    uid=36_6 StaticText \"下方 iframe 来自 127.0.0.1，与 localhost 页面不同源。\"\n    uid=36_7 Iframe \"第三方授权窗口\"\n      uid=36_8 RootWebArea \"第三方授权窗口\" url=\"http://127.0.0.1:4399/iframe-child.html\"\n        uid=36_9 main\n          uid=36_10 heading \"Bench OAuth\" level=\"1\"\n          uid=36_11 StaticText \"账号：iframe-user@bench.dev\"\n          uid=36_12 button \"确认授权\" focusable focused\n          uid=36_13 StaticText \"授权码会通过 post ...",
+      "notes": "a11y snapshot 可直接看到跨域 iframe 内容。"
+    },
+    {
+      "task": "T18",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": "DevTools MCP upload_file 能把真实文件放入 input.files（upload-token.txt，36 bytes），但本轮没有自动触发页面 change 解析；用 eval_action/DataTransfer 逃生后页面可显示 token=UPLOAD-448。",
+      "evidence": "upload_file 后页面检查：value=C:\\fakepath\\upload-token.txt, filesLength=1, file0={name:upload-token.txt,size:36,type:text/plain}, result=等待文件…；随后 eval_action 以 DataTransfer 设置同名 36-byte File 并 dispatch change，页面显示“文件 upload-token.txt，36 bytes，token=UPLOAD-448”。",
+      "notes": "按任务卡，eval 伪造 File 对象属于部分成功；真实 upload_file 未独立完成页面解析，因此记 ⚠️。"
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "键盘无法到达并激活“保存偏好”；#save-preferences 是 div role=button，但缺 tabindex=\"0\" 且无 Enter/Space 键盘处理；鼠标保存确认码 A11Y-204。",
+      "evidence": "keyboard active sequence: [{\"key\":\"Tab\",\"active\":{\"id\":\"notify-email\",\"tag\":\"INPUT\",\"text\":\"\"}},{\"key\":\"Tab\",\"active\":{\"id\":\"close-modal\",\"tag\":\"BUTTON\",\"text\":\"关闭\"}},{\"key\":\"Tab\",\"active\":{\"id\":\"notify-email\",\"tag\":\"INPUT\",\"text\":\"\"}},{\"key\":\"Shift+Tab\",\"active\":{\"id\":\"close-modal\",\"tag\":\"BUTTON\",\"text\":\"关闭\"}},{\"key\":\"Enter\",\"active\":{\"id\":\"open-modal\",\"tag\":\"BUTTON\",\"text\":\"打开偏好设置\"}}]; attrs: {\"tag\":\"DIV\",\"role\":\"button\",\"tabindex\":null,\"onkeydown\":false,\"className\":\"fake-button save-preferences\",\"display\":\"inline-block\"}; final snapshot: A11Y-204\"",
+      "notes": "先用键盘 Tab/Shift+Tab 检查，再鼠标点击验证确认码。"
+    },
+    {
+      "task": "T20",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "通过 7/10，失败 3/10，失败轮次 3、6、9，稳定性代码 FLAKE-307；不稳定，flake rate=30%。",
+      "evidence": "snapshot: ## Latest page snapshot\nuid=45_0 RootWebArea \"回归稳定性 · Bench 靶场\" url=\"http://localhost:4399/flake?t20=devtools\"\n  uid=45_1 banner\n    uid=45_2 link \"Bench 靶场\" url=\"http://localhost:4399/\"\n      uid=45_3 StaticText \"Bench 靶场\"\n  uid=45_4 main\n    uid=45_5 heading \"不稳定回归\" level=\"1\"\n    uid=45_6 StaticText \"运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\"\n    uid=45_7 button \"运行 10 次\" focusable focused\n    uid=46_0 StaticText \"通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307\"\n    uid=45_9 StaticText \"轮次\"\n    uid=45_10 StaticText \"结果\"\n    uid=45_11 StaticText \"代码\"\n    uid=46_1 StaticText \"1\"\n    uid=46_2 StaticText \"PASS\"\n    uid=46_3 StaticText \"FLAKE-307\"\n    uid=46_4 StaticText \"2\"\n    uid=46_5 StaticText \"PASS\"\n    uid=46_6 StaticText \"FLAKE-307\"\n    uid=46_7 StaticText \"3\"\n    uid=46_8 StaticText ...",
+      "notes": "使用页面“运行 10 次”一次性统计。"
+    },
+    {
+      "task": "R01",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "标题 Auto-waiting; Locator.click checks: Visible, Stable, Receives Events, Enabled; final URL https://playwright.dev/docs/actionability?r01=devtools",
+      "evidence": "Browser opened GitHub repo then official docs. Extracted row: locator.click() | Yes | Yes | Yes | Yes | -",
+      "notes": "没有使用终端/curl/本地源码。 判定修正：官方文档当前 H1 为 Auto-waiting，表格行已包含四项 actionability checks。"
+    },
+    {
+      "task": "R02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "观察时间 2026/6/21 03:01:18；页面 unread notification rows=23；前 5 条：ffffhx/garden-lab – CI #387 5 days ago CI workflow run failed for main branch | ffffhx/garden-lab – CI #386 last week CI workflow run failed for main branch | ffffhx/garden-lab – CI #376 last week CI workflow run failed for main branch | ffffhx/garden-lab – CI #375 last week CI workflow run failed for main branch | ffffhx/open-token-board – CI #41 last week CI workflow run failed for main branch；final URL https://github.com/notifications?query=is%3Aunread&r02_devtools_rerun=devtools-mcp-1781982070490",
+      "evidence": "9223 /json/list target: https://github.com/notifications?query=is%3Aunread&r02_devtools_rerun=devtools-mcp-1781982070490 id=5AEA5B3B92122B2B27819C3A43D204BD; snapshot length=29161; first repositories=ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/open-token-board",
+      "notes": "只读；未点击 Done/Mark as read/Subscribe/Save 等会写状态的控件。GitHub 页面未显示独立总数字段，按 unread 过滤页 snapshot 中的通知行计数。"
+    },
+    {
+      "task": "R03",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "主标题 Fetch API; 前三个接口 FetchLaterResult, Headers, Request; Baseline/compatibility 信息：页面显示相关信息; final URL https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API?r03=devtools",
+      "evidence": "MDN extracted: {\"h1\":\"Fetch API\",\"url\":\"https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API?r03=devtools\",\"names\":[\"FetchLaterResult\",\"Headers\",\"Request\"],\"baseline\":true,\"text\":\"Skip to main content\\nSkip to search\\nWeb APIs\\nFetch API\\nFetch API\\n\\nThe Fetch API provides an interface for fetching resources (including across the network). It is a more powerful and flexible replacement for XMLHttpRequest.\\n\\nIn this article\\nConcepts and usage\\nInterfaces\\nHTTP headers\\nSpecifications\\nBrowser compatibility\\nSee also\\nConcepts and usage\\n\\nThe Fetch API uses Request and Response objects (and other things involved with network requests), as well as related concepts such as CORS and the HTTP Origin header semantics.\\n\\nFor making a request and fetching a resource, use the fetch() method. It is a global method in both Window and Worker contexts. This makes it available in pretty much any context you might want to fetch resources in.\\n\\nThe fetch() method takes one mandatory argument, the path to the resource you want to fetch. It returns a Promise that resolves to the Response to that request — as soon as the server responds with headers — even if the server response is an HTTP error \"}",
+      "notes": "通过浏览器页面进入 MDN 文档。"
+    },
+    {
+      "task": "R04",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "观察时间 2026/6/21 03:01:29；version=1.61.0; license=Apache-2.0; weekly downloads=41,880,590; unpacked size=页面未显示; repository=github.com/microsoft/playwright; final URL https://www.npmjs.com/package/@playwright/test?r04=devtools-rerun",
+      "evidence": "npm DOM extraction={\"url\":\"https://www.npmjs.com/package/@playwright/test?r04=devtools-rerun\",\"title\":\"@playwright/test - npm\",\"version\":\"1.61.0\",\"license\":\"Apache-2.0\",\"weekly\":\"41,880,590\",\"unpacked\":null,\"repository\":\"github.com/microsoft/playwright\",\"homepage\":\"playwright.dev\",\"hits\":{\"repository\":\"Repository\\n\\ngithub.com/microsoft/playwright\\n\\nHomepage\\n\\nplaywright.dev\\n\\nWeekly Downloads\\n\\n41,880,590\\n\\nVersion\\n\\n1.61.0\\n\\nLicense\\n\\nApache-2.0\\n\\nLast publish\\n\\n12 hours ago\\n\\nCollaborators\\nAnalyze security wi\",\"weekly\":\"Weekly Downloads\\n\\n41,880,590\\n\\nVersion\\n\\n1.61.0\\n\\nLicense\\n\\nApache-2.0\\n\\nLast publish\\n\\n12 hours ago\\n\\nCollaborators\\nAnalyze security with SocketCheck bundle sizeView package healthExplore dependencies\\nRepor\",\"license\":\"License\\n\\nApache-2.0\\n\\nLast publish\\n\\n12 hours ago\\n\\nCollaborators\\nAnalyze security with SocketCheck bundle sizeView package healthExplore dependencies\\nReport malware\\nFooter\\nSupport\\nHelp\\nAdvisories\\nStatus\"}}",
+      "notes": "只通过浏览器页面读取；未用 npm CLI/curl。"
+    },
+    {
+      "task": "R05",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "扩展 ID fmkadmapgofadopljbjfkapdkoienihi；名称 React Developer Tools；发布者/提供方 Meta；评分 4.0（1,633 个评分）；用户量 5,000,000 用户；主按钮文案 添加至 Chrome；final URL https://chromewebstore.google.com/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi?r05=devtools",
+      "evidence": "snapshot/text: 跳到主要内容\nchrome 应用商店\n登录\n探索\n扩展程序\n主题\nReact Developer Tools\n精选\n4.0\n(\n\n1,633 个评分\n\n)\n分享\n扩展程序\n开发者工具\n5,000,000 用户\n添加至 Chrome\n概述\n\nAdds React debugging tools to the Chrome Developer Tools.\n\nCreated from revision 3cde211b0c on 10/20/2025.\n\nReact Developer Tools is a Chrome DevTools extension for the open-source React JavaScript library. It allows you to inspect the React component hierarchies in the Chrome Developer Tools.\n\nYou will get two new tabs in your Chrome DevTools: \"Components ⚛\" and \"Profiler ⚛\".\n\nThe Components tab shows you the root React components that were rendered on the page, as well as the subcomponents that they ended up rendering.\n\nBy selecting one of the components in the tree, you can inspect and edit its current props and state in the panel on the right. In the breadcrumbs you can inspect the selected component, the component that created it, the component that created that one, and so on.\n\nIf you inspect a React element on the page using the regular Elements tab, then switc ...; buttons=[\"探索\",\"扩展程序\",\"主题\",\"分享\",\"添加至 Chrome\"]; verbose snapshot rerun found 提供方 Meta, 4.0, 1,633 个评分, 5,000,000 用户, 添加至 Chrome.",
+      "notes": "只读，未点击安装/移除。"
+    },
+    {
+      "task": "R06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "徽标完整内容 REAL-SITE-2026 · v1.0.0；final URL https://ffffhx.github.io/garden-lab/post/agent/?r06=devtools",
+      "evidence": "extension id=jkmndkochpgaleoechlemhdhbikdecnf; initial badge evidence=BENCH EXT v1.0.0; final snapshot=REAL-SITE-2026 · v1.0.0\"",
+      "notes": "只改 Bench Badge 本地 storage；未修改真实网站。"
+    },
+    {
+      "task": "R07",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "请求 reqid=1 GET https://www.npmjs.com/package/@playwright/test?r07=devtools-rerun [200]; HTTP 200; content-type=text/html; response package name=@playwright/test; version=1.61.0; 页面版本=1.61.0，一致。",
+      "evidence": "Network response body meta description contains \"Latest version: 1.61.0\" and package name @playwright/test; response snippet=react-helmet=\"true\" name=\"theme-color\" content=\"#cb3837\"/><meta data-react-helmet=\"true\" name=\"description\" content=\"A high-level API to automate web browsers. Latest version: 1.61.0, last published: 5 days ago. Start using @playwright/test in your project by running `npm i @playwright/test`. There are 862 other projects in the npm registry using @playwright/test.\"/><meta data-",
+      "notes": "来自 DevTools MCP Network 响应体 document HTML；未用 npm CLI/curl。"
+    },
+    {
+      "task": "R08",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "DevTools MCP 1.2.0 当前暴露工具无 route/abort/block URL 一等能力；未用 JS/CSS 伪装图片隐藏。",
+      "evidence": "tools/list 包含 network read tools: emulate, get_network_request, list_network_requests, navigate_page；不含 route/abort/intercept/setBlockedURLs。",
+      "notes": "按任务规则，不能用 CSS/JS 层隐藏图片冒充网络层拦截。"
+    },
+    {
+      "task": "R09",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "观察时间 2026/6/21 02:52:36；最慢 3 个资源：https://8-218-149-148.anyip.dev/token-board/api/auth/me (fetch, 57ms) | https://ffffhx.github.io/garden-lab/_next/static/chunks/main-app-ca700f8821109cef.js (script, 26ms) | https://ffffhx.github.io/garden-lab/_next/static/chunks/app/layout-5ce7bee09b11075e.js (script, 26ms)；首屏判断：document/html、CSS、主 JS 或首屏图片会影响首屏，异步图片/统计脚本通常不阻塞文章标题首屏。final URL https://ffffhx.github.io/garden-lab/post/agent/?r09=devtools",
+      "evidence": "trace file=/Users/bytedance/Code/garden-lab/apps/browser-tool-bench/results/unified-9223-2026-06-21-6tools/devtools-mcp/R09-trace-20260620184923.json.gz; trace=The raw trace data was saved to /Users/bytedance/Code/garden-lab/apps/browser-tool-bench/results/unified-9223-2026-06-21-6tools/devtools-mcp/R09-trace-20260620184923.json.json.gz.\nThe performance trace has been stopped.\n## Summary of Performance trace findings:\nURL: https://ffffhx.github.io/garden-lab/post/agent/?r09=devtools\nTrace bounds: {min: 1266177367712µs, max: 1266182689488µs}\nCPU throttling: 1x\nNetwork throttling: none\n\n# Available insight sets\n\nThe following is a list of insight sets. A ...; resource timings=[{\"url\":\"https://8-218-149-148.anyip.dev/token-board/api/auth/me\",\"type\":\"fetch\",\"duration\":57,\"start\":259,\"responseEnd\":316},{\"url\":\"https://ffffhx.github.io/garden-lab/_next/static/chunks/main-app-ca700f8821109cef.js\",\"type\":\"script\",\"duration\":26,\"start\":11,\"responseEnd\":37},{\"url\":\"https://ffffhx.github.io/garden-lab/_next/static/chunks/app/layout-5ce7bee09b11075e.js\",\"type\":\"script\",\"duration\":26,\"start\":11,\"responseEnd\":37}]",
+      "notes": "使用 performance trace + ResourceTiming；未导出 HAR，但保留 trace 文件和 network timing。"
+    }
+  ],
+  "extra_probe_browserOps_estimate": 47,
+  "extension_restore_proof": "Final Chrome DevTools MCP snapshot on http://localhost:4399/?final_restore_check=devtools_mcp showed BENCH EXT v1.0.0."
+}

@@ -1,0 +1,27 @@
+T10b 登录态持久化（bb-browser 自己的机制）
+
+== bb-browser 的持久化模型 ==
+- bb-browser 0.14.2 无显式 state save/load 命令（与 agent-browser / playwright 的 state-save 不同）。
+- 它的持久化是「受管 Chrome 的固定 user-data-dir」隐式路线（类似 DevTools MCP 的持久 userDataDir）：
+  目录 = ~/.bb-browser/chrome-data （52M）
+  含 Cookies / Cookies-journal / Local Storage / Login Data / Login Data For Account / Network Persistent State 等
+  → 凭证确实落盘、跨 daemon 重启存活。
+- 运行模式二选一（daemon.json 决定）：
+  (a) attach 外部 CDP（当前：daemon.json cdpPort=9223，连用户的 9223 Chrome）→ 持久化归外部浏览器所有；
+  (b) 受管模式：daemon 自己启动系统 Chrome，固定 --remote-debugging-port=9222 + 上述 chrome-data 作 user-data-dir。
+
+== 本环境无法执行 GitHub 两阶段免登录 demo（如实记录）==
+- 受管模式硬编码端口 9222；本机 9222 已被用户另一个 Chrome 占用（lsof 确认 9222 LISTEN）。
+- `bb-browser daemon`(无参) 试图在 9222 自启受管 Chrome → "bind() failed: Address already in use" / "Cannot find a Chromium-based browser" → 受管 profile 在本机起不来。
+- 因此无法用 bb-browser 自己的受管 profile 跑「登录 GitHub → 停 daemon → 新会话免登录恢复」的完整两阶段。
+- 任务卡禁止在新设备 profile 上做写/登录折腾，也不做 GitHub 登录。
+
+== 可执行的部分验证（本地靶场，证明 profile 内会话持久化概念）==
+- T01 在 9223 profile 登录 bench 后，新开 tab 直达 /dashboard：
+  url=http://localhost:4399/dashboard, welcome="欢迎回来，Agent 测试员（工号 BENCH-7341）", authed=true
+  cookies: name=sid domain=localhost httpOnly session  → 会话 cookie 在 profile 内复用、免登录。
+- 这证明「profile 内登录态复用」可行，但不是 daemon 重启 / 隔天 / GitHub 的规定 demo。
+
+== 判定 ==
+⚠️ 部分：持久化机制存在（持久 user-data-dir，凭证落盘可跨重启），本地会话复用已验证；
+但 bb-browser 自己的受管 profile 在本机端口冲突下无法启动，规定的 GitHub 两阶段免登录恢复 demo 未能执行。

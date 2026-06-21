@@ -1,0 +1,286 @@
+{
+  "tool": "@chrome / Chrome plugin",
+  "model": "gpt-5",
+  "reasoning_effort": "unavailable",
+  "strict_cdp": "http://127.0.0.1:9223",
+  "tool_version": "openai-bundled chrome skill 26.616.32156; Chrome/149.0.7827.116",
+  "cdp_proof": "9223 /json/version reachable. Chrome plugin opened http://localhost:4399/?chrome_proof=chrome-plugin-9223-1781975526972 and saw title Bench 靶场 · 首页, but 9223 /json/list contained 0 targets with that unique proof id. Binding to 9223 was not proven.",
+  "elapsed_ms": 180000,
+  "tool_calls": 26,
+  "browserOps": 8,
+  "escapes": {
+    "total": 0,
+    "eval_read": 0,
+    "eval_action": 0,
+    "cdp_escape": 0,
+    "init_script": 0,
+    "notes": "curl /json/version and /json/list were used only for mandatory proof, not to operate browser tasks."
+  },
+  "tokens": "unavailable",
+  "cost_usd": "unavailable",
+  "tally": {
+    "pass": 0,
+    "warn": 0,
+    "fail": 0,
+    "nr": 30,
+    "na": 1
+  },
+  "results": [
+    {
+      "task": "T01",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "Strict 9223 binding not proven; did not use default profile."
+    },
+    {
+      "task": "T02",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No Network task was run."
+    },
+    {
+      "task": "T03",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No performance evidence collected."
+    },
+    {
+      "task": "T04",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No request mock attempted."
+    },
+    {
+      "task": "T05",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No livefeed task was run."
+    },
+    {
+      "task": "T06",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No catalog extraction was run."
+    },
+    {
+      "task": "T07",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No page-session fetch was run."
+    },
+    {
+      "task": "T08",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No Shadow DOM operation attempted."
+    },
+    {
+      "task": "T09",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "Did not modify extension; manifest file currently says version 1.0.0."
+    },
+    {
+      "task": "T10a",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "Strict 9223 run; default profile route not accepted."
+    },
+    {
+      "task": "T10b",
+      "verdict": "N/A",
+      "escape": false,
+      "answer": "不适用",
+      "evidence": "@chrome does not expose a self-managed dedicated profile/state persistence workflow for this card.",
+      "notes": "Brief allows N/A or N-R for T10b when the tool cannot express the 9223-constrained dedicated-profile task."
+    },
+    {
+      "task": "T10c",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "T10c requires proving 9223 first; @chrome proof URL had 0 matches in 9223 /json/list.",
+      "notes": "No GitHub notification data read."
+    },
+    {
+      "task": "T11",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "Did not modify Bench Badge options."
+    },
+    {
+      "task": "T12",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No console/source-map evidence collected."
+    },
+    {
+      "task": "T13",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No mobile viewport task run."
+    },
+    {
+      "task": "T14",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No hydration evidence collected."
+    },
+    {
+      "task": "T15",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No SSE task run."
+    },
+    {
+      "task": "T16",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No Service Worker diagnosis run."
+    },
+    {
+      "task": "T17",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No iframe operation attempted."
+    },
+    {
+      "task": "T18",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No file upload attempted."
+    },
+    {
+      "task": "T19",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No keyboard accessibility task run."
+    },
+    {
+      "task": "T20",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No flake run attempted."
+    },
+    {
+      "task": "R01",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No GitHub page navigation under 9223."
+    },
+    {
+      "task": "R02",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No notification page read under 9223."
+    },
+    {
+      "task": "R03",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No MDN navigation under 9223."
+    },
+    {
+      "task": "R04",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No npm page read under 9223."
+    },
+    {
+      "task": "R05",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No Chrome Web Store page read under 9223."
+    },
+    {
+      "task": "R06",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No real-site extension storage change."
+    },
+    {
+      "task": "R07",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No real Network response body read."
+    },
+    {
+      "task": "R08",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No request interception attempted."
+    },
+    {
+      "task": "R09",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "未执行",
+      "evidence": "@chrome proof URL did not appear in 9223 /json/list; 0 matches.",
+      "notes": "No HAR/performance snapshot collected."
+    }
+  ],
+  "undefined_tasks": [
+    "R10"
+  ],
+  "extension_restore": {
+    "mutated_by_this_run": false,
+    "manifest_version_observed": "1.0.0",
+    "notes": "No @chrome operation was performed against 9223 extension state because strict binding proof failed."
+  }
+}

@@ -1,3 +1,9 @@
 # T10b 登录态文件等同账号凭证，禁止入库
 *auth*.json
 *.state.json
+
+# 巨型 trace dump 不入库（单文件可达 90M+，仓库会爆）；保留 REPORT/summary/截图等证据
+*.trace
+*trace*.json
+*trace*.json.gz
+*trace*.gz

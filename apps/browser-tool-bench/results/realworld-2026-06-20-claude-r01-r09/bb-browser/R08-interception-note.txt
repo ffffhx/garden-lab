@@ -1,0 +1,13 @@
+R08 真实网站请求拦截 — bb-browser 0.14.2
+
+bb-browser CLI 无 route/abort/intercept/block/mock/fulfill 任何拦截原语
+（--help 全列表无相关命令；network 子命令仅只读查看请求）。
+→ 工具原生能力：N-R（不暴露该能力，无法表达拦截操作）。
+
+为验证浏览器底层可拦截，使用 CDP 逃生（Fetch.enable + Fetch.failRequest BlockedByClient）演示：
+被拦截的 3 个图片(SVG)资源：
+  https://developer.mozilla.org/static/client/chevron-down.7c923b7054da305b.svg
+  https://developer.mozilla.org/static/client/chevron-right.a81fc439dd5e4839.svg
+  https://developer.mozilla.org/static/client/graduation-cap.c7aa0f3430c53718.svg
+拦截方式：CDP Fetch domain，resourceType=Image，errorReason=BlockedByClient（网络层 abort，非 CSS 隐藏）
+主文档仍加载成功，最终标题：Fetch API - Web APIs | MDN

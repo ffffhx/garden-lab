@@ -1,0 +1,4 @@
+### Result
+3. [GET] http://localhost:4399/api/realtime-events => [404] Not Found
+
+Note: 2 static requests not shown, run with --static option to see them.

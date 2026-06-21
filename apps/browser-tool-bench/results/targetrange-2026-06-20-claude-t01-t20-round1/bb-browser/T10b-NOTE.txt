@@ -1,0 +1,9 @@
+T10b persistence (bb-browser own mechanism) - N-R / cannot demonstrate.
+Findings:
+- bb-browser 0.14.2 is a CDP-only client. NO explicit state save/load command (no `state save`, no `--session-name`, no `--state` file). Confirmed via --help and source grep of dist/cli.js + daemon.js.
+- Its ONLY persistence = implicit managed userDataDir at ~/.bb-browser/browser/user-data (auto-launched Chrome), same model as DevTools MCP (no portable state file).
+- Attempted to exercise it: stopped daemon, ran `bb-browser open` with no --port to trigger auto-launch of managed Chrome -> FAILED: "bb-browser: Cannot find a Chromium-based browser" (it could not auto-launch/locate a Chromium binary; needs an external Chrome on a CDP port).
+- Managed profile on disk (Default/Cookies) has GitHub cookies _octo/logged_in/_device_id but NO user_session -> not authenticated; cannot demo 免登录 to /notifications.
+- A fresh interactive GitHub login (possible 2FA / device verification) cannot be performed by a non-interactive agent.
+- Restored: user's CDP 9223 daemon reattached and verified working after the test.
+Verdict: N-R (no own portable persistence mechanism testable here; cannot login interactively).

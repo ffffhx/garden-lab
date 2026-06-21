@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "blocking.css": {"ttfb_ms": 1205, "responseEnd_ms": 1225, "role": "render-blocking + blocks following sync heavy.js execution (CSSOM dependency)"},
+    "heavy.js": {"download_ms": 21, "longtask_start_ms": 1225, "longtask_dur_ms": 800, "func": "crunchAnalytics", "role": "main-thread long task, serialized AFTER css returns"},
+    "hero.svg": {"ttfb_ms": 1504, "responseEnd_ms": 1523, "role": "slowest single resource BUT parallel <img>, non-blocking, finishes before paint -> distractor"}
+  },
+  "longtask_observed": {"start_ms": 1225, "dur_ms": 800},
+  "dom_html_order": "<link blocking.css> then <script src=heavy.js> sync -> CSS blocks script exec",
+  "conclusion": "LCP main cause = blocking.css (1.2s TTFB) which both blocks render and blocks heavy.js exec; heavy.js 800ms longtask second; hero.svg is distractor."
+}

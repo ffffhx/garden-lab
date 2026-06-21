@@ -1,0 +1,859 @@
+{
+  "meta": {
+    "startedAt": "2026-06-20T11:45:27.201Z",
+    "browserList": [
+      {
+        "capabilities": {
+          "browser": [],
+          "tab": [
+            {
+              "description": "List assets already observed in the current page state and bundle selected assets into a temporary local artifact.",
+              "id": "pageAssets"
+            },
+            {
+              "id": "cdp",
+              "description": "Send raw Chrome DevTools Protocol commands and read debugger events through a supported tab for developer use cases."
+            }
+          ]
+        },
+        "id": "-fb6f-4124-a417-862122a4c3ee",
+        "name": "Chrome",
+        "type": "extension",
+        "metadata": {
+          "extensionId": "hehggadaopoacecdllhhajmbjkdcmajg",
+          "extensionInstanceId": "2769f6ac-8934-46e1-9ade-2f2abb5d1660",
+          "profileName": "您的 Chrome",
+          "profileIsLastUsed": "true",
+          "profileOrdering": "0"
+        }
+      },
+      {
+        "capabilities": {
+          "browser": [
+            {
+              "id": "visibility",
+              "description": "Use to show or hide the browser to the user, and to determine the browser's current visibility. Keep browser work in the background unless the user asks to see it or live viewing is useful. When the browser should be visible, call set(true)."
+            },
+            {
+              "id": "viewport",
+              "description": "Controls an explicit browser viewport override for responsive or device-size testing. Use it when a task calls for specific dimensions or breakpoint validation; otherwise leave it unset so the browser uses its normal 1280x720 viewport. Reset temporary overrides before finishing unless the user asked to keep them."
+            }
+          ],
+          "tab": [
+            {
+              "id": "pageAssets",
+              "description": "List assets already observed in the current page state and bundle selected assets into a temporary local artifact."
+            },
+            {
+              "id": "cdp",
+              "description": "Send raw Chrome DevTools Protocol commands and read debugger events through a supported tab for developer use cases."
+            }
+          ]
+        },
+        "id": "-5278-4975-90b5-3fe862c17a49",
+        "name": "Codex In-app Browser",
+        "type": "iab",
+        "metadata": {
+          "codexAppBuildFlavor": "prod",
+          "codexAppSessionId": "55b6a244-fdc0-480b-b3a7-093c6879ae3f",
+          "codexSessionId": "019edfd3-8072-7173-a6e5-e213f6d38dc2",
+          "codexIabTabMode": "singleTab"
+        }
+      }
+    ],
+    "profile": {
+      "extensionId": "hehggadaopoacecdllhhajmbjkdcmajg",
+      "extensionInstanceId": "2769f6ac-8934-46e1-9ade-2f2abb5d1660",
+      "profileName": "您的 Chrome",
+      "profileIsLastUsed": "true",
+      "profileOrdering": "0"
+    },
+    "probe": {
+      "networkEnable": {
+        "ok": true,
+        "result": {}
+      },
+      "runtimeEval": {
+        "ok": true,
+        "result": {
+          "result": {
+            "type": "string",
+            "value": "http://localhost:4399/"
+          }
+        }
+      },
+      "performanceEnable": {
+        "ok": true,
+        "result": {}
+      },
+      "fetchEnable": {
+        "ok": false,
+        "error": "This method is not supported through raw CDP. Use explicit non-Document resourceType patterns; Browser Use reserves Document responses for download confirmations."
+      },
+      "badge": null
+    },
+    "fetchXHRProbe": {
+      "enable": {},
+      "events": [
+        {
+          "seq": 20,
+          "url": "http://localhost:4399/users",
+          "requestId": "interception-job-294.0",
+          "resourceType": "Document"
+        }
+      ],
+      "error": "{\"code\":-32602,\"message\":\"Invalid InterceptionId.\"}"
+    },
+    "fetchXHRProbe2": {
+      "enable": {},
+      "events": [
+        {
+          "seq": 21,
+          "url": "http://localhost:4399/users",
+          "requestId": "interception-job-311.0",
+          "resourceType": "Document"
+        }
+      ],
+      "text": "Bench 靶场\n控制台\n团队成员\n\n加载中…"
+    },
+    "networkInterceptionProbe": {
+      "setRequestInterception": {
+        "error": "This method is not supported through raw CDP."
+      },
+      "continueInterceptedRequest": "not tested"
+    }
+  },
+  "local": {
+    "T01": {
+      "status": "✅",
+      "summary": "登录后欢迎语工号 BENCH-7341",
+      "evidence": {
+        "text": "Bench 靶场\n成员\n商品目录\n动态\n欢迎回来，Agent 测试员（工号 BENCH-7341）\n\n这里是你的工作台。\n\n快速下单\n\n为常用物料 SKU-8821 创建补货订单。\n\n提交订单\n每日福利",
+        "url": "http://localhost:4399/dashboard"
+      }
+    },
+    "T02": {
+      "status": "✅",
+      "summary": "Network CDP 读到 POST /api/orders 500 响应体：INSUFFICIENT_INVENTORY / SKU-8821 库存不足",
+      "evidence": {
+        "requestUrl": "http://localhost:4399/api/orders",
+        "status": 500,
+        "body": {
+          "base64Encoded": false,
+          "body": "{\"error\":\"INSUFFICIENT_INVENTORY\",\"message\":\"SKU-8821 库存不足，剩余 0 件\",\"traceId\":\"tr-7941777757c4\"}"
+        }
+      }
+    },
+    "T03": {
+      "status": "✅",
+      "summary": "blocking.css responseEnd=1226ms 后才到 DOMContentLoaded=2042ms，中间约 816ms 是 heavy.js 同步 crunchAnalytics 长任务；hero.svg 1513ms 并行加载，是干扰项",
+      "evidence": {
+        "css": {
+          "name": "http://localhost:4399/assets/blocking.css",
+          "initiatorType": "link",
+          "startTime": 13,
+          "duration": 1213,
+          "responseStart": 1225,
+          "responseEnd": 1226
+        },
+        "heavy": {
+          "name": "http://localhost:4399/assets/heavy.js",
+          "initiatorType": "script",
+          "startTime": 13,
+          "duration": 11,
+          "responseStart": 24,
+          "responseEnd": 24
+        },
+        "hero": {
+          "name": "http://localhost:4399/assets/hero.svg",
+          "initiatorType": "img",
+          "startTime": 13,
+          "duration": 1513,
+          "responseStart": 1526,
+          "responseEnd": 1526
+        },
+        "nav": {
+          "domContentLoaded": 2042,
+          "load": 2082,
+          "duration": 2082
+        },
+        "executionGap": 816,
+        "heavySourceSnippet": "// 故意的主线程长任务：同步占用约 800ms（T03 性能诊断的坑之一）。\nfunction crunchAnalytics() {\n  const t0 = performance.now();\n  let acc = 0;\n  while (performance.now() - t0 < 800) {\n    acc += Math.sqrt(acc + 1);\n  }\n  return acc;\n}\ncrunchAnalyt",
+        "hasCrunch": true
+      }
+    },
+    "T04": {
+      "status": "❌",
+      "summary": "raw CDP 不开放可靠 route/mock：Fetch 会卡 Document，Network.setRequestInterception 与 Page.addScriptToEvaluateOnNewDocument 均不支持；未用 DOM 伪造空状态",
+      "evidence": {
+        "fetchProbe": {
+          "enable": {},
+          "events": [
+            {
+              "seq": 21,
+              "url": "http://localhost:4399/users",
+              "requestId": "interception-job-311.0",
+              "resourceType": "Document"
+            }
+          ],
+          "text": "Bench 靶场\n控制台\n团队成员\n\n加载中…"
+        },
+        "networkInterceptionProbe": {
+          "setRequestInterception": {
+            "error": "This method is not supported through raw CDP."
+          },
+          "continueInterceptedRequest": "not tested"
+        }
+      }
+    },
+    "T05": {
+      "status": "✅",
+      "summary": "最终 12 条动态，最后口令 LIVE-512",
+      "evidence": {
+        "count": 12,
+        "last": "系统公告：今日口令 LIVE-512",
+        "status": "已加载 12 条（没有更多了）",
+        "text": "Bench 靶场\n控制台\n团队动态\n小林 发布了新文档《季度复盘》\n构建流水线 #4821 通过\n阿芳 评论了你的合并请求\n监控告警已恢复：api-gateway 延迟\n新成员 莫莫 加入了团队\n周报机器人推送了上周摘要\n设计稿《新版首页》更新到 v7\n数据库备份任务完成\n老张 关闭了工单 #233\n灰度发布已扩量到 50%\n客服值班表已更新\n系统公告：今日口令 LIVE-512\n\n已加载 12 条（没有更多了）"
+      }
+    },
+    "T06": {
+      "status": "✅",
+      "summary": "从页面 DOM 提取 12 件商品，最贵雷霆工作站 15999 元",
+      "evidence": {
+        "products": [
+          {
+            "name": "雷霆工作站",
+            "price": 15999,
+            "stock": 2
+          },
+          {
+            "name": "全画幅扫描仪",
+            "price": 3699,
+            "stock": 3
+          },
+          {
+            "name": "4K 专业显示器",
+            "price": 2499,
+            "stock": 7
+          },
+          {
+            "name": "人体工学椅",
+            "price": 1899,
+            "stock": 0
+          },
+          {
+            "name": "会议级摄像头",
+            "price": 1599,
+            "stock": 11
+          },
+          {
+            "name": "桌面监听音箱",
+            "price": 1299,
+            "stock": 5
+          },
+          {
+            "name": "降噪耳机 Pro",
+            "price": 899,
+            "stock": 41
+          },
+          {
+            "name": "便携 SSD 1TB",
+            "price": 749,
+            "stock": 16
+          },
+          {
+            "name": "USB-C 扩展坞",
+            "price": 549,
+            "stock": 64
+          },
+          {
+            "name": "电竞鼠标",
+            "price": 459,
+            "stock": 0
+          },
+          {
+            "name": "静音机械键盘",
+            "price": 399,
+            "stock": 23
+          },
+          {
+            "name": "智能护眼台灯",
+            "price": 329,
+            "stock": 88
+          }
+        ]
+      }
+    },
+    "T07": {
+      "status": "✅",
+      "summary": "CDP Runtime.evaluate 在页面登录态内 fetch /api/me，plan=team-pro-2026",
+      "evidence": {
+        "json": {
+          "user": "Agent 测试员",
+          "badge": "BENCH-7341",
+          "plan": "team-pro-2026",
+          "loginAt": "2026-06-20T11:47:42.309Z"
+        }
+      }
+    },
+    "T08": {
+      "status": "✅*",
+      "summary": "CDP Runtime 穿透 open Shadow DOM 点击，兑换码 SHADOW-99",
+      "evidence": {
+        "code": "兑换码：SHADOW-99"
+      }
+    },
+    "T09": {
+      "status": "❌",
+      "summary": "失败：系统默认 profile 没有 Bench Badge 徽标，且 chrome://extensions 被 Browser Use URL policy 拦截，无法 reload 本地扩展",
+      "evidence": {
+        "badge": null,
+        "chromeExtensions": null,
+        "chromeExtensionsError": "Browser Use rejected this action due to browser security policy. Reason: Browser Use cannot visit the requested page because its URL is blocked by the Browser Use URL policy. The agent must not attempt to achieve the same outcome via workaround, indirect execution, raw CDP or browser commands, alternate browser surfaces, or policy circumvention. Proceed only with a materially safer alternative that does not require this blocked browser action; if none exists, stop and request user input."
+      }
+    },
+    "T11": {
+      "status": "❌",
+      "summary": "失败：系统默认 profile 没有 Bench Badge，且 chrome:// / chrome-extension:// 扩展设置路径不在 @chrome 可访问范围内",
+      "evidence": {
+        "badge": null,
+        "chromeExtensions": null,
+        "chromeExtensionsError": "Browser Use rejected this action due to browser security policy. Reason: Browser Use cannot visit the requested page because its URL is blocked by the Browser Use URL policy. The agent must not attempt to achieve the same outcome via workaround, indirect execution, raw CDP or browser commands, alternate browser surfaces, or policy circumvention. Proceed only with a materially safer alternative that does not require this blocked browser action; if none exists, stop and request user input."
+      }
+    },
+    "T12": {
+      "status": "✅",
+      "summary": "Console 触发异常，并用 source map 定位到 coupon.ts / applySelectedCoupon / selectedCoupon.couponCode，guard 应为空值判断",
+      "evidence": {
+        "events": [
+          {
+            "method": "Runtime.consoleAPICalled",
+            "params": {
+              "args": [
+                {
+                  "type": "string",
+                  "value": "checkout coupon crash"
+                },
+                {
+                  "className": "Object",
+                  "description": "Object",
+                  "objectId": "-5429184296875114721.2.1",
+                  "preview": {
+                    "description": "Object",
+                    "overflow": false,
+                    "properties": [
+                      {
+                        "name": "cartId",
+                        "type": "string",
+                        "value": "CART-9A2"
+                      },
+                      {
+                        "name": "originalSource",
+                        "type": "string",
+                        "value": "src/cart/coupon.ts:12"
+                      },
+                      {
+                        "name": "functionName",
+                        "type": "string",
+                        "value": "applySelectedCoupon"
+                      },
+                      {
+                        "name": "error",
+                        "subtype": "error",
+                        "type": "object",
+                        "value": "TypeError: Cannot read properties of null (reading 'couponCode')\n    at applySelectedCoupon (http:/…"
+                      }
+                    ],
+                    "type": "object"
+                  },
+                  "type": "object"
+                }
+              ],
+              "executionContextId": 2,
+              "stackTrace": {
+                "callFrames": [
+                  {
+                    "columnNumber": 12,
+                    "functionName": "renderCheckoutFailure",
+                    "lineNumber": 11,
+                    "scriptId": "8",
+                    "url": "http://localhost:4399/assets/debug-bundle.js"
+                  },
+                  {
+                    "columnNumber": 6,
+                    "functionName": "",
+                    "lineNumber": 23,
+                    "scriptId": "8",
+                    "url": "http://localhost:4399/assets/debug-bundle.js"
+                  }
+                ]
+              },
+              "timestamp": 1781956331756.94,
+              "type": "error"
+            }
+          }
+        ],
+        "source": "webpack://bench/src/cart/coupon.ts",
+        "contentSnippet": "export type CartState = { cartId: string; selectedCoupon: null | { couponCode: string } };\n\nexport function applySelectedCoupon(cartState: CartState) {\n  // BUG: selectedCoupon can be null when the user has not picked a coupon.\n  // Expected guard: if (!cartState.selectedCoupon) return null;\n  return cartState.selectedCoupon.couponCode.toUpperCase();\n}\n\nimport { applySelectedCoupon } from './coupon';\n\nexport function submitCoupon(cartState) {\n  return applySelectedCoupon(cartState);\n}\n"
+      }
+    },
+    "T13": {
+      "status": "✅*",
+      "summary": "移动端 390x844 下 .mobile-support-bar fixed bottom/z-index 20 覆盖支付按钮；临时隐藏后验证确认码 MOBILE-39",
+      "evidence": {
+        "clickError": null,
+        "diag": {
+          "payRect": {
+            "left": 20,
+            "top": 766,
+            "width": 350,
+            "height": 38
+          },
+          "barRect": {
+            "left": 0,
+            "top": 726,
+            "width": 390,
+            "height": 118
+          },
+          "elementAtPayCenter": {
+            "tag": "DIV",
+            "cls": "",
+            "text": "移动端帮助条错误覆盖了支付按钮。"
+          },
+          "payStyle": {
+            "position": "fixed",
+            "bottom": "40px",
+            "zIndex": "10"
+          },
+          "barStyle": {
+            "display": "block",
+            "position": "fixed",
+            "bottom": "0px",
+            "height": "118px",
+            "zIndex": "20"
+          }
+        },
+        "code": "支付确认码：MOBILE-39"
+      }
+    },
+    "T14": {
+      "status": "✅",
+      "summary": "TaskSummary hydration mismatch：SSR pendingTasks=8/planName=starter，client=9/team-pro，traceId HYD-908",
+      "evidence": {
+        "store": {
+          "traceId": "HYD-908",
+          "component": "TaskSummary",
+          "clientState": {
+            "pendingTasks": 9,
+            "planName": "team-pro"
+          },
+          "ssrState": {
+            "pendingTasks": 8,
+            "planName": "starter"
+          }
+        },
+        "dom": {
+          "pending": "9",
+          "plan": "team-pro",
+          "status": "客户端已接管，traceId=HYD-908",
+          "ssrPending": "8",
+          "ssrPlan": "starter"
+        }
+      }
+    },
+    "T15": {
+      "status": "✅",
+      "summary": "SSE 收到 5 条，最后 evt-005，关键告警 STREAM-721",
+      "evidence": {
+        "items": [
+          "evt-001 · connected · SSE 通道已建立",
+          "evt-002 · metric · checkout_latency_ms",
+          "evt-003 · metric · cart_items",
+          "evt-004 · notice · 库存同步完成",
+          "evt-005 · alert · STREAM-721"
+        ],
+        "status": "接收完成：5 条事件，关键告警 STREAM-721"
+      }
+    },
+    "T16": {
+      "status": "✅",
+      "summary": "确认 Service Worker 返回旧值 blue/cached-2025.11/STALE-CACHE-17；live=green/live-2026.06/CACHE-BUST-42；修复应更新或注销 SW",
+      "evidence": {
+        "cached": {
+          "theme": "blue",
+          "release": "cached-2025.11",
+          "featureFlag": "STALE-CACHE-17"
+        },
+        "live": {
+          "theme": "green",
+          "release": "live-2026.06",
+          "featureFlag": "CACHE-BUST-42"
+        },
+        "hasRegistration": true,
+        "controlled": true,
+        "dom": {
+          "theme": "blue",
+          "release": "cached-2025.11",
+          "flag": "STALE-CACHE-17",
+          "status": "Service Worker 已控制页面"
+        }
+      }
+    },
+    "T17": {
+      "status": "✅",
+      "summary": "跨域 iframe 点击确认授权，父页面显示 iframe-user@bench.dev / OAUTH-314",
+      "evidence": {
+        "result": "授权完成：iframe-user@bench.dev / OAUTH-314"
+      }
+    },
+    "T18": {
+      "status": "✅",
+      "summary": "file chooser 真实上传 upload-token.txt，页面解析 36 bytes / UPLOAD-448",
+      "evidence": {
+        "result": "文件 upload-token.txt，36 bytes，token=UPLOAD-448"
+      }
+    },
+    "T19": {
+      "status": "✅",
+      "summary": "Tab 焦点只在 notify-email/close-modal 循环，#save-preferences 缺 tabindex 和键盘 handler；鼠标保存码 A11Y-204",
+      "evidence": {
+        "focusSeq": [
+          "",
+          "notify-email",
+          "close-modal",
+          "notify-email",
+          "close-modal"
+        ],
+        "saveButton": {
+          "tag": "DIV",
+          "role": "button",
+          "tabindex": null,
+          "hasKeydown": false,
+          "className": "fake-button save-preferences"
+        },
+        "result": "保存成功：A11Y-204"
+      }
+    },
+    "T20": {
+      "status": "✅",
+      "summary": "10 次检查：7/10 通过，失败轮次 3/6/9，FLAKE-307，flake rate 30%",
+      "evidence": {
+        "rows": [
+          [
+            "1",
+            "PASS",
+            "FLAKE-307"
+          ],
+          [
+            "2",
+            "PASS",
+            "FLAKE-307"
+          ],
+          [
+            "3",
+            "FAIL",
+            "FLAKE-307"
+          ],
+          [
+            "4",
+            "PASS",
+            "FLAKE-307"
+          ],
+          [
+            "5",
+            "PASS",
+            "FLAKE-307"
+          ],
+          [
+            "6",
+            "FAIL",
+            "FLAKE-307"
+          ],
+          [
+            "7",
+            "PASS",
+            "FLAKE-307"
+          ],
+          [
+            "8",
+            "PASS",
+            "FLAKE-307"
+          ],
+          [
+            "9",
+            "FAIL",
+            "FLAKE-307"
+          ],
+          [
+            "10",
+            "PASS",
+            "FLAKE-307"
+          ]
+        ],
+        "text": "Bench 靶场\n不稳定回归\n\n运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\n\n运行 10 次\n\n通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307\n\n轮次\t结果\t代码\n1\tPASS\tFLAKE-307\n2\tPASS\tFLAKE-307\n3\tFAIL\tFLAKE-307\n4\tPASS\tFLAKE-307\n5\tPASS\tFLAKE-307\n6\tFAIL\tFLAKE-307\n7\tPASS\tFLAKE-307\n8\tPASS\tFLAKE-307\n9\tFAIL\tFLAKE-307\n10\tPASS\tFLAKE-307"
+      }
+    }
+  },
+  "real": {
+    "R01": {
+      "status": "✅",
+      "summary": "GitHub 仓库文件 actionability.md 可读，Locator.click 需要 Visible / Stable / Receives Events / Enabled",
+      "evidence": {
+        "observedAt": "2026-06-20T11:54:21.869Z",
+        "finalUrl": "https://github.com/microsoft/playwright/blob/main/docs/src/actionability.md",
+        "title": "playwright/docs/src/actionability.md at main · microsoft/playwright",
+        "checks": [
+          "Visible",
+          "Stable",
+          "Receives Events",
+          "Enabled"
+        ]
+      }
+    },
+    "R02": {
+      "status": "✅",
+      "summary": "GitHub notifications 只读成功；未读总数 70；前 5 条仓库 ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/open-token-board",
+      "evidence": {
+        "observedAt": "2026-06-20T11:55:29.810Z",
+        "repos": [
+          "ffffhx/garden-lab",
+          "ffffhx/garden-lab",
+          "ffffhx/garden-lab",
+          "ffffhx/garden-lab",
+          "ffffhx/open-token-board"
+        ],
+        "textHead": "Skip to content\nNotifications\nType / to search\nNotifications\nFolders\nInbox\n70\nSaved\nDone\nFilters\n🎯 Assigned\n💬 Participating\n2\n✋ Mentioned\n🙌 Team mentioned\n👀 Review requested\n Add new filter\nRepositories\nffffhx/garden-lab\n58\nffffhx/codex-snapshots\n7\nffffhx/profilepilot\n4\nffffhx/open-token-board\n1\nvercel-labs/agent-browser\nManage notifications\nAll\nUnread\nSearch notifications\nis:unread \nClear\nSort by: Newest to oldest\nGroup by: Date\nClear out the clutter.\n\nGet the most out of your new inbox by quickly and easily marking all of your previously read notifications as done.\n\nDismiss\nGet started\nNotifications by date\nSingle sign-on\n Select all\n\nffffhx/garden-lab – CI #387\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #386\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #376\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #375\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/open-token-board – CI #41\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/profilepilot – Build Release Packages #7\n\nBuild Release Packages workflow run failed for main branch\n\nci activity\n\nffffhx/profilepilot – Build Release Packages #3\n\nBuild Release Packages workflow run failed for v0.1.0 branch\n\nci activity\n\nffffhx/profilepilot – Build Release Packages #2\n\nBuild Release Packages workflow run failed for v0.1.0 branch\n\nci activity\n\nffffhx/profilepilot – Build Release Packages #1\n\nBuild Release Packages workflow run failed for v0.1.0 branch\n\nci activity\n\nffffhx/codex-snapshots – CI #18\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #340\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #339\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/garden-lab – CI #338\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/codex-snapshots – CI #17\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/codex-snapshots – CI #16\n\nCI workflow run failed for main branch\n\nci activity\n\nffffhx/codex-snapshots #2\n\nRefactor snapshot runtime and secure local publishing\n\nstate change\n\nffffhx/codex-snapshots #1\n\nRefactor site t",
+        "title": "Notifications",
+        "total": "70",
+        "url": "https://github.com/notifications?query=is%3Aunread"
+      }
+    },
+    "R03": {
+      "status": "✅",
+      "summary": "MDN Fetch API：主标题 Fetch API，接口/条目 fetch(), Headers, Request, Response，兼容性/Baseline 信息=true",
+      "evidence": {
+        "observedAt": "2026-06-20T11:54:30.412Z",
+        "h1": "Fetch API",
+        "hasBaseline": true,
+        "interfaces": [
+          "fetch()",
+          "Headers",
+          "Request",
+          "Response"
+        ],
+        "textHead": "Skip to main content\nSkip to search\nHTML\nCSS\nJavaScript\nWeb APIs\nAll\nLearn\nTools\nAbout\nBlog\nWeb\nWeb APIs\nFetch API\nFetch API\n\nThe Fetch API provides an interface for fetching resources (including across the network). It is a more powerful and flexible replacement for XMLHttpRequest.\n\nIn this article\nConcepts and usage\nInterfaces\nHTTP headers\nSpecifications\nBrowser compatibility\nSee also\nConcepts and usage\n\nThe Fetch API uses Request and Response objects (and other things involved with network requests), as well as related concepts such as CORS and the HTTP Origin header semantics.\n\nFor making a request and fetching a resource, use the fetch() method. It is a global method in both Window and Worker contexts. This makes it available in pretty much any context you might want to fetch resources in.\n\nThe fetch() method takes one mandatory argument, the path to the resource you want to fetch. It returns a Promise that resolves to the Response to that request — as soon as the server responds with headers — even if the server response is an HTTP error status. You can also optionally pass in an init options object as the second argument (see Request).\n\nOnce a Response is retrieved, there are a number of methods available to define what the body content is and how it should be handled.\n\nYou can create a request and response directly using the Request() and Response() constructors, but it's uncommon to do this directly. Instead, these are more likely to be created as results of other API actions (for example, FetchEvent.respondWith() from service workers).\n\nFind out more about using the Fetch API features in Using Fetch.\n\nDeferred Fetch\n\nThe fetchLater() API enables a developer to request a deferred fetch, that can be sent after a specified period of time, or when the page is closed or navigated away from. See Using Deferred Fetch.\n\nInterfaces\nWindow.fetch() and WorkerGlobalScope.fetch()\n\nThe fetch() method used to fetch a resource.\n\nWindow.fetchLater()\n\nUsed to make a deferre",
+        "title": "Fetch API - Web APIs | MDN",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API"
+      }
+    },
+    "R04": {
+      "status": "✅",
+      "summary": "npm @playwright/test：version 1.61.0，license Apache-2.0，weekly downloads 页面未清晰显示，unpacked 页面未清晰显示，repo https://github.com/microsoft/playwright",
+      "evidence": {
+        "observedAt": "2026-06-20T11:54:36.991Z",
+        "license": "Apache-2.0",
+        "repo": "https://github.com/microsoft/playwright",
+        "textHead": "skip to:contentpackage searchsign in\nPro\nTeams\nPricing\nDocumentation\nnpm\nSearch\nSign Up\nSign In\n@playwright/test\n1.61.0 • Public • Published 5 days ago\n Readme\nCode Beta\n1 Dependency\n862 Dependents\n3,246 Versions\n🎭 Playwright\n\n    \n\nDocumentation | API reference\n\nPlaywright is a framework for web automation and testing. It drives Chromium, Firefox, and WebKit with a single API — in your tests, in your scripts, and as a tool for AI agents.\n\nGet Started\n\nChoose the path that fits your workflow:\n\n\tBest for\tInstall\nPlaywright Test\tEnd-to-end testing\tnpm init playwright@latest\nPlaywright CLI\tCoding agents (Claude Code, Copilot)\tnpm i -g @playwright/cli@latest\nPlaywright MCP\tAI agents and LLM-driven automation\tnpx @playwright/mcp@latest\nPlaywright Library\tBrowser automation scripts\tnpm i playwright\nVS Code Extension\tTest authoring and debugging in VS Code\tInstall from Marketplace\nPlaywright Test\n\nPlaywright Test is a full-featured test runner built for end-to-end testing. It runs tests across Chromium, Firefox, and WebKit with full browser isolation, auto-waiting, and web-first assertions.\n\nInstall\nnpm init playwright@latest\n\nOr add manually:\n\nnpm i -D @playwright/test\nnpx playwright install\nWrite a test\nimport { test, expect } from '@playwright/test';\n\ntest('has title', async ({ page }) => {\n  await page.goto('https://playwright.dev/');\n  await expect(page).toHaveTitle(/Playwright/);\n});\n\ntest('get started link', async ({ page }) => {\n  await page.goto('https://playwright.dev/');\n  await page.getByRole('link', { name: 'Get started' }).click();\n  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();\n});\nRun tests\nnpx playwright test\n\nTests run in parallel across all configured browsers, in headless mode by default. Each test gets a fresh browser context — full isolation with near-zero overhead.\n\nKey capabilities\n\nAuto-wait and web-first assertions. No artificial timeouts. Playwright waits for elements to be actionable, and assertions automatica",
+        "title": "@playwright/test - npm",
+        "unpacked": null,
+        "url": "https://www.npmjs.com/package/@playwright/test",
+        "version": "1.61.0",
+        "weekly": null
+      }
+    },
+    "R05": {
+      "status": "❌",
+      "summary": "Chrome Web Store tab detached/运行失败，无法稳定读取详情页",
+      "evidence": {
+        "observedAt": "2026-06-20T11:55:07.121Z",
+        "attempts": [
+          {
+            "ok": false,
+            "error": "Detached while handling command."
+          },
+          {
+            "ok": false,
+            "error": "Detached while handling command."
+          }
+        ]
+      }
+    },
+    "R06": {
+      "status": "N-R",
+      "summary": "系统默认 profile 未加载 Bench Badge，@chrome 也不能访问 chrome://extensions / chrome-extension:// options；本轮无法做扩展注入真实网站测试",
+      "evidence": {
+        "observedAt": "2026-06-20T11:54:37.526Z",
+        "badgeProbe": {
+          "badge": null,
+          "chromeExtensions": null,
+          "chromeExtensionsError": "Browser Use rejected this action due to browser security policy. Reason: Browser Use cannot visit the requested page because its URL is blocked by the Browser Use URL policy. The agent must not attempt to achieve the same outcome via workaround, indirect execution, raw CDP or browser commands, alternate browser surfaces, or policy circumvention. Proceed only with a materially safer alternative that does not require this blocked browser action; if none exists, stop and request user input."
+        }
+      }
+    },
+    "R07": {
+      "status": "✅",
+      "summary": "Network.getResponseBody 读取 npm document：200 text/html，响应体含 @playwright/test 与版本信息",
+      "evidence": {
+        "observedAt": "2026-06-20T11:54:41.439Z",
+        "requestUrl": "https://www.npmjs.com/package/@playwright/test",
+        "status": 200,
+        "mimeType": "text/html",
+        "bodySnippet": "\n<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\">\n    <script>\n      (function(){try{var d=document.documentElement,s=localStorage.getItem('npm-color-mode')||'light';d.setAttribute('data-theme-setting',s);if(s==='dark'){d.setAttribute('data-color-mode','dark')}else if(s==='system'){var q=window.matchMedia('(prefers-color-scheme: dark)');d.setAttribute('data-color-mode',q.matches?'dark':'light');q.addEventListener('change',function(e){if((localStorage.getItem('npm-color-mode')||'light')==='system'){d.setAttribute('data-color-mode',e.matches?'dark':'light')}})}else{d.setAttribute('data-color-mode','light')}}catch(e){}})();\n    </script>\n    <link rel=\"stylesheet\" href=\"https://static-production.npmjs.com/styles.9e7a776a2d141c1e5aae.css\" />\n      <title data-react-helmet=\"true\">@playwright/test - npm</title>\n      <meta data-react-helmet=\"true\" http-equiv=\"cleartype\" content=\"on\"/><meta data-react-helmet=\"true\" name=\"apple-mobile-web-app-capable\" content=\"yes\"/><meta d",
+        "version": "1.61.0"
+      }
+    },
+    "R08": {
+      "status": "✅*",
+      "summary": "Network.setBlockedURLs 本地阻断图片资源，主文档仍加载为 Fetch API",
+      "evidence": {
+        "observedAt": "2026-06-20T11:54:45.023Z",
+        "blockedEvent": {
+          "sequence": 262,
+          "source": {
+            "tabId": 745248563
+          },
+          "method": "Network.loadingFailed",
+          "params": {
+            "blockedReason": "inspector",
+            "canceled": false,
+            "errorText": "",
+            "requestId": "54224.64",
+            "timestamp": 1248325.783217,
+            "type": "Image"
+          }
+        },
+        "failedCount": 40,
+        "page": {
+          "title": "Fetch API",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API"
+        }
+      }
+    },
+    "R09": {
+      "status": "✅",
+      "summary": "Performance entries 记录最慢 3 个资源：script:461ms / link:459ms / link:400ms；主文档 DCL 825ms",
+      "evidence": {
+        "observedAt": "2026-06-20T11:54:46.549Z",
+        "url": "https://ffffhx.github.io/garden-lab/post/agent/",
+        "title": "浏览器 Agent 工具怎么选：@chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP、playwright-cli 二十任务实测 | Garden Lab",
+        "h1": "浏览器 Agent 工具怎么选：@chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP、playwright-cli 二十任务实测",
+        "entries": [
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/app/layout-5ce7bee09b11075e.js",
+            "type": "script",
+            "duration": 461,
+            "startTime": 362,
+            "transferSize": 12562,
+            "responseEnd": 822
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/media/5611c55482296524-s.p.woff2",
+            "type": "link",
+            "duration": 459,
+            "startTime": 361,
+            "transferSize": 58452,
+            "responseEnd": 820
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/css/c60f887dffc5bfe7.css",
+            "type": "link",
+            "duration": 400,
+            "startTime": 361,
+            "transferSize": 26703,
+            "responseEnd": 761
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/main-app-ca700f8821109cef.js",
+            "type": "script",
+            "duration": 400,
+            "startTime": 362,
+            "transferSize": 527,
+            "responseEnd": 762
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/42-228cfaa1f6e390a1.js",
+            "type": "script",
+            "duration": 390,
+            "startTime": 362,
+            "transferSize": 8597,
+            "responseEnd": 752
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/media/66a476ca42fc796d-s.p.woff2",
+            "type": "link",
+            "duration": 388,
+            "startTime": 361,
+            "transferSize": 16424,
+            "responseEnd": 749
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/webpack-98bad5c3540ee390.js",
+            "type": "link",
+            "duration": 388,
+            "startTime": 361,
+            "transferSize": 2098,
+            "responseEnd": 749
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/483-365ef981704e3b0f.js",
+            "type": "script",
+            "duration": 381,
+            "startTime": 362,
+            "transferSize": 3673,
+            "responseEnd": 743
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/app/post/%5Bslug%5D/page-29aefa01488dacdc.js",
+            "type": "script",
+            "duration": 380,
+            "startTime": 362,
+            "transferSize": 7584,
+            "responseEnd": 742
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/media/e02f7a71372872a3-s.p.woff2",
+            "type": "link",
+            "duration": 378,
+            "startTime": 361,
+            "transferSize": 36828,
+            "responseEnd": 739
+          }
+        ],
+        "nav": {
+          "domContentLoaded": 825,
+          "load": 0,
+          "duration": 0,
+          "responseStart": 346
+        },
+        "paints": [],
+        "top3": [
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/app/layout-5ce7bee09b11075e.js",
+            "type": "script",
+            "duration": 461,
+            "startTime": 362,
+            "transferSize": 12562,
+            "responseEnd": 822
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/media/5611c55482296524-s.p.woff2",
+            "type": "link",
+            "duration": 459,
+            "startTime": 361,
+            "transferSize": 58452,
+            "responseEnd": 820
+          },
+          {
+            "url": "https://ffffhx.github.io/garden-lab/_next/static/css/c60f887dffc5bfe7.css",
+            "type": "link",
+            "duration": 400,
+            "startTime": 361,
+            "transferSize": 26703,
+            "responseEnd": 761
+          }
+        ]
+      }
+    }
+  },
+  "notes": []
+}

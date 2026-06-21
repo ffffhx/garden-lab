@@ -1,0 +1,21 @@
+      isClank() {
+        return this.options.name === "clank";
+      }
+      async _waitForAllPagesToBeInitialized() {
+        await Promise.all([...this._crPages.values()].map((crPage) => crPage._page.waitForInitializedOrError()));
+      }
+      _onAttachedToTarget({ targetInfo, sessionId, waitingForDebugger }) {
+        if (targetInfo.type === "browser")
+          return;
+        const session2 = this._session.createChildSession(sessionId);
+        assert(targetInfo.browserContextId, "targetInfo: " + JSON.stringify(targetInfo, null, 2));
+        let context2 = this._contexts.get(targetInfo.browserContextId) || null;
+        if (!context2) {
+          context2 = this._defaultContext;
+        }
+        if (targetInfo.type === "other" && targetInfo.url.startsWith("devtools://devtools") && this._devtools) {
+          this._devtools.install(session2);
+          return;
+        }
+        const treatOtherAsPage = targetInfo.type === "other" && process.env.PW_CHROMIUM_ATTACH_TO_OTHER;
+        if (!context2 || targetInfo.type === "other" && !treatOtherAsPage) {

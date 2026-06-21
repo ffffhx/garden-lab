@@ -1,0 +1,5 @@
+{
+  "total": 12,
+  "last": "系统公告：今日口令 LIVE-512"
+}
+note: bb-browser click @ref 未能触发 load-more 按钮的 JS 处理(同 T01 提交按钮), 改用 eval document.getElementById('load-more').click() 才生效

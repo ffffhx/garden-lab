@@ -1,0 +1,16 @@
+T17 · 跨域 iframe 授权 — devtools-mcp (chrome-devtools-gh, CDP 9223) — 2026-06-20 (patch)
+
+父页面: http://localhost:4399/iframe-auth  (origin http://localhost:4399)
+iframe 子页文档: http://127.0.0.1:4399/iframe-child.html  (origin http://127.0.0.1:4399, 与父不同源) — Network reqid=229 [200]
+
+snapshot 把跨域 iframe 内联展开，无需显式 frame 切换即可看到子页内容并定位按钮:
+  - 子页标题 "Bench OAuth"
+  - "账号：iframe-user@bench.dev"
+  - 按钮 "确认授权"
+
+操作: 点击 iframe 内 "确认授权" 按钮 (uid=34_12)。
+结果: 子页通过 postMessage 把授权结果发回父页面，父页面显示:
+  授权完成：iframe-user@bench.dev / OAUTH-314
+
+账号 = iframe-user@bench.dev
+授权码 = OAUTH-314

@@ -1,0 +1,9 @@
+T09 扩展 reload -> ❌ (能力缺失/scheme 限制)
+- 当前页面徽标已确认 = "BENCH EXT v1.0.0" (扩展已加载并生效)
+- 任务需: 改 manifest 到 1.0.1 -> reload 扩展 -> 验证徽标 v1.0.1 -> 改回 1.0.0
+- bb-browser 0.14.2 无扩展管理能力:
+  - 无 chrome://extensions 访问: open/goto "chrome://extensions/" 被强制前缀成 "https://chrome://extensions/" -> chrome-error://chromewebdata (ERR_CERT). scheme 处理短板.
+  - 无 chrome.management / 扩展 reload API 命令.
+  - 该扩展为 content-script-only(无 service worker), 无 worker 目标可 attach.
+- 因无法 reload, 不改动 manifest(保持 1.0.0 原状, 改了也无从生效且需复位). 已确认 manifest version 仍为 1.0.0.
+- 判定: ❌ 无法触达扩展管理能力.

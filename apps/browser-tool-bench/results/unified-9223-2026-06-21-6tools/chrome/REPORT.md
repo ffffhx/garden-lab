@@ -1,0 +1,398 @@
+# @chrome 统一 9223 成本评测报告
+
+- Tool: `@chrome` (Codex Chrome plugin / Chrome Browser Use)
+- Run directory: `apps/browser-tool-bench/results/unified-9223-2026-06-21-6tools/chrome/`
+- Scope: local `T01-T20` plus `T10a/T10b/T10c`, real-site `R01-R09`; `R10` is not defined in this repository.
+- Browser mode: `default-profile-fallback`
+- Strict CDP target: `http://127.0.0.1:9223`
+- CDP proof: Failed: @chrome opened http://localhost:4399/?chromeProof=chrome-plugin-1781976570555 and listed it in Chrome plugin tabs, but curl http://127.0.0.1:9223/json/list did not contain that URL. 9223 itself was reachable as Chrome/149.0.7827.116.
+- 9223 preflight: `curl /json/version` returned Chrome/149.0.7827.116 and a websocket URL under `ws://127.0.0.1:9223/...`; `/json/list` was reachable, but did not include the @chrome proof tab.
+- Important scoring rule: default Profile fallback is allowed for this run, but it cannot make T10c pass.
+- Extension baseline after run: manifest version `1.0.0`; @chrome fallback profile page showed `BENCH EXT v1.0.0`.
+
+## Cost / Operations
+
+- elapsed_ms: 569098
+- tool_calls: 55 (estimated; shell commands inside parallel tool calls are counted approximately)
+- browserOps: 221
+- escapes: total=36, eval_read=34, eval_action=2, cdp_escape=0, init_script=0
+- tokens: unavailable
+- cost_usd: unavailable
+
+## Tally
+
+- pass: 13
+- warn: 5
+- fail: 10
+- N-R: 2
+- N/A: 1
+
+## Capability Notes
+
+- Chrome plugin could operate the default Chrome profile and reuse its GitHub login state, but the unique proof URL did not appear in the 9223 target list.
+- Documented browser surface exposed DOM/locator/CUA, screenshots, console logs, read-only evaluate, and `pageAssets`; it did not expose Network response bodies, request interception, HAR/trace, viewport resize, file upload, extension reload, or extension-options discovery.
+- `chrome://extensions/` navigation was blocked by Browser Use URL policy. Chrome Web Store automation returned `The extensions gallery cannot be scripted.`
+- The evaluate sandbox could read DOM, but `fetch`, `window.fetch`, `performance`, and `window.performance` were unavailable in the tested pages.
+
+## Results
+
+| Task | Verdict | Escape | Answer |
+| --- | --- | --- | --- |
+| T01 | ✅ | true | BENCH-7341 |
+| T02 | ❌ | true |  |
+| T03 | ❌ | true |  |
+| T04 | ❌ | false | 未能 mock /api/users 为空列表；页面仍显示真实成员列表。 |
+| T05 | ✅ | true | 12 条；最后口令 LIVE-512 |
+| T06 | ✅ | true | [{"name":"雷霆工作站","price":15999,"stock":2},{"name":"全画幅扫描仪","price":3699,"stock":3},{"name":"4K 专业显示器","price":2499,"stock":7},{"name":"人体工学椅","price":1899,"stock":0},{"name":"会议级摄像头","price":1599,"stock":11},{"name":"桌面监听音箱","price":1299,"stock":5},{"name":"降噪耳机 Pro","price":899,"stock":41},{"name":"便携 SSD 1TB","price":749,"stock":16},{"name":"USB-C 扩展坞","price":549,"stock":64},{"name":"电竞鼠标","price":459,"stock":0},{"name":"静音机械键盘","price":399,"stock":23},{"name":"智能护眼台灯","price":329,"stock":88}] |
+| T07 | ❌ | true |  |
+| T08 | ✅ | true | SHADOW-99 |
+| T09 | ❌ | false | 无法通过 @chrome reload 本地扩展；chrome://extensions 被 Chrome plugin URL policy 阻止。 |
+| T10a | ⚠️ | true | default Profile fallback: unread=visible>=4; first repos=ffffhx/garden-lab, ffffhx/open-token-board, ffffhx/profilepilot, ffffhx/codex-snapshots |
+| T10b | N/A | false | @chrome 不提供独立专用 profile/state save-load 持久化机制；该任务不适用。 |
+| T10c | N-R | false | 不能证明 @chrome 绑定到 9223；已停止 strict-9223 GitHub 通知任务。 |
+| T11 | ❌ | false | 无法按用户路径打开 Bench Badge 设置页并保存 HELLO-2026；chrome://extensions 被策略阻止且无扩展页/扩展管理一等 API。 |
+| T12 | ⚠️ | true | 函数 applySelectedCoupon；字段 selectedCoupon.couponCode；guard: if (!cartState.selectedCoupon) return null; |
+| T13 | ⚠️ | true | 遮挡元素 .mobile-support-bar[data-bug="overlaps-pay-button"]；移动端 fixed bottom height 118px z-index 20 覆盖 .checkout-actions bottom 40px z-index 10；正常点击确认码 MOBILE-39。 |
+| T14 | ✅ | true | TaskSummary；traceId HYD-908；pendingTasks SSR=8/client=9，planName SSR=starter/client=team-pro；最终显示 9 个待办、team-pro 套餐。 |
+| T15 | ✅ | true | 5 条；最后 id evt-005；关键告警 code STREAM-721 |
+| T16 | ⚠️ | true | 页面显示 Service Worker 已控制，并显示旧值 theme=blue/release=cached-2025.11/featureFlag=STALE-CACHE-17；@chrome 打开 /api/settings?live=1 被 ERR_BLOCKED_BY_CLIENT 阻止，未能用浏览器证据读取 live 值。 |
+| T17 | ✅ | true | iframe-user@bench.dev / OAUTH-314 |
+| T18 | ❌ | false | 未能完成真实文件上传。 |
+| T19 | ✅ | true | 键盘无法到达/激活保存按钮；#save-preferences 是 div role=button，缺 tabindex="0" 且无 Enter/Space 处理；鼠标保存确认码 A11Y-204。 |
+| T20 | ✅ | true | 通过 7/10，失败 3/10，失败轮次 3/6/9，稳定性代码 FLAKE-307；不稳定，flake rate 30%。 |
+| R01 | ✅ | true | 页面标题：playwright/docs/src/actionability.md at main · microsoft/playwright; Locator.click checks: Visible, Stable, Receives Events, Enabled; URL=https://github.com/microsoft/playwright/blob/main/docs/src/actionability.md |
+| R02 | ✅ | true | observedAt=2026-06-20T17:36:24.668Z; unread=visible>=4; first repos=ffffhx/garden-lab, ffffhx/open-token-board, ffffhx/profilepilot, ffffhx/codex-snapshots; URL=https://github.com/notifications?query=is%3Aunread&chromeBench=1781976984668 |
+| R03 | ✅ | true | 主标题：Fetch API; 前三个接口：FetchLaterResult, Headers, Request; Baseline/compatibility=页面显示相关信息; URL=https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API |
+| R04 | ✅ | true | observedAt=2026-06-20T17:36:33.493Z; version=1.61.0; license=Apache-2.0; weekly downloads=41,880,590; unpacked size=页面未显示/未解析; repo=https://github.com/microsoft/playwright-cli; URL=https://www.npmjs.com/package/@playwright/test |
+| R05 | ❌ | true | Chrome Web Store 页面可打开但 @chrome 不能脚本化该 extensions gallery，无法读取详情字段。 |
+| R06 | ❌ | true | 初始真实站点注入=BENCH EXT v1.0.0；未能打开扩展设置页修改 REAL-SITE-2026。 |
+| R07 | ❌ | true | 无法通过 @chrome 获取真实 Network 请求响应体；只能读取页面文本，不能满足响应体 package name/version 证据要求。 |
+| R08 | N-R | false | @chrome 当前能力没有 route/abort/intercept API，无法在浏览器层拦截 MDN 图片请求。 |
+| R09 | ⚠️ | true | observedAt=2026-06-20T17:36:49.751Z; @chrome 可列出页面资源但没有 timing/HAR/trace，因此不能给出最慢 3 个资源耗时。final URL=https://ffffhx.github.io/garden-lab/post/agent/?r09=1781977009751 |
+
+## Evidence Details
+
+### T01 ✅
+
+- escape: true
+- answer: BENCH-7341
+- evidence: After login URL=http://localhost:4399/dashboard; #greeting="欢迎回来，Agent 测试员（工号 BENCH-7341）"
+- notes: Used Chrome plugin form fill/click; final DOM read via evaluate.
+
+### T02 ❌
+
+- escape: true
+- answer: (empty)
+- evidence: Retry error: TypeError: window.fetch is not a function
+    at __playwrightEvaluate (<anonymous>:2643:30)
+    at <anonymous>:2647:14
+    at runUserScript (<anonymous>:2648:10)
+    at <anonymous>:2652:10
+    at <anonymous>:2653:3
+- notes: window.fetch replay also failed.
+
+### T03 ❌
+
+- escape: true
+- answer: (empty)
+- evidence: Retry error: TypeError: Cannot read properties of undefined (reading 'getEntriesByType')
+    at __playwrightEvaluate (<anonymous>:2643:22)
+    at <anonymous>:2649:14
+    at runUserScript (<anonymous>:2650:10)
+    at <anonymous>:2654:10
+    at <anonymous>:2655:3
+- notes: window.performance unavailable or incomplete.
+
+### T04 ❌
+
+- escape: false
+- answer: 未能 mock /api/users 为空列表；页面仍显示真实成员列表。
+- evidence: Chrome plugin exposes no route/mock/intercept API; actual page rows=18, emptyState="", content excerpt="姓名角色加入时间
+            成员01管理员2025-01-01成员02成员2025-02-02成员03成员2025-03-03成员04成员2025-04-04成员05成员2025-05-05成员06维护者2025-06-06成员07成员2025-07-07成员08成员2025-08-08成员09成员2025-09-09成员10成员2025-10-01成员11维护者2025-11-02"
+- notes: Did not use DOM forgery or non-@chrome browser tools.
+
+### T05 ✅
+
+- escape: true
+- answer: 12 条；最后口令 LIVE-512
+- evidence: #status="已加载 12 条（没有更多了）"; last item="系统公告：今日口令 LIVE-512"
+- notes: Waited for first-page button and second-page render before counting.
+
+### T06 ✅
+
+- escape: true
+- answer: [{"name":"雷霆工作站","price":15999,"stock":2},{"name":"全画幅扫描仪","price":3699,"stock":3},{"name":"4K 专业显示器","price":2499,"stock":7},{"name":"人体工学椅","price":1899,"stock":0},{"name":"会议级摄像头","price":1599,"stock":11},{"name":"桌面监听音箱","price":1299,"stock":5},{"name":"降噪耳机 Pro","price":899,"stock":41},{"name":"便携 SSD 1TB","price":749,"stock":16},{"name":"USB-C 扩展坞","price":549,"stock":64},{"name":"电竞鼠标","price":459,"stock":0},{"name":"静音机械键盘","price":399,"stock":23},{"name":"智能护眼台灯","price":329,"stock":88}]
+- evidence: Clicked #next-page; DOM .prod count=12; sorted top={"name":"雷霆工作站","price":15999,"stock":2}
+- notes: DOM extraction path because page evaluate sandbox initially lacked bare fetch; numeric fields cleaned from visible DOM.
+
+### T07 ❌
+
+- escape: true
+- answer: (empty)
+- evidence: Retry error: TypeError: window.fetch is not a function
+    at __playwrightEvaluate (<anonymous>:2642:30)
+    at <anonymous>:2645:14
+    at runUserScript (<anonymous>:2646:10)
+    at <anonymous>:2650:10
+    at <anonymous>:2651:3
+- notes: window.fetch logged-in request failed.
+
+### T08 ✅
+
+- escape: true
+- answer: SHADOW-99
+- evidence: Shadow button locator count=1; shadow text after click=".box { border: 1px dashed #cfd3da; border-radius: 8px; padding: 14px; font-size: 14px; } button { padding: 7px 16px; border: none; border-radius: 6px; background: #00a86b; color: #fff; cursor: pointer; } .code { margin-top: 10px; font-weight: 700; color: #00a86b; } 每天可以领取一次奖励。 领取今日奖励 兑换码：SHADOW-99"; snapshot included claim text=true
+- notes: Clicked shadow DOM button via locator then read open shadow root.
+
+### T09 ❌
+
+- escape: false
+- answer: 无法通过 @chrome reload 本地扩展；chrome://extensions 被 Chrome plugin URL policy 阻止。
+- evidence: Baseline page in fallback profile showed BENCH EXT v1.0.0; direct navigation to chrome://extensions/ was rejected by Browser Use security policy; no extension-management/reload API exposed.
+- notes: Did not edit manifest to 1.0.1 because reload path was unavailable and state pollution would not be recoverable through @chrome.
+
+### T10a ⚠️
+
+- escape: true
+- answer: default Profile fallback: unread=visible>=4; first repos=ffffhx/garden-lab, ffffhx/open-token-board, ffffhx/profilepilot, ffffhx/codex-snapshots
+- evidence: observedAt=2026-06-20T17:36:24.668Z; finalUrl=https://github.com/notifications?query=is%3Aunread&chromeBench=1781976984668; proof mode=default Profile fallback, not 9223; repos=["ffffhx/garden-lab","ffffhx/open-token-board","ffffhx/profilepilot","ffffhx/codex-snapshots"]
+- notes: No independent human ground truth in this subagent, so not marked full pass.
+
+### T10b N/A
+
+- escape: false
+- answer: @chrome 不提供独立专用 profile/state save-load 持久化机制；该任务不适用。
+- evidence: Task card says @chrome/@browser are not applicable because their auth comes from default profile, not a tool-owned dedicated profile.
+- notes: No dedicated profile setup attempted.
+
+### T10c N-R
+
+- escape: false
+- answer: 不能证明 @chrome 绑定到 9223；已停止 strict-9223 GitHub 通知任务。
+- evidence: Proof tab http://localhost:4399/?chromeProof=chrome-plugin-1781976570555 appeared in @chrome tabs but not in http://127.0.0.1:9223/json/list.
+- notes: Per latest brief, default Profile fallback cannot count for T10c.
+
+### T11 ❌
+
+- escape: false
+- answer: 无法按用户路径打开 Bench Badge 设置页并保存 HELLO-2026；chrome://extensions 被策略阻止且无扩展页/扩展管理一等 API。
+- evidence: Fallback profile baseline badge was BENCH EXT v1.0.0; chrome://extensions/ navigation rejected by Browser Use security policy; no extension target enumeration/open-options API exposed.
+- notes: Did not use CDP/raw extension storage workaround.
+
+### T12 ⚠️
+
+- escape: true
+- answer: 函数 applySelectedCoupon；字段 selectedCoupon.couponCode；guard: if (!cartState.selectedCoupon) return null;
+- evidence: Source-map retry error: Browser Use cannot open http://localhost:4399/assets/debug-bundle.js.map in tab 745248748. Browser reported: net::ERR_BLOCKED_BY_CLIENT
+- notes: Console failure text was visible but source-map evidence could not be parsed.
+
+### T13 ⚠️
+
+- escape: true
+- answer: 遮挡元素 .mobile-support-bar[data-bug="overlaps-pay-button"]；移动端 fixed bottom height 118px z-index 20 覆盖 .checkout-actions bottom 40px z-index 10；正常点击确认码 MOBILE-39。
+- evidence: Viewport={"h":690,"mobile":false,"w":1512}; checkoutActions={"bottom":"auto","bottomPx":369,"display":"block","height":54,"position":"static","selector":".checkout-actions","text":"提交支付","top":315,"zIndex":"auto"}; supportBar={"bottom":"auto","bottomPx":0,"display":"none","height":0,"position":"static","selector":".mobile-support-bar","text":"在线客服\n    移动端帮助条错误覆盖了支付按钮。\n    联系客服","top":0,"zIndex":"auto"}; resultAfterClick="支付确认码：MOBILE-39"
+- notes: Chrome plugin exposes no viewport resize API in documented surface, so actual run stayed in current desktop viewport; CSS/DOM evidence identifies the mobile overlap bug, and desktop click verifies confirmation code.
+
+### T14 ✅
+
+- escape: true
+- answer: TaskSummary；traceId HYD-908；pendingTasks SSR=8/client=9，planName SSR=starter/client=team-pro；最终显示 9 个待办、team-pro 套餐。
+- evidence: DOM/store={"component":"TaskSummary","pendingSSR":"8","pendingText":"9","planSSR":"starter","planText":"team-pro","status":"客户端已接管，traceId=HYD-908"}; console=[{"level":"error","message":"[hydration mismatch] Object","timestamp":"2026-06-20T17:34:04.399Z","url":"http://localhost:4399/hydration?run=1781976843887"}]
+- notes: Read console plus window.__BENCH_STORE__ and final DOM.
+
+### T15 ✅
+
+- escape: true
+- answer: 5 条；最后 id evt-005；关键告警 code STREAM-721
+- evidence: #stream-status="接收完成：5 条事件，关键告警 STREAM-721"; items=["evt-001 · connected · SSE 通道已建立","evt-002 · metric · checkout_latency_ms","evt-003 · metric · cart_items","evt-004 · notice · 库存同步完成","evt-005 · alert · STREAM-721"]
+- notes: Observed completed EventSource through page DOM; no streaming Network API exposed.
+
+### T16 ⚠️
+
+- escape: true
+- answer: 页面显示 Service Worker 已控制，并显示旧值 theme=blue/release=cached-2025.11/featureFlag=STALE-CACHE-17；@chrome 打开 /api/settings?live=1 被 ERR_BLOCKED_BY_CLIENT 阻止，未能用浏览器证据读取 live 值。
+- evidence: cache page DOM={"flag":"STALE-CACHE-17","release":"cached-2025.11","status":"Service Worker 已控制页面","theme":"blue","url":"http://localhost:4399/cache?partial=1781976913568"}; live JSON browser navigation was blocked with net::ERR_BLOCKED_BY_CLIENT
+- notes: Partial: SW stale state proven from page DOM, but direct live endpoint proof failed because the tool/browser blocked API URL navigation and evaluate fetch is unavailable.
+
+### T17 ✅
+
+- escape: true
+- answer: iframe-user@bench.dev / OAUTH-314
+- evidence: frame src=http://127.0.0.1:4399/iframe-child.html; parent result="授权完成：iframe-user@bench.dev / OAUTH-314"
+- notes: Used frameLocator into cross-origin iframe and verified postMessage result in parent page.
+
+### T18 ❌
+
+- escape: false
+- answer: 未能完成真实文件上传。
+- evidence: #token-file locator count=1; documented/available locator.setInputFiles=false; current result="等待文件…"
+- notes: Chrome plugin documented Playwright subset lacks file upload/file chooser API; did not fake File via eval.
+
+### T19 ✅
+
+- escape: true
+- answer: 键盘无法到达/激活保存按钮；#save-preferences 是 div role=button，缺 tabindex="0" 且无 Enter/Space 处理；鼠标保存确认码 A11Y-204。
+- evidence: After Tab from input active=close-modal; after Shift+Tab active=notify-email; save attrs={"activeId":"close-modal","saveRole":"button","saveTabIndex":null,"saveTag":"DIV","trapIds":["notify-email","close-modal"]}; mouse result="保存成功：A11Y-204"
+- notes: Used keyboard Tab/Shift+Tab plus DOM attribute inspection; mouse click only used to verify confirmation code after diagnosing keyboard failure.
+
+### T20 ✅
+
+- escape: true
+- answer: 通过 7/10，失败 3/10，失败轮次 3/6/9，稳定性代码 FLAKE-307；不稳定，flake rate 30%。
+- evidence: summary="通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307"; rows=[["1","PASS","FLAKE-307"],["2","PASS","FLAKE-307"],["3","FAIL","FLAKE-307"],["4","PASS","FLAKE-307"],["5","PASS","FLAKE-307"],["6","FAIL","FLAKE-307"],["7","PASS","FLAKE-307"],["8","PASS","FLAKE-307"],["9","FAIL","FLAKE-307"],["10","PASS","FLAKE-307"]]
+- notes: Ran the page’s 10-check workflow and counted the table rows.
+
+### R01 ✅
+
+- escape: true
+- answer: 页面标题：playwright/docs/src/actionability.md at main · microsoft/playwright; Locator.click checks: Visible, Stable, Receives Events, Enabled; URL=https://github.com/microsoft/playwright/blob/main/docs/src/actionability.md
+- evidence: finalUrl=https://github.com/microsoft/playwright/blob/main/docs/src/actionability.md; title=playwright/docs/src/actionability.md at main · microsoft/playwright; clickLine=For example, for [method: Locator.click], Playwright will ensure that:; checksFound=Visible,Stable,Receives Events,Enabled
+- notes: Navigated in Chrome to official Playwright GitHub/docs page; no local source/curl.
+
+### R02 ✅
+
+- escape: true
+- answer: observedAt=2026-06-20T17:36:24.668Z; unread=visible>=4; first repos=ffffhx/garden-lab, ffffhx/open-token-board, ffffhx/profilepilot, ffffhx/codex-snapshots; URL=https://github.com/notifications?query=is%3Aunread&chromeBench=1781976984668
+- evidence: title=Notifications; finalUrl=https://github.com/notifications?query=is%3Aunread&chromeBench=1781976984668; repos=["ffffhx/garden-lab","ffffhx/open-token-board","ffffhx/profilepilot","ffffhx/codex-snapshots"]; aria/title candidates=["GitHub","GitHub","Global Navigation Menu","Breadcrumbs","Search or jump to…","Suggestions","Close","Include my email address so I can be contacted","Close","Open Copilot…"]; text excerpt=Skip to content
+Notifications
+Type / to search
+Notifications
+Folders
+Inbox
+70
+Saved
+Done
+Filters
+🎯 Assigned
+💬 Participating
+2
+✋ Mentioned
+🙌 Team mentioned
+👀 Review requested
+ Add new filter
+Repositories
+ffffhx/garden-lab
+58
+ffffhx/codex-snapshots
+7
+ffffhx/profilepilot
+4
+ffffhx/open-token-board
+1
+vercel-labs/agent-browser
+Manage notifications
+All
+Unread
+Search notifications
+is:unread 
+Clear
+Sort by: Newest to oldest
+Group by: Date
+Clear out the clutter.
+
+Get the most out of your new inbox by quickly and easily marking all of your previously read notifications as done.
+
+Dismiss
+Get started
+Notifications by date
+Single sign-on
+ Select all
+
+ffffhx/garden-lab – CI #387
+
+CI workflow run failed for main branch
+
+ci activity
+
+ffffhx/garden-lab – CI #386
+
+CI workflow run failed for main branch
+
+
+- notes: Read-only; did not click notification controls. This is @chrome default Profile fallback, not 9223 proof.
+
+### R03 ✅
+
+- escape: true
+- answer: 主标题：Fetch API; 前三个接口：FetchLaterResult, Headers, Request; Baseline/compatibility=页面显示相关信息; URL=https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+- evidence: MDN data={"hasBaseline":true,"interfaces":["FetchLaterResult","Headers","Request"],"textExcerpt":"Skip to main content\nSkip to search\nHTML\nCSS\nJavaScript\nWeb APIs\nAll\nLearn\nTools\nAbout\nBlog\nWeb\nWeb APIs\nFetch API\nFetch API\n\nThe Fetch API provides an interface for fetching resources (including across the network). It is a more powerful and flexible replacement for XMLHttpRequest.\n\nIn this article\nConcepts and usage\nInterfaces\nHTTP headers\nSpecifications\nBrowser compatibility\nSee also\nConcepts and usage\n\nThe Fetch API uses Request and Response objects (and other things involved with network requests), as well as related concepts such as CORS and the HTTP Origin header semantics.\n\nFor making a request and fetching a resource, use the fetch() method. It is a global method in both Window and Worker contexts. This makes it available in pretty much any context you might want to fetch resources in.\n\nThe fetch() method takes one mandatory argument, the path to the resource you want to fetch. It returns a Promise that resolves to the Response to that request — as soon as the server responds with headers — even if the server response is an HTTP error status. You can also optionally pass in an init options object as the second argument (see Request).\n\nOnce a Response is retrieved, there are a number of methods available to define what the body content is and how it should be handled.\n\nYou can create a request and response directly using the Request() and Response() constructors, but it's uncommon to do this directly. Instead, these are more likely to be created as results of other AP","title":"Fetch API","url":"https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API"}
+- notes: Direct official MDN page navigation/read; no external curl/cache.
+
+### R04 ✅
+
+- escape: true
+- answer: observedAt=2026-06-20T17:36:33.493Z; version=1.61.0; license=Apache-2.0; weekly downloads=41,880,590; unpacked size=页面未显示/未解析; repo=https://github.com/microsoft/playwright-cli; URL=https://www.npmjs.com/package/@playwright/test
+- evidence: npm data={"downloads":"41,880,590","license":"Apache-2.0","repo":"https://github.com/microsoft/playwright-cli","textExcerpt":"skip to:contentpackage searchsign in\nPro\nTeams\nPricing\nDocumentation\nnpm\nSearch\nSign Up\nSign In\n@playwright/test\n1.61.0 • Public • Published 5 days ago\n Readme\nCode Beta\n1 Dependency\n862 Dependents\n3,246 Versions\n🎭 Playwright\n\n    \n\nDocumentation | API reference\n\nPlaywright is a framework for web automation and testing. It drives Chromium, Firefox, and WebKit with a single API — in your tests, in your scripts, and as a tool for AI agents.\n\nGet Started\n\nChoose the path that fits your workflow:\n\n\tBest for\tInstall\nPlaywright Test\tEnd-to-end testing\tnpm init playwright@latest\nPlaywright CLI\tCoding agents (Claude Code, Copilot)\tnpm i -g @playwright/cli@latest\nPlaywright MCP\tAI agents and LLM-driven automation\tnpx @playwright/mcp@latest\nPlaywright Library\tBrowser automation scripts\tnpm i playwright\nVS Code Extension\tTest authoring and debugging in VS Code\tInstall from Marketplace\nPlaywright Test\n\nPlaywright Test is a full-featured test runner built for end-to-end testing. It runs tests across Chromium, Firefox, and WebKit with full browser isolation, auto-waiting, and web-first assertions.\n\nInstall\nnpm init playwright@latest\n\nOr add manually:\n\nnpm i -D @playwright/test\nnpx playwright install\nWrite a test\nimport { test, expect } from '@playwright/test';\n\ntest('has title', async ({ page }) => {\n  await page.goto('https://playwright.dev/');\n  await expect(page).toHaveTitle(/Playwright/);\n});\n\ntest('get started link', async ({ page }) => {\n  await page.goto('https://playwright.dev/');\n  await page.getByRole('link', { name: 'Get started' }).click();\n  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();\n});\nRun tests\nnpx playwright test\n\nTests run in parallel across all configured browsers, in headless mode by default. Each test gets a fresh browser context — full isolation with near-zero overhead.\n\nKey capabilities\n\nAuto-wait and web-first assertions. No artificial timeouts. Playwright waits for elements to be actionable, and assertions automatica","title":"@playwright/test","unpacked":"","url":"https://www.npmjs.com/package/@playwright/test","version":"1.61.0"}
+- notes: Read from visible npm page DOM only.
+
+### R05 ❌
+
+- escape: true
+- answer: Chrome Web Store 页面可打开但 @chrome 不能脚本化该 extensions gallery，无法读取详情字段。
+- evidence: Initial attempt detached; retry against existing Web Store tab returned: "The extensions gallery cannot be scripted." No install/remove click performed.
+- notes: Tool/browser policy boundary on Chrome Web Store; no workaround attempted.
+
+### R06 ❌
+
+- escape: true
+- answer: 初始真实站点注入=BENCH EXT v1.0.0；未能打开扩展设置页修改 REAL-SITE-2026。
+- evidence: real site title=浏览器 Agent 工具怎么选：@chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP、playwright-cli 二十任务实测 | Garden Lab; URL=https://ffffhx.github.io/garden-lab/post/agent/?r06=1781977001195; badge=BENCH EXT v1.0.0; extension settings/options path unavailable because chrome://extensions is blocked and no extension-options API is exposed
+- notes: Verified injection on real site in default Profile fallback, but required options-page write path is unavailable; no storage workaround used.
+
+### R07 ❌
+
+- escape: true
+- answer: 无法通过 @chrome 获取真实 Network 请求响应体；只能读取页面文本，不能满足响应体 package name/version 证据要求。
+- evidence: finalUrl=https://www.npmjs.com/package/@playwright/test?r07=1781977004713; title=@playwright/test - npm; page excerpt=skip to:contentpackage searchsign in
+Pro
+Teams
+Pricing
+Documentation
+npm
+Search
+Sign Up
+Sign In
+@playwright/test
+1.61.0 • Public • Published 5 days ago
+ Readme
+Code Beta
+1 Dependency
+862 Dependents
+3,246 Versions
+🎭 Playwright
+
+    
+
+Documentation | API reference
+
+Playwright is a framework for web automation and testing. It drives Chromium, Firefox, and WebKit with a single API — in your tests, in your scripts, and as a tool for AI agents.
+
+Get Started
+
+Choose the path that fits your workflow:
+
+	Best for	Install
+Playwright Test	End-to-end testing	npm init playwright@latest
+Playwright CLI	Coding agents (Claude Code, Copilot)	npm i -g @playwright/cli@latest
+Playwright MCP	AI agents and LLM-dri; Chrome plugin documentation exposes no Network request list/response body API and evaluate fetch is unavailable
+- notes: Did not use terminal curl/npm CLI.
+
+### R08 N-R
+
+- escape: false
+- answer: @chrome 当前能力没有 route/abort/intercept API，无法在浏览器层拦截 MDN 图片请求。
+- evidence: Chrome plugin documentation exposes locator/DOM/screenshot/logs/pageAssets only; no request interception or route API. No CSS/JS hiding attempted.
+- notes: Per R08 scoring, explicit no route/abort capability is N-R.
+
+### R09 ⚠️
+
+- escape: true
+- answer: observedAt=2026-06-20T17:36:49.751Z; @chrome 可列出页面资源但没有 timing/HAR/trace，因此不能给出最慢 3 个资源耗时。final URL=https://ffffhx.github.io/garden-lab/post/agent/?r09=1781977009751
+- evidence: title=浏览器 Agent 工具怎么选：@chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP、playwright-cli 二十任务实测 | Garden Lab; pageAssets summary={"byKind":{"font":6,"image":2,"other":9,"script":12,"stylesheet":2,"video":0},"inlineSvgCount":6,"totalCount":31}; assets=[{"kind":"font","name":"4b9bb515ce6d026f-s.p.woff2","url":"https://ffffhx.github.io/garden-lab/_next/static/media/4b9bb515ce6d026f-s.p.woff2","sources":["resource","attribute"]},{"kind":"font","name":"5611c55482296524-s.p.woff2","url":"https://ffffhx.github.io/garden-lab/_next/static/media/5611c55482296524-s.p.woff2","sources":["resource","attribute"]},{"kind":"stylesheet","name":"34074d4b07f8da55.css","url":"https://ffffhx.github.io/garden-lab/_next/static/css/34074d4b07f8da55.css","sources":["resource","attribute"]},{"kind":"image","name":"cover-v1.webp","url":"https://ffffhx.github.io/garden-lab/post-assets/2026/06/12/%E6%B5%8F%E8%A7%88%E5%99%A8-agent-%E5%B7%A5%E5%85%B7%E5%AE%9E%E6%B5%8B-%E5%85%AD%E5%B7%A5%E5%85%B7%E5%85%AB%E4%BB%BB%E5%8A%A1%E6%A8%AA%E8%AF%84/cover-v1.webp","sources":["resource","attribute","attribute"]},{"kind":"font","name":"e02f7a71372872a3-s.p.woff2","url":"https://ffffhx.github.io/garden-lab/_next/static/media/e02f7a71372872a3-s.p.woff2","sources":["resource","attribute"]},{"kind":"font","name":"66a476ca42fc796d-s.p.woff2","url":"https://ffffhx.github.io/garden-lab/_next/static/media/66a476ca42fc796d-s.p.woff2","sources":["resource","attribute"]},{"kind":"stylesheet","name":"c60f887dffc5bfe7.css","url":"https://ffffhx.github.io/garden-lab/_next/static/css/c60f887dffc5bfe7.css","sources":["resource","attribute"]},{"kind":"script","name":"main-app-ca700f8821109cef.js","url":"https://ffffhx.github.io/garden-lab/_next/static/chunks/main-app-ca700f8821109cef.js","sources":["resource","attribute"]},{"kind":"script","name":"webpack-98bad5c3540ee390.js","url":"https://ffffhx.github.io/garden-lab/_next/static/chunks/webpack-98bad5c3540ee390.js","sources":["resource","attribute","attribute"]},{"kind":"script","name":"695-6aaaff9a9270e5cc.js","url":"https://ffffhx.github.io/garden-lab/_next/static/chunks/695-6aaaff9a9270e5cc.js","sources":["resource","attribute"]}]
+- notes: Partial only: pageAssets inventory has resource URLs/kinds but no timing or first-screen waterfall.
+
+## Restoration
+
+- No extension storage or manifest version change was performed by this run.
+- Final browser check in @chrome fallback profile: `BENCH EXT v1.0.0` at `http://localhost:4399/?finalBadge=1781977073553`.
+- The worktree already had unrelated benchmark changes, including a modified manifest formatting/content diff; this run did not revert user-existing changes.

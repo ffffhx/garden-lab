@@ -1,0 +1,23 @@
+### Page
+- Page URL: http://localhost:4399/realtime
+- Page Title: SSE 实时流 · Bench 靶场
+- Console: 1 errors, 0 warnings
+### Snapshot
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - link "Bench 靶场" [ref=e3] [cursor=pointer]:
+      - /url: /
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - heading "实时事件流" [level=1] [ref=e6]
+      - paragraph [ref=e7]: 点击开始后，页面会通过 EventSource 接收 5 条事件。
+      - button "开始接收" [active] [ref=e8] [cursor=pointer]
+      - paragraph [ref=e9]: 接收完成：5 条事件，关键告警 STREAM-721
+      - list [ref=e10]:
+        - listitem [ref=e11]: evt-001 · connected · SSE 通道已建立
+        - listitem [ref=e12]: evt-002 · metric · checkout_latency_ms
+        - listitem [ref=e13]: evt-003 · metric · cart_items
+        - listitem [ref=e14]: evt-004 · notice · 库存同步完成
+        - listitem [ref=e15]: evt-005 · alert · STREAM-721
+```

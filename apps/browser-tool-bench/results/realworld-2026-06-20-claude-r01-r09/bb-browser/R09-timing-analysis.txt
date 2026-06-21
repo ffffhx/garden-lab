@@ -1,0 +1,31 @@
+R09 garden-lab post/agent — bb-browser trace timing (response_ts - request_ts, ms)
+OBS 2026-06-20 01:20:53 CST | finalUrl https://ffffhx.github.io/garden-lab/post/agent/
+paired 27 requests with response events
+
+   317ms  Script     200 application/javascript        https://ffffhx.github.io/garden-lab/_next/static/chunks/app/post/%5Bslug%5D/page-29aefa01488dacdc.js
+   301ms  Script     200 application/javascript        https://ffffhx.github.io/garden-lab/_next/static/chunks/app/layout-5ce7bee09b11075e.js
+   243ms  Script     200 application/javascript        https://ffffhx.github.io/garden-lab/_next/static/chunks/483-365ef981704e3b0f.js
+   242ms  Script     200 application/javascript        https://ffffhx.github.io/garden-lab/_next/static/chunks/654-1c2818613cc4b3bc.js
+   242ms  Script     200 application/javascript        https://ffffhx.github.io/garden-lab/_next/static/chunks/42-228cfaa1f6e390a1.js
+    92ms  Document   200 text/html                     https://ffffhx.github.io/garden-lab/post/agent/
+    76ms  Script     200 application/javascript        https://ffffhx.github.io/garden-lab/_next/static/chunks/main-app-ca700f8821109cef.js
+    74ms  Script     200 application/javascript        https://ffffhx.github.io/garden-lab/_next/static/chunks/d99d8e6a-80443bd3c9d31f50.js
+    74ms  Script     200 application/javascript        https://ffffhx.github.io/garden-lab/_next/static/chunks/695-6aaaff9a9270e5cc.js
+    73ms  Font       200 font/woff2                    https://ffffhx.github.io/garden-lab/_next/static/media/665e920483964785-s.woff2
+    72ms  Font       200 font/woff2                    https://ffffhx.github.io/garden-lab/_next/static/media/59829bb575d36b50-s.woff2
+    55ms  Fetch      200 application/json              https://8-218-149-148.anyip.dev/token-board/api/auth/me
+    52ms  Script     200 text/javascript               chrome-extension://ngbeieahpajgaoakojeamhkacekiicfk/js/inject.min.js
+    44ms  Fetch      200 application/json              chrome-extension://bpoadfkcbjbfhfodiogcnhhhpibjhbnh/default_config.content.json
+    28ms  Image      200 image/webp                    https://ffffhx.github.io/garden-lab/post-assets/2026/06/12/%E6%B5%8F%E8%A7%88%E5%99%A8-agent-%E5%B7%A5%E5%85%B7%E5%AE%9E%E6%B5%8B-%E5%85%AD%E5%B7%A5%E5%85%B7%E5%85%AB%E4%BB%BB%E5%8A%A1%E6%A8%AA%E8%AF%84/cover-v1.webp
+    18ms  Script     200 application/javascript        https://ffffhx.github.io/garden-lab/_next/static/chunks/webpack-98bad5c3540ee390.js
+    16ms  Font       200 font/woff2                    https://ffffhx.github.io/garden-lab/_next/static/media/e02f7a71372872a3-s.p.woff2
+    14ms  Stylesheet 200 text/css                      https://ffffhx.github.io/garden-lab/_next/static/css/c60f887dffc5bfe7.css
+    14ms  Stylesheet 200 text/css                      https://ffffhx.github.io/garden-lab/_next/static/css/34074d4b07f8da55.css
+    11ms  Font       200 font/woff2                    https://ffffhx.github.io/garden-lab/_next/static/media/4b9bb515ce6d026f-s.p.woff2
+    10ms  Font       200 font/woff2                    https://ffffhx.github.io/garden-lab/_next/static/media/66a476ca42fc796d-s.p.woff2
+    10ms  Font       200 font/woff2                    https://ffffhx.github.io/garden-lab/_next/static/media/5611c55482296524-s.p.woff2
+     9ms  Other      200 image/png                     https://ffffhx.github.io/garden-lab/images/icon-192.png
+     9ms  Other      200 image/svg+xml                 https://ffffhx.github.io/garden-lab/images/favicon.svg
+     9ms  Script     200 text/javascript               chrome-extension://idgpnmonknjnojddfkpgkljpfnnfcklj/assets/src/js/service/content_script_vite-c387a50d.js
+     8ms  Manifest   200 application/manifest+json     https://ffffhx.github.io/garden-lab/manifest.webmanifest
+     3ms  Script     200 text/javascript               chrome-extension://bpoadfkcbjbfhfodiogcnhhhpibjhbnh/content_main.js

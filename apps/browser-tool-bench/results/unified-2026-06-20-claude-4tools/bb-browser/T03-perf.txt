@@ -1,0 +1,4 @@
+blocking.css: TTFB 1209ms (server delay ~1200ms), render-blocking CSS -> biggest LCP impact
+heavy.js: downloaded 11ms but crunchAnalytics() = 800ms main-thread long task starting at 1225ms (right after CSS, serial)
+hero.svg: 1510ms TTFB but parallel non-blocking, finishes at 1522ms before load -> distractor
+DOMContentLoaded 2039ms, loadEnd 2108ms. Chain: blocking.css(->1221ms) -> longtask(1225-2025ms)

@@ -43,6 +43,8 @@ cell 格式：`结果 · 轮数 · token · 打断`，例如 `✅ · 6轮 · 12k
 
 ## 真实网站外场任务（R01-R09，2026-06-19/20 已跑一轮）
 
+> ⚠️ 本表为 2026-06-19/20 那一轮的记录。其中 **playwright-cli「0/9 · 9 N-R」已被 2026-06-21 轮更新**：playwright-cli 之后成功 attach 9223、R 任务大部分通过（见文末「2026-06-21 统一六工具轮」C.1）。当时的全 N-R 是那一轮带多扩展 profile 触发 SW target 断言所致，非工具铁律。
+
 这组任务在 `apps/browser-tool-bench/tasks-real/`，不并入上面的 T01-T20 总分。原因是外部网站会变，动态字段必须按当次 URL、时间戳、profile 和证据判定。2026-06-19 23:45 - 2026-06-20 00:32（Asia/Shanghai）已按“每个工具一个独立 Codex Subagent，`gpt-5.5` / `xhigh`，顺序使用同一个 9223 测试 Chrome profile”的方式跑完一轮。原始报告见 `results/realworld-2026-06-20-r01-r09/`。
 
 | 任务 | @chrome 无完整 CDP 默认 Profile | @chrome 开权限默认 Profile | @browser | agent-browser 0.27.2 | bb-browser 0.14.2 | DevTools MCP 1.3.0 | playwright-cli 0.1.14 |
@@ -62,10 +64,10 @@ cell 格式：`结果 · 轮数 · token · 打断`，例如 `✅ · 6轮 · 12k
 
 ## 测试环境
 
-- 日期：
-- Agent 宿主与模型：（@chrome 列单独注明 Codex 版本）
-- Chrome 版本：
-- 工具版本：agent-browser ___ / bb-browser ___ / chrome-devtools-mcp ___ / playwright ___
+- 日期：2026-06-12 首轮 → 2026-06-21 统一六工具轮（最新，见文末新章节）。
+- Agent 宿主与模型：Claude Code（Opus 4.8）轮 + Codex（gpt-5.5 / xhigh）轮，各自独立、每工具一个干净 subagent 顺序跑；`@chrome` / `@browser` 为 Codex 专属，只在 Codex 轮测。
+- Chrome 版本：系统默认企业管控 Chrome 149（CDP 9223，真实登录态 GitHub `ffffhx`/`test03-*`）；扩展任务（T09/T11）改用干净 Chrome for Testing 149（`--disable-features=DisableLoadExtensionCommandLineSwitch --load-extension`）。
+- 工具版本：agent-browser 0.27.2 / bb-browser 0.14.2 / chrome-devtools-mcp 1.2.0（T01-08）·1.3.0（R 任务） / playwright-cli 0.1.14。
 
 ## 运行记录
 
@@ -108,3 +110,67 @@ cell 格式：`结果 · 轮数 · token · 打断`，例如 `✅ · 6轮 · 12k
 综合排序：devtools-mcp（最稳零逃生）> agent-browser（最全能）> playwright-cli（自管/CI 稳健，弱登录态）> bb-browser（读取类快手，mock/扩展/跨域 iframe/拦截四短板）。
 
 **环境处置**：靶场第1轮 T15/16/17/20 集体失败系陈旧靶场服务（6/12 启动缺路由）+ codex-snapshot 占 127.0.0.1:4399；已重启 server.mjs、把 codex-snapshot 迁 4401、对四题做环境补丁轮重跑。GT 全对，状态污染检查通过（徽标/manifest 复位、真实网站只读）。
+
+---
+
+## 2026-06-21 统一六工具轮（最新，已并入文章总表）
+
+> 这一节归并 2026-06-21 三轮统一评测，是当前文章总表与成本表的数据源。口径：31 格 = T01-T20（T10 拆 T10a/b/c，共 22 格）+ R01-R09（9 格）。`⚠️` 部分完成/能力降级；`N-R` 运行时不可用/能力未暴露；`N/A` 任务不适用于该工具。
+>
+> 原始报告：
+> - Codex 单轮（gpt-5.5）：`unified-9223-2026-06-21-6tools/REPORT.md`
+> - Codex rerun2（含真实 token）：`unified-9223-2026-06-21-6tools-rerun2/AGGREGATE-SNAPSHOT.md`
+> - Claude/Opus 4.8 两轮（4 工具，9223→9224）：`unified-9224-2026-06-21-claude-round2/REPORT.md`（续 `unified-2026-06-20-claude-4tools/`）
+
+### A. 31 格判定（Codex 轮：单轮 → rerun2）
+
+| 工具 | 浏览器模式 | 单轮（6tools） | rerun2 |
+| --- | --- | --- | --- |
+| `@chrome` | 默认 Profile fallback（9223 未证明） | 13✅/5⚠️/10❌/2 N-R/1 N/A | 15✅/2⚠️/1❌/12 N-R/1 N/A |
+| `@browser` | in-app browser（9223 未证明） | 12✅/5⚠️/8❌/5 N-R/1 N/A | 14✅/2⚠️/0❌/14 N-R/1 N/A |
+| `agent-browser` | CDP 9223 ✅ | 28✅/2⚠️/0❌/0 N-R/1 N/A | **30✅/0⚠️/0❌/0 N-R/1 N/A** |
+| `bb-browser` | CDP 9223 ✅（rerun2 daemon status drift） | 20✅/1⚠️/7❌/1 N-R/2 N/A | 19✅/4⚠️/5❌/1 N-R/2 N/A |
+| `Chrome DevTools MCP` | CDP 9223 ✅ | 27✅/1⚠️/0❌/1 N-R/2 N/A | 26✅/1⚠️/1❌/1 N-R/2 N/A |
+| `playwright-cli` | CDP 9223 ✅（本轮成功 attach） | **30✅/0⚠️/0❌/0 N-R/1 N/A** | 28✅/1⚠️/1❌/0 N-R/1 N/A |
+
+> rerun2 里 `@chrome`/`@browser` 的 N-R 暴涨（→12/14）是严格 9223 证明口径所致：两者证不了命中 9223 的格直接记 N-R。changed-verdict 明细见 AGGREGATE-SNAPSHOT.md。
+
+### B. 真实成本/token（首次拿到逐工具数据）
+
+rerun2 的 token 来自 Codex session JSONL（`AGGREGATE-SNAPSHOT.md` 行 16-25）。总 token 95%+ 为缓存输入（便宜），真实生成量看 output。
+
+| 工具 | 总 token | 缓存输入 | output | 自报耗时 | tool_calls | browserOps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `@chrome` | 5,471,590 | 5,086,976 | 44,739 | 11.9m | 61 | 245 |
+| `@browser` | 6,621,147 | 6,325,888 | 40,871 | 10.9m | 64 | 129 |
+| `agent-browser` | 14,760,026 | 14,289,152 | 49,262 | 17.5m | 205 | 166 |
+| `bb-browser` | 14,645,635 | 14,398,080 | 37,575 | 30.0m | 242 | 198 |
+| `Chrome DevTools MCP` | 未采全 | — | — | 5.0m（自报，疑低估） | 120 | 112 |
+| `playwright-cli` | 未采全 | — | — | 26.0m | 68 | 62 |
+
+> ⚠️ Codex 耗时是 subagent 自报，**不可跨宿主与 Claude 轮比**（如 DevTools MCP 5.0m 几乎肯定低估）。token/耗时只在同一宿主内可比。
+
+Claude/Opus 4.8 两轮（同宿主可比，单一 token 总量未拆 in/out，单位 k）：
+
+| 工具 | 轮 | 结果（30题） | 耗时 | token | tool_calls | browserOps | eval 自救 |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| agent-browser | R1·9223 / R2·9224 | 29✅(R06漏报) / **30✅** | 25.8 / 26.4m | 190.6 / 205.0 | 183 / 233 | 218 / 378 | 24 / 6 |
+| bb-browser | R1 / R2 | 22✅3⚠️4❌1NR / 26✅1⚠️2❌1NR(R09重测✅*) | 47.9 / 41.9m | 271.9 / 233.3 | 277 / 252 | 244 / 311 | 33 / 39 |
+| devtools-mcp | R1 / R2 | 28✅1⚠️1NR / **29✅1NR** | 25.5 / 23.6m | 322.7 / 327.4 | 230 / 220 | 169 / 161 | 25 / 17 |
+| playwright-cli | R1·自管 / R2·自管 | 24✅1⚠️2❌3NR / 25✅2❌3NR | 26.4 / 24.3m | 203.7 / 209.3 | 188 / 188 | 184 / 189 | 38 / 18 |
+
+> 文章成本表①把 playwright/bb 的自管 N-R 折进 ❌（playwright R1 记 5❌、bb R1 记 5❌），这里保留 REPORT 原始的 ❌+N-R 拆分。可比指标只有耗时、token；browserOps/eval 自救两轮摆动大（口径不一），只看趋势。
+
+### C. 相对 6/20 的新结论 / 更正
+
+1. **playwright-cli 能 attach 9223 了**（推翻旧 R 表的「0/9 · 9 N-R」）。Codex 轮用唯一 URL 在 `/json/list` 证明命中，单轮 30✅、rerun2 28✅。早期外场轮的「attach 装扩展 9223 确定性崩溃」与环境/扩展集/版本有关，**不是铁律**；Claude 轮 attach 装扩展的 9223/9224 仍崩，故改自管。两条都对，差在浏览器是否带多扩展 SW target。
+2. **agent-browser rerun2 干净 30✅**（T08/T10a 由 ⚠️→✅），与「能力第一梯队、全绿」一致。
+3. **bb-browser R09 的 N-R/❌ 是站点抽风**（ffffhx.github.io 偶发 000）：站点稳定后单独重测 = ✅*；其 T04/T11/T13/T17 在 ❌↔✅* 间跳是原语弱+逃生力度差异（真实短板），非测错。
+4. **npm 被 Cloudflare/403 拦**是环境噪声（curl 实测 403）：playwright-cli 自管浏览器 R04/R07 ❌，但走 9223 已登录 Chrome 的 agent-browser/devtools-mcp R04/R07 ✅——同题不同会话结果不同。
+5. **DevTools MCP 唯一稳定短板 = R08 无运行时 route/abort/intercept 原语**（rerun2 记 N-R/❌），其余全绿。
+
+### D. 能力梯队（三轮 + 能力表三方一致）
+
+`devtools-mcp / agent-browser`（第一梯队，稳定全绿；devtools 仅 R08 无运行时 route，agent-browser 独占运行时 route+HAR+扩展 options+可移植登录态）> `playwright-cli`（自管/CI 稳健，弱在接用户现成登录态、外场受 npm 网络拦）> `bb-browser`（原语弱、靠 CDP 逃生才勉强，最慢最贵最不稳）。`@chrome`/`@browser` 受扩展安全域 + 默认 Profile 限制，大量任务做不成。
+
+**成本三轴（仅 Claude 同宿主可比）**：速度上 agent-browser / devtools-mcp / playwright-cli 挤在 ~24.6–26.1min 实质平手，bb-browser ~45min（1.8×）独慢；token 上 agent-browser 最省（~198k）、devtools-mcp 最贵（~325k，1.6×）做同样多活——「只装一款」结论指向 **agent-browser**（前端纯调试且不在乎 token 才选 DevTools MCP）。

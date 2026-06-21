@@ -1,0 +1,21 @@
+T17 跨域 iframe 授权 — bb-browser 0.14.2 (CDP 9223), 2026-06-20 patch
+==================================================================
+环境补丁已生效: 子页 http://127.0.0.1:4399/iframe-child.html 现已正常提供(直接以 tab 打开返回 200, 含 "确认授权" 按钮)。
+父页 http://localhost:4399/iframe-auth 正常加载, 内嵌 iframe id=auth-frame src=http://127.0.0.1:4399/iframe-child.html, 与父页 localhost 不同源(跨域 OOPIF)。
+
+子页脚本(已读取确认 GT):
+  button#approve click -> parent.postMessage({type:'bench-oauth', account:'iframe-user@bench.dev', code:'OAUTH-314'}, 'http://localhost:4399')
+父页初始显示: "等待授权完成…"
+
+bb-browser 卡点(工具能力缺失, 非环境缺陷):
+  - snap / snap -i / snap -s iframe (--tab a12f): 跨域 iframe 内容不被内联, 拿不到子页按钮的 ref, 无法 click。
+  - eval / click 仅作用于 tab 的主框架(top frame); 无 frame 切换 / OOPIF 选择能力。
+  - eval --domain 127.0.0.1: 解析的是"顶层 tab"(按 hostname), 不是父页内的跨域子框架(OOPIF)。
+      * 单独以 tab 打开 iframe-child.html 时, --domain 命中该独立 tab, 但其中 parent===self(自身即 top),
+        click 后 postMessage 发给的是它自己, 不会送达 a12f 父页 -> 无效。
+      * 关闭该独立 tab 后, --domain 127.0.0.1 漂移到无关的 127.0.0.1:3010 tab, 证明 --domain 选的是顶层 target 而非子框架。
+  - tab list 不列出子 OOPIF(127.0.0.1:4399/iframe-child.html) 作为可操作 target, 只有父 tab a12f。
+  - click 无坐标(--xy)选项, 无法对 iframe 内按钮做坐标点击。
+
+结论: bb-browser 无法在父页内的跨域 iframe 中触发点击, 父页始终停留 "等待授权完成…", 无法读到 postMessage 回传的 iframe-user@bench.dev / OAUTH-314。
+GT(iframe-user@bench.dev / OAUTH-314)系从子页源码读到, 非通过 postMessage 流程在父页验证 -> 判 ❌。

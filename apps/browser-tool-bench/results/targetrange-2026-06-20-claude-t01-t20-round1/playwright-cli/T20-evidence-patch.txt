@@ -1,0 +1,8 @@
+T20 flake rate — playwright-cli (self-managed) — patch round 2026-06-20
+Page: http://localhost:4399/flake ; clicked "运行 10 次".
+Network: 10x GET /api/flake-check?run=1..10 => [200] (see T20-requests-patch.txt)
+Table results: run 3, 6, 9 = FAIL; runs 1,2,4,5,7,8,10 = PASS; code FLAKE-307 on every row.
+Page summary: "通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307"
+Independent curl per-run cross-check matched (3/6/9 ok:false).
+ANSWER: 7/10 pass, 3/10 fail, failing runs 3/6/9, stability code FLAKE-307,
+UNSTABLE, flake rate = 30%.

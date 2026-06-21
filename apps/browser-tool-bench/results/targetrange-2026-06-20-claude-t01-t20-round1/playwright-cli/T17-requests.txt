@@ -1,0 +1,4 @@
+### Result
+3. [GET] http://127.0.0.1:4399/iframe-child.html => [404] Not Found
+
+Note: 2 static requests not shown, run with --static option to see them.

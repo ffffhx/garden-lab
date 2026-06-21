@@ -1,0 +1,7 @@
+=== T17 root cause: 127.0.0.1:4399 squatted by codex-snapshots server ===
+iframe src: http://127.0.0.1:4399/iframe-child.html
+
+127.0.0.1:4399/iframe-child.html -> 404 (codex-snapshots PID 74361, NOT bench)
+localhost:4399/iframe-child.html  -> 200 (bench PID 1762, file exists)
+
+iframe contentDocument: null (shows codex-snapshots 404 'not found'), no 确认授权 button reachable

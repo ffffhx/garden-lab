@@ -1,0 +1,29 @@
+{
+  "observedAt": "2026-06-21T00:27 local (UTC+8)",
+  "url": "https://ffffhx.github.io/garden-lab/post/agent/",
+  "tool": "playwright-cli 0.1.14 (self-managed Chromium)",
+  "navigation": { "domContentLoadedMs": 726, "loadEventMs": 1243 },
+  "totalResources": 26,
+  "evidence": ["R09-trace.trace", "R09-trace.network (Playwright network log)"],
+  "top3SlowestByDuration": [
+    {
+      "url": "https://ffffhx.github.io/garden-lab/_next/static/media/665e920483964785-s.woff2",
+      "type": "font (css-initiated)",
+      "durationMs": 417, "ttfbMs": 413, "waitMs": 325, "transferSize": 36628,
+      "firstScreenImpact": "Web font. Affects FOIT/FOUT and perceived text rendering of above-the-fold content, so it does have first-screen impact (text visibility), though Next.js font-display usually shows fallback text first."
+    },
+    {
+      "url": "https://ffffhx.github.io/garden-lab/_next/static/media/59829bb575d36b50-s.woff2",
+      "type": "font (css-initiated)",
+      "durationMs": 410, "ttfbMs": 410, "waitMs": 321, "transferSize": 21048,
+      "firstScreenImpact": "Second web font, same reasoning - affects first-screen text rendering."
+    },
+    {
+      "url": "https://ffffhx.github.io/garden-lab/_next/static/chunks/app/page-68c0d8a16ff12f54.js",
+      "type": "script",
+      "durationMs": 379, "ttfbMs": 378, "waitMs": 377, "transferSize": 2352,
+      "firstScreenImpact": "App route chunk for hydration. Small (2.3KB) and mostly TTFB-bound; needed for interactivity but content is server-rendered, so impact on first paint is moderate."
+    }
+  ],
+  "analysis": "Slowest-by-duration are dominated by TTFB/queueing (GitHub Pages CDN latency ~0.3-0.4s), not transfer size. The two woff2 fonts are the most relevant to first-screen experience because they affect visible text; the JS chunks affect hydration/interactivity rather than first paint. domContentLoaded 726ms / load 1243ms overall - a light page."
+}

@@ -1,0 +1,13 @@
+{
+  "url": "https://www.npmjs.com/package/@playwright/test",
+  "requestId": "89F42758379201CA197C1AC6AD61AC69",
+  "resourceType": "Document",
+  "mimeType": "text/html",
+  "status": 200,
+  "extracted": {
+    "name": "@playwright/test",
+    "version": "1.61.0",
+    "dist-tags.latest": "1.61.0"
+  },
+  "bodySnippet": "Y4R00V4CQxt1qmqb2gLiMVGeORg\"}}],\"name\":\"@playwright/test\",\"license\":\"Apache-2.0\",\"version\":\"1.61.0\",\"versions\":[{\"version\":\"1.61.0-beta-1781"
+}

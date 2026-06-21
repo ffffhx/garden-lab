@@ -1,0 +1,6 @@
+### Result
+"上传凭证\n\n选择或拖入 fixture 文件，页面会在本地解析 token。\n\n也可以把文件拖到这里\n\n文件 upload-token.txt，36 bytes，token=UPLOAD-448"
+### Ran Playwright code
+```js
+await page.evaluate('() => document.querySelector(\'main\').innerText');
+```

@@ -1,0 +1,8 @@
+T09 extension reload - FAILED (bb-browser cannot reach chrome://extensions or any extension-management API).
+- Changed extension-sample/manifest.json version 1.0.0 -> 1.0.1 on disk.
+- bb-browser `open chrome://extensions` mangles scheme to `https://chrome://extensions` -> chrome-error://chromewebdata/ (URL-normalization bug).
+- `goto chrome://extensions/` same result. In-page location.assign('chrome://...') blocked by browser security.
+- bb-browser help has NO extension/reload/chrome: management command (only page-level `reload`).
+- Could NOT reload extension -> badge stayed v1.0.0 (manifest change never took effect in browser).
+- RESTORED manifest.json version back to 1.0.0. Live badge confirmed "BENCH EXT v1.0.0".
+Verdict: FAIL (capability gap + chrome:// scheme bug).

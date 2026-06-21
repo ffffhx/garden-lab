@@ -1,0 +1,282 @@
+{
+  "tool": "@browser",
+  "model": "gpt-5",
+  "reasoning_effort": "unavailable",
+  "strict_cdp": "http://127.0.0.1:9223",
+  "browser_mode": "in-app",
+  "cdp_proof": "9223 was reachable by curl /json/version and /json/list, but @browser in-app proof URL http://localhost:4399/?cdp_proof=browser-iab-proof-1781977267640 did not appear in 9223 /json/list. agent.browsers.list exposed extension and iab backends; per Browser skill the run used iab, so strict 9223 binding was not proven.",
+  "elapsed_ms": 760000,
+  "tool_calls": 40,
+  "tool_calls_note": "Estimated developer-tool calls, counting parallel shell subcommands individually.",
+  "browserOps": 226,
+  "escapes": {
+    "total": 104,
+    "eval_read": 103,
+    "eval_action": 1,
+    "cdp_escape": 0,
+    "init_script": 0,
+    "notes": "Browser plugin read-only evaluate was used heavily for DOM inspection. One eval_action attempt replayed local POST /api/orders but failed because fetch is unavailable in the evaluate sandbox. curl /json/version and /json/list were used only for allowed CDP preflight/proof checks, not browser operation."
+  },
+  "tokens": "unavailable",
+  "cost_usd": "unavailable",
+  "tally": {
+    "pass": 12,
+    "warn": 5,
+    "fail": 8,
+    "nr": 5,
+    "na": 1
+  },
+  "results": [
+    {
+      "task": "T01",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "BENCH-7341",
+      "evidence": "After form login, #greeting was \"欢迎回来，Agent 测试员（工号 BENCH-7341）\" at http://localhost:4399/dashboard.",
+      "notes": "Form interaction worked; greeting read through DOM evaluate."
+    },
+    {
+      "task": "T02",
+      "verdict": "❌",
+      "escape": true,
+      "answer": "Unable to obtain the /api/orders HTTP 500 response body with @browser.",
+      "evidence": "Clicking submit produced only the generic page error. @browser exposes console logs but no Network response-body API; read-only evaluate has no fetch/window.fetch.",
+      "notes": "No curl or server-side shortcut was used to fill in the body."
+    },
+    {
+      "task": "T03",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": "The likely intended root cause is blocking.css as render-blocking, with heavy.js next and hero.svg as a slow distractor, but @browser could not provide trace/timing proof.",
+      "evidence": "pageAssets could list /assets/blocking.css, /assets/heavy.js, and /assets/hero.svg. read-only evaluate has no performance API, and direct asset navigation was blocked with ERR_BLOCKED_BY_CLIENT.",
+      "notes": "Partial because no HAR/trace/LCP/long-task evidence was available."
+    },
+    {
+      "task": "T04",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "Unable to mock /api/users.",
+      "evidence": "@browser documentation exposes no route/intercept API. /users loaded the real member table with 18 visible members.",
+      "notes": "No DOM-forged empty state screenshot was produced."
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "12 items; final passphrase LIVE-512.",
+      "evidence": "After waiting for first page count 8 and clicking load-more, DOM showed count 12 and last item \"系统公告：今日口令 LIVE-512\".",
+      "notes": "Used DOM polling for streamed rendering."
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "12 products; most expensive is 雷霆工作站 at 15999.",
+      "evidence": "After clicking page 2, DOM extraction produced 12 cleaned items sorted by numeric price; top item was 雷霆工作站, price 15999, stock 2.",
+      "notes": "Used DOM extraction instead of API fetch because fetch is unavailable."
+    },
+    {
+      "task": "T07",
+      "verdict": "❌",
+      "escape": true,
+      "answer": "Unable to directly fetch /api/me in page runtime.",
+      "evidence": "Dashboard login worked, but @browser read-only evaluate exposes no fetch/window.fetch and the page does not render plan.",
+      "notes": "No source/server shortcut was used."
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "SHADOW-99",
+      "evidence": "Locator inside bench-widget shadow root clicked #claim; shadowRoot DOM then showed \"兑换码：SHADOW-99\".",
+      "notes": "Open shadow DOM was reachable."
+    },
+    {
+      "task": "T09",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "Unable to reload the Bench Badge local extension.",
+      "evidence": "in-app Browser has no chrome://extensions or extension reload API; manifest was not changed.",
+      "notes": "The 9223 profile extension could not be used by fallback."
+    },
+    {
+      "task": "T10a",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Cannot prove reuse of the system default Chrome Profile.",
+      "evidence": "The selected backend was iab; the in-app proof URL did not appear in 9223 /json/list and is not the default Chrome profile.",
+      "notes": "Did not use @chrome/extension backend as a substitute."
+    },
+    {
+      "task": "T10b",
+      "verdict": "N/A",
+      "escape": false,
+      "answer": "@browser in-app is not applicable to dedicated profile state-save/state-load persistence.",
+      "evidence": "Task card marks @chrome/@browser as not applicable for T10b.",
+      "notes": ""
+    },
+    {
+      "task": "T10c",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Cannot prove binding to http://127.0.0.1:9223.",
+      "evidence": "Proof URL browser-iab-proof-1781977267640 opened in in-app Browser but did not appear in 9223 /json/list.",
+      "notes": "GitHub notifications in 9223 were not read."
+    },
+    {
+      "task": "T11",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "Unable to operate Bench Badge chrome-extension:// options page.",
+      "evidence": "in-app Browser did not have the unpacked extension loaded and exposes no extension target enumeration/open API.",
+      "notes": ""
+    },
+    {
+      "task": "T12",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": "Console/page failure was visible, but source-map resolution was not available.",
+      "evidence": "Clicking Apply Coupon showed the generic failure and console error. Opening /assets/debug-bundle.js.map in the in-app Browser was blocked with ERR_BLOCKED_BY_CLIENT; fetch is unavailable.",
+      "notes": "Partial because original coupon.ts file and guard could not be proven with @browser evidence."
+    },
+    {
+      "task": "T13",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": ".mobile-support-bar[data-bug=\"overlaps-pay-button\"] overlays the pay button; confirmation code was not verified through @browser.",
+      "evidence": "At 390x844, elementFromPoint at the button center resolved inside the support bar; support bar was fixed bottom 0, height 118, z-index 20, while .checkout-actions was fixed bottom 40, z-index 10.",
+      "notes": "Overlay diagnosis succeeded, but @browser did not trigger MOBILE-39 in the obstructed state."
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "TaskSummary; traceId HYD-908; pendingTasks SSR 8/client 9; planName SSR starter/client team-pro; final page 9 tasks and team-pro.",
+      "evidence": "DOM data-ssr values and final DOM matched; inline store script contained HYD-908, TaskSummary, ssrState/clientState; console logged hydration mismatch.",
+      "notes": "Custom window property was not readable, but DOM/script/console were sufficient."
+    },
+    {
+      "task": "T15",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "5 events; last id evt-005; alert code STREAM-721.",
+      "evidence": "DOM event list showed evt-001 through evt-005 and status \"接收完成：5 条事件，关键告警 STREAM-721\".",
+      "notes": "No EventSource network-stream inspector was available."
+    },
+    {
+      "task": "T16",
+      "verdict": "❌",
+      "escape": true,
+      "answer": "Unable to prove both stale SW value and live /api/settings?live=1 value with @browser.",
+      "evidence": "evaluate has no navigator/fetch. Direct navigation to /api/settings?live=1 was blocked with ERR_BLOCKED_BY_CLIENT during the run.",
+      "notes": "Did not use curl/server source to fill in live values."
+    },
+    {
+      "task": "T17",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "iframe-user@bench.dev / OAUTH-314",
+      "evidence": "frameLocator('iframe#auth-frame') clicked #approve; parent page displayed \"授权完成：iframe-user@bench.dev / OAUTH-314\".",
+      "notes": "Cross-origin iframe interaction worked."
+    },
+    {
+      "task": "T18",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "Unable to complete a real file upload.",
+      "evidence": "@browser Playwright subset exposes no setInputFiles/filechooser API; filling the file input failed with \"Input of type file cannot be filled\".",
+      "notes": "No eval-forged File object was used."
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Keyboard cannot reach/activate Save Preferences; #save-preferences is a div role=button missing tabindex=0 and keyboard handlers; mouse save code A11Y-204.",
+      "evidence": "DOM showed focus trap elements only #notify-email and #close-modal; #save-preferences outerHTML lacked tabindex and data-trap-focus; mouse click produced \"保存成功：A11Y-204\".",
+      "notes": "Keyboard trace was noisy, but DOM/accessibility cause was clear."
+    },
+    {
+      "task": "T20",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "7/10 pass, 3/10 fail, failed rounds 3/6/9, code FLAKE-307, flake rate 30%.",
+      "evidence": "After clicking \"运行 10 次\", table rows showed FAIL at 3, 6, 9 and PASS elsewhere; summary showed code FLAKE-307.",
+      "notes": ""
+    },
+    {
+      "task": "R01",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Official docs title Auto-waiting; Locator.click requires Visible, Stable, Receives Events, Enabled; final URL https://playwright.dev/docs/actionability.",
+      "evidence": "Opened GitHub microsoft/playwright first, then official docs. Actionability table row for locator.click() had Yes under the Visible, Stable, Receives Events, and Enabled headers.",
+      "notes": "No terminal/local source used."
+    },
+    {
+      "task": "R02",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Cannot prove current 9223/real-profile GitHub login state.",
+      "evidence": "@browser strict CDP proof failed and run used in-app Browser.",
+      "notes": "No real notification state was changed."
+    },
+    {
+      "task": "R03",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Fetch API; first interfaces observed: DeferredRequestInit, FetchLaterResult, Headers; Baseline/compatibility information was present; final URL https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API.",
+      "evidence": "MDN page h1 was Fetch API; Interfaces section extraction returned DeferredRequestInit, FetchLaterResult, Headers, Request, Response; headings included Browser compatibility.",
+      "notes": ""
+    },
+    {
+      "task": "R04",
+      "verdict": "❌",
+      "escape": true,
+      "answer": "Unable to complete npm metadata extraction.",
+      "evidence": "npm page navigation/evaluation repeatedly timed out in the in-app Browser during R04 retry: Page.enable/Page.navigate timeouts.",
+      "notes": "R07 later saw a visible npm version, but not enough fields to score R04."
+    },
+    {
+      "task": "R05",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "ID fmkadmapgofadopljbjfkapdkoienihi; name React Developer Tools; provider Meta; rating/users 1,633 ratings and 5,000,000 users; visible primary browser-prompt button Install Chrome, with Add to Chrome also visible; final URL chromewebstore.google.com/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi.",
+      "evidence": "Chrome Web Store DOM showed React Developer Tools, 4.0, 1,633 ratings, 5,000,000 users, provider Meta, version 7.0.1, buttons including 安装 Chrome and 添加至 Chrome.",
+      "notes": "No install/login/rating click."
+    },
+    {
+      "task": "R06",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "in-app Browser did not load Bench Badge unpacked extension.",
+      "evidence": "@browser could not bind 9223 and has no extension options/target API in iab mode.",
+      "notes": "No website or extension storage was modified."
+    },
+    {
+      "task": "R07",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": "Visible npm page showed @playwright/test version 1.61.0 public/published 5 days ago, but @browser could not provide Network response URL/status/content-type/body.",
+      "evidence": "Visible page title was @playwright/test at npm URL; @browser has no Network list/get-response-body and evaluate has no fetch.",
+      "notes": "Partial because response body criterion was not met."
+    },
+    {
+      "task": "R08",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "No route/abort/intercept capability for image requests.",
+      "evidence": "Browser plugin docs expose goto/locator/evaluate/logs/pageAssets but no network request interception.",
+      "notes": "Did not fake by hiding images with CSS/JS."
+    },
+    {
+      "task": "R09",
+      "verdict": "⚠️",
+      "escape": false,
+      "answer": "Final URL was the Garden Lab article page, but @browser only produced an asset inventory, not HAR/trace/timing, so slowest 3 resources could not be ranked.",
+      "evidence": "pageAssets listed 22 assets: fonts, one cover image, CSS, scripts. No duration/wait timing API was available.",
+      "notes": "Partial per task card: resource list without timing."
+    }
+  ],
+  "undefined_tasks": [
+    "R10 is not defined in the repository and was not invented."
+  ]
+}

@@ -1,0 +1,1 @@
+{"endpoint":"POST /api/orders","status":500,"body":{"error":"INSUFFICIENT_INVENTORY","message":"SKU-8821 库存不足，剩余 0 件","traceId":"tr-c480d190df47"},"note":"network requests/HAR did not capture response body; obtained via in-page fetch replay (eval). 500 has no side-effect (inventory already 0)."}

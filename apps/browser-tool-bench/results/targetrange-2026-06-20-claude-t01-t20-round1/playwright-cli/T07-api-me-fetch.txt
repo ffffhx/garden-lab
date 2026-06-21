@@ -1,0 +1,6 @@
+### Result
+"{\"status\":200,\"body\":{\"user\":\"Agent 测试员\",\"badge\":\"BENCH-7341\",\"plan\":\"team-pro-2026\",\"loginAt\":\"2026-06-20T04:15:12.931Z\"}}"
+### Ran Playwright code
+```js
+await page.evaluate('async () => { const r = await fetch(\'/api/me\', {credentials:\'include\'}); const j = await r.json(); return JSON.stringify({status:r.status, body:j}); }');
+```

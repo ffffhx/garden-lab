@@ -1,0 +1,5 @@
+=== T17 BLOCKER ===
+iframe src = http://127.0.0.1:4399/iframe-child.html
+127.0.0.1:4399 served by PID74361 (codex-snapshot, NOT bench) => 404 'not found'
+localhost/::1:4399/iframe-child.html (bench PID1762) => 200 (has 确认授权 button + OAUTH-314)
+Bench server binds only ::1, codex-snapshot occupies 127.0.0.1 -> cross-origin iframe cannot load. No button to click, no postMessage.

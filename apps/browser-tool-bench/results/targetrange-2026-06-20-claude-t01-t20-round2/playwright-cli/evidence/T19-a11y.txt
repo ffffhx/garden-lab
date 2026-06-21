@@ -1,0 +1,6 @@
+T19 keyboard accessibility
+- #save-preferences = <div class="fake-button save-preferences" role="button">, tabindex=null, no data-trap-focus
+- focus trap (data-trap-focus) only includes: #notify-email (INPUT), #close-modal (BUTTON)
+- Tab cycle from #notify-email: -> close-modal -> notify-email -> close-modal ... (#save-preferences NEVER reached)
+- Cause: missing tabindex="0" and no Enter/Space keyboard handler; excluded from focus trap
+- Mouse click "保存偏好" -> 保存成功：A11Y-204

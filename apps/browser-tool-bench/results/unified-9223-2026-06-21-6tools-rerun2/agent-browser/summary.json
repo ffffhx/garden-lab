@@ -1,0 +1,278 @@
+{
+  "tool": "agent-browser",
+  "model": "gpt-5.5",
+  "reasoning_effort": "xhigh",
+  "strict_cdp": "http://127.0.0.1:9223",
+  "browser_mode": "cdp-9223",
+  "cdp_proof": "curl /json/version returned Chrome 149.0.7827.116 with ws://127.0.0.1:9223/devtools/browser/88daa777-7389-4a89-8aad-df77b2877f3b; dedicated agent-browser session agent-browser-rerun2 get cdp-url returned the same 9223 browser websocket; unique URL http://localhost:4399/?agent_browser_worker=unified-9223-rerun2-1782010101 appeared in /json/list on ws://127.0.0.1:9223/devtools/page/...",
+  "elapsed_ms": 1050000,
+  "tool_calls": 205,
+  "browserOps": 166,
+  "escapes": {
+    "total": 7,
+    "eval_read": 7,
+    "eval_action": 0,
+    "cdp_escape": 0,
+    "init_script": 0,
+    "notes": "Read-only eval only: T07 had one failed syntax eval plus one successful fetch('/api/me') read; T14 read window.__BENCH_STORE__; T19 used four focus reads. No raw CDP, no init script, no eval action."
+  },
+  "tokens": "unavailable",
+  "cost_usd": "unavailable",
+  "tally": {
+    "pass": 30,
+    "warn": 0,
+    "fail": 0,
+    "nr": 0,
+    "na": 1
+  },
+  "results": [
+    {
+      "task": "T01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Logged in as BENCH-7341.",
+      "evidence": "/login accepted agent@bench.dev / bench-2026; dashboard heading showed 欢迎回来，Agent 测试员（工号 BENCH-7341）.",
+      "notes": ""
+    },
+    {
+      "task": "T02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "POST /api/orders failed with 500 and INSUFFICIENT_INVENTORY; SKU-8821 stock was 0.",
+      "evidence": "Network request 77506.41 response body contained error INSUFFICIENT_INVENTORY, message SKU-8821 库存不足，剩余 0 件, traceId tr-0fb6ebda10e5.",
+      "notes": ""
+    },
+    {
+      "task": "T03",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "LCP was mainly delayed by render-blocking blocking.css; heavy.js added an about 800 ms main-thread long task; hero.svg was slow but not the LCP element.",
+      "evidence": "Trace t03-trace.json: blocking.css finished around 1266 ms; heavy.js EvaluateScript/v8.run around 800 ms; hero.svg around 2068 ms; LCP candidate was text P around 2110 ms.",
+      "notes": "Trace artifact saved in output directory."
+    },
+    {
+      "task": "T04",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Empty users state shown with invite action.",
+      "evidence": "Routed **/api/users to {\"users\":[]}; page showed 暂无成员 and 邀请成员; screenshot t04-empty-state.png.",
+      "notes": "Route removed afterward."
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Loaded 12 feed items; final code LIVE-512.",
+      "evidence": "/livefeed after 加载更多 showed 已加载 12 条（没有更多了） and 系统公告：今日口令 LIVE-512.",
+      "notes": ""
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Most expensive item was 雷霆工作站 at 15999; sorted list captured for all 12 products.",
+      "evidence": "/catalog loaded page 2 and showed all products; descending top was 雷霆工作站 15999 stock 2, then 全画幅扫描仪 3699, 4K 专业显示器 2499.",
+      "notes": ""
+    },
+    {
+      "task": "T07",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Plan from API was team-pro-2026.",
+      "evidence": "Read-only eval on /dashboard: fetch('/api/me') returned plan team-pro-2026 and badge BENCH-7341.",
+      "notes": "One failed syntax eval attempt preceded the successful read."
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Shadow DOM reward code SHADOW-99.",
+      "evidence": "Dashboard snapshot exposed shadow button 领取今日奖励; after click snapshot showed 兑换码：SHADOW-99.",
+      "notes": ""
+    },
+    {
+      "task": "T09",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Reloaded unpacked Bench Badge from 1.0.0 to 1.0.1, verified page badge, then restored 1.0.0.",
+      "evidence": "Temporarily changed manifest version, clicked reload in chrome://extensions, local page showed BENCH EXT v1.0.1; restored manifest/storage and verified BENCH EXT v1.0.0.",
+      "notes": "Only Bench Badge state was touched; preexisting manifest diff outside version was not reverted."
+    },
+    {
+      "task": "T10a",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "GitHub notifications unread count was 70; first five entries were four ffffhx/garden-lab CI failures and one ffffhx/open-token-board CI failure.",
+      "evidence": "At 2026-06-21 10:58:28 CST, https://github.com/notifications?query=is%3Aunread&t10a=agent-browser-rerun2-20260621 showed Inbox 70; repo counts included garden-lab 58, codex-snapshots 7, profilepilot 4, open-token-board 1.",
+      "notes": "Read-only real-site task."
+    },
+    {
+      "task": "T10b",
+      "verdict": "N/A",
+      "escape": false,
+      "answer": "Not applicable under this strict 9223 run.",
+      "evidence": "Brief says T10b is self-managed persistence; user required every browser op to use CDP 9223 and forbade self-started profile substitution.",
+      "notes": ""
+    },
+    {
+      "task": "T10c",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Same GitHub notifications evidence as T10a under proven 9223 control.",
+      "evidence": "Final URL included t10c=agent-browser-rerun2-20260621-1059; /json/list showed the tab on ws://127.0.0.1:9223/devtools/page/...; unread count 70.",
+      "notes": "Read-only real-site task."
+    },
+    {
+      "task": "T11",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Extension options changed badge to HELLO-2026 · v1.0.0, then restored default.",
+      "evidence": "Bench Badge ID jkmndkochpgaleoechlemhdhbikdecnf; options save confirmed HELLO-2026; local page showed custom badge; final restore showed BENCH EXT v1.0.0.",
+      "notes": ""
+    },
+    {
+      "task": "T12",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Original source webpack://bench/src/cart/coupon.ts; failing function applySelectedCoupon; null field cartState.selectedCoupon.couponCode; expected guard if (!cartState.selectedCoupon) return null;.",
+      "evidence": "Console error carried originalSource src/cart/coupon.ts:12; Network source map listed webpack://bench/src/cart/coupon.ts and sourcesContent with the expected guard.",
+      "notes": "Opened source map as a normal browser resource; no eval."
+    },
+    {
+      "task": "T13",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Mobile pay button was covered by .mobile-support-bar[data-bug=\"overlaps-pay-button\"]; mouse-accessible confirmation code was MOBILE-39.",
+      "evidence": "Mobile click failed because support bar covered button; support bar z-index 20, actions z-index 10; desktop click revealed 支付确认码：MOBILE-39.",
+      "notes": ""
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Hydration mismatch trace HYD-908; component TaskSummary; SSR pendingTasks 8 planName starter; client pendingTasks 9 planName team-pro.",
+      "evidence": "Console logged [hydration mismatch]; read-only eval of window.__BENCH_STORE__ confirmed component, traceId, SSR and client states.",
+      "notes": ""
+    },
+    {
+      "task": "T15",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "SSE delivered 5 events; final alert code STREAM-721, last event evt-005.",
+      "evidence": "Network showed GET /api/realtime-events as EventSource with text/event-stream; page showed 接收完成：5 条事件，关键告警 STREAM-721.",
+      "notes": ""
+    },
+    {
+      "task": "T16",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Service worker stale cache returned STALE-CACHE-17; live bypass returned CACHE-BUST-42.",
+      "evidence": "/cache showed theme blue and release cached-2025.11; /api/settings had X-Bench-Cache service-worker-stale; /api/settings?live=1 returned green/live-2026.06/CACHE-BUST-42.",
+      "notes": "Suggested fix: update/unregister SW or change fetch handler cache strategy and reactivate."
+    },
+    {
+      "task": "T17",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Iframe auth account iframe-user@bench.dev, code OAUTH-314.",
+      "evidence": "Iframe button 确认授权 clicked successfully; page showed 授权完成：iframe-user@bench.dev / OAUTH-314.",
+      "notes": ""
+    },
+    {
+      "task": "T18",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Uploaded upload-token.txt, 36 bytes, token UPLOAD-448.",
+      "evidence": "File input accepted apps/browser-tool-bench/fixtures/upload-token.txt; page showed 文件 upload-token.txt，36 bytes，token=UPLOAD-448.",
+      "notes": ""
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "Keyboard trap skipped the save control; mouse click saved with code A11Y-204.",
+      "evidence": "Read-only focus eval after tabs cycled notify-email -> close-modal -> notify-email -> close-modal; save was a role button div without tabindex; mouse click showed 保存成功：A11Y-204.",
+      "notes": ""
+    },
+    {
+      "task": "T20",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "7/10 passed; failed rounds 3,6,9; code FLAKE-307; flake rate 30%.",
+      "evidence": "/flake after 运行 10 次 showed 通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307.",
+      "notes": ""
+    },
+    {
+      "task": "R01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Playwright docs page title Auto-waiting; locator.click() checks Visible, Stable, Receives Events, Enabled.",
+      "evidence": "Opened Microsoft Playwright repo then official docs https://playwright.dev/docs/actionability?r01=agent-browser-rerun2; actionability table showed the checks.",
+      "notes": "Read-only real-site task."
+    },
+    {
+      "task": "R02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "GitHub notifications unread count 70; first five repos ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/garden-lab, ffffhx/open-token-board.",
+      "evidence": "Reused read-only T10a/T10c GitHub evidence from current 9223 profile; no write actions.",
+      "notes": ""
+    },
+    {
+      "task": "R03",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "MDN Fetch API page title Fetch API; interfaces included Window.fetch() and WorkerGlobalScope.fetch(), Window.fetchLater(), DeferredRequestInit, FetchLaterResult, Headers, Request, Response.",
+      "evidence": "Opened https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API?r03=agent-browser-rerun2; Browser compatibility section was present.",
+      "notes": "No separate Baseline badge was visible in captured text."
+    },
+    {
+      "task": "R04",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "npm @playwright/test page showed version 1.61.0, weekly downloads 38,582,078, license Apache-2.0, repository github.com/microsoft/playwright, last publish 20 hours ago.",
+      "evidence": "Observation at 2026-06-21 10:59:50 CST; page said 1.61.0 • Public • Published 6 days ago.",
+      "notes": "Unpacked size was not shown in captured page text."
+    },
+    {
+      "task": "R05",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Chrome Web Store React Developer Tools: ID fmkadmapgofadopljbjfkapdkoienihi, publisher/provider Meta, rating 4.0, 1,633 ratings, 5,000,000 users, button 添加至 Chrome.",
+      "evidence": "Page details showed version 7.0.1 (10/20/2025), provider Meta, developer Meta Platforms, INC., size 789KiB.",
+      "notes": "Read-only real-site task."
+    },
+    {
+      "task": "R06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Real Garden Lab page showed custom extension badge REAL-SITE-2026 · v1.0.0, then was restored to BENCH EXT v1.0.0.",
+      "evidence": "Options page saved REAL-SITE-2026; real URL https://ffffhx.github.io/garden-lab/post/agent/?r06=agent-browser-rerun2-real-site; final restore verified local badge default.",
+      "notes": "Only Bench Badge state touched."
+    },
+    {
+      "task": "R07",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "npm metadata source was the document response body: URL https://www.npmjs.com/package/@playwright/test?r07=agent-browser-rerun2-20260621, status 200, content-type text/html, package @playwright/test, version 1.61.0; page version matched.",
+      "evidence": "Network document request B3995736AADF009C90A9CF351B4A9F49; response body had title @playwright/test - npm, og:title @playwright/test, meta description Latest version: 1.61.0, and visible version 1.61.0.",
+      "notes": "npm current frontend inlined package metadata in the document HTML rather than a separate package JSON XHR."
+    },
+    {
+      "task": "R08",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "Aborted image request https://developer.mozilla.org/static/client/external-link.4f3a2dc8e402cae5.svg with route **/*.svg --abort; final title Fetch API - Web APIs | MDN.",
+      "evidence": "Network request 13982.143 was resourceType Image with no response status/headers after local abort; main document loaded successfully and title stayed Fetch API.",
+      "notes": "agent-browser route supports URL patterns but not resource-type filtering, so a common image extension pattern was used."
+    },
+    {
+      "task": "R09",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "HAR slowest resources: document 353.79 ms, external auth/me fetch 186.43 ms, route script 15.63 ms.",
+      "evidence": "HAR r09.har saved with 31 requests at 2026-06-21 11:04:02 CST; final URL https://ffffhx.github.io/garden-lab/post/agent/?r09=agent-browser-rerun2-har.",
+      "notes": "Document affected first screen; external auth fetch was post-load/non-critical for article content; route script was cached and short."
+    }
+  ]
+}

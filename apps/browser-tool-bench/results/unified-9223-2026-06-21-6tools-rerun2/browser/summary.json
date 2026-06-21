@@ -1,0 +1,278 @@
+{
+  "tool": "browser",
+  "model": "gpt-5",
+  "reasoning_effort": "high",
+  "strict_cdp": "http://127.0.0.1:9223",
+  "browser_mode": "in-app",
+  "cdp_proof": "Browser proof URL http://localhost:4399/?browser_proof=browser-rerun2-1782009310019 opened in Browser tab, but it was absent from http://127.0.0.1:9223/json/list; therefore Browser did not prove control of 9223 and this run uses in-app fallback.",
+  "elapsed_ms": 656250,
+  "tool_calls": 64,
+  "browserOps": 129,
+  "escapes": {
+    "total": 31,
+    "eval_read": 30,
+    "eval_action": 1,
+    "cdp_escape": 0,
+    "init_script": 0,
+    "notes": "eval_read counts Browser read-only evaluate calls used for DOM/state extraction; eval_action=1 was a failed early shadow-DOM click attempt and was not used for final T08 success; shell curl was used only for allowed CDP preflight/proof."
+  },
+  "tokens": "unavailable",
+  "cost_usd": "unavailable",
+  "tally": {
+    "pass": 14,
+    "warn": 2,
+    "fail": 0,
+    "nr": 14,
+    "na": 1
+  },
+  "results": [
+    {
+      "task": "T01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "BENCH-7341",
+      "evidence": "Logged in to http://localhost:4399/dashboard; welcome text yielded BENCH-7341.",
+      "notes": ""
+    },
+    {
+      "task": "T02",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "@browser/in-app can click the order button and see the generic failure, but it has no Network request list/response-body API; status code and JSON error body could not be retrieved faithfully.",
+      "evidence": "Browser docs expose tab.dev.logs and page interaction, but no Network response body API. Attempted read-only evaluate for PerformanceResourceTiming failed because performance is unavailable in Browser evaluate sandbox.",
+      "notes": "No pre-click Network API available; did not synthesize a POST fetch."
+    },
+    {
+      "task": "T03",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Browser in-app does not expose trace/HAR/PerformanceTimeline access in this runtime, so LCP attribution for /slow cannot be evidenced faithfully.",
+      "evidence": "Attempted Browser evaluate of performance.getEntriesByType failed because performance is unavailable in the evaluate sandbox; Browser docs list no trace/performance insight capability.",
+      "notes": "Did not infer from task-card ground truth as benchmark evidence."
+    },
+    {
+      "task": "T04",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Browser in-app does not expose route/mock/intercept primitives for /api/users; no empty-state screenshot was produced rather than faking it with DOM changes.",
+      "evidence": "Browser documentation API has goto/click/evaluate/logs/screenshot but no request routing or response mock API.",
+      "notes": "No DOM mutation or fake empty state."
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "最终 12 条动态；最后一条口令 LIVE-512。",
+      "evidence": "Loaded more button count=1; final body contains LIVE-512=true; extracted candidates included “系统公告：今日口令 LIVE-512”.",
+      "notes": "Waited for button and final token before counting."
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "[{\"name\":\"雷霆工作站\",\"price\":15999,\"stock\":2},{\"name\":\"全画幅扫描仪\",\"price\":3699,\"stock\":3},{\"name\":\"4K 专业显示器\",\"price\":2499,\"stock\":7},{\"name\":\"人体工学椅\",\"price\":1899,\"stock\":0},{\"name\":\"会议级摄像头\",\"price\":1599,\"stock\":11},{\"name\":\"桌面监听音箱\",\"price\":1299,\"stock\":5},{\"name\":\"降噪耳机 Pro\",\"price\":899,\"stock\":41},{\"name\":\"便携 SSD 1TB\",\"price\":749,\"stock\":16},{\"name\":\"USB-C 扩展坞\",\"price\":549,\"stock\":64},{\"name\":\"电竞鼠标\",\"price\":459,\"stock\":0},{\"name\":\"静音机械键盘\",\"price\":399,\"stock\":23},{\"name\":\"智能护眼台灯\",\"price\":329,\"stock\":88}]; 最贵：雷霆工作站 15999 元",
+      "evidence": "DOM snapshot after page 2 click contained 12 products; first sorted item={\"name\":\"雷霆工作站\",\"price\":15999,\"stock\":2}; button count=1.",
+      "notes": "Extraction used Browser DOM snapshot after waiting for async render."
+    },
+    {
+      "task": "T07",
+      "verdict": "N-R",
+      "escape": true,
+      "answer": "Browser evaluate cannot run page-context fetch here, so /api/me plan could not be requested directly from the logged-in page runtime.",
+      "evidence": "Attempted page-runtime fetch from Browser evaluate failed with “fetch is not a function”.",
+      "notes": "This is a required runtime-fetch capability cell; no DOM fallback used."
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "SHADOW-99",
+      "evidence": "DOM snapshot exposed shadow-root control as button; after click snapshot contains SHADOW-99=true.",
+      "notes": "No eval action needed; Browser snapshot pierced open shadow DOM."
+    },
+    {
+      "task": "T09",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Browser in-app cannot operate chrome://extensions or a loaded Bench Badge extension in the 9223 profile; extension reload was not attempted.",
+      "evidence": "Run mode is in-app after failed 9223 proof; Browser docs provide no extension-management API. Existing Bench Badge state in 9223 was not touched.",
+      "notes": "No extension mutation; baseline restore not needed by this worker."
+    },
+    {
+      "task": "T10a",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "In-app Browser current profile is not logged into GitHub notifications; it redirected to GitHub login, and no login was attempted.",
+      "evidence": "Final URL=https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fnotifications%3Fquery%3Dis%253Aunread%26browser_t10a%3D1782009583246; title=Sign in to GitHub · GitHub; snapshot heading Sign in to GitHub.",
+      "notes": "This does not prove default system Chrome profile access; mode is in-app fallback."
+    },
+    {
+      "task": "T10b",
+      "verdict": "N/A",
+      "escape": false,
+      "answer": "Browser plugin has no dedicated profile state save/load or persistent self-managed profile flow to test T10b.",
+      "evidence": "Browser docs expose in-app tabs but no state file/session persistence commands equivalent to agent-browser/playwright persistent profile.",
+      "notes": "T10b is not applicable to @browser/in-app."
+    },
+    {
+      "task": "T10c",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Could not prove Browser controls http://127.0.0.1:9223; stopped before reading 9223 GitHub notifications.",
+      "evidence": "Browser proof URL http://localhost:4399/?browser_proof=browser-rerun2-1782009310019 opened in Browser tab, but it was absent from http://127.0.0.1:9223/json/list; therefore Browser did not prove control of 9223 and this run uses in-app fallback.",
+      "notes": "Unique Browser proof URL absent from /json/list; did not substitute in-app profile."
+    },
+    {
+      "task": "T11",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Browser in-app cannot discover/open the Bench Badge chrome-extension:// options page from the 9223 profile, so badge text was not changed.",
+      "evidence": "Run mode is in-app after failed 9223 proof; Browser docs and tab list do not provide extension target enumeration or chrome-extension options access for the target profile.",
+      "notes": "No extension storage touched; BENCH EXT v1.0.0 not altered by this worker."
+    },
+    {
+      "task": "T12",
+      "verdict": "⚠️",
+      "escape": true,
+      "answer": "Browser saw the failure/console message but could not retrieve source-map mapped original file and field fully.",
+      "evidence": "Button count=1; logs=[{\"level\":\"error\",\"message\":\"order submit failed tr-1878fb88c68e\",\"timestamp\":\"2026-06-21T02:37:53.535Z\",\"url\":\"http://localhost:4399/dashboard\"},{\"level\":\"error\",\"message\":\"checkout coupon crash Object\",\"timestamp\":\"2026-06-21T02:40:30.480Z\",\"url\":\"http://localhost:4399/assets/debug-bundle.js\"}]; source probe={\"body\":\"Bench 靶场\\nConsole 调试\\n结算页\\n\\n订单 CART-9A2 已选 3 件商品。点击应用优惠券会触发一个前端异常。\\n\\n应用优惠券\\n\\n应用失败，请联系管理员（错误码已上报）\",\"scripts\":[{\"src\":\"http://localhost:4399/assets/debug-bundle.js\",\"textTail\":\"\"}]}; snapshot has failure=true.",
+      "notes": "Browser has console logs, but no network/source-map fetch API; only inline script metadata could be read."
+    },
+    {
+      "task": "T13",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "移动端点击被 .mobile-support-bar[data-bug=\"overlaps-pay-button\"] 遮挡；它 fixed 底部、height 118px、z-index 20，高于 .checkout-actions 的 z-index 10。正常点击确认码 MOBILE-39。",
+      "evidence": "Mobile click error=; elementFromPoint on pay center={\"bug\":null,\"cls\":\"\",\"tag\":\"DIV\",\"text\":\"移动端帮助条错误覆盖了支付按钮。\"}; barStyle={\"bottom\":\"0px\",\"height\":\"118px\",\"pointerEvents\":\"auto\",\"position\":\"fixed\",\"zIndex\":\"20\"}; payStyle={\"bottom\":\"auto\",\"position\":\"static\",\"zIndex\":\"auto\"}; desktop confirmation in snapshot=true. Recheck exact styles={\"actionsClass\":\"checkout-actions\",\"actionsStyle\":{\"bottom\":\"40px\",\"position\":\"fixed\",\"zIndex\":\"10\"},\"barBug\":\"overlaps-pay-button\",\"barClass\":\"mobile-support-bar\",\"barStyle\":{\"bottom\":\"0px\",\"height\":\"118px\",\"position\":\"fixed\",\"zIndex\":\"20\"}}.",
+      "notes": "Used Browser viewport capability 390x844, then wider viewport only to verify normal confirmation code."
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "组件 TaskSummary；traceId HYD-908；SSR pendingTasks=8/planName=starter，Client pendingTasks=9/planName=team-pro；客户端最终显示 9 个待办、team-pro 套餐。",
+      "evidence": "Snapshot excerpt=- banner:\n  - link \"Bench 靶场\":\n    - /url: /\n- main:\n  - heading \"任务概览\" [level=1]\n  - paragraph:\n    - text: 待办数量：\n    - strong: \"9\"\n  - paragraph:\n    - text: 套餐：\n    - strong: team-pro\n  - paragraph: 客户端已接管，traceId=HYD-908; logs=[{\"level\":\"error\",\"message\":\"order submit failed tr-1878fb88c68e\",\"timestamp\":\"2026-06-21T02:37:53.535Z\",\"url\":\"http://localhost:4399/dashboard\"},{\"level\":\"error\",\"message\":\"checkout coupon crash Object\",\"timestamp\":\"2026-06-21T02:40:30.480Z\",\"url\":\"http://localhost:4399/assets/debug-bundle.js\"},{\"level\":\"error\",\"message\":\"[hydration mismatch] Object\",\"timestamp\":\"2026-06-21T02:41:20.541Z\",\"url\":\"http://localhost:4399/hydration?browser_run=1782009680113\"}]; store={\"body\":\"Bench 靶场\\n任务概览\\n\\n待办数量：9\\n\\n套餐：team-pro\\n\\n客户端已接管，traceId=HYD-908\",\"scripts\":[\"\\n    window.__BENCH_STORE__ = {\\n      traceId: \\\"HYD-908\\\",\\n      component: \\\"TaskSummary\\\",\\n      clientState: { pendingTasks: 9, planName: \\\"team-pro\\\" },\\n      ssrState: { pendingTasks: 8, planName: \\\"starter\\\" },\\n    };\\n\\n    setTimeout(() => {\\n      const store = window.__BENCH_STORE__;\\n      console.error(\\\"[hydration mismatch]\\\", {\\n        traceId: store.traceId,\\n        component: store.component,\\n        fields: [\\\"pendingTasks\\\", \\\"planName\\\"],\\n        ssrState: store.ssrState,\\n        clientState: \"],\"store\":null}.",
+      "notes": "Used console plus Browser evaluate of window.__BENCH_STORE__/inline state."
+    },
+    {
+      "task": "T15",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "共收到 5 条事件；最后一条 id=evt-005；关键告警 code=STREAM-721。",
+      "evidence": "Button count=1; final snapshot/body excerpt=- banner:\n  - link \"Bench 靶场\":\n    - /url: /\n- main:\n  - heading \"实时事件流\" [level=1]\n  - paragraph: 点击开始后，页面会通过 EventSource 接收 5 条事件。\n  - button \"开始接收\" [active]\n  - paragraph: 接收完成：5 条事件，关键告警 STREAM-721\n  - list:\n    - listitem: evt-001 · connected · SSE 通道已建立\n    - listitem: evt-002 · metric · checkout_latency_ms\n    - listitem: evt-003 · metric · cart_items\n    - listitem: evt-004 · notice · 库存同步完成\n    - listitem: evt-005 · alert · STREAM-721\nBench 靶场\n实时事件流\n\n点击开始后，页面会通过 EventSource 接收 5 条事件。\n\n开始接收\n\n接收完成：5 条事件，关键告警 STREAM-721\n\nevt-001 · connected · SSE 通道已建立\nevt-002 · metric · checkout_latency_ms\nevt-003 · metric · cart_items\nevt-004 · notice · 库存同步完成\nevt-005 · alert · STREAM-721.",
+      "notes": "Relied on page DOM after waiting for stream completion; Browser did not expose streaming response internals."
+    },
+    {
+      "task": "T16",
+      "verdict": "⚠️",
+      "escape": false,
+      "answer": "页面显示旧配置 theme=blue, release=cached-2025.11, featureFlag=STALE-CACHE-17，疑似 Service Worker 缓存；但 Browser 无法打开/请求 /api/settings?live=1，不能在本工具内验证真实值。建议修复动作是更新/注销 Service Worker 或修正 fetch handler 缓存策略并重新激活。",
+      "evidence": "Cache snapshot/body=\"Bench 靶场\\n配置中心\\n\\n页面会读取 /api/settings，但 Service Worker 故意返回过期配置。\\n\\n主题\\nblue\\n版本\\ncached-2025.11\\nFeature Flag\\nSTALE-CACHE-17\\n\\nService Worker 已控制页面\"; logs=[{\"level\":\"error\",\"message\":\"order submit failed tr-1878fb88c68e\",\"timestamp\":\"2026-06-21T02:37:53.535Z\",\"url\":\"http://localhost:4399/dashboard\"},{\"level\":\"error\",\"message\":\"checkout coupon crash Object\",\"timestamp\":\"2026-06-21T02:40:30.480Z\",\"url\":\"http://localhost:4399/assets/debug-bundle.js\"},{\"level\":\"error\",\"message\":\"[hydration mismatch] Object\",\"timestamp\":\"2026-06-21T02:41:20.541Z\",\"url\":\"http://localhost:4399/hydration?browser_run=1782009680113\"}]; Browser direct navigation to /api/settings?live=1 failed with net::ERR_BLOCKED_BY_CLIENT.",
+      "notes": "Partial: stale UI observed, live endpoint blocked by Browser; navigator/fetch unavailable in evaluate sandbox."
+    },
+    {
+      "task": "T17",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "授权账号 iframe-user@bench.dev，授权码 OAUTH-314。",
+      "evidence": "iframe button count=1; parent snapshot after click includes OAUTH-314=true; excerpt=- banner:\n  - link \"Bench 靶场\":\n    - /url: /\n- main:\n  - heading \"第三方授权\" [level=1]\n  - paragraph: 下方 iframe 来自 127.0.0.1，与 localhost 页面不同源。\n  - iframe [active]:\n    - main:\n      - heading \"Bench OAuth\" [level=1]\n      - paragraph: 账号：iframe-user@bench.dev\n      - button \"确认授权\" [active]\n      - paragraph: 授权码会通过 postMessage 发回父页面。\n  - paragraph: 授权完成：iframe-user@bench.dev / OAUTH-314.",
+      "notes": "Used Browser frameLocator to click inside cross-origin iframe."
+    },
+    {
+      "task": "T18",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Browser in-app exposes the file input but its supported API has no setInputFiles/file chooser upload primitive; real upload of upload-token.txt could not be performed.",
+      "evidence": "Snapshot has file input=1; attempted locator.fill on file input failed=Timed out after 3000ms waiting for selector input[type=\"file\"]: Browser Use encountered an error interacting with this webpage: Error: Input of type \"file\" cannot be filled\nlocator.fill failed for selector input[type=\"file\"]; supported Browser docs list fill/click but no setInputFiles/upload API.",
+      "notes": "Did not synthesize a File object via eval; that would be the partial/escape path, and Browser evaluate is read-only for actions here."
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "键盘不能到达/激活“保存偏好”。原因：focus trap 只包含 [data-trap-focus] 的输入框和关闭按钮；#save-preferences 是 div[role=button]，缺少 tabindex=\"0\"，也没有键盘处理。鼠标点击保存后的确认码是 A11Y-204。",
+      "evidence": "active before={\"active\":{\"id\":\"\",\"role\":null,\"tabindex\":null,\"tag\":\"BODY\",\"text\":\"Bench 靶场\\n偏好设置\\n打开偏好设置\\n\\n尚未保存\\n\\n通知偏好\\n通知邮箱\\n 保存偏好 关闭\"},\"save\":{\"className\":\"fake-button save-preferences\",\"id\":\"save-preferences\",\"onkeydown\":false,\"role\":\"button\",\"tabindex\":null,\"tag\":\"DIV\",\"text\":\"保存偏好\"},\"trap\":[{\"id\":\"notify-email\",\"role\":null,\"tabindex\":null,\"tag\":\"INPUT\",\"text\":\"agent@bench.dev\"},{\"id\":\"close-modal\",\"role\":null,\"tabindex\":null,\"tag\":\"BUTTON\",\"text\":\"关闭\"}]}; after Tab={\"active\":{\"id\":\"\",\"role\":null,\"tabindex\":null,\"tag\":\"BODY\",\"text\":\"Bench 靶场\\n偏好设置\\n打开偏好设置\\n\\n尚未保存\\n\\n通知偏好\\n通知邮箱\\n 保存偏好 关闭\"},\"save\":{\"className\":\"fake-button save-preferences\",\"id\":\"save-preferences\",\"onkeydown\":false,\"role\":\"button\",\"tabindex\":null,\"tag\":\"DIV\",\"text\":\"保存偏好\"},\"trap\":[{\"id\":\"notify-email\",\"role\":null,\"tabindex\":null,\"tag\":\"INPUT\",\"text\":\"agent@bench.dev\"},{\"id\":\"close-modal\",\"role\":null,\"tabindex\":null,\"tag\":\"BUTTON\",\"text\":\"关闭\"}]}; after second Tab={\"active\":{\"id\":\"\",\"role\":null,\"tabindex\":null,\"tag\":\"BODY\",\"text\":\"Bench 靶场\\n偏好设置\\n打开偏好设置\\n\\n尚未保存\\n\\n通知偏好\\n通知邮箱\\n 保存偏好 关闭\"},\"save\":{\"className\":\"fake-button save-preferences\",\"id\":\"save-preferences\",\"onkeydown\":false,\"role\":\"button\",\"tabindex\":null,\"tag\":\"DIV\",\"text\":\"保存偏好\"},\"trap\":[{\"id\":\"notify-email\",\"role\":null,\"tabindex\":null,\"tag\":\"INPUT\",\"text\":\"agent@bench.dev\"},{\"id\":\"close-modal\",\"role\":null,\"tabindex\":null,\"tag\":\"BUTTON\",\"text\":\"关闭\"}]}; after Shift+Tab={\"active\":{\"id\":\"\",\"role\":null,\"tabindex\":null,\"tag\":\"BODY\",\"text\":\"Bench 靶场\\n偏好设置\\n打开偏好设置\\n\\n尚未保存\\n\\n通知偏好\\n通知邮箱\\n 保存偏好 关闭\"},\"save\":{\"className\":\"fake-button save-preferences\",\"id\":\"save-preferences\",\"onkeydown\":false,\"role\":\"button\",\"tabindex\":null,\"tag\":\"DIV\",\"text\":\"保存偏好\"},\"trap\":[{\"id\":\"notify-email\",\"role\":null,\"tabindex\":null,\"tag\":\"INPUT\",\"text\"…[truncated]",
+      "notes": "Used Browser keyboard events for Tab/Shift+Tab, then mouse click only to obtain requested confirmation code."
+    },
+    {
+      "task": "T20",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "通过 7/10，失败 3/10，失败轮次 3、6、9，稳定性代码 FLAKE-307；flake rate=30%，不稳定。",
+      "evidence": "Final snapshot/body showed summary “通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307” and table rows 1 PASS, 2 PASS, 3 FAIL, 4 PASS, 5 PASS, 6 FAIL, 7 PASS, 8 PASS, 9 FAIL, 10 PASS.",
+      "notes": "Waited after initial partial table until all 10 rows rendered."
+    },
+    {
+      "task": "R01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "页面标题 Actionability；Locator.click 需要 Visible、Stable、Receives Events、Enabled checks（不需要 Editable）。最终 URL: https://playwright.dev/docs/actionability?browser_run=1782009805462",
+      "evidence": "Title=Auto-waiting | Playwright; excerpt around Locator.click=\"Skip to main content\\nPlaywright\\nDocs\\nMCP\\nCLI\\nAPI\\nNode.js\\nSearch\\n⌘\\nK\\nGetting Started\\nInstallation\\nWriting tests\\nGenerating tests\\nRunning and debugging tests\\nTrace viewer\\nSetting up CI\\nVS Code\\nRelease notes\\nCanary releases\\nPlaywright Test\\nAgents\\nAnnotations\\nCommand line\\nConfiguration\\nConfiguration (use)\\nEmulation\\nFixtures\\nGlobal setup and teardown\\nParallelism\\nParameterize tests\\nProjects\\nReporters\\nRetries\\nSharding\\nTimeouts\\nTypeScript\\nUI Mode\\nWeb server\\nGuides\\nLibrary\\nAccessibility testing\\nActions\\nAssertions\\nAPI testing\\nAuthentication\\nAuto-waiting\\nBest Practices\\nBrowsers\\nChrome extensions\\nClock\\nComponents (experimental)\\nDebugging Tests\\nDialogs\\nDownloads\\nEvaluating JavaScript\\nEvents\\nExtensibility\\nFrames\\nHandles\\nIsolation\\nLocators\\nMock APIs\\nMock browser APIs\\nNavigations\\nNetwork\\nOther locators\\nPages\\nPage object models\\nScreenshots\\nService Workers\\nSnapshot testing\\nTest generator\\nTouch events (legacy)\\nTrace viewer\\nVideos\\nVisual comparisons\\nWebView2\\nMigration\\nIntegrations\\nSupported languages\\nGuidesAuto-waiting\\nAuto-waiting\\nIntroduction​\\n\\nPlaywright performs a range of actionability checks on the elements before making actions to ensure these actions behave as expected. It auto-waits for all the relevant checks to pass and only then performs the requested action. If the required checks do not pass within the given timeout, action fails with the TimeoutError.\\n\\nFor example, for locator.click(), Playwright will ensure that:\\n\\nlocator resolves to exactly one element\\nelement is Visible\\nelement is Stable, as in not animating or completed animation\\nelement Receives Events, as in not obscured by other element…[truncated]",
+      "notes": "Used official Playwright docs page in Browser; no terminal/source reading."
+    },
+    {
+      "task": "R02",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Current in-app Browser profile is not logged into GitHub; notifications redirected to login, so unread count/repositories were not read.",
+      "evidence": "Observation time=2026-06-21T02:43:37.670Z; final URL=https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fnotifications%3Fquery%3Dis%253Aunread%26browser_t10a%3D1782009583246; title=Sign in to GitHub · GitHub; login snapshot shown.",
+      "notes": "Read-only; no login attempted and no notification state changed."
+    },
+    {
+      "task": "R03",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "主标题 Fetch API；Interfaces 区域前三个接口：Headers, Request, Response；页面显示 Baseline/Browser compatibility 相关信息：是。最终 URL: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API?browser_run=1782009826847",
+      "evidence": "Title=Fetch API - Web APIs | MDN; #interfaces heading=Interfaces; section=\"Interfaces\\nWindow.fetch() and WorkerGlobalScope.fetch()\\n\\nThe fetch() method used to fetch a resource.\\n\\nWindow.fetchLater()\\n\\nUsed to make a deferred fetch request.\\n\\nDeferredRequestInit\\n\\nRepresents the set of options that can be used to configure a deferred fetch request.\\n\\nFetchLaterResult\\n\\nRepresents the result of requesting a deferred fetch.\\n\\nHeaders\\n\\nRepresents response/request headers, allowing you to query them and take different actions depending on the results.\\n\\nRequest\\n\\nRepresents a resource request.\\n\\nResponse\\n\\nRepresents the response to a request.\"; relevant links=[\"Request\",\"Response\",\"Response\",\"Request\",\"Response\",\"Headers\",\"Request\",\"Response\"]; baseline=true.",
+      "notes": "Used MDN page through Browser; re-read the #interfaces section instead of the table of contents."
+    },
+    {
+      "task": "R04",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "观察时间 2026-06-21T02:44:29.538Z；version=1.61.0; license=Apache-2.0; weekly downloads=38,582,078; unpacked size=页面未显示; repository=https://github.com/microsoft/playwright; final URL=https://www.npmjs.com/package/@playwright/test?browser_run=1782009863745",
+      "evidence": "Title=@playwright/test - npm; body excerpt=\"skip to:contentpackage searchsign in\\nPro\\nTeams\\nPricing\\nDocumentation\\nnpm\\nSearch\\nSign Up\\nSign In\\n@playwright/test\\n1.61.0 • Public • Published 6 days ago\\n Readme\\nCode Beta\\n1 Dependency\\n862 Dependents\\n3,246 Versions\\n🎭 Playwright\\n\\n    \\n\\nDocumentation | API reference\\n\\nPlaywright is a framework for web automation and testing. It drives Chromium, Firefox, and WebKit with a single API — in your tests, in your scripts, and as a tool for AI agents.\\n\\nGet Started\\n\\nChoose the path that fits your workflow:\\n\\n\\tBest for\\tInstall\\nPlaywright Test\\tEnd-to-end testing\\tnpm init playwright@latest\\nPlaywright CLI\\tCoding agents (Claude Code, Copilot)\\tnpm i -g @playwright/cli@latest\\nPlaywright MCP\\tAI agents and LLM-driven automation\\tnpx @playwright/mcp@latest\\nPlaywright Library\\tBrowser automation scripts\\tnpm i playwright\\nVS Code Extension\\tTest authoring and debugging in VS Code\\tInstall from Marketplace\\nPlaywright Test\\n\\nPlaywright Test is a full-featured test runner built for end-to-end testing. It runs tests across Chromium, Firefox, and WebKit with full browser isolation, auto-waiting, and web-first assertions.\\n\\nInstall\\nnpm init playwright@latest\\n\\nOr add manually:\\n\\nnpm i -D @playwright/test\\nnpx playwright install\\nWrite a test\\nimport { test, expect } from '@playwright/test';\\n\\ntest('has title', async ({ page }) => {\\n  await page.goto('https://playwright.dev/');\\n  await expect(page).toHaveTitle(/Playwright/);\\n});\\n\\ntest('get started link', async ({ page }) => {\\n  await page.goto('https://playwright.dev/');\\n  await page.getByRole('link', { name: 'Get started' }).click();\\n  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();\\n});\\nRun…[truncated]",
+      "notes": "Values are from visible npm page text/links in Browser; no npm CLI/curl."
+    },
+    {
+      "task": "R05",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "扩展 ID=fmkadmapgofadopljbjfkapdkoienihi；名称=React Developer Tools；发布者=Meta；评分/用户量=4.0（1,633 个评分）/ 5,000,000 用户；扩展 CTA=添加至 Chrome（页面另有“改用 Chrome”横幅按钮“安装 Chrome”）；最终 URL=https://chromewebstore.google.com/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi?browser_run=1782009896789",
+      "evidence": "Title=React Developer Tools - Chrome 应用商店; buttons=[\"一个包含更多选项的菜单\",\"探索\",\"扩展程序\",\"主题\",\"不了，谢谢\",\"安装 Chrome\",\"评分每天更新一次，未必反映最新评价。\",\"分享\",\"添加至 Chrome\",\"详细了解结果和评价\",\"上一张幻灯片\",\"下一张幻灯片\"]; body excerpt=\"跳到主要内容\\nchrome 应用商店\\n登录\\n探索\\n扩展程序\\n主题\\n改用 Chrome？\\n\\nGoogle 建议将扩展程序和主题与 Chrome 搭配使用。\\n\\n不了，谢谢\\n是\\n切换到 Chrome 即可安装扩展程序和主题背景\\n安装 Chrome\\nReact Developer Tools\\n精选\\n4.0\\n(\\n\\n1,633 个评分\\n\\n)\\n分享\\n扩展程序\\n开发者工具\\n5,000,000 用户\\n添加至 Chrome\\n概述\\n\\nAdds React debugging tools to the Chrome Developer Tools.\\n\\nCreated from revision 3cde211b0c on 10/20/2025.\\n\\nReact Developer Tools is a Chrome DevTools extension for the open-source React JavaScript library. It allows you to inspect the React component hierarchies in the Chrome Developer Tools.\\n\\nYou will get two new tabs in your Chrome DevTools: \\\"Components ⚛\\\" and \\\"Profiler ⚛\\\".\\n\\nThe Components tab shows you the root React components that were rendered on the page, as well as the subcomponents that they ended up rendering.\\n\\nBy selecting one of the components in the tree, you can inspect and edit its current props and state in the panel on the right. In the breadcrumbs you can inspect the selected component, the component that created it, the component that created that one, and so on.\\n\\nIf you inspect a React element on the page using the regular Elements tab, then switch over to the React tab, that element will be automatically selected in the React tree.\\n\\nThe Profiler tab allows you to record performance information.\\n\\nThis extension requires permissions to access the page's React tree, but it does not transmit any data remotely. It is fully open source, and you can find its source code at https://github.com/facebook/react/tree/main/packages/react-devtools-extensions.\\n\\n查看更多\\n4.0 星（5 星制）\\n1,633 个评分\\n\\n详细了…[truncated]",
+      "notes": "Read-only Chrome Web Store page in Browser; no install/remove/login click."
+    },
+    {
+      "task": "R06",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Browser in-app is not the 9223/profile with Bench Badge loaded and cannot open the extension options page; real-site injection/configuration was not attempted.",
+      "evidence": "Run mode is in-app after failed 9223 proof; no extension target enumeration/options API; target website was not modified.",
+      "notes": "No Bench Badge storage or target website state touched."
+    },
+    {
+      "task": "R07",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Browser in-app can read the npm page, but it has no browser Network request list/response-body API; package metadata response URL/status/content-type/body could not be retrieved faithfully.",
+      "evidence": "Browser docs expose page DOM/logs but no Network response API. R04 page metadata was visible, but R07 specifically requires Network response body evidence.",
+      "notes": "Did not use curl/npm CLI or synthesize a separate fetch."
+    },
+    {
+      "task": "R08",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Browser in-app exposes no route/abort/intercept primitive, so image requests on MDN could not be blocked at the network layer.",
+      "evidence": "Browser documentation lists navigation/click/evaluate/logs/screenshot only; no request interception API. CSS/JS hiding was not used because it would not satisfy the network-layer task.",
+      "notes": "No requests were blocked."
+    },
+    {
+      "task": "R09",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "Browser in-app cannot provide HAR/trace/Network timing/performance entries for the real Garden Lab article load in this runtime.",
+      "evidence": "Probe on https://ffffhx.github.io/garden-lab/post/agent/ showed window.performance is undefined in Browser evaluate; Browser docs list no HAR/trace/network timing API.",
+      "notes": "Page content could be opened, but timing evidence required by R09 was unavailable."
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+T10b: bb-browser persistence test.
+- bb-browser has NO explicit state save/load or --session-name command. Persistence is implicit = underlying Chrome --user-data-dir.
+- Here attached to external persistent 9223 profile (user_session/dotcom_user/logged_in cookies persisted, expiry months out).
+- Demo: stopped daemon (ended bb-browser session) -> started fresh daemon session -> reopened github.com/notifications -> still logged in as ffffhx, NO login wall, NO re-login.
+Verdict ✅ (persistence works via user-data-dir; no portable state-file export like agent-browser/playwright-cli).

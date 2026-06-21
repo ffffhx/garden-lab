@@ -1,0 +1,23 @@
+T16 Service Worker 缓存排障 — bb-browser 0.14.2 (CDP 9223), 2026-06-20 patch
+==================================================================
+页面 /cache 当前显示(旧值):
+  theme       = blue
+  release     = cached-2025.11
+  featureFlag = STALE-CACHE-17
+  状态文字: "Service Worker 已控制页面"
+
+SW 注册确认:
+  scope=http://localhost:4399/  active script=http://localhost:4399/sw-cache.js  state=activated
+
+证明是 Service Worker 缓存导致(非普通 HTTP cache / 页面 bug):
+  - sw-cache.js 的 fetch handler 拦截 pathname=='/api/settings' 且无 live 参数, 直接 respondWith 硬编码 STALE_SETTINGS,
+    并附 header X-Bench-Cache: service-worker-stale。
+  - fetch('/api/settings')        => {"theme":"blue","release":"cached-2025.11","featureFlag":"STALE-CACHE-17"}  (被 SW 拦截)
+  - fetch('/api/settings?live=1') => {"theme":"green","release":"live-2026.06","featureFlag":"CACHE-BUST-42"}   (绕过 SW, 真实网络值)
+
+直接请求实时接口的真实值:
+  theme=green  release=live-2026.06  featureFlag=CACHE-BUST-42
+
+修复动作:
+  注销/更新该 Service Worker(navigator.serviceWorker.getRegistrations()->unregister, 或 bump SW 版本触发 update + skipWaiting/clients.claim),
+  或修正 sw-cache.js 的 fetch handler 缓存策略(不再返回硬编码 STALE_SETTINGS, 改为透传/网络优先)并重新激活。

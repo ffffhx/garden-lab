@@ -1,0 +1,13 @@
+实时事件流
+
+点击开始后，页面会通过 EventSource 接收 5 条事件。
+
+开始接收
+
+接收完成：5 条事件，关键告警 STREAM-721
+
+evt-001 · connected · SSE 通道已建立
+evt-002 · metric · checkout_latency_ms
+evt-003 · metric · cart_items
+evt-004 · notice · 库存同步完成
+evt-005 · alert · STREAM-721

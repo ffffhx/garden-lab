@@ -1,0 +1,8 @@
+T13 mobile layout overlap (viewport 390x844)
+- Click "提交支付" via Playwright UI click -> TimeoutError: pointer events intercepted by
+  <div> from <aside class="mobile-support-bar" data-bug="overlaps-pay-button">
+- .mobile-support-bar: position:fixed, bottom:0px, height:118px, z-index:20  (spans y 726-844)
+- .checkout-actions:   position:fixed, bottom:40px, height:54px, z-index:10  (button center y~785)
+- elementFromPoint(button center) -> closest('.mobile-support-bar')===true
+- Overlapping element: .mobile-support-bar[data-bug="overlaps-pay-button"]
+- After hiding the bar (fix), real UI click -> 支付确认码：MOBILE-39

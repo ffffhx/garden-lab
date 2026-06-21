@@ -1,0 +1,20 @@
+id: evt-001
+event: connected
+data: {"id":"evt-001","type":"connected","message":"SSE é€šé“å·²å»ºç«‹"}
+
+id: evt-002
+event: metric
+data: {"id":"evt-002","type":"metric","name":"checkout_latency_ms","value":184}
+
+id: evt-003
+event: metric
+data: {"id":"evt-003","type":"metric","name":"cart_items","value":3}
+
+id: evt-004
+event: notice
+data: {"id":"evt-004","type":"notice","message":"åº“å­˜åŒæ­¥å®Œæˆ"}
+
+id: evt-005
+event: alert
+data: {"id":"evt-005","type":"alert","severity":"critical","code":"STREAM-721","message":"æ”¯ä»˜é€šé“æŠ–åŠ¨"}
+

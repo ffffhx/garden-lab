@@ -1,0 +1,14 @@
+### Result
+3. [POST] http://localhost:4399/api/login => [200] OK
+6. [GET] http://localhost:4399/api/me => [200] OK
+7. [POST] http://localhost:4399/api/orders => [500] Internal Server Error
+
+Note: 4 static requests not shown, run with --static option to see them.
+=== response-body 7 ===
+{"error":"INSUFFICIENT_INVENTORY","message":"SKU-8821 库存不足，剩余 0 件","traceId":"tr-613fa137b10f"}
+=== response-headers 7 ===
+transfer-encoding: chunked
+keep-alive: timeout=5
+date: Sat, 20 Jun 2026 04:15:30 GMT
+content-type: application/json; charset=utf-8
+connection: keep-alive

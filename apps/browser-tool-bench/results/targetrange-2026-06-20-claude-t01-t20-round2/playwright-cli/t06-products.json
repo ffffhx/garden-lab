@@ -1,0 +1,63 @@
+[
+  {
+    "name": "雷霆工作站",
+    "price": 15999,
+    "stock": 2
+  },
+  {
+    "name": "全画幅扫描仪",
+    "price": 3699,
+    "stock": 3
+  },
+  {
+    "name": "4K 专业显示器",
+    "price": 2499,
+    "stock": 7
+  },
+  {
+    "name": "人体工学椅",
+    "price": 1899,
+    "stock": 0
+  },
+  {
+    "name": "会议级摄像头",
+    "price": 1599,
+    "stock": 11
+  },
+  {
+    "name": "桌面监听音箱",
+    "price": 1299,
+    "stock": 5
+  },
+  {
+    "name": "降噪耳机 Pro",
+    "price": 899,
+    "stock": 41
+  },
+  {
+    "name": "便携 SSD 1TB",
+    "price": 749,
+    "stock": 16
+  },
+  {
+    "name": "USB-C 扩展坞",
+    "price": 549,
+    "stock": 64
+  },
+  {
+    "name": "电竞鼠标",
+    "price": 459,
+    "stock": 0
+  },
+  {
+    "name": "静音机械键盘",
+    "price": 399,
+    "stock": 23
+  },
+  {
+    "name": "智能护眼台灯",
+    "price": 329,
+    "stock": 88
+  }
+]
+COUNT=12 TOP=雷霆工作站 15999

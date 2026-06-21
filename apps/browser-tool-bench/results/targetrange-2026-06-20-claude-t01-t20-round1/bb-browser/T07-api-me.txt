@@ -1,0 +1,1 @@
+{"status":200,"plan":"team-pro-2026","user":"Agent 测试员","badge":"BENCH-7341"} -- via bb-browser eval in-page fetch with session cookie

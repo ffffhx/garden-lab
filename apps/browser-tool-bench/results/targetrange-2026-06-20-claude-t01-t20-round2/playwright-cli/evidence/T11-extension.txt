@@ -1,0 +1,7 @@
+T11 use extension (playwright-cli self-managed, persistent context + Chromium --load-extension)
+- Launch: config browser.launchOptions.args = --load-extension/--disable-extensions-except, channel chromium, headed, persistent userDataDir
+- Default badge on first load: "BENCH EXT v1.0.0"
+- Extension ID discovered via chrome://extensions shadow DOM: jkmndkochpgaleoechlemhdhbikdecnf (name "Bench Badge")
+- options.html opened as first-class tab: chrome-extension://jkmndkochpgaleoechlemhdhbikdecnf/options.html
+- Filled #badge-text="HELLO-2026", clicked 保存 -> status: "已保存：徽标文字将显示为「HELLO-2026」（刷新靶场页面生效）"
+- After reload of localhost:4399, badge #bench-ext-badge = "HELLO-2026 · v1.0.0"  ✅

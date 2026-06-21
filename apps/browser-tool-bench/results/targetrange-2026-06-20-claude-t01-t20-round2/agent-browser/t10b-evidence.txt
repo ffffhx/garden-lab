@@ -1,0 +1,14 @@
+T10b agent-browser self persistence (state save/load), dedicated self-managed sessions, NOT 9223 default profile
+
+Phase 1 (seed): agent-browser --cdp 9223 state save ./t10b-gh-auth.json
+  -> 1MB state, 2210 cookies incl GitHub user_session / logged_in / dotcom_user; origins github.com + localhost:4399.
+Phase 2a (fresh dedicated session t10b, --state load):
+  agent-browser --session t10b --state ./t10b-gh-auth.json open github.com/notifications
+  -> landed DIRECTLY on /notifications?query=is:unread, user=ffffhx, onLogin=false (免登录 OK).
+  -> unread: Inbox 70 (garden-lab 58 + codex-snapshots 7 + profilepilot 4 + open-token-board 1).
+Phase 2b (restart survival): closed t10b, opened NEW session t10b2 with same --state
+  -> again免登录, user=ffffhx, onLogin=false. State survives session/daemon restart.
+No GitHub风控 / device verification triggered.
+state file DELETED after test (credential hygiene; not committed).
+
+Verdict: agent-browser's explicit state save/load persistence works end-to-end (success-capable).

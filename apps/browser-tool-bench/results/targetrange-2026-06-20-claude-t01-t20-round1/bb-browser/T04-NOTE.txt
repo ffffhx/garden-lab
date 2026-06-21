@@ -1,0 +1,1 @@
+bb-browser has no route/mock; fetch-override does not survive reload (no addInitScript). T04 not achievable without DOM-faking.

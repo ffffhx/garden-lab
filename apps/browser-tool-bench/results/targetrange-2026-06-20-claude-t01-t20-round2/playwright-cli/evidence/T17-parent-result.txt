@@ -1,0 +1,6 @@
+### Result
+"第三方授权\n\n下方 iframe 来自 127.0.0.1，与 localhost 页面不同源。\n\n授权完成：iframe-user@bench.dev / OAUTH-314"
+### Ran Playwright code
+```js
+await page.evaluate('() => document.querySelector(\'main\').innerText');
+```

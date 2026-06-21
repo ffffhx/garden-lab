@@ -1,0 +1,12 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "launchOptions": {
+      "headless": false,
+      "args": [
+        "--disable-extensions-except=/Users/bytedance/Code/garden-lab/apps/browser-tool-bench/extension-sample",
+        "--load-extension=/Users/bytedance/Code/garden-lab/apps/browser-tool-bench/extension-sample"
+      ]
+    }
+  }
+}

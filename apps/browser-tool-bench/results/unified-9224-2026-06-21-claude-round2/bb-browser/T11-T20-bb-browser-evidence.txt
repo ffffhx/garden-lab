@@ -1,0 +1,60 @@
+bb-browser 0.14.2 — CDP 9224 — Bench 靶场 T11-T20 证据 (2026-06-21)
+
+[T11 使用扩展] ✅ (escape: CDP nav)
+ - bb-browser open/goto "chrome-extension://..." -> 被归一化成 "https://chrome-extension//..." -> chrome-error 页 (URL bug 复现)
+ - CDP escape: Page.navigate 到真实 options.html ("Bench Badge 设置")，真实键盘输入 HELLO-2026 + 真实鼠标点 #save
+ - 状态栏: 已保存：徽标文字将显示为「HELLO-2026」（刷新靶场页面生效）; storage.local badgeText=HELLO-2026
+ - localhost:4399/ 徽标 #bench-ext-badge = "HELLO-2026 · v1.0.0"
+ - 恢复: 清空+remove storage -> reload -> 徽标恢复 "BENCH EXT v1.0.0" ✅
+
+[T12 Console/SourceMap] ✅
+ - source grep applySelectedCoupon 命中 /assets/debug-bundle.js
+ - sourceMappingURL=/assets/debug-bundle.js.map; sources[0]=webpack://bench/src/cart/coupon.ts
+ - func applySelectedCoupon; 空字段 cartState.selectedCoupon (=null) -> .couponCode 崩
+ - guard: if (!cartState.selectedCoupon) return null;
+ - 注: bb-browser console 只捕获扩展 log，未展开 console.error("checkout coupon crash") 对象
+
+[T13 移动端遮挡] ✅ (escape: CDP 无 viewport 原语)
+ - bb-browser 无 emulate/viewport/resize 原语 -> CDP Emulation.setDeviceMetricsOverride 390x844
+ - 按钮 #pay-button rect y766-804 整段被 .mobile-support-bar (y726-844, h118, z-index20, position fixed) 覆盖
+ - elementFromPoint(按钮中心)= .mobile-support-bar 的子 div; CDP 真实点击按钮中心 -> pay-result 仍 hidden（点不到）
+ - .checkout-actions z-index10 < .mobile-support-bar z-index20 => 帮助条吞点击
+ - 遮挡元素 .mobile-support-bar[data-bug="overlaps-pay-button"]; 正常点击确认码 支付确认码：MOBILE-39
+ - 已 clearDeviceMetricsOverride 复位
+
+[T14 Hydration] ✅ (escape: eval 读 window store)
+ - console 捕获 [ERROR] [hydration mismatch] Object（对象未展开）
+ - eval window.__BENCH_STORE__: traceId HYD-908, component TaskSummary, ssr{8,starter} client{9,team-pro}
+ - DOM 接管后 pending-count=9 plan-name=team-pro; status=客户端已接管，traceId=HYD-908
+
+[T15 SSE] ✅ data (escape: bb click 不触发 -> eval .click)
+ - bb-browser click 开始接收按钮两次均未触发 EventSource (status 尚未开始, 0 事件, network/trace 无 /api/realtime-events)
+ - eval document.getElementById('start-stream').click() -> 收齐 5 条
+ - evt-001..005; 最后 evt-005; alert code STREAM-721; status=接收完成：5 条事件，关键告警 STREAM-721
+
+[T16 ServiceWorker 缓存] ✅
+ - getRegistrations: sw-cache.js scope / activated
+ - SW 拦截 /api/settings -> blue / cached-2025.11 / STALE-CACHE-17
+ - ?live=1 (eval fetch) 与 curl 直连服务器 -> green / live-2026.06 / CACHE-BUST-42
+ - 修复: 更新/注销 SW 或修正 fetch handler 缓存策略后重新激活
+
+[T17 跨域 iframe] ✅ (escape: CDP 点 OOPIF)
+ - 父页 localhost:4399, iframe 127.0.0.1:4399/iframe-child.html (跨域 OOPIF)
+ - bb-browser snap/tab list 不内联/不暴露 iframe target（无 frame 切换原语）
+ - CDP 附到 iframe target，真实鼠标点 #approve -> 父页 postMessage
+ - 父页显示 授权完成：iframe-user@bench.dev / OAUTH-314
+
+[T18 文件上传] ✅ (escape: CDP setFileInputFiles, bb 无 upload 原语)
+ - bb-browser 无 upload/file-chooser 原语
+ - CDP DOM.setFileInputFiles 真实文件 fixtures/upload-token.txt -> input.files[0] {name:upload-token.txt, size:36}（真实 File，非伪造）
+ - dispatch change -> 文件 upload-token.txt，36 bytes，token=UPLOAD-448
+
+[T19 键盘可访问性] ✅ (escape: eval .click 取确认码)
+ - #save-preferences = <div class="fake-button save-preferences" role="button"> tabindex=null, 只有 click 监听, 无 Enter/Space handler
+ - focus trap backdrop keydown 只在 [data-trap-focus]={notify-email, close-modal} 间循环, 永不含 save-preferences
+ - 键盘 Tab 到不了/激活不了保存; bb click & CDP 鼠标点该 div 均未触发 (坐标/覆盖), eval .click() 确认码 保存成功：A11Y-204
+
+[T20 Flake] ✅
+ - 直连 /api/flake-check?run=1..10: run 3/6/9 ok:false, 其余 ok:true; code FLAKE-307
+ - 页面 summary (eval .click 触发, bb click 未触发): 通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307
+ - 7/10 通过, 3/10 失败, flake rate 30%, 不稳定

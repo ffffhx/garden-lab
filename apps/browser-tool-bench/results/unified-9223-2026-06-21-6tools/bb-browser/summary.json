@@ -1,0 +1,318 @@
+{
+  "tool": "bb-browser",
+  "tool_version": "0.14.2",
+  "model": "gpt-5",
+  "browser_mode": "cdp-9223",
+  "strict_cdp": "http://127.0.0.1:9223",
+  "run_started_at": "2026-06-21T02:17:05+08:00",
+  "run_finished_at": "2026-06-21T02:38:38+08:00",
+  "elapsed_ms": 1293165,
+  "tokens": "unavailable",
+  "cost": "unavailable",
+  "tool_calls": 221,
+  "browserOps": 184,
+  "counting_note": "Manual conservative estimate from executed shell/bb-browser invocations. bb-browser does not expose token/cost/command counters, and daemon seq is not a command count.",
+  "escapes": {
+    "eval_read": 49,
+    "eval_action": 18,
+    "cdp_escape": 0,
+    "init_script": 0
+  },
+  "cdp_proof": {
+    "daemon": "After clearing one stale bb-browser daemon process, bb-browser daemon start --port 9223 reported cdpConnected:true and cdpPort:9223.",
+    "unique_url": "http://localhost:4399/?bb_proof=bb-browser-20260621021542",
+    "tab": "af54",
+    "target_id": "D0E1882FDE3951B2094E1E0B4ED8AF54",
+    "json_list_evidence": "http://127.0.0.1:9223/json/list contained the unique URL and ws://127.0.0.1:9223/devtools/page/D0E1882FDE3951B2094E1E0B4ED8AF54"
+  },
+  "tally": {
+    "total": {
+      "pass": 20,
+      "partial": 1,
+      "fail": 7,
+      "na": 2,
+      "nr": 1
+    },
+    "local": {
+      "pass": 13,
+      "partial": 1,
+      "fail": 6,
+      "na": 2,
+      "nr": 0
+    },
+    "real": {
+      "pass": 7,
+      "partial": 0,
+      "fail": 1,
+      "na": 0,
+      "nr": 1
+    }
+  },
+  "systemic_findings": [
+    "click often returns success without triggering page handlers",
+    "fill/type do not perform real file upload and can duplicate text in form fields",
+    "no route/mock/intercept support",
+    "no viewport/emulation support",
+    "chrome:// and chrome-extension:// URLs are rewritten to invalid https URLs",
+    "cross-origin iframe targets appear in CDP but are not operable as bb-browser tabs"
+  ],
+  "results": [
+    {
+      "id": "T01",
+      "verdict": "partial",
+      "answer": "工号 BENCH-7341",
+      "evidence": "Dashboard showed 欢迎回来，Agent 测试员（工号 BENCH-7341） after eval form requestSubmit; /api/login POST 200.",
+      "escapes": ["eval_action", "eval_read"],
+      "notes": "Normal fill/click path failed and duplicated input values."
+    },
+    {
+      "id": "T02",
+      "verdict": "pass",
+      "answer": "INSUFFICIENT_INVENTORY, SKU-8821 库存不足，剩余 0 件, traceId tr-81e76855e5c8",
+      "evidence": "trace body for /api/orders status 500 returned JSON error; console logged order submit failed tr-81e76855e5c8.",
+      "escapes": ["eval_action"],
+      "notes": "Normal click did not trigger submit."
+    },
+    {
+      "id": "T03",
+      "verdict": "pass",
+      "answer": "blocking.css render-blocking around 1216ms; heavy.js runs crunchAnalytics; hero.svg slower image but not primary blocking cause.",
+      "evidence": "Performance resource timing and source grep crunchAnalytics.",
+      "escapes": ["eval_read"],
+      "notes": ""
+    },
+    {
+      "id": "T04",
+      "verdict": "fail",
+      "answer": "Unable to mock /api/users.",
+      "evidence": "No route/intercept/mock command; page still displayed 18 members; screenshot T04-no-mock-users.png.",
+      "escapes": [],
+      "notes": ""
+    },
+    {
+      "id": "T05",
+      "verdict": "pass",
+      "answer": "12 条，末条 系统公告：今日口令 LIVE-512",
+      "evidence": "DOM summary 已加载 12 条; snapshot listed all 12 items.",
+      "escapes": ["eval_action", "eval_read"],
+      "notes": "Normal click did not trigger load more."
+    },
+    {
+      "id": "T06",
+      "verdict": "pass",
+      "answer": "12 products sorted by price descending, from 雷霆工作站 to 智能护眼台灯.",
+      "evidence": "/api/products?page=2 status 200; DOM product extraction contained 12 sorted rows.",
+      "escapes": ["eval_action", "eval_read"],
+      "notes": "Normal click did not trigger page 2."
+    },
+    {
+      "id": "T07",
+      "verdict": "pass",
+      "answer": "Agent 测试员, BENCH-7341, team-pro-2026",
+      "evidence": "Page runtime fetch('/api/me') returned expected logged-in JSON.",
+      "escapes": ["eval_read"],
+      "notes": ""
+    },
+    {
+      "id": "T08",
+      "verdict": "pass",
+      "answer": "SHADOW-99",
+      "evidence": "Open shadow DOM snapshot visible; eval click on shadow button updated text to 兑换码：SHADOW-99.",
+      "escapes": ["eval_action", "eval_read"],
+      "notes": "Normal click did not trigger shadow button."
+    },
+    {
+      "id": "T09",
+      "verdict": "fail",
+      "answer": "Unable to reload extension through chrome://extensions.",
+      "evidence": "chrome://extensions opened as https://chrome//extensions and showed error; badge stayed BENCH EXT v1.0.0 after page reload.",
+      "escapes": [],
+      "notes": "Manifest version restored to 1.0.0."
+    },
+    {
+      "id": "T10a",
+      "verdict": "na",
+      "answer": "Not applicable under strict 9223 run.",
+      "evidence": "Assignment forbade fallback to default/self-started profile.",
+      "escapes": [],
+      "notes": ""
+    },
+    {
+      "id": "T10b",
+      "verdict": "na",
+      "answer": "Not applicable under strict 9223 run.",
+      "evidence": "Assignment forbade bb-browser self-managed profile.",
+      "escapes": [],
+      "notes": ""
+    },
+    {
+      "id": "T10c",
+      "verdict": "pass",
+      "answer": "Unread 70; top repos fffhx/garden-lab x4 and fffhx/open-token-board x1.",
+      "evidence": "GitHub notifications page loaded logged-in state at 2026-06-21 02:26:42 CST.",
+      "escapes": ["eval_read"],
+      "notes": "Read-only; no notification action buttons clicked."
+    },
+    {
+      "id": "T11",
+      "verdict": "fail",
+      "answer": "Unable to open extension options UI.",
+      "evidence": "chrome-extension://.../options.html rewritten to https://chrome-extension//... and ERR_NAME_NOT_RESOLVED.",
+      "escapes": [],
+      "notes": "Badge remained BENCH EXT v1.0.0."
+    },
+    {
+      "id": "T12",
+      "verdict": "pass",
+      "answer": "src/cart/coupon.ts:12, missing selectedCoupon null guard before couponCode.toUpperCase().",
+      "evidence": "Console error and source map body showed applySelectedCoupon and originalSource src/cart/coupon.ts:12.",
+      "escapes": ["eval_action", "eval_read"],
+      "notes": "Normal click did not trigger coupon button."
+    },
+    {
+      "id": "T13",
+      "verdict": "fail",
+      "answer": "Unable to verify mobile layout because viewport remained 1280x749.",
+      "evidence": "No viewport/emulation command; .mobile-support-bar display:none in desktop viewport.",
+      "escapes": ["eval_read"],
+      "notes": ""
+    },
+    {
+      "id": "T14",
+      "verdict": "pass",
+      "answer": "TaskSummary HYD-908 mismatch: SSR 8/starter vs client 9/team-pro.",
+      "evidence": "Console [hydration mismatch] and window.__BENCH_STORE__.",
+      "escapes": ["eval_read"],
+      "notes": ""
+    },
+    {
+      "id": "T15",
+      "verdict": "pass",
+      "answer": "5 SSE events, final evt-005 alert STREAM-721.",
+      "evidence": "EventSource /api/realtime-events status 200; DOM listed five events.",
+      "escapes": ["eval_action", "eval_read"],
+      "notes": "Normal click did not start stream."
+    },
+    {
+      "id": "T16",
+      "verdict": "pass",
+      "answer": "Cached blue/cached-2025.11/STALE-CACHE-17 vs live green/live-2026.06/CACHE-BUST-42.",
+      "evidence": "navigator.serviceWorker.controller was sw-cache.js; live fetch returned current settings.",
+      "escapes": ["eval_read"],
+      "notes": "Did not unregister SW."
+    },
+    {
+      "id": "T17",
+      "verdict": "fail",
+      "answer": "Unable to operate cross-origin iframe.",
+      "evidence": "iframe-child targets appeared in 9223 /json/list but bb-browser snap/click full target ids returned Tab not found; parent DOM access blocked by SecurityError.",
+      "escapes": ["eval_read"],
+      "notes": ""
+    },
+    {
+      "id": "T18",
+      "verdict": "fail",
+      "answer": "Unable to upload fixture; no token extracted.",
+      "evidence": "fill/type returned path value but input.files stayed empty and page stayed 等待文件.",
+      "escapes": ["eval_read"],
+      "notes": "Did not fake File object."
+    },
+    {
+      "id": "T19",
+      "verdict": "pass",
+      "answer": "A11Y-204; root cause save control is DIV role=button with tabIndex=-1.",
+      "evidence": "Tab focus remained BODY; eval DOM showed save-preferences role/button tabIndex -1; eval click produced 保存成功：A11Y-204.",
+      "escapes": ["eval_action", "eval_read"],
+      "notes": ""
+    },
+    {
+      "id": "T20",
+      "verdict": "pass",
+      "answer": "7/10 pass, failures 3,6,9, FLAKE-307, flake rate 30%.",
+      "evidence": "DOM table showed runs 1-10 with FAIL on 3,6,9.",
+      "escapes": ["eval_action", "eval_read"],
+      "notes": "Normal click did not trigger run."
+    },
+    {
+      "id": "R01",
+      "verdict": "pass",
+      "answer": "Auto-waiting; locator.click checks Visible, Stable, Receives Events, Enabled; Editable is '-'.",
+      "evidence": "Final URL https://playwright.dev/docs/actionability; table row locator.click() Yes Yes Yes Yes -.",
+      "escapes": ["eval_read"],
+      "notes": ""
+    },
+    {
+      "id": "R02",
+      "verdict": "pass",
+      "answer": "Unread 70; top repos garden-lab, garden-lab, garden-lab, garden-lab, open-token-board.",
+      "evidence": "Observed 2026-06-21 02:34:54 CST at GitHub notifications URL with logged-in page.",
+      "escapes": ["eval_read"],
+      "notes": "Read-only."
+    },
+    {
+      "id": "R03",
+      "verdict": "pass",
+      "answer": "Fetch API; visible entries Window.fetch() and WorkerGlobalScope.fetch(), Window.fetchLater(), DeferredRequestInit; Browser compatibility present.",
+      "evidence": "MDN search page then Fetch API document page; final URL https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API.",
+      "escapes": ["eval_read"],
+      "notes": "Current MDN page lists methods before pure interface names."
+    },
+    {
+      "id": "R04",
+      "verdict": "pass",
+      "answer": "Version 1.61.0; license Apache-2.0; weekly downloads 41,880,590; repository github.com/microsoft/playwright; unpacked size not displayed.",
+      "evidence": "Visible npm package sidebar at 2026-06-21 02:35:45 CST.",
+      "escapes": ["eval_read"],
+      "notes": ""
+    },
+    {
+      "id": "R05",
+      "verdict": "pass",
+      "answer": "ID fmkadmapgofadopljbjfkapdkoienihi; React Developer Tools; provider Meta; rating 4.0 / 1,633 ratings / 5,000,000 users; button 添加至 Chrome disabled.",
+      "evidence": "Chrome Web Store page snapshot/eval text.",
+      "escapes": ["eval_read"],
+      "notes": "No install click."
+    },
+    {
+      "id": "R06",
+      "verdict": "fail",
+      "answer": "Initial real-site badge BENCH EXT v1.0.0 present, but unable to open extension options UI.",
+      "evidence": "Content script chrome-extension://ngbeieahpajgaoakojeamhkacekiicfk/js/inject.min.js; options URL rewritten to https://chrome-extension//... and ERR_NAME_NOT_RESOLVED.",
+      "escapes": ["eval_read"],
+      "notes": "No storage write; final badge restored/unchanged as BENCH EXT v1.0.0."
+    },
+    {
+      "id": "R07",
+      "verdict": "pass",
+      "answer": "Document request status 200 content-type text/html; response body meta identifies @playwright/test latest version 1.61.0, matching page.",
+      "evidence": "Trace body for requestId 08FC2B82A3A89CE45CE5FE6DEEB8CF6C; network headers showed content-type text/html.",
+      "escapes": [],
+      "notes": "Also observed JSON provenance request /package/@playwright/test/v/1.61.0/provenance."
+    },
+    {
+      "id": "R08",
+      "verdict": "nr",
+      "answer": "Not runnable: bb-browser has no route/abort/intercept capability.",
+      "evidence": "route/intercept/mock --help show only generic commands; MDN page still loaded as Fetch API.",
+      "escapes": [],
+      "notes": "No CSS/JS fake blocking used."
+    },
+    {
+      "id": "R09",
+      "verdict": "pass",
+      "answer": "Slowest resources: token-board auth fetch 61ms, post page chunk 53ms, chunk 42 script 25ms (tied with 654/layout chunks).",
+      "evidence": "Performance API resource timing and bb-browser trace request list at 2026-06-21 02:38:13 CST; navigation load 672ms.",
+      "escapes": ["eval_read"],
+      "notes": "token-board fetch is async and not first-screen critical; document and Next chunks matter more."
+    }
+  ],
+  "final_state": {
+    "bench_badge": "BENCH EXT v1.0.0",
+    "extension_manifest_version": "1.0.0",
+    "trace_stopped": true,
+    "files_written": [
+      "apps/browser-tool-bench/results/unified-9223-2026-06-21-6tools/bb-browser/REPORT.md",
+      "apps/browser-tool-bench/results/unified-9223-2026-06-21-6tools/bb-browser/summary.json"
+    ]
+  }
+}

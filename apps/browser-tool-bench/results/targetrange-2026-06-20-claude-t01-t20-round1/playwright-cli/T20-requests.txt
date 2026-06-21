@@ -1,0 +1,5 @@
+### Result
+3. [GET] http://localhost:4399/api/flake-check?run=1 => [404] Not Found
+4. [GET] http://localhost:4399/api/flake-check?run=1 => [404] Not Found
+
+Note: 2 static requests not shown, run with --static option to see them.

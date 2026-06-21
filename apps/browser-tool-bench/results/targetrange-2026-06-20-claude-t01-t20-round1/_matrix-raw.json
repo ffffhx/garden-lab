@@ -1,0 +1,682 @@
+{
+  "agent-browser": [
+    {
+      "task": "T01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "BENCH-7341",
+      "evidence": "T01-dashboard.png — 欢迎语「欢迎回来，Agent 测试员（工号 BENCH-7341）」",
+      "notes": "fill @e3/@e4 → click @e5 → 跳 /dashboard，文本已渲染无需重试"
+    },
+    {
+      "task": "T02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "POST /api/orders 500, INSUFFICIENT_INVENTORY / SKU-8821 库存不足剩余 0 件 (traceId tr-4fe2c008db26)",
+      "evidence": "T02-orders-response.json — network request --json 拿到完整响应体",
+      "notes": "network requests --clear → 点提交订单 → filter orders 得 500 → request --json 读响应体；默认持续抓包无需预订阅"
+    },
+    {
+      "task": "T03",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "LCP主因 blocking.css(TTFB~1254ms 渲染阻塞); 次 heavy.js(crunchAnalytics ~800ms 同步长任务); hero.svg(1555ms)非阻塞干扰项",
+      "evidence": "T03-perf-timing.json + T03-slow.png + curl heavy.js 确认 crunchAnalytics",
+      "notes": "无 trace insight 工具，读 Performance API resource timing/renderBlockingStatus/LCP(2112ms,P文本)，Agent 自行从原始数据推理"
+    },
+    {
+      "task": "T04",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "空状态: 🪴 + 暂无成员去邀请第一位伙伴吧 + 邀请成员按钮",
+      "evidence": "T04-empty-users.png",
+      "notes": "先 curl 确认结构 {\"users\":[...]} → network route --body '{\"users\":[]}' → 截图 → unroute 恢复"
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "12 条；最后一条口令 LIVE-512",
+      "evidence": "T05-livefeed.png",
+      "notes": "等第一页8条渲染完→加载更多@e4出现→点击→wait→数到12，读最后一条公告口令"
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "12 件；最贵 雷霆工作站 ¥15999",
+      "evidence": "T06-products.json — 12项 price/stock 数字、price 降序",
+      "notes": "聪明路径走 /api/products(page1 8+page2 4)，浏览器点加载第2页验证渲染后页面 runtime fetch 拼接排序；两件 stock=0；排序与 GT 完全一致"
+    },
+    {
+      "task": "T07",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "plan = team-pro-2026",
+      "evidence": "T07-api-me.json — status 200",
+      "notes": "机制: eval 内 fetch('/api/me',{credentials:'include'})，页面 runtime 带会话 cookie，非读 DOM"
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "SHADOW-99",
+      "evidence": "T08-shadow-reward.png",
+      "notes": "snapshot -i 的 a11y 树穿透 open shadow root，按钮显示为 @e9，原生 click(非 evaluate 绕过)，读到兑换码"
+    },
+    {
+      "task": "T09",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "reload 后徽标 BENCH EXT v1.0.1，恢复后回 v1.0.0",
+      "evidence": "T09-badge-v101.png + T09-badge-restored-v100.png",
+      "notes": "agent-browser 无扩展 reload 子命令；导航 chrome://extensions/ 用页面 runtime chrome.developerPrivate.reload(id) 触发(lastError=none)，getExtensionsInfo+页面徽标双验证；manifest 改回 1.0.0 并再 reload 恢复，文件已复位。企业管控未拦截"
+    },
+    {
+      "task": "T10a",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "未读 70 条(Inbox 70)，标题以 CI/Deploy/Build 工作流失败为主，另 2 条 codex-snapshots PR",
+      "evidence": "T10a-github-notifications.png + T10a-counts.json(inbox 70) + T10a-notifications.json(首页25标题+repo breakdown)",
+      "notes": "9223 默认 Profile 已登录 GitHub，未撞登录墙；is:unread 渲染25行有下一页，侧栏 repo 计数 58+7+4+1=70=Inbox 总未读。人工打断0(attach 已运行 CDP 无弹窗)。只读"
+    },
+    {
+      "task": "T10b",
+      "verdict": "⚠️",
+      "escape": false,
+      "answer": "agent-browser state save/load 机制端到端验证通过(免登录恢复成功)；GitHub 专项未实测",
+      "evidence": "T10b-restored-dashboard.png — 新 session 免登录直达 dashboard，/api/me 200 plan=team-pro-2026",
+      "notes": "独立专用 session(非9223)演示 save→close→新 session load→免登录。判⚠️因 GT 针对 GitHub 而真实 GitHub 首登需交互式真人2FA/验证码自主代理无法完成，改用 bench 站演示同一机制；机制确认可用但 GitHub GT 未测。状态文件用后已删除无残留"
+    },
+    {
+      "task": "T11",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "HELLO-2026 · v1.0.0",
+      "evidence": "T11-badge-hello.png；chrome://extensions shadow DOM 枚举得 ID jkmndkochpgaleoechlemhdhbikdecnf；options 页保存状态逐字「已保存：徽标文字将显示为「HELLO-2026」（刷新靶场页面生效）」",
+      "notes": "扩展 content-script-only 不在 /json/list，经 chrome://extensions 发现 ID。走 options UI 改 badgeText，localhost 验证 #bench-ext-badge=HELLO-2026 · v1.0.0。已恢复默认 BENCH EXT v1.0.0。"
+    },
+    {
+      "task": "T12",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "文件 webpack://bench/src/cart/coupon.ts；函数 applySelectedCoupon；字段 cartState.selectedCoupon.couponCode (selectedCoupon=null)；guard if(!cartState.selectedCoupon) return null;",
+      "evidence": "T12-console.json (checkout coupon crash, functionName=applySelectedCoupon, TypeError reading couponCode)；T12-debug-bundle.js.map sourcesContent 内含原始 coupon.ts 源码与 BUG 注释",
+      "notes": "Console 抓异常对象 + 抓取 /assets/debug-bundle.js.map 把 bundle 映射回原始源码，四项全中。"
+    },
+    {
+      "task": "T13",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "支付确认码：MOBILE-39；遮挡元素 .mobile-support-bar[data-bug=overlaps-pay-button]",
+      "evidence": "T13-mobile-overlap.png；工具 click 被拒 Element covered by <div>；elementsFromPoint 命中 mobile-support-bar",
+      "notes": "set viewport 390x844。CSS：support-bar fixed bottom:0 height:118px z-index:20 覆盖 .checkout-actions(z-index:10)。"
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "组件 TaskSummary；traceId HYD-908；SSR pendingTasks=8 planName=starter；Client pendingTasks=9 planName=team-pro；最终 9 待办 team-pro",
+      "evidence": "T14-store.json (window.__BENCH_STORE__)；Console [hydration mismatch] traceId HYD-908",
+      "notes": "读 Console 结构化错误 + __BENCH_STORE__ 拿到 ssr/client 双态，DOM 最终态一致。"
+    },
+    {
+      "task": "T15",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "无法获取（事件流未产生）",
+      "evidence": "T15-sse-error.png；T15-T16-T20-blocker.txt；CDP network: GET /api/realtime-events => 404 text/html",
+      "notes": "环境阻断：运行中靶场服务 PID1762 启动于6/12早于 server.mjs 改动6/19，缺 /api/realtime-events 路由 → EventSource 404 → 页面「连接异常，事件未收全」。未重启服务(任务外基础设施)。拒绝凭源码/记忆答 5条/evt-005/STREAM-721。"
+    },
+    {
+      "task": "T16",
+      "verdict": "⚠️",
+      "escape": false,
+      "answer": "SW 旧值: theme=blue, release=cached-2025.11, featureFlag=STALE-CACHE-17；修复=更新/注销 Service Worker；真实 live 值未能从网络取得",
+      "evidence": "T16-cache-stale.png；T16-evidence.txt；/sw-cache.js active 控制 localhost:4399/，header X-Bench-Cache: service-worker-stale；旁路 /api/settings?live=1 => 404",
+      "notes": "已证 SW 拦截+旧值+修复动作齐全(✅部分)；但 ?live=1 旁路因过期服务进程缺 /api/settings 路由返回 404，拿不到真实 green/live-2026.06/CACHE-BUST-42 网络证据，拒绝凭源码答 → ⚠️。"
+    },
+    {
+      "task": "T17",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "无法获取（iframe 内容未加载）",
+      "evidence": "T17-iframe-notfound.png；T17-blocker.txt；iframe src=http://127.0.0.1:4399/iframe-child.html 显示 not found",
+      "notes": "环境阻断：iframe 指向 127.0.0.1:4399，但该 IP 被无关进程 codex-snapshot(PID74361)占用返回404；靶场服务只绑 ::1(localhost)。iframe 跨域不渲染按钮，无 确认授权 可点、无 postMessage。拒绝凭源码答 OAUTH-314。"
+    },
+    {
+      "task": "T18",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "upload-token.txt，36 bytes，token=UPLOAD-448",
+      "evidence": "T18-upload.png；upload input[type=file]（input#token-file）真实上传 fixtures/upload-token.txt",
+      "notes": "走真实 file input 上传路径，未用 eval 伪造 File。页面解析逐字匹配。"
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "键盘到不了 #save-preferences（缺 tabindex/键盘 handler）；确认码 A11Y-204",
+      "evidence": "T19-a11y.png；实测 Tab/Shift+Tab 循环只在 #notify-email↔#close-modal；#save-preferences=<div role=button> tabindex=null 无 data-trap-focus",
+      "notes": "真键盘 press Tab 验证 focus trap 永不含 save。鼠标点击得 A11Y-204。"
+    },
+    {
+      "task": "T20",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "无法统计（检查未运行完成）",
+      "evidence": "T20-flake.png；CDP network: GET /api/flake-check?run=1 => 404；页面停「尚未运行」",
+      "notes": "环境阻断：过期靶场服务进程缺 /api/flake-check 路由，run 全 404 不推进，无 pass/fail 统计。拒绝凭文案/源码答 7-3/3-6-9/FLAKE-307。"
+    }
+  ],
+  "bb-browser": [
+    {
+      "task": "T01",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "BENCH-7341",
+      "evidence": "T01-dashboard-welcome.png — 欢迎回来，Agent 测试员（工号 BENCH-7341）",
+      "notes": "登录后 /api/me 异步渲染，已等待读到正确工号。bb-browser click 未触发表单提交，改用 eval form.requestSubmit()（逃生）。"
+    },
+    {
+      "task": "T02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "POST /api/orders · 500 · INSUFFICIENT_INVENTORY / SKU-8821 库存不足，剩余 0 件 (traceId tr-12732b3143df)",
+      "evidence": "T02-orders-500-body.json, T02-order-fail.png",
+      "notes": "trace 时间线定位 POST /api/orders=500，trace body 66086.19 拿到真实响应体。无需逃生。"
+    },
+    {
+      "task": "T03",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "LCP 主因=blocking.css(TTFB 1205ms,阻塞渲染+阻塞其后同步heavy.js执行); 次因=heavy.js crunchAnalytics 长任务(start1225ms/dur800ms); hero.svg(TTFB1504ms)是并行<img>干扰项",
+      "evidence": "T03-perf-evidence.json, T03-slow-page.png",
+      "notes": "工具无 perf insight；证据来自 Resource Timing + PerformanceObserver(longtask,buffered)，结论 Agent 自推。识别出 hero.svg 干扰项。"
+    },
+    {
+      "task": "T04",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "无法 mock（工具缺能力）",
+      "evidence": "T04-NOTE.txt, T04-users-real-18-no-mock.png",
+      "notes": "bb-browser 无 route/mock/abort；fetch override 不跨 reload 存活(无 addInitScript)。拒绝用 DOM 伪造空状态。真实接口返回 {users:[...18]}。"
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "12 条；最后一条口令 LIVE-512",
+      "evidence": "T05-livefeed-12.png",
+      "notes": "首页8条流式渲染→加载更多→第二页4条。状态文「已加载12条（没有更多了）」。click 未触发加载更多，改用 eval .click()（逃生），等流式渲染完再计数。"
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "12件；最贵=雷霆工作站 ¥15999",
+      "evidence": "T06-catalog.json",
+      "notes": "聪明路径：页面内 fetch /api/products?page=1/2，price 已为数字，降序排序与 GT 完全一致；两件 stock=0(人体工学椅/电竞鼠标)。"
+    },
+    {
+      "task": "T07",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "team-pro-2026",
+      "evidence": "T07-api-me.txt",
+      "notes": "eval 内 fetch('/api/me') 复用页面 session cookie，status 200，plan=team-pro-2026。机制=eval 页面 runtime fetch。"
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "SHADOW-99",
+      "evidence": "T08-shadow-code.png",
+      "notes": "a11y snapshot 穿透 open shadow root（按钮 ref=5 可见，✅穿透）。但 click 未触发处理器，改用 eval 进 shadowRoot 调 .click()（逃生）后读到兑换码 SHADOW-99。"
+    },
+    {
+      "task": "T09",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "reload 失败（已恢复 manifest 1.0.0）",
+      "evidence": "T09-NOTE.txt",
+      "notes": "已改 manifest 1.0.0→1.0.1；bb-browser open chrome://extensions 被改写成 https://chrome://extensions→chrome-error(scheme归一化bug)，且无任何扩展管理API(仅页面级reload)。徽标保持v1.0.0。做完已将 manifest 恢复1.0.0并验证实时徽标=BENCH EXT v1.0.0。"
+    },
+    {
+      "task": "T10a",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "70 条未读（garden-lab 58/codex-snapshots 7/profilepilot 4/open-token-board 1）",
+      "evidence": "T10a-github-notifications.png, T10a-notifications.txt",
+      "notes": "attach 9223 默认 Profile(user=ffffhx)，零授权弹窗，只读。Inbox 计数=70；首页25条标题已列（主要为各仓 CI/Build workflow failed）。只读无写操作。"
+    },
+    {
+      "task": "T10b",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "无可演示的自有持久化机制",
+      "evidence": "T10b-NOTE.txt",
+      "notes": "bb-browser 无显式 state save/load（仅隐式 managed userDataDir ~/.bb-browser/browser/user-data，同 DevTools MCP 模型）。本机无法 auto-launch managed Chrome（报 Cannot find a Chromium-based browser）；managed profile 无有效 GitHub user_session；无法交互式登录(2FA风险)。测后已重新 attach 并验证 9223 CDP connected。"
+    },
+    {
+      "task": "T11",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "",
+      "evidence": "T11-extension-nav-broken.png, T11-badge-default.png：open/goto 'chrome-extension://.../options.html' 被归一化为 'https://chrome-extension://...' → 实际加载 chrome-error://chromewebdata/；chrome://extensions 同样被前缀 https:// 失败",
+      "notes": "bb-browser URL 归一化 bug：所有非 http(s) scheme 强加 https:// 前缀，无法到达扩展 options 页。Bench Badge 为 content-script-only，无 SW/page CDP target 可附加，故无旁路。徽标保持默认 BENCH EXT v1.0.0，未改无需恢复。"
+    },
+    {
+      "task": "T12",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "文件 webpack://bench/src/cart/coupon.ts；函数 applySelectedCoupon；空字段 cartState.selectedCoupon.couponCode（selectedCoupon=null）；guard if(!cartState.selectedCoupon) return null;",
+      "evidence": "T12-debug-bundle.js.map（sources=['webpack://bench/src/cart/coupon.ts','...checkout.ts']，sourcesContent 含 BUG 注释与 Expected guard），T12-source-grep-coupon.txt（applySelectedCoupon、selectedCoupon:null、console.error('checkout coupon crash')）",
+      "notes": "bb-browser console/errors 未捕获 page 的 console.error（仅捕获到无关扩展 log）。改用 source grep + 直接拉 .js.map 取证，source map 把 bundle 映射回原始 TS。"
+    },
+    {
+      "task": "T13",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "支付确认码：MOBILE-39",
+      "evidence": "T13-mobile-overlap.png, T13-mobile-code.png；CSS：@media(max-width:480px) .mobile-support-bar{position:fixed;bottom:0;height:118px;z-index:20}（data-bug=overlaps-pay-button）覆盖 .checkout-actions{z-index:10;bottom:40px}；elementFromPoint(195,785)→ASIDE.mobile-support-bar[bug=overlaps-pay-button]",
+      "notes": "bb-browser 无 viewport/emulate 命令，用原始 CDP Emulation.setDeviceMetricsOverride 模拟 390×844 复现移动端媒体查询（cdp-emulate.cjs），用完 clearDeviceMetricsOverride。遮挡定位与确认码均经页面证据。"
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "组件 TaskSummary；traceId HYD-908；不一致字段 pendingTasks(SSR 8/Client 9) 与 planName(SSR starter/Client team-pro)；最终显示 9 个待办、team-pro 套餐",
+      "evidence": "T14-bench-store.txt（window.__BENCH_STORE__ 全量 JSON），T14-hydration.png（DOM：待办数量 9 / 套餐 team-pro / 客户端已接管 traceId=HYD-908）",
+      "notes": "console 有 [hydration mismatch] error 但 bb-browser 不展开对象参数；用 __BENCH_STORE__ 取得 SSR 与 client 结构化状态。"
+    },
+    {
+      "task": "T15",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "",
+      "evidence": "T15-sse-raw.txt（curl SSE 返回 <h1>404</h1>），network 抓到 EventSource /api/realtime-events status=404；页面状态 '连接异常，事件未收全'，0 事件；T15-T16-T20-env-defect.txt",
+      "notes": "环境缺陷而非工具问题：运行中的旧服务（PID1762 6/12 / PID74361 6/14）缺 /api/realtime-events 路由，EventSource 直接 404。bb-browser 能正确点击启动并抓到 SSE 请求及其 404。未重启共享服务器。无法观测 5 条/evt-005/STREAM-721。"
+    },
+    {
+      "task": "T16",
+      "verdict": "⚠️",
+      "escape": false,
+      "answer": "页面显示 theme=blue / release=cached-2025.11 / featureFlag=STALE-CACHE-17（SW 缓存值）；真实 live 值无法获取（端点 404）；修复=注销/更新 Service Worker",
+      "evidence": "T16-sw-cache.js（fetch handler 拦截 /api/settings 返回 STALE_SETTINGS），T16-cache-page.png；SW 注册 scope http://localhost:4399/ activated；/api/settings 响应头 X-Bench-Cache: service-worker-stale",
+      "notes": "已证明是 Service Worker 拦截（非 HTTP cache）：SW 源码、scope、X-Bench-Cache 头、stale body 三重证据。但 /api/settings?live=1 在运行服务 404（同 T15 环境缺陷），真实值 green/live-2026.06/CACHE-BUST-42 无法验证 → 部分。未凭磁盘源码补 GT。"
+    },
+    {
+      "task": "T17",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "",
+      "evidence": "T17-iframe-auth.png；父页 main 文本 '等待授权完成…'；CDP 进 frame target 读 http://127.0.0.1:4399/iframe-child.html body='not found'；curl 127.0.0.1:4399/iframe-child.html → 404（同名文件 localhost/IPv6 返回 200）",
+      "notes": "环境缺陷：跨域 iframe 指向 127.0.0.1:4399（由 codex-snapshot 旧服务监听），该服务无 iframe-child.html → iframe 渲染 'not found'，无授权按钮、postMessage 不触发。bb-browser snapshot 不内联跨域 iframe，用原始 CDP 进 frame target 确认根因。无法得到 iframe-user@bench.dev/OAUTH-314。"
+    },
+    {
+      "task": "T18",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "文件 upload-token.txt，36 bytes，token=UPLOAD-448",
+      "evidence": "T18-upload-result.png；页面解析文本 '文件 upload-token.txt，36 bytes，token=UPLOAD-448'",
+      "notes": "bb-browser 0.14.2 无 upload/file-chooser 命令，用原始 CDP DOM.setFileInputFiles 把真实 fixture 设进 #token-file（浏览器原生上传路径，非伪造 File）；页面 FileReader 解析出文件名/字节数/token。"
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "键盘无法到达/激活保存；确认码 A11Y-204",
+      "evidence": "T19-a11y-modal.png, T19-a11y-saved.png；DOM：#save-preferences=<div class='fake-button save-preferences' role='button'> tabindex=null data-trap-focus=null；trap 仅含 #notify-email、#close-modal；源码 saveBtn 仅有 click 监听无 keydown",
+      "notes": "diagnosis 经 DOM 属性 + 页面源码：div role=button 缺 tabindex=0、不在 focus trap、无 Enter/Space handler → 键盘到不了。Tab 实测焦点不离 notify-email。鼠标 click（eval .click()）得 保存成功：A11Y-204。bb-browser snapshot ref click 未触发 div handler，改用 eval。"
+    },
+    {
+      "task": "T20",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "",
+      "evidence": "T20-flake.png；点击'运行 10 次'后页面停在'尚未运行'、表格空；in-browser fetch /api/flake-check?run=1..3 全 404；T15-T16-T20-env-defect.txt",
+      "notes": "环境缺陷：运行服务缺 /api/flake-check 路由，全部 404，页面无法产出任何轮次结果。bb-browser 可脚本化 10 次 fetch 统计，瓶颈在后端。未重启服务器。无法观测 7/10、3/6/9、FLAKE-307、30%。"
+    }
+  ],
+  "devtools-mcp": [
+    {
+      "task": "T01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "BENCH-7341",
+      "evidence": "T01-dashboard.png；登录后跳转 /dashboard，欢迎语「欢迎回来，Agent 测试员（工号 BENCH-7341）」",
+      "notes": "fill_form 填账号密码 + click 登录 + wait_for「工号」等异步 /api/me 渲染，未读到「加载中」"
+    },
+    {
+      "task": "T02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "POST /api/orders 500，INSUFFICIENT_INVENTORY「SKU-8821 库存不足，剩余 0 件」",
+      "evidence": "T02-order-fail.png, T02-orders-response.json；list_network_requests 找到 reqid 4178，get_network_request 读响应体",
+      "notes": "页面只显示笼统文案「提交失败，请稍后再试」，真实原因从响应体拿到；devtools-mcp 自动记录网络无需预先开启"
+    },
+    {
+      "task": "T03",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "blocking.css(1206ms 阻塞渲染)=LCP 主因；heavy.js(crunchAnalytics ~800ms 长任务)次之；hero.svg(1508ms 最长但并行非阻塞)=干扰项",
+      "evidence": "T03-slow-trace.json；performance trace LCP 2069ms render delay 99.8%，LCPBreakdown/RenderBlocking insight + resource timing",
+      "notes": "工具 insight 直接给 render-blocking 列表，Agent 结合 resource timing(hero.svg responseEnd 1515ms 在 LCP 前) 和 heavy.js 内容(crunchAnalytics) 推断；正确识别干扰项"
+    },
+    {
+      "task": "T04",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "mock /api/users 成 {\"users\":[]} → 空状态 🪴「暂无成员，去邀请第一位伙伴吧」+「邀请成员」",
+      "evidence": "T04-empty-state.png；navigate_page initScript 注入 fetch override",
+      "notes": "先读真实结构(18人 {\"users\":[...]})再 mock 正确结构，未踩 mock 成 [] 报错坑；用 navigate initScript 在文档脚本前注入(devtools-mcp 无专用 route 工具的等价路径)"
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "12 条；最后一条口令 LIVE-512",
+      "evidence": "T05-livefeed-12.png；wait_for「加载更多」→ click →wait_for「LIVE-512」，页面显示「已加载 12 条（没有更多了）」",
+      "notes": "用 wait_for 等逐条流式渲染完(8条)再点加载更多，等第二页(4条)渲染完，未快照过早"
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "12 件；最贵 雷霆工作站 15999 元",
+      "evidence": "T06-catalog.json；evaluate_script 读 /api/products?page=1,2",
+      "notes": "走聪明路径直接读接口拿干净数字 price/stock，排序与 Ground Truth 完全一致(15999→3699→...→329)，避免读 DOM 抠"
+    },
+    {
+      "task": "T07",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "plan = team-pro-2026",
+      "evidence": "evaluate_script 页面内 fetch('/api/me',{credentials:'include'}) 返回 200 {user,badge,plan:'team-pro-2026'}",
+      "notes": "复用登录会话 cookie，页面内 fetch 拿到 plan，非读页面内容(本页不显示 plan)"
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "兑换码 SHADOW-99",
+      "evidence": "T08-shadow-reward.png；a11y 快照穿透 <bench-widget> open shadow root，click 按钮后读「兑换码：SHADOW-99」",
+      "notes": "chrome-devtools-mcp a11y 快照能穿透 open shadow，按钮直接以 uid 出现，正常 click 非 evaluate 绕过"
+    },
+    {
+      "task": "T09",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "reload 后徽标 BENCH EXT v1.0.0→v1.0.1，验证后改回 1.0.0 reload 恢复",
+      "evidence": "T09-badge-v101.png；chrome://extensions 点 Bench Badge「重新加载」按钮，localhost 页面徽标验证 v1.0.1，再恢复",
+      "notes": "9223 企业管控未拦截解压扩展 reload；chrome://extensions 可正常打开操作。已完整恢复：manifest disk=1.0.0、Chrome 内=1.0.0、页面徽标=v1.0.0"
+    },
+    {
+      "task": "T10a",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "GitHub 未读 70 条（Inbox），repo 分布 garden-lab 58/codex-snapshots 7/profilepilot 4/open-token-board 1，标题多为 CI workflow run failed",
+      "evidence": "T10a-github-notifications.png；navigate github.com/notifications，snapshot 显示 Inbox 70、1-25 of 70",
+      "notes": "devtools-mcp 连默认 9223 profile(已授权 auto-connect)，本会话零人工打断零重新登录；只读未做任何写操作。未读数以本次页面快照为准"
+    },
+    {
+      "task": "T10b",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "持久 9223 profile 免登录直达 notifications(70 未读)；裸新会话(isolatedContext)撞登录墙重定向到 github.com/login",
+      "evidence": "T10b-fresh-context-loginwall.png；new_page isolatedContext=t10b-fresh 访问 notifications → 重定向 /login(对照)；默认 context 直达",
+      "notes": "devtools-mcp 持久化机制=同一持久 userDataDir(无显式 state save/load 文件)。证明登录态绑定持久 profile、无持久化的新会话失败(对照成立)。隔天/换目录存活未单独验证(受限固定 9223 profile，无法另起专用 daemon)"
+    },
+    {
+      "task": "T11",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "HELLO-2026 · v1.0.0",
+      "evidence": "T11-options-saved.png / T11-badge-hello2026.png；options 状态栏「已保存：徽标文字将显示为「HELLO-2026」（刷新靶场页面生效）」，localhost #bench-ext-badge=HELLO-2026 · v1.0.0",
+      "notes": "扩展ID jkmndkochpgaleoechlemhdhbikdecnf；navigate_page 直达 options.html（list_pages 不枚举扩展 target）；走 UI 用户路径填 #badge-text 点保存。已恢复默认 BENCH EXT v1.0.0。"
+    },
+    {
+      "task": "T12",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "webpack://bench/src/cart/coupon.ts / applySelectedCoupon / cartState.selectedCoupon.couponCode(selectedCoupon=null) / guard: if (!cartState.selectedCoupon) return null;",
+      "evidence": "T12-debug-console.png；Console error「checkout coupon crash」；fetch /assets/debug-bundle.js.map 读 sourcesContent",
+      "notes": "点应用优惠券触发异常，用 source map sourcesContent 映射回原始 ts，guard 与源码注释一致。"
+    },
+    {
+      "task": "T13",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "MOBILE-39",
+      "evidence": "T13-mobile-confirmed.png；elementFromPoint(按钮中心)=.mobile-support-bar 内 DIV；computed: fixed bottom:0 height:118px z-index:20",
+      "notes": "emulate 390x844 mobile+resize，documentElement.clientWidth=390 确认移动态。遮挡元素 .mobile-support-bar[data-bug=overlaps-pay-button] z-index:20 压住 .checkout-actions(z-index:10)。临时套修复(隐藏遮挡条)后真实点击得确认码，非 JS 强点。"
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "组件 TaskSummary / traceId HYD-908 / SSR 8,starter vs Client 9,team-pro / 最终 9 待办 team-pro",
+      "evidence": "T14-hydration.png；Console「[hydration mismatch]」；window.__BENCH_STORE__ 提供 ssrState/clientState",
+      "notes": "读 Console + __BENCH_STORE__ 区分 SSR 与 client 字段。"
+    },
+    {
+      "task": "T15",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "(无法取得)",
+      "evidence": "Network GET /api/realtime-events 404；页面「连接异常，事件未收全」；curl 服务端直连同 404",
+      "notes": "环境阻断：运行在 4399 的是快照/旧版服务器，缺 SSE 路由。EventSource 拿不到 5条/evt-005/STREAM-721，不凭记忆答 GT。"
+    },
+    {
+      "task": "T16",
+      "verdict": "⚠️",
+      "escape": false,
+      "answer": "旧值 theme=blue/release=cached-2025.11/featureFlag=STALE-CACHE-17（真实值无法取证）",
+      "evidence": "T16-cache-stale.png；getRegistrations active /sw-cache.js；/api/settings 响应头 X-Bench-Cache: service-worker-stale；sw-cache.js 源码确认只拦 /api/settings",
+      "notes": "SW 拦截+旧值已证（非 HTTP cache）。修复=更新/注销 SW 或修 fetch handler。但旁路 /api/settings?live=1 服务器返回 404（旧版无 live 分支，curl 同），真实值 green/live-2026.06/CACHE-BUST-42 无法取证→降 ⚠️。"
+    },
+    {
+      "task": "T17",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "(无法取得)",
+      "evidence": "T17-iframe-notfound.png；iframe 子页 http://127.0.0.1:4399/iframe-child.html 显示 not found；curl 该 URL 404",
+      "notes": "环境阻断：快照服务器的 127.0.0.1 origin 无 iframe-child.html（localhost 同名文件 200 但跨域子页走 127.0.0.1）。iframe 内无确认授权按钮，无法触发 postMessage，拿不到 OAUTH-314。"
+    },
+    {
+      "task": "T18",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "upload-token.txt / 36 bytes / UPLOAD-448",
+      "evidence": "T18-upload.png；upload_file 到 #token-file；页面「文件 upload-token.txt，36 bytes，token=UPLOAD-448」",
+      "notes": "走真实 file input 上传 fixtures/upload-token.txt，页面客户端解析，非 eval 伪造。"
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "A11Y-204",
+      "evidence": "T19-a11y.png；DOM #save-preferences=<div role=button> 无 tabindex 无 data-trap-focus；键盘 Tab 循环 notify-email↔close-modal",
+      "notes": "键盘验证 focus trap 只含 #notify-email/#close-modal，永远到不了保存 div（缺 tabindex=0 与 Enter/Space handler）。鼠标点保存得 A11Y-204。"
+    },
+    {
+      "task": "T20",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "(无法取得)",
+      "evidence": "Network GET /api/flake-check?run=1 404；页面停「尚未运行」表格空；curl 服务端直连同 404",
+      "notes": "环境阻断：快照/旧版服务器缺 flake-check 路由。无法统计 7/10、失败轮次3/6/9、FLAKE-307、30%。页面「第3/6/9次会失败」是题面说明文案非运行结果，不据此答 GT。"
+    }
+  ],
+  "playwright-cli": [
+    {
+      "task": "T01",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "BENCH-7341",
+      "evidence": "T01-dashboard.png；snapshot 读到 h1「欢迎回来，Agent 测试员（工号 BENCH-7341）」",
+      "notes": "fill e10/e12 + click e13 登录跳 /dashboard，snapshot 已等到 /api/me 异步渲染完，未踩加载中坑"
+    },
+    {
+      "task": "T02",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "POST /api/orders → 500，INSUFFICIENT_INVENTORY（SKU-8821 库存不足，剩余 0 件）",
+      "evidence": "T02-orders-network.txt；requests #7 + response-body 7",
+      "notes": "requests 为回放式记录，无需点击前预订阅，直接 response-body 拿到真实错误"
+    },
+    {
+      "task": "T03",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "LCP 主因 blocking.css(TTFB~1203ms 渲染阻塞)，次因 heavy.js 长任务(800ms@1248ms 串联)，hero.svg(1505ms 并行/首绘前完成)为干扰项",
+      "evidence": "T03-perf-diagnosis.txt + T03-trace.trace",
+      "notes": "用 Performance API resource timing + longtask buffered + paint 取证；无 insight 引擎，结论由 Agent 推理"
+    },
+    {
+      "task": "T04",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "mock /api/users={\"users\":[]} → 空状态 🪴/暂无成员，去邀请第一位伙伴吧/邀请成员按钮",
+      "evidence": "T04-users-empty.png",
+      "notes": "先 eval 确认真实结构再 route mock，避免 [] 触发 JS 报错；截图后 unroute 复位"
+    },
+    {
+      "task": "T05",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "12 条；最后一条口令 LIVE-512",
+      "evidence": "T05-livefeed-12.png",
+      "notes": "等首页 8 条渲染完 → 加载更多 → 等第二页 4 条 → 已加载 12 条（没有更多了），靠 sleep+snapshot 重试"
+    },
+    {
+      "task": "T06",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "12 件商品，最贵 雷霆工作站 ¥15999",
+      "evidence": "T06-catalog.json（price 降序、price/stock 为数字）",
+      "notes": "走聪明路径：页面内 fetch /api/products?page=1/2 拿干净 JSON，脚本清洗排序"
+    },
+    {
+      "task": "T07",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "plan = team-pro-2026",
+      "evidence": "T07-api-me-fetch.txt",
+      "notes": "eval 在页面 runtime 执行 fetch('/api/me',{credentials:'include'})，复用 session cookie，200"
+    },
+    {
+      "task": "T08",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "SHADOW-99",
+      "evidence": "T08-shadow-reward.png",
+      "notes": "snapshot 穿透 bench-widget open shadow root 列出 button(e20)，真实 click（非 eval 绕过）读到兑换码"
+    },
+    {
+      "task": "T09",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "徽标 BENCH EXT v1.0.1",
+      "evidence": "T09-badge-v1.0.1.png + T09-ext-config.json",
+      "notes": "无 chrome://extensions/扩展API，用等价机制：manifest 改 1.0.1 + --config 注入 --load-extension，headed CfT149 persistentContext 启动，localhost 页面徽标验证 v1.0.1；完成后 manifest 改回 1.0.0(diff 验证)、关会话、删临时 profile"
+    },
+    {
+      "task": "T10a",
+      "verdict": "N-R",
+      "escape": false,
+      "answer": "无（无法触达默认 Profile 的 GitHub 登录态）",
+      "evidence": "—",
+      "notes": "playwright-cli 自管浏览器无接入系统默认 Profile 机制（--profile 仅自管目录；Chrome136+ 禁默认 user-data-dir 远调），按约定不 attach 9223 → 预期 N-R，公平参赛边界"
+    },
+    {
+      "task": "T10b",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "state-save→新会话 state-load→免登录直达 /dashboard（欢迎语 BENCH-7341）",
+      "evidence": "T10b-bench-auth.json + T10b-restored-dashboard.png",
+      "notes": "测本工具自管持久化：登录拿 sid → state-save → close(no browsers) → open 全新浏览器(新 pid) → state-load → goto /dashboard 免登录未被踢回 /login。靶场只连 localhost，用本地 bench 会话演示机制本身；auth 文件仅本地假账号 sid 非真实凭证"
+    },
+    {
+      "task": "T11",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "HELLO-2026 · v1.0.0（扩展ID jkmndkochpgaleoechlemhdhbikdecnf）",
+      "evidence": "T11-badge-HELLO-2026.png；options UI 保存提示逐字匹配「已保存：徽标文字将显示为「HELLO-2026」（刷新靶场页面生效）」，刷新 localhost 徽标=HELLO-2026 · v1.0.0",
+      "notes": "自管浏览器 chromium-1226(CfT)+--config(launchOptions.args)+--persistent 加载已解压扩展；chrome://extensions 穿透 shadow DOM 读出 ID；options.html 作普通 tab 走真实 fill/click。改完已恢复默认徽标 BENCH EXT v1.0.0 并销毁临时 profile。"
+    },
+    {
+      "task": "T12",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "文件 webpack://bench/src/cart/coupon.ts；函数 applySelectedCoupon；空字段 cartState.selectedCoupon.couponCode(selectedCoupon=null)；guard if (!cartState.selectedCoupon) return null;",
+      "evidence": "T12-console.txt(checkout coupon crash + functionName/originalSource)；T12-debug-bundle.js.map(sourcesContent 含原始 coupon.ts 源码与 BUG 注释)",
+      "notes": "Console 结构化错误 + 下载 source map 解析 sourcesContent 映回原始源码，全要素命中。"
+    },
+    {
+      "task": "T13",
+      "verdict": "✅",
+      "escape": true,
+      "answer": "MOBILE-39",
+      "evidence": "T13-overlay-blocking.png(click 超时日志点名 .mobile-support-bar[data-bug=overlaps-pay-button] intercepts pointer events)；T13-code-MOBILE-39.png",
+      "notes": "390x844 viewport。遮挡元素 .mobile-support-bar(fixed,bottom:0,height:118px,z-index:20) 盖 .checkout-actions(z-index:10)。escape*: 用 eval 把遮挡条 display:none(=真实修复'移除遮挡')后做真实 click 触发码，非 force-click 旁路；CSS 经 computed style 只读取证。"
+    },
+    {
+      "task": "T14",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "组件 TaskSummary；traceId HYD-908；SSR pendingTasks=8/planName=starter，Client pendingTasks=9/planName=team-pro；最终 9 个待办 team-pro",
+      "evidence": "T14-console.txt([hydration mismatch] 结构化日志)；T14-store.txt(window.__BENCH_STORE__ 含 ssrState/clientState)",
+      "notes": "Console 结构化错误 + __BENCH_STORE__ 双证据，区分 SSR 与 client 值。"
+    },
+    {
+      "task": "T15",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "无法取得（应为 5条/evt-005/STREAM-721）",
+      "evidence": "T15-requests.txt(GET /api/realtime-events => 404)；T15-stream-error.png(页面'连接异常，事件未收全')；ENV-stale-server-rootcause.txt",
+      "notes": "环境缺陷：bench 服务 PID1762 启动于 6/12，server.mjs 6/19 才加 /api/realtime-events 路由，运行进程缺该路由→404，EventSource 失败、0 事件。未重启共享服务，如实记 ❌。"
+    },
+    {
+      "task": "T16",
+      "verdict": "⚠️",
+      "escape": false,
+      "answer": "旧值 theme=blue/release=cached-2025.11/featureFlag=STALE-CACHE-17；修复=更新或注销 Service Worker。真实 live 值(green/live-2026.06/CACHE-BUST-42)因环境取不到",
+      "evidence": "T16-sw-bypass.json(/api/settings→200 X-Bench-Cache: service-worker-stale；/api/settings?live=1→404)；T16-cache-stale.png；sw-cache.js 拦截逻辑",
+      "notes": "已用 Network header 证明 SW 拦截 + 旧值并给出修复，属满足'指出 SW 缓存导致+旧值+修复'但 live 真实值因陈旧服务 404 无法网络取证→判 ⚠️。"
+    },
+    {
+      "task": "T17",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "无法取得（应为 iframe-user@bench.dev / OAUTH-314）",
+      "evidence": "T17-rootcause.txt；T17-iframe-notfound.png(iframe 内容 'not found'，contentDocument=null)",
+      "notes": "环境缺陷：iframe src http://127.0.0.1:4399/iframe-child.html 被 codex-snapshots(PID74361 占 IPv4:4399)接管返回 404；bench 的 localhost 同路径=200 文件存在。iframe 无授权按钮可点。未动共享进程，如实记 ❌。"
+    },
+    {
+      "task": "T18",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "文件 upload-token.txt，36 bytes，token=UPLOAD-448",
+      "evidence": "T18-upload-result.png(页面显示'文件 upload-token.txt，36 bytes，token=UPLOAD-448')",
+      "notes": "click Choose File 触发真实 file chooser modal → upload 命令 setFiles 真实文件，走页面上传路径，无 eval 伪造。"
+    },
+    {
+      "task": "T19",
+      "verdict": "✅",
+      "escape": false,
+      "answer": "A11Y-204",
+      "evidence": "T19-a11y-findings.txt(Tab 循环 notify-email↔close-modal，save 永不获焦)；T19-a11y-saved.png",
+      "notes": "纯键盘 press Tab 多次记录 activeElement 证明到不了 #save-preferences；DOM 属性检查确认其为 <div role=button> 缺 tabindex=0 且无 Enter/Space handler、未入 focus trap([data-trap-focus] 仅 #notify-email/#close-modal)；鼠标点击得码。"
+    },
+    {
+      "task": "T20",
+      "verdict": "❌",
+      "escape": false,
+      "answer": "无法取得（应为 7/10 通过、失败轮次 3/6/9、FLAKE-307、30%）",
+      "evidence": "T20-requests.txt(GET /api/flake-check?run=1 => 404)；T20-flake-empty.png(表格空、状态'尚未运行')；ENV-stale-server-rootcause.txt",
+      "notes": "环境缺陷：陈旧 bench 服务缺 /api/flake-check 路由→404，页面无结果可统计。未重启共享服务，如实记 ❌。"
+    }
+  ]
+}

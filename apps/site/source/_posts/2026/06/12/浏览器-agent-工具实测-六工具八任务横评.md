@@ -553,7 +553,7 @@ coverPosition: "below-title"
 <div class="bc-foot">两轮(R1 9223 / R2 9224)。<b>耗时/token 两轮稳</b>，可比；<b>browserOps/eval 自救摆动大</b>(同 subagent 口径不一，只看趋势)。agent-browser R1 的 29✅ 是子代理漏报 R06，R2 干净 30✅。bb-browser R2 已含 R09 重测✅(上次 N-R 是站点网络抽风)。playwright-cli 自管有 5 题快速失败(自管无真实登录态/扩展、npm 被 Cloudflare 拦)，低耗时不等于“做了同样多题”。</div>
 </figure>
 
-四条读数：① **bb-browser 是成本黑洞**——47.9min ≈ agent-browser 的 1.86×，调用/操作数最高却结果最差（4❌），根因还是 4.6 那个 click 事件 bug 逼出的处处 eval 重试——纯工具缺陷把成本顶上去。② **devtools-mcp 操作最省（169）、token 最贵（322.7k）**——MCP 每次回传冗长 a11y 快照/网络体，单 op 很贵，但能力最稳（28✅、零 ❌）。③ **agent-browser 综合最省**（耗时+token 双低、结果最全），代价是 24 次 eval 逃生。④ **playwright-cli 的低成本要打折看**：它有 5 题没做成、都记 ✕——自管浏览器没真实登录态/扩展（R02/R06/T10a）、npm 被 Cloudflare 拦（R04/R07），这些快速失败反而压低了耗时/token。
+四条读数：① **bb-browser 是成本黑洞**——47.9min ≈ agent-browser 的 1.86×，调用/操作数最高却结果最差（4❌），根因还是 4.6 那个 click 事件 bug 逼出的处处 eval 重试——纯工具缺陷把成本顶上去。② **devtools-mcp 操作最省（169）、token 最贵（322.7k）**——MCP 每次回传冗长 a11y 快照/网络体，单 op 很贵，但能力最稳（28✅、零 ❌）。③ **agent-browser 综合最省**——耗时、token 双低，结果还最全；美中不足是这份"全"里有 24 次靠 eval 逃生补原语，不够纯原生、可移植性打折——这是**纯净度瑕疵**，不是"拿 eval 换低成本"的代价（eval 一行直取有时反而比反复快照更省）。④ **playwright-cli 的低成本要打折看**：它有 5 题没做成、都记 ✕——自管浏览器没真实登录态/扩展（R02/R06/T10a）、npm 被 Cloudflare 拦（R04/R07），这些快速失败反而压低了耗时/token。
 
 > 三点诚实声明：(a) harness 每工具只给一个 token 总量、未拆 input/output，无法精确折 $（按 Opus 4.8 输出价粗估单工具约 $14–24、含 input 更高），故这里以 **token 总量**作成本口径；(b) **eval 自救是软指标**——各 subagent 对"eval 读数据"算不算逃生口径不一，跨工具只看趋势别逐个抠；(c) **公平性**：playwright-cli 宿主与另三者不同、且有 5 题快速失败，其低耗时不能与"完成同样多题"等价比。
 

@@ -89,6 +89,10 @@ window.COVERS = (function () {
       ["AI 人才", "模型监管", "教育禁令", "现金消耗", "硬件成本"],
       "前沿 AI 的竞争，正在同时压向人才、监管、课堂、资本和设备价格。",
       "John Jumper · Anthropic/G7 · Norway AI ban · OpenAI burn · Nothing RAM"),
+    news("2026/06/22/2026-06-22-x-上-ai-与前端热点速览", "2026-06-22",
+      ["企业部署", "AI 硬件", "机器人 IPO", "产品设计", "增长信任"],
+      "AI 正在进入组织、供应链、机器人市场和产品信任体系。",
+      "Samsung Codex · Lingyi · Coowa · Apple design · Polymarket"),
   ];
 
   const T = [

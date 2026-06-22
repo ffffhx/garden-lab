@@ -157,10 +157,10 @@ coverPosition: "below-title"
 
 没人会把六个工具都装上。如果只能留一把，先过一道硬前提：要能**复用真实登录态**（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用）——这一条先淘汰不继承登录态的 `@browser`。剩下能接到真实 9223 / 受管持久 profile 的几个里，真正的决赛只在**两个满分选手**之间：agent-browser 和 Chrome DevTools MCP，两者在同口径 31 格里都是 **31/31**。再往下比就分出胜负了：agent-browser **token 最省（~198k）、最快（~26min）、state 可移植**，而且唯二**原生支持网络层 route/mock**；DevTools MCP 最稳（eval 逃生最少、零失败）、F12 式诊断直出，T04 它也过了——但走的是 **JS 层 initScript 补丁**（注入脚本改 fetch/XHR），不是 agent-browser 那种**协议层 route**：常见 fetch/XHR 够用，可一旦要 abort、改 header、拦非 JS 发起的请求，JS 层就够不着，鲁棒性弱一档。再叠加 **token 最贵（~325k，约 agent-browser 的 1.6×）、绑 userDataDir 不可移植**两条，单选的天平就压向 agent-browser：能力同样满格，但更省、更快、可移植、route 更硬。代价是 agent-browser 的 click 不稳、daemon 粘滞——但这是能靠重试 + `connect 9223` 复核吸收的工程细节，而非能力差距。
 
-在这些候选里，**只能装一款就选 agent-browser**；唯一例外是"纯前端调试"场景——那时换 Chrome DevTools MCP。
+在这些候选里，**只能装一款就选 agent-browser**（极少数例外场景见文末速查表）。
 
 
-<figure class="pickflow" role="group" aria-label="第一节 浏览器工具选型路由图：先过登录态硬前提，通用单选落到 agent-browser，只有纯前端调试这一例外才换 Chrome DevTools MCP">
+<figure class="pickflow" role="group" aria-label="第一节 浏览器工具选型路由图：先过登录态硬前提，通用单选落到 agent-browser">
 <style>
 .pickflow{
   --pf-paper-soft: var(--paper-soft, #faf6ec);
@@ -403,7 +403,7 @@ coverPosition: "below-title"
 <div class="pf-head">
   <span class="pf-kicker">§1 选型路由</span>
   <div class="pf-title">只装一把，选 agent-browser</div>
-  <div class="pf-sub">先过登录态硬前提；通用单选落到 agent-browser；只有"纯前端调试"这一例外才换 DevTools MCP。</div>
+  <div class="pf-sub">先过登录态硬前提，剩下的满分选手里通用单选落到 agent-browser。</div>
 </div>
 <div class="pf-stage">
   <div class="pf-node pf-gate" data-step="1">
@@ -419,20 +419,10 @@ coverPosition: "below-title"
     <small>同口径满分 31/31，token 最省（~198k）、最快（~26min）、state 可移植，还唯二原生支持协议层 route/mock（比 JS 层补丁更鲁棒）。软肋只有 click / daemon 稳定性——靠重试 + connect 9223 复核就能吸收，不是能力洞。</small>
     <span class="pf-pill">能力无洞，一把够用</span>
   </div>
-  <div class="pf-flow" aria-hidden="true"></div>
-  <div class="pf-bhead" aria-hidden="true">唯一例外 → 才换工具</div>
-  <div class="pf-unit pf-u1">
-    <div class="pf-node pf-b1" data-step="3">
-      <span class="pf-tag" aria-hidden="true">纯前端调试 · 例外</span>
-      <b>Chrome DevTools MCP</b>
-      <small>只调试不改流量、不在乎 token、不需要跨机时换它：最稳、eval 逃生最少、F12 式诊断直出。它的 mock 走 JS 层 initScript（非协议层 route），这点差异在本场景里恰好用不到。</small>
-    </div>
-  </div>
 </div>
 <div class="pf-foot" aria-hidden="true">
   <span class="pf-leg"><span class="pf-dot d-amb"></span>硬前提</span>
   <span class="pf-leg"><span class="pf-dot d-green"></span>通用首选 · agent-browser</span>
-  <span class="pf-leg"><span class="pf-dot d-cyan"></span>例外 · DevTools MCP</span>
 </div>
 </figure>
 
@@ -445,8 +435,6 @@ coverPosition: "below-title"
 - **能接真实 profile**：严格 `connect 9223` + `get cdp-url` 复核后，能稳定跑一轮真实登录态外场。
 
 **它的软肋，以及为什么不致命**：click 事件偶发不稳、常驻 daemon 的 `--cdp` 命中目标 profile 会粘滞（见 7.2）。但这些都是**工程细节、不是能力缺口**——靠重试、snapshot 复核、连接前先 `connect 9223` + `get cdp-url` 复位就能吸收。换句话说：两者能力都满格，分胜负的是成本（token 省 ~40%）、可移植性，以及 route 的鲁棒性（协议层 vs JS 层）——这三条把单选的天平压向 agent-browser。
-
-**唯一会让我改判的情况**：用途锁死在"纯前端调试、不在乎 token、不需要 mock 也不需要跨机"。这时换 **Chrome DevTools MCP**——它把 F12 调试流程包成 Agent 工具，Network 响应体、性能诊断直出、扩展特权页，以及 console/source map、SW、iframe、file input、键盘可访问性的证据链全覆盖，而且 eval 逃生最少、最稳。它的 mock 走 JS 层 initScript、非协议层 route，但在"只调试不改流量"的场景里这点差异恰好用不到，所以这个例外里它反而更顺手。实操上别让它接管你的日常主 Chrome（会抢焦点、误改账号状态，见第 5 节），而是开一个**专用调试 profile**、用 `--browserUrl` 连它的 CDP 端口。
 
 **其余四个为什么落选**：
 

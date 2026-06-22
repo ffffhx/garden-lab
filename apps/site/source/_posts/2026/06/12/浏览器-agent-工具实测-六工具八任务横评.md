@@ -23,7 +23,7 @@ coverPosition: "below-title"
 
 这篇文章按"结论 → 过程 → 原理"三段组织：
 
-- **一、结论先行**：第 1 节按"你要干什么"直接给首选与加装路由，第 2 节是6工具 × 20个 靶场任务 + 9个 真实网站任务的结果总表；
+- **一、结论先行**：第 1 节按"你是哪种人 / 要干什么"给"没有银弹、按使用风格选"的分流路由，第 2 节是6工具 × 20个 靶场任务 + 9个 真实网站任务的结果总表；
 - **二、测试过程**：第 3 节是实测方法（基准测试站与任务设计），第 4 节逐格核对每个 ❌ / ⚠️ 的成因，第 5 节提炼跨工具规律；
 - **三、底层原理**：第 6 节用浏览器能力分层和安全域给出边界公式，第 7 节逐工具讲实现——边界到底来自哪里。
 
@@ -463,7 +463,7 @@ coverPosition: "below-title"
 
 ### 2. 结果总表
 
-下面这张热力图收全 T01-T20 靶场任务和 R01-R09 真实网站任务，颜色与图例见图内；图中标记：「粘滞」= `--cdp` 命中目标 profile 不可靠、需先复位常驻 daemon（见 7.2），「绑目录」= 依赖持久 userDataDir、不可移植（换目录即丢），`△` = 工具自身无持久化机制、只能搭外部持久浏览器便车，`N/A` = 该任务对该工具不适用，`N-R` = 该轮因环境/没跑成而无结果（非能力判定）；工具能力做不成记 ✕ 失败。
+下面这张热力图收全 T01-T20 靶场任务和 R01-R09 真实网站任务，颜色与图例见图内；图中标记：「粘滞」= `--cdp` 命中目标 profile 不可靠、需先复位常驻 daemon（见 7.2），「绑目录」= 依赖持久 userDataDir、不可移植（换目录即丢）；**做不到的统一记 ✕ 失败**（"想做但能力不支持"也算失败，不再用 N/A 中性挡箭）。
 
 <figure class="benchviz bv-matrix" role="group" aria-label="六工具 × 三十一任务结果热力图">
 <style>.benchviz{margin:1.8rem 0;font-family:var(--font-serif-body,system-ui)}
@@ -590,7 +590,7 @@ coverPosition: "below-title"
 - **token 口径**：Codex rerun2 的总 token 看着上千万，其实 **95%+ 是缓存输入**(便宜)，真实生成量看 output(37k–49k)；Claude 轮 harness 只给单一 token 总量(未拆 in/out)。两边 token 都别直接折算成同一个 $。
 
 
-#### 成本 × 能力 × 速度：只装一款选谁
+#### 成本 × 能力 × 速度 × 稳定性：没有银弹，按使用风格选
 
 综合推荐看四个维度——**能力（原生）、稳定性、速度、token**。先各给一张完整图，最后一张归一化叠在一起：
 
@@ -724,7 +724,7 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 读者指出这一版仍然偏"靶场"之后，我又把真实网站外场任务补成 R01-R09，并直接合进上面这张总表。**这组是真实网站**：动态字段（GitHub 未读数、npm 版本、资源耗时等）会变，所以每格都带了观察时间、最终 URL、profile 和证据（详见第 3 节）。`N-R` 在这里表示运行时不可用或该能力未暴露，不等于网站本身失败；`✅*` 表示用 URL block 或启动参数证明了网络层阻断，但不是运行时 route API。
 
-上表主体为 2026-06-19/20 Codex 单轮；`@chrome（开权限）`列是 2026-06-20 对系统默认 Chrome Profile 的追加复测，不再使用 9223；`@chrome（无完整 CDP）`列是 2026-06-21 在同一默认 Profile 上关闭完整 CDP 后的复测。无完整 CDP 时，`@chrome` 不再是 9/9 N-R：页面级操作、默认 Profile 登录态、Shadow DOM、iframe、SSE、GitHub/MDN/npm 阅读都能做；缺的是 Network body、Performance timing、route/mock、viewport、file upload、特权页和 9223 绑定。开完整 CDP 后，Network body、Runtime fetch、Performance timing、文件上传等能力明显放开；用户手动把 Bench Badge 装进默认 Profile 后，R06 至少能证明真实线上文章出现 `BENCH EXT v1.0.0`，但 `chrome-extension://.../options.html` 仍被 URL policy 拦住，所以不能把徽标改成 `REAL-SITE-2026`，只能记 ⚠️。2026-06-20 我又用 Claude Code 主控、每工具一个干净 Subagent，把外场 R01-R09 和靶场 T01-T20 **各独立复跑两轮**收方差：**agent-browser R06 两轮实测都是 ✅**（上表那笔 ⚠️ 只是 Codex Subagent 观察漏判）、playwright-cli 在外场 attach 9223 两轮确定性崩溃、动态字段两轮吻合（GitHub 未读 70 等），两轮明细见第 3 节"两轮独立复跑校准"。注意这不等于 playwright-cli 永远接不进 9223：T10c 单题用 `attach --cdp=http://127.0.0.1:9223` 已经成功。外场没有推翻推荐，反而更强化了第 1 节的结论：通用单选仍是 agent-browser，而 DevTools MCP 稳居"纯前端排障"这个例外场景的首选。
+上表主体为 2026-06-19/20 Codex 单轮；`@chrome（开权限）`列是 2026-06-20 对系统默认 Chrome Profile 的追加复测，不再使用 9223；`@chrome（无完整 CDP）`列是 2026-06-21 在同一默认 Profile 上关闭完整 CDP 后的复测。无完整 CDP 时，`@chrome` 不再是 9/9 N-R：页面级操作、默认 Profile 登录态、Shadow DOM、iframe、SSE、GitHub/MDN/npm 阅读都能做；缺的是 Network body、Performance timing、route/mock、viewport、file upload、特权页和 9223 绑定。开完整 CDP 后，Network body、Runtime fetch、Performance timing、文件上传等能力明显放开；用户手动把 Bench Badge 装进默认 Profile 后，R06 至少能证明真实线上文章出现 `BENCH EXT v1.0.0`，但 `chrome-extension://.../options.html` 仍被 URL policy 拦住，所以不能把徽标改成 `REAL-SITE-2026`，只能记 ⚠️。2026-06-20 我又用 Claude Code 主控、每工具一个干净 Subagent，把外场 R01-R09 和靶场 T01-T20 **各独立复跑两轮**收方差：**agent-browser R06 两轮实测都是 ✅**（上表那笔 ⚠️ 只是 Codex Subagent 观察漏判）、playwright-cli 在外场 attach 9223 两轮确定性崩溃、动态字段两轮吻合（GitHub 未读 70 等），两轮明细见第 3 节"两轮独立复跑校准"。注意这不等于 playwright-cli 永远接不进 9223：T10c 单题用 `attach --cdp=http://127.0.0.1:9223` 已经成功。外场没有推翻第 1 节的结论：没有银弹、按使用风格选——DevTools MCP 在"纯前端排障 / 开箱即稳"这一支稳居首选，agent-browser、playwright 各有所长（详见综合卡片图）。
 
 ## 二、测试过程：怎么测出来的、逐格为什么
 
@@ -871,7 +871,7 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 **一个必须记录的环境坑**：靶场第 1 轮里 T15/T16/T17/T20 四工具集体失败，根因是**环境而非工具**——运行中的靶场服务进程是更早启动的旧版本、缺后来才加的 `/api/realtime-events`·`/api/settings`·`/api/flake-check` 路由（404）；且 T17 跨域 iframe 子页走的 `127.0.0.1:4399` 被另一个本机服务占用。重启 `server.mjs`、把占端口的服务迁走之后四题重跑：T15/T16/T20 四工具全 ✅，T17 三工具 ✅、bb-browser ❌（缺跨域 OOPIF 切换/坐标点击，是真实工具短板）。这条提醒任何复现者：**跑靶场前先确认服务是当前版本、4399 没被别的进程抢**。
 
-**结论没变，只是更扎实**：两轮下来，**chrome-devtools-mcp 仍是最稳、零逃生的前端排障首选**（靶场两轮 21✅/20✅、外场只差一个运行时 route）；**agent-browser 是能力最全的全能选手**——若抛开 7.2 那个粘滞 daemon 的 `--cdp` 可靠性硬伤，它在"运行时 route + HAR + 扩展 options + 专用 profile 持久化"上的覆盖面其实是四家里最广的，是最接近"一个工具全包"的候选；**playwright-cli 自管浏览器、CI 友好，T10c 能 attach 9223，但接管真实 profile 的 attach 依赖其浏览器状态（需页面在场，见 4.7）**；**bb-browser 读取类够快，但 mock / 扩展设置页 / 跨域 iframe / 网络拦截四类硬短板叠加 URL 归一化 bug，仍是修一处能改命、但当前最弱的一个**。
+**结论没变，只是更扎实**：两轮下来，**chrome-devtools-mcp 仍是最稳、零逃生的前端排障首选**（靶场两轮 21✅/20✅、外场只差一个运行时 route）；**agent-browser 是覆盖面最广的全能选手**（注意是功能面最广，不是原生通过最多——原生数 playwright 30 更高）——若抛开 7.2 那个粘滞 daemon 的 `--cdp` 可靠性硬伤，它在"运行时 route + HAR + 扩展 options + 专用 profile 持久化"上的覆盖面其实是四家里最广的，是最接近"一个工具全包"的候选；**playwright-cli 自管浏览器、CI 友好，T10c 能 attach 9223，但接管真实 profile 的 attach 依赖其浏览器状态（需页面在场，见 4.7）**；**bb-browser 读取类够快，但 mock / 扩展设置页 / 跨域 iframe / 网络拦截四类硬短板叠加 URL 归一化 bug，仍是修一处能改命、但当前最弱的一个**。
 
 正式数据全部来自独立会话：每个单元格（任务 × 工具）由一个全新上下文、既不知道答案也不知道工具已知 bug 的无偏 Agent 执行（Claude Code 无头 `claude -p` 进程或 Codex 隔离子 Agent），提示词只含任务原文、工具限定与约 25 次操作止损线，禁止 curl/读源码旁路，单元格之间重启基准测试站清状态——这样测到的是真实用户要付的成本，而非熟练者的最优解。每个单元格记录判定（✅/⚠️/❌ 按任务卡标准）、操作数、轮数、耗时、成本，以及 **eval 自救次数**（Agent 被迫弃用工具原语、改用 eval 直接执行 JS 才能推进的次数，见 5.2）。需如实声明的局限：第一批单元格基本只跑一次，后续又用 Claude 独立轮对 R01-R09 和 T01-T20 收过一次方差；@chrome/@browser 跑在 Codex 宿主内，时间/调用数只能粗比，但**能力判定不受宿主影响**；固定基准测试站全在 localhost、版本固定；R01-R09 外场只代表 2026-06-19/20 这一次真实网站状态，本文只把它作为同一快照的单独分栏并入总览，不拿动态答案和靶场静态答案互相替代。
 

@@ -148,8 +148,13 @@ function loadPosts() {
       const date = parseDateInput(parsed.data.date);
       const assetBasePath = getPostAssetBasePath(relativePath);
       const compiled = compileMarkdown(parsed.content, assetBasePath);
+      // Allow an explicit `slug:` in front-matter (sanitized). Falls back to the
+      // file-name stem. Needed because pure-CJK file names slugify to non-ASCII
+      // slugs that GitHub Pages / static-export routing can't serve.
+      const explicitSlug =
+        typeof parsed.data.slug === "string" ? parsed.data.slug.trim() : "";
       const slug = ensureUniqueSlug(
-        slugifyPostStem(path.parse(filePath).name),
+        slugifyPostStem(explicitSlug || path.parse(filePath).name),
         relativePath,
         takenSlugs
       );

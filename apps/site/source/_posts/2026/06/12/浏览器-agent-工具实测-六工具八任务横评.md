@@ -155,12 +155,12 @@ coverPosition: "below-title"
 
 ### 1. 选型路由：按任务场景反推工具
 
-没人会把六个工具都装上。大多数人——尤其是前端开发者——只需要一个**综合最顺手、又能复用真实登录态**的工具。把"复用真实登录态"定成硬前提（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用），候选会先分成两档：DevTools MCP、agent-browser、bb-browser 这三类能在本轮接到 9223 或受管持久 profile；playwright-cli 在 T10c 单题里也能 `attach --cdp` 复用 9223，但外场轮在带多扩展的真实 profile 上触发过 service worker target 断言，稳定性还没达到“真实 profile 主工具”的级别；@browser 不继承真实登录态；`@chrome（开权限）` 已经能通过默认 Chrome Profile 做大量 CDP 观察，但 T10c 仍证明不了它落在用户指定的 9223。agent-browser 在严格 `connect 9223` + `get cdp-url` 复核后可以稳定跑一轮真实外场，所以它不该被简单排除；但如果只能给前端开发者推荐**一款**，我仍然选 **Chrome DevTools MCP**。后续追加的前端专项、真实网站外场、`@chrome` 开权限复测与 T10c 没有推翻这个结论，反而把理由补强了：前端排障最常见的 console、source map、Service Worker、iframe、file input、键盘可访问性、真实 Network body、扩展 options、指定 profile 和性能 trace，DevTools MCP 都能拿到证据。
+没人会把六个工具都装上。如果只能留一把，先过一道硬前提：要能**复用真实登录态**（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用）——这一条先淘汰不继承登录态的 `@browser`。剩下能接到真实 9223 / 受管持久 profile 的几个里，真正的决赛只在**两个满分选手**之间：agent-browser 和 Chrome DevTools MCP，两者在同口径 31 格里都是 **31/31**。再往下比就分出胜负了：agent-browser **token 最省（~198k）、最快（~26min）、state 可移植**，而且唯二**原生支持网络层 route/mock**；DevTools MCP 最稳（eval 逃生最少）、F12 式诊断直出，但它**没有网络层 route**——这让它从根上越不过 T04（请求 mock）这道分水岭，是个**后付补不上的能力缺口**。两者的取舍因此很清晰：agent-browser 的弱点（click 不稳、daemon 粘滞）是能靠重试 + `connect 9223` 复核吸收的工程细节，不是能力洞；而 DevTools MCP 的洞补不上。”能力的洞补不上，但稳定性能靠运维补上”——所以选没有洞的那把。
 
-在这些候选里，**前端开发者首选 Chrome DevTools MCP**。
+在这些候选里，**只能装一款就选 agent-browser**；唯一例外是"纯前端调试"场景——那时换 Chrome DevTools MCP。
 
 
-<figure class="pickflow" role="group" aria-label="第一节 浏览器工具选型路由图：先过登录态硬前提，默认首选 Chrome DevTools MCP，再按四类额外需求加装其它工具">
+<figure class="pickflow" role="group" aria-label="第一节 浏览器工具选型路由图：先过登录态硬前提，通用单选落到 agent-browser，只有纯前端调试这一例外才换 Chrome DevTools MCP">
 <style>
 .pickflow{
   --pf-paper-soft: var(--paper-soft, #faf6ec);
@@ -402,120 +402,66 @@ coverPosition: "below-title"
 <span class="pf-grain" aria-hidden="true"></span>
 <div class="pf-head">
   <span class="pf-kicker">§1 选型路由</span>
-  <div class="pf-title">按任务场景反推工具</div>
-  <div class="pf-sub">先过一道硬前提，落到前端默认首选，再按额外需求逐项加装。</div>
+  <div class="pf-title">只装一把，选 agent-browser</div>
+  <div class="pf-sub">先过登录态硬前提；通用单选落到 agent-browser；只有"纯前端调试"这一例外才换 DevTools MCP。</div>
 </div>
 <div class="pf-stage">
   <div class="pf-node pf-gate" data-step="1">
     <span class="pf-tag" aria-hidden="true">硬前提 · GATE</span>
     <b>要复用真实登录态？</b>
-    <small>你登录过的 GitHub / 内网 / 在调应用——Agent 直接接着用，免重登。</small>
+    <small>你登录过的 GitHub / 内网 / 在调应用——Agent 直接接着用，免重登。不继承登录态的 @browser 在这关出局。</small>
   </div>
   <div class="pf-flow" aria-hidden="true"></div>
   <div class="pf-node pf-hero" data-step="2">
     <span class="pf-hero-halo" aria-hidden="true"></span>
-    <span class="pf-tag" aria-hidden="true">前端默认 · MAIN</span>
-    <b>Chrome DevTools MCP</b>
-    <small>把 F12 调试流程包成 Agent 工具：Network 响应体、性能诊断直出、扩展特权页、直连真实 Chrome 全覆盖，操作数最少。</small>
-    <span class="pf-pill">满足需求即收手，不用再加装</span>
+    <span class="pf-tag" aria-hidden="true">通用单选 · MAIN</span>
+    <b>agent-browser</b>
+    <small>同口径满分 31/31，token 最省（~198k）、最快（~26min）、state 可移植，还唯二原生支持网络层 route/mock。软肋只有 click / daemon 稳定性——靠重试 + connect 9223 复核就能吸收，不是能力洞。</small>
+    <span class="pf-pill">能力无洞，一把够用</span>
   </div>
   <div class="pf-flow" aria-hidden="true"></div>
-  <div class="pf-bhead" aria-hidden="true">额外需求 → 加装</div>
-  <div class="pf-row">
-    <div class="pf-spine" aria-hidden="true"></div>
-    <div class="pf-branches">
-      <div class="pf-unit pf-u1">
-        <span class="pf-flow-h" aria-hidden="true"></span>
-        <div class="pf-node pf-b1" data-step="3">
-          <span class="pf-tag" aria-hidden="true">流量层 · route</span>
-          <b>要 mock / 拦截 / 改写流量</b>
-          <span class="pf-chips">
-            <span class="pf-chip c-cyan">agent-browser</span>
-            <span class="pf-chip c-pur">playwright-cli</span>
-          </span>
-          <small>唯二真正在网络层做 route 的工具。</small>
-        </div>
-      </div>
-      <div class="pf-unit pf-u2">
-        <span class="pf-flow-h" aria-hidden="true"></span>
-        <div class="pf-node pf-b2" data-step="4">
-          <span class="pf-tag" aria-hidden="true">可移植 · state</span>
-          <b>跨机器 / 跨目录免登录</b>
-          <span class="pf-chips">
-            <span class="pf-chip c-cyan">agent-browser</span>
-            <span class="pf-chip c-pur">playwright-cli</span>
-          </span>
-          <small>导出可移植的 state 文件，换台机器照样带登录态。</small>
-        </div>
-      </div>
-      <div class="pf-unit pf-u3">
-        <span class="pf-flow-h" aria-hidden="true"></span>
-        <div class="pf-node pf-b3" data-step="5">
-          <span class="pf-tag" aria-hidden="true">封装 · site adapter</span>
-          <b>把固定网站封成稳定命令</b>
-          <span class="pf-chips">
-            <span class="pf-chip c-gray">bb-browser</span>
-          </span>
-          <small>用 site adapter 把常用站点固化成可复用命令。</small>
-        </div>
-      </div>
-      <div class="pf-unit pf-u4">
-        <span class="pf-flow-h" aria-hidden="true"></span>
-        <div class="pf-node pf-b4" data-step="6">
-          <span class="pf-tag" aria-hidden="true">回归 · headless</span>
-          <b>纯自启浏览器 · 长期回归测试</b>
-          <span class="pf-chips">
-            <span class="pf-chip c-pur">Playwright 库</span>
-          </span>
-          <small>不依赖真实登录态时，自启浏览器跑稳定回归。</small>
-        </div>
-      </div>
+  <div class="pf-bhead" aria-hidden="true">唯一例外 → 才换工具</div>
+  <div class="pf-unit pf-u1">
+    <div class="pf-node pf-b1" data-step="3">
+      <span class="pf-tag" aria-hidden="true">纯前端调试 · 例外</span>
+      <b>Chrome DevTools MCP</b>
+      <small>只调试不改流量、不在乎 token、不需要跨机时换它：最稳、eval 逃生最少、F12 式诊断直出。它唯一的硬伤（没有网络层 route）在这个场景里恰好用不到。</small>
     </div>
   </div>
 </div>
 <div class="pf-foot" aria-hidden="true">
   <span class="pf-leg"><span class="pf-dot d-amb"></span>硬前提</span>
-  <span class="pf-leg"><span class="pf-dot d-green"></span>首选 MCP</span>
-  <span class="pf-leg"><span class="pf-dot d-cyan"></span>agent-browser</span>
-  <span class="pf-leg"><span class="pf-dot d-pur"></span>playwright</span>
-  <span class="pf-leg"><span class="pf-dot d-gray"></span>bb-browser</span>
+  <span class="pf-leg"><span class="pf-dot d-green"></span>通用首选 · agent-browser</span>
+  <span class="pf-leg"><span class="pf-dot d-cyan"></span>例外 · DevTools MCP</span>
 </div>
 </figure>
 
-**为什么是它**：它本质就是"把你天天用的 F12 调试流程包成了一个 Agent 工具"——
+**为什么是它**：在两个满分选手里，它把"每天都在生效"的优势全占了——
 
-- **Network 拿得到响应体**：状态码、响应体留底、事后可查，排接口问题和你在 Network 面板里干的事一模一样；
-- **性能诊断直出结论**（全场最省解释成本）：`performance_analyze_insight` 直接给"LCP 2.1s、主因阻塞 CSS"这种 DevTools 原生诊断，不用自己读 trace；
-- **够得到扩展特权页**：`chrome://extensions`、`options.html` 都能操作；
-- **`--browserUrl` 直连你的真实 Chrome**：免登录接管你已登录的会话；
-- **前端排障证据链基本全覆盖**：console/source map、hydration、SSE、SW、iframe、file input、键盘可访问性和 flake 统计都能落证据；
-- 综合表现领先、操作数全场最少——对已经熟悉 DevTools 心智模型的前端，几乎零学习成本（每一项对应的逐格判定见第 2 节总表）。
+- **满分覆盖、没有能力洞**：同口径 31/31，T01-T20 靶场 + R01-R09 真实外场全过（逐格判定见第 2 节总表）；
+- **token 最省、速度最快**：Claude 轮约 198k token / 26min，是四个 CDP 工具里单位成本最低、收尾最快的；
+- **唯二真正的网络层 route**：mock / 拦截 / 改写 / abort 流量原生支持，直接拿下 T04 这道别家越不过的分水岭；
+- **state 可移植**：导出 state 文件，换机器、换目录照样带登录态，跨机免登录开箱即用；
+- **能接真实 profile**：严格 `connect 9223` + `get cdp-url` 复核后，能稳定跑一轮真实登录态外场。
 
-**为什么不是另外两个常见候选**：
+**它的软肋，以及为什么不致命**：click 事件偶发不稳、常驻 daemon 的 `--cdp` 命中目标 profile 会粘滞（见 7.2）。但这些都是**工程细节、不是能力缺口**——靠重试、snapshot 复核、连接前先 `connect 9223` + `get cdp-url` 复位就能吸收。"能力的洞补不上，但稳定性能靠运维补上"，这正是它压过 DevTools MCP 的根本理由。
 
-- **@chrome**：要分清“bridge 可用但无完整 CDP”和“开完整 CDP”。无完整 CDP 时它已经不是不可用：默认 Profile 登录态、页面点击、DOM/Shadow/iframe、SSE、GitHub/MDN/npm 阅读都能跑；但 Network body、Runtime fetch、Performance timing、viewport、file upload、route/mock 都缺。开完整 CDP 后，T02/T03/T07/T18 等会翻盘，但三条硬边界还在：不能证明绑定用户指定的 9223 profile，不能进入 `chrome://extensions` / `chrome-extension://.../options.html`，也没有可靠 route/mock API。对前端排障来说，它是默认 Profile 的轻量观察器，但还不是完整 F12。
-- **agent-browser**：这轮真实网站跑得很好，是我会保留的 CLI 备选；但它更像自动化工具，需要自己守住 `--cdp 9223` 连接、route/HAR/状态清理这些工程细节，性能解释和 DevTools 面板式诊断不如 MCP 直观。
-- **bb-browser**：能用 `--port` 读真实登录态，但 0.14.2 的 click 事件注入有 bug、又到不了 `chrome://` / `chrome-extension://` 特权页，通用操作得频繁靠 eval 兜底，不够稳。
+**唯一会让我改判的情况**：用途锁死在"纯前端调试、不在乎 token、不需要 mock 也不需要跨机"。这时换 **Chrome DevTools MCP**——它把 F12 调试流程包成 Agent 工具，Network 响应体、性能诊断直出、扩展特权页，以及 console/source map、SW、iframe、file input、键盘可访问性的证据链全覆盖，而且 eval 逃生最少、最稳。它唯一的硬伤（没有网络层 route）在"只调试不改流量"的场景里恰好用不到，所以这个例外里它反而更顺手。实操上别让它接管你的日常主 Chrome（会抢焦点、误改账号状态，见第 5 节），而是开一个**专用调试 profile**、用 `--browserUrl` 连它的 CDP 端口。
 
-> playwright-cli 的纯自动化能力仍然最稳（综合通过率最高、几乎零 eval 自救）。T10c 证明它可以 attach 到 9223 并读到登录态；但外场 R01-R09 里它在带多扩展的真实 profile 上 attach 崩过，两轮复现，所以我不会把它当“真实 profile 排障”的首选。如果你主要做自启浏览器的自动化或回归测试，它才是首选。
+**其余四个为什么落选**：
 
-**装它之前要知道的四个短板**：
+- **@chrome**：无完整 CDP 时缺 Network body / Runtime fetch / route/mock；开完整 CDP 后 T02/T03/T07/T18 会翻盘，但三条硬边界仍在——证明不了绑定用户指定的 9223 profile、进不了 `chrome://extensions` / `chrome-extension://.../options.html`、没有可靠 route/mock API。是默认 Profile 的轻量观察器，不是完整 F12。
+- **@browser**：不继承真实登录态，硬前提这关就出局。
+- **bb-browser**：能用 `--port` 读真实登录态，但 0.14.2 的 click 注入有 bug、又到不了 `chrome://` / `chrome-extension://` 特权页，通用操作频繁靠 eval 兜底，44.9min 也是全场最慢。
+- **playwright-cli**：纯自动化最稳（综合通过率最高、几乎零 eval 自救），T10c 也能 attach 9223 读到登录态；但外场 R01-R09 里它在带多扩展的真实 profile 上 attach 崩过两轮，所以它是"自启浏览器回归测试"的首选，不是"真实 profile 主力"的首选。
 
-- **不能 mock / 拦截网络**（只能在 JS 层打补丁）：要改写、拦截、abort 流量，得另配 playwright-cli 或 agent-browser；
-- **复杂诊断会滑向 `evaluate_script`**：移动端遮挡、SW 绕行、文件 input 状态这类问题，它能查清楚，但经常需要像人打开 Console 一样写脚本；
-- **持久化绑 userDataDir、不可移植**（换目录/换机就丢）：跨机器免登录不是它的强项；
-- **接入成本高于纯 CLI**：要连对 Chrome、CDP 端口、profile 和 MCP server，profile 漂移会让评测结果变得不可比。
+只有极少数情况才需要在 agent-browser 之外再补一把（它本身已覆盖 route 与可移植 state，所以加装项比原先少得多）：
 
-**实操姿势**：别让它接管你的日常主 Chrome（Agent 和你抢同一个 profile 会抢焦点、误改账号状态，见第 5 节），而是开一个**专用调试 profile**、用 `--browserUrl` 连它的 CDP 端口——这才是"复用真实登录态"又不打扰自己的最稳做法。
-
-如果你的需求确实超出"驱动真实登录的浏览器 + 像 F12 一样调试"，再按下表补第二个工具：
-
-| 额外需求 | 加装 | 为什么 |
+| 例外场景 | 换 / 补 | 为什么 |
 | --- | --- | --- |
-| mock / 拦截 / 改写流量 | agent-browser 或 playwright-cli | 唯二真正的网络层 route |
-| 跨机器 / 跨目录免登录 | agent-browser 或 playwright-cli | 可移植 state 文件，跨目录跨实例都能恢复 |
+| 纯前端调试，不在乎 token / mock / 跨机 | Chrome DevTools MCP | 最稳、F12 诊断直出、eval 逃生最少 |
+| 纯自启浏览器的长期回归测试 | Playwright（库） | 成熟测试基建、actionability 最稳 |
 | 把固定网站封成稳定命令 | bb-browser site adapter | 适配器复用页面登录态与前端逻辑 |
-| 纯自启浏览器的长期回归测试 | Playwright（库） | 成熟的测试基建 |
 
 ### 2. 结果总表
 
@@ -671,7 +617,7 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 读者指出这一版仍然偏"靶场"之后，我又把真实网站外场任务补成 R01-R09，并直接合进上面这张总表。**这组是真实网站**：动态字段（GitHub 未读数、npm 版本、资源耗时等）会变，所以每格都带了观察时间、最终 URL、profile 和证据（详见第 3 节）。`N-R` 在这里表示运行时不可用或该能力未暴露，不等于网站本身失败；`✅*` 表示用 URL block 或启动参数证明了网络层阻断，但不是运行时 route API。
 
-上表主体为 2026-06-19/20 Codex 单轮；`@chrome（开权限）`列是 2026-06-20 对系统默认 Chrome Profile 的追加复测，不再使用 9223；`@chrome（无完整 CDP）`列是 2026-06-21 在同一默认 Profile 上关闭完整 CDP 后的复测。无完整 CDP 时，`@chrome` 不再是 9/9 N-R：页面级操作、默认 Profile 登录态、Shadow DOM、iframe、SSE、GitHub/MDN/npm 阅读都能做；缺的是 Network body、Performance timing、route/mock、viewport、file upload、特权页和 9223 绑定。开完整 CDP 后，Network body、Runtime fetch、Performance timing、文件上传等能力明显放开；用户手动把 Bench Badge 装进默认 Profile 后，R06 至少能证明真实线上文章出现 `BENCH EXT v1.0.0`，但 `chrome-extension://.../options.html` 仍被 URL policy 拦住，所以不能把徽标改成 `REAL-SITE-2026`，只能记 ⚠️。2026-06-20 我又用 Claude Code 主控、每工具一个干净 Subagent，把外场 R01-R09 和靶场 T01-T20 **各独立复跑两轮**收方差：**agent-browser R06 两轮实测都是 ✅**（上表那笔 ⚠️ 只是 Codex Subagent 观察漏判）、playwright-cli 在外场 attach 9223 两轮确定性崩溃、动态字段两轮吻合（GitHub 未读 70 等），两轮明细见第 3 节"两轮独立复跑校准"。注意这不等于 playwright-cli 永远接不进 9223：T10c 单题用 `attach --cdp=http://127.0.0.1:9223` 已经成功。外场没有推翻推荐，反而更强化了"前端开发者首选 DevTools MCP"这个结论。
+上表主体为 2026-06-19/20 Codex 单轮；`@chrome（开权限）`列是 2026-06-20 对系统默认 Chrome Profile 的追加复测，不再使用 9223；`@chrome（无完整 CDP）`列是 2026-06-21 在同一默认 Profile 上关闭完整 CDP 后的复测。无完整 CDP 时，`@chrome` 不再是 9/9 N-R：页面级操作、默认 Profile 登录态、Shadow DOM、iframe、SSE、GitHub/MDN/npm 阅读都能做；缺的是 Network body、Performance timing、route/mock、viewport、file upload、特权页和 9223 绑定。开完整 CDP 后，Network body、Runtime fetch、Performance timing、文件上传等能力明显放开；用户手动把 Bench Badge 装进默认 Profile 后，R06 至少能证明真实线上文章出现 `BENCH EXT v1.0.0`，但 `chrome-extension://.../options.html` 仍被 URL policy 拦住，所以不能把徽标改成 `REAL-SITE-2026`，只能记 ⚠️。2026-06-20 我又用 Claude Code 主控、每工具一个干净 Subagent，把外场 R01-R09 和靶场 T01-T20 **各独立复跑两轮**收方差：**agent-browser R06 两轮实测都是 ✅**（上表那笔 ⚠️ 只是 Codex Subagent 观察漏判）、playwright-cli 在外场 attach 9223 两轮确定性崩溃、动态字段两轮吻合（GitHub 未读 70 等），两轮明细见第 3 节"两轮独立复跑校准"。注意这不等于 playwright-cli 永远接不进 9223：T10c 单题用 `attach --cdp=http://127.0.0.1:9223` 已经成功。外场没有推翻推荐，反而更强化了第 1 节的结论：通用单选仍是 agent-browser，而 DevTools MCP 稳居"纯前端排障"这个例外场景的首选。
 
 ## 二、测试过程：怎么测出来的、逐格为什么
 
@@ -914,7 +860,7 @@ T12–T20 是我后来补的一组前端开发者专项题。它们的目标不�
 - **@browser 5✅3⚠️1 N-R**：普通 DOM、iframe、SSE 完成态、可访问性、表格统计都能做；但 raw asset/source map 被拦、Service Worker live bypass 拿不到、文件上传没有 API。它适合轻量观察，不适合完整前端调试。
 - **@chrome（无完整 CDP）4✅2⚠️3❌，开完整 CDP 后 9/9**：早期前端专项轮的 9 N-R 是 Codex Chrome Extension disabled，不是无完整 CDP 的真实上限。2026-06-21 关掉完整 CDP 后复测，T14/T15/T17/T19/T20 这类页面级任务能跑，T12/T16 只能部分定位；T13 缺 viewport，T18 缺 upload API，T07/T02/T03 这类 DevTools 面仍失败。开完整 CDP 后默认 Profile 复测把 T12-T20 全部跑通，其中 T13 仍需要 hit-test 后临时隐藏遮挡层。这个变化很关键：@chrome 的上限取决于当前权限开关，而不是工具名本身。
 
-这组补测把第 1 节的推荐从"理论上更像 F12"变成了"实测九个前端专项仍然第一"：**DevTools MCP 是前端排障首选；playwright-cli 是自动化回归首选；agent-browser 是真实 profile 流程操作的补充；开权限后的 @chrome 是默认 Profile 里的轻量 CDP 观察器，但仍缺扩展特权页、指定 9223 证明和可靠 route/mock。**
+这组补测坐实了"纯前端排障"这个例外场景：DevTools MCP 从"理论上更像 F12"变成了"实测九个前端专项仍然第一"。各场景分工因此清晰：**纯前端排障 DevTools MCP 第一；自动化回归 playwright-cli 首选；而通用单选仍是覆盖最全、能接真实 profile 的 agent-browser；开权限后的 @chrome 是默认 Profile 里的轻量 CDP 观察器，但仍缺扩展特权页、指定 9223 证明和可靠 route/mock。**
 
 ### 5. 跨工具规律：比单格结论更长寿的部分
 

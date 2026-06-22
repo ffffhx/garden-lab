@@ -445,11 +445,34 @@ coverPosition: "below-title"
 
 只有极少数情况才需要在 agent-browser 之外再补一把（它本身已覆盖 route 与可移植 state，所以加装项比原先少得多）：
 
-| 例外场景 | 换 / 补 | 为什么 |
-| --- | --- | --- |
-| 纯前端调试，不在乎 token / mock / 跨机 | Chrome DevTools MCP | 最稳、F12 诊断直出、eval 逃生最少 |
-| 纯自启浏览器的长期回归测试 | Playwright（库） | 成熟测试基建、actionability 最稳 |
-| 把固定网站封成稳定命令 | bb-browser site adapter | 适配器复用页面登录态与前端逻辑 |
+<figure class="dtable" role="group" aria-label="agent-browser 之外极少数需要加装第二把工具的例外场景表">
+<style>
+.dtable{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--paper-vsoft:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--serif:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);--mono:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);--cyan:#3f6d79;--cyan-b:#dcebed;--cyan-e:#8fbcc4;--amb:#9a6516;--grn:#4f7233;--red:#8f2d20;--pur:#54579a;margin:0;padding:clamp(14px,3vw,22px);font-family:var(--serif);color:var(--ink);line-height:1.5;background:radial-gradient(130% 90% at 92% 0%,var(--paper-soft),transparent 60%),linear-gradient(160deg,var(--paper-vsoft),var(--paper-deep));border:1px solid var(--hair);border-radius:14px;position:relative;overflow:hidden}
+.dtable *{box-sizing:border-box;min-width:0}
+.dtable .dt-head{margin-bottom:11px}
+.dtable .dt-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);display:inline-flex;align-items:center;gap:8px}
+.dtable .dt-kicker::before{content:"";width:22px;height:1px;background:var(--cyan)}
+.dtable .dt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--hair)}
+.dtable table{width:100%;border-collapse:collapse;font-size:13px;background:color-mix(in srgb,var(--paper-soft) 55%,transparent)}
+.dtable thead th{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:600;padding:9px 12px;border-bottom:1.5px solid var(--hair);white-space:nowrap;background:color-mix(in srgb,var(--paper-soft) 75%,transparent)}
+.dtable tbody td{padding:9px 12px;border-bottom:1px solid var(--hair);color:var(--ink-soft);vertical-align:top}
+.dtable tbody tr:nth-child(even) td{background:rgba(26,24,21,.025)}
+.dtable tbody tr:hover td{background:color-mix(in srgb,var(--cyan-b) 45%,transparent)}
+.dtable tbody tr:last-child td{border-bottom:none}
+.dtable tbody td:first-child{font-weight:600;color:var(--ink)}
+.dtable strong{color:var(--cyan);font-weight:700}
+.dtable code{font-family:var(--mono);font-size:12px;background:color-mix(in srgb,var(--cyan-b) 55%,transparent);border:1px solid var(--cyan-e);padding:0 5px;border-radius:5px;color:var(--ink-soft);white-space:nowrap}
+.dtable .dt-flow{transition:background .2s ease}
+@media (max-width:560px){.dtable table{font-size:12px}.dtable thead th,.dtable tbody td{padding:7px 9px}}
+@media (prefers-reduced-motion:reduce){.dtable tbody tr:hover td,.dtable tbody td{transition:none}}
+</style>
+<div class="dt-head"><span class="dt-kicker">例外 · 加装第二把</span></div>
+<div class="dt-scroll"><table><thead><tr><th>例外场景</th><th>换 / 补</th><th>为什么</th></tr></thead><tbody>
+<tr class="dt-flow"><td>纯前端调试，不在乎 token / mock / 跨机</td><td><strong>Chrome DevTools MCP</strong></td><td>最稳、F12 诊断直出、eval 逃生最少</td></tr>
+<tr class="dt-flow"><td>纯自启浏览器的长期回归测试</td><td><strong>Playwright（库）</strong></td><td>成熟测试基建、actionability 最稳</td></tr>
+<tr class="dt-flow"><td>把固定网站封成稳定命令</td><td><strong>bb-browser site adapter</strong></td><td>适配器复用页面登录态与前端逻辑</td></tr>
+</tbody></table></div>
+</figure>
 
 ### 2. 结果总表
 
@@ -613,28 +636,31 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 本地零依赖的基准测试站，每页埋一个已知答案的坑。固定靶场负责可复现：网站不会变、登录态可控、标准答案能机械核对。真实网站负责外场真实性：它能暴露站点改版、登录态差异、Chrome Web Store 限制、真实 Network 波动、扩展注入线上页面这些靶场刻意压掉的变量。两者维度不同，但既然是同一时刻、同一批工具跑的一次快照，就合进第 2 节同一张结果总表——代价是动态网站那几列的绝对值带时间戳、换时间复跑要重测，同一轮内仍可横比。
 
-| 任务 | 坑 | 标准答案 | 考的理论维度 |
-| --- | --- | --- | --- |
-| T01 登录与观察 | 欢迎语由 /api/me 异步渲染 | 工号 BENCH-7341 | 快照质量、观察时机 |
-| T02 Network 排障 | 下单接口固定 500，页面文案笼统 | INSUFFICIENT_INVENTORY / SKU-8821 | **CDP Network 层留底** |
-| T03 性能诊断 | CSS 延迟 1.2s + 800ms 长任务 + 图延迟 1.5s | 阻塞 CSS 是 LCP 主因（见 4.3） | **DevTools 诊断模型** |
-| T04 请求 mock | 成员接口真实返回 18 人 | mock 空列表 → 空状态截图 | **CDP 拦截层** |
-| T05 动态等待 | 流式渲染 + 延迟出现的按钮 | 12 条 / LIVE-512 | 等待策略、动作可靠性 |
-| T06 结构化提取 | 脏 DOM + 千分位 + 分页 | 12 件、最贵雷霆工作站 15999 | 阅读成本、字段清洗 |
-| T07 已登录 fetch | /api/me 仅带 cookie 可访问 | plan = team-pro-2026 | **页面 Runtime 可写性** |
-| T08 Shadow DOM | open shadow 里的按钮和兑换码 | SHADOW-99 | 快照穿透、事件注入 |
-| T09 扩展 reload | 加载本地解压扩展，需进 `chrome://extensions` 重新加载 | 扩展 reload 成功、特权页可达 | **特权页可达性 / 安全策略** |
-| T10 真实登录态与持久化 | GitHub 通知页需真实登录态，并拆成默认 profile、自管持久化、指定 9223 三条路线 | 免登录读到当次未读数；专用 profile 可移植恢复；指定 9223 必须命中 target | **复用真实 profile / 跨会话持久化 / 指定 CDP profile** |
-| T11 用扩展（设置页改徽标） | 需进 `chrome-extension://…/options.html` 改设置 | 在扩展设置页成功改掉徽标 | **特权页操作 / 产品封装范围** |
-| T12 Console 与 Source Map | bundle 报错，真实源码藏在 sourcemap | `coupon.ts` / `applySelectedCoupon` / 空值 guard | **Console + Source Map 取证** |
-| T13 移动端布局遮挡 | 移动端底部帮助条覆盖支付按钮 | `.mobile-support-bar` 覆盖，确认码 `MOBILE-39` | **viewport / hit-test / CSS 诊断** |
-| T14 SPA Hydration 不一致 | SSR 状态与客户端接管状态不一致 | `TaskSummary`，`HYD-908`，8→9 / starter→team-pro | **Console 结构化对象 + 页面状态** |
-| T15 SSE 实时流等待 | EventSource 分批推送，不能提前读结果 | 5 条，最后 `evt-005`，告警 `STREAM-721` | **实时流等待 / 完成态判断** |
-| T16 Service Worker 缓存 | SW 拦截接口，页面看到旧配置 | 旧值 blue/cached，live 值 green/live | **SW 控制面 / Network bypass** |
-| T17 跨域 iframe 授权 | 父页 localhost，子 iframe 127.0.0.1 | `iframe-user@bench.dev / OAUTH-314` | **跨源 iframe 操作** |
-| T18 文件上传输入 | 标准 file input 需要真实本地文件 | `upload-token.txt`，36 bytes，`UPLOAD-448` | **file chooser / upload 能力** |
-| T19 键盘可访问性 | 看似按钮，键盘不可达 | `div role=button` 缺 `tabindex` 和键盘 handler | **键盘遍历 / a11y DOM 诊断** |
-| T20 回归稳定性 | 10 次检查里固定 3 次失败 | 7/10，通过率 70%，失败轮次 3/6/9 | **重复执行 / flake 率统计** |
+<figure class="dtable" role="group" aria-label="T01 至 T20 靶场任务卡：每题的坑、标准答案与考的理论维度，加粗维度为分界题">
+<div class="dt-head"><span class="dt-kicker">§3 靶场任务卡 · T01–T20</span></div>
+<div class="dt-scroll"><table><thead><tr><th>任务</th><th>坑</th><th>标准答案</th><th>考的理论维度</th></tr></thead><tbody>
+<tr class="dt-flow"><td>T01 登录与观察</td><td>欢迎语由 /api/me 异步渲染</td><td>工号 BENCH-7341</td><td>快照质量、观察时机</td></tr>
+<tr class="dt-flow"><td>T02 Network 排障</td><td>下单接口固定 500，页面文案笼统</td><td>INSUFFICIENT_INVENTORY / SKU-8821</td><td><strong>CDP Network 层留底</strong></td></tr>
+<tr class="dt-flow"><td>T03 性能诊断</td><td>CSS 延迟 1.2s + 800ms 长任务 + 图延迟 1.5s</td><td>阻塞 CSS 是 LCP 主因（见 4.3）</td><td><strong>DevTools 诊断模型</strong></td></tr>
+<tr class="dt-flow"><td>T04 请求 mock</td><td>成员接口真实返回 18 人</td><td>mock 空列表 → 空状态截图</td><td><strong>CDP 拦截层</strong></td></tr>
+<tr class="dt-flow"><td>T05 动态等待</td><td>流式渲染 + 延迟出现的按钮</td><td>12 条 / LIVE-512</td><td>等待策略、动作可靠性</td></tr>
+<tr class="dt-flow"><td>T06 结构化提取</td><td>脏 DOM + 千分位 + 分页</td><td>12 件、最贵雷霆工作站 15999</td><td>阅读成本、字段清洗</td></tr>
+<tr class="dt-flow"><td>T07 已登录 fetch</td><td>/api/me 仅带 cookie 可访问</td><td>plan = team-pro-2026</td><td><strong>页面 Runtime 可写性</strong></td></tr>
+<tr class="dt-flow"><td>T08 Shadow DOM</td><td>open shadow 里的按钮和兑换码</td><td>SHADOW-99</td><td>快照穿透、事件注入</td></tr>
+<tr class="dt-flow"><td>T09 扩展 reload</td><td>加载本地解压扩展，需进 <code>chrome://extensions</code> 重新加载</td><td>扩展 reload 成功、特权页可达</td><td><strong>特权页可达性 / 安全策略</strong></td></tr>
+<tr class="dt-flow"><td>T10 真实登录态与持久化</td><td>GitHub 通知页需真实登录态，并拆成默认 profile、自管持久化、指定 9223 三条路线</td><td>免登录读到当次未读数；专用 profile 可移植恢复；指定 9223 必须命中 target</td><td><strong>复用真实 profile / 跨会话持久化 / 指定 CDP profile</strong></td></tr>
+<tr class="dt-flow"><td>T11 用扩展（设置页改徽标）</td><td>需进 <code>chrome-extension://…/options.html</code> 改设置</td><td>在扩展设置页成功改掉徽标</td><td><strong>特权页操作 / 产品封装范围</strong></td></tr>
+<tr class="dt-flow"><td>T12 Console 与 Source Map</td><td>bundle 报错，真实源码藏在 sourcemap</td><td><code>coupon.ts</code> / <code>applySelectedCoupon</code> / 空值 guard</td><td><strong>Console + Source Map 取证</strong></td></tr>
+<tr class="dt-flow"><td>T13 移动端布局遮挡</td><td>移动端底部帮助条覆盖支付按钮</td><td><code>.mobile-support-bar</code> 覆盖，确认码 <code>MOBILE-39</code></td><td><strong>viewport / hit-test / CSS 诊断</strong></td></tr>
+<tr class="dt-flow"><td>T14 SPA Hydration 不一致</td><td>SSR 状态与客户端接管状态不一致</td><td><code>TaskSummary</code>，<code>HYD-908</code>，8→9 / starter→team-pro</td><td><strong>Console 结构化对象 + 页面状态</strong></td></tr>
+<tr class="dt-flow"><td>T15 SSE 实时流等待</td><td>EventSource 分批推送，不能提前读结果</td><td>5 条，最后 <code>evt-005</code>，告警 <code>STREAM-721</code></td><td><strong>实时流等待 / 完成态判断</strong></td></tr>
+<tr class="dt-flow"><td>T16 Service Worker 缓存</td><td>SW 拦截接口，页面看到旧配置</td><td>旧值 blue/cached，live 值 green/live</td><td><strong>SW 控制面 / Network bypass</strong></td></tr>
+<tr class="dt-flow"><td>T17 跨域 iframe 授权</td><td>父页 localhost，子 iframe 127.0.0.1</td><td><code>iframe-user@bench.dev / OAUTH-314</code></td><td><strong>跨源 iframe 操作</strong></td></tr>
+<tr class="dt-flow"><td>T18 文件上传输入</td><td>标准 file input 需要真实本地文件</td><td><code>upload-token.txt</code>，36 bytes，<code>UPLOAD-448</code></td><td><strong>file chooser / upload 能力</strong></td></tr>
+<tr class="dt-flow"><td>T19 键盘可访问性</td><td>看似按钮，键盘不可达</td><td><code>div role=button</code> 缺 <code>tabindex</code> 和键盘 handler</td><td><strong>键盘遍历 / a11y DOM 诊断</strong></td></tr>
+<tr class="dt-flow"><td>T20 回归稳定性</td><td>10 次检查里固定 3 次失败</td><td>7/10，通过率 70%，失败轮次 3/6/9</td><td><strong>重复执行 / flake 率统计</strong></td></tr>
+</tbody></table></div>
+</figure>
 
 加粗的几道是按 6.2 的边界公式设计的"分界题"——它们恰好把六个工具分成了几个阵营。
 
@@ -696,17 +722,20 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 真实网站外场任务放在 `tasks-real/`，结果与 T01-T20 一起并进第 2 节同一张结果总表（动态字段带时间戳）：
 
-| 任务 | 真实网站 | 重点 |
-| --- | --- | --- |
-| R01 GitHub 公共仓库代码导航 | GitHub | 真实 SPA、代码导航、站内搜索 |
-| R02 GitHub 真实登录态只读通知 | GitHub notifications | 真实 profile、只读账号状态 |
-| R03 MDN 文档结构化阅读 | MDN | 文档搜索、结构化提取 |
-| R04 npm 包页面元数据 | npm | 动态元数据、页面证据 |
-| R05 Chrome Web Store 扩展详情 | Chrome Web Store | 插件生态真实页面，只读扩展信息 |
-| R06 扩展注入真实网站 | 线上 Garden Lab 文章 | content script、options 页、真实页面注入 |
-| R07 真实网站 Network 响应体 | npm | 请求列表、响应体、页面与 JSON 交叉验证 |
-| R08 真实网站请求拦截 | MDN | route / abort / mock、资源降级验证 |
-| R09 真实网站 HAR 与性能快照 | 线上 Garden Lab 文章 | HAR / trace / 性能瀑布图 |
+<figure class="dtable" role="group" aria-label="R01 至 R09 真实网站外场任务：站点与考察重点">
+<div class="dt-head"><span class="dt-kicker">§3 外场任务 · R01–R09</span></div>
+<div class="dt-scroll"><table><thead><tr><th>任务</th><th>真实网站</th><th>重点</th></tr></thead><tbody>
+<tr class="dt-flow"><td>R01 GitHub 公共仓库代码导航</td><td>GitHub</td><td>真实 SPA、代码导航、站内搜索</td></tr>
+<tr class="dt-flow"><td>R02 GitHub 真实登录态只读通知</td><td>GitHub notifications</td><td>真实 profile、只读账号状态</td></tr>
+<tr class="dt-flow"><td>R03 MDN 文档结构化阅读</td><td>MDN</td><td>文档搜索、结构化提取</td></tr>
+<tr class="dt-flow"><td>R04 npm 包页面元数据</td><td>npm</td><td>动态元数据、页面证据</td></tr>
+<tr class="dt-flow"><td>R05 Chrome Web Store 扩展详情</td><td>Chrome Web Store</td><td>插件生态真实页面，只读扩展信息</td></tr>
+<tr class="dt-flow"><td>R06 扩展注入真实网站</td><td>线上 Garden Lab 文章</td><td>content script、options 页、真实页面注入</td></tr>
+<tr class="dt-flow"><td>R07 真实网站 Network 响应体</td><td>npm</td><td>请求列表、响应体、页面与 JSON 交叉验证</td></tr>
+<tr class="dt-flow"><td>R08 真实网站请求拦截</td><td>MDN</td><td>route / abort / mock、资源降级验证</td></tr>
+<tr class="dt-flow"><td>R09 真实网站 HAR 与性能快照</td><td>线上 Garden Lab 文章</td><td>HAR / trace / 性能瀑布图</td></tr>
+</tbody></table></div>
+</figure>
 
 这组任务的答案不能像 T01-T20 那样全部写死：GitHub 通知数、npm 当前版本、Chrome Web Store 按钮文案、资源耗时都会变。任务卡里写的是"答案生成规则"：必须记录观察时间、最终 URL、profile、工具版本和截图 / Network / trace 证据；任何会写真实网站状态的动作都直接判失败。
 
@@ -720,21 +749,27 @@ T12–T20 是 2026-06-19 追加的"前端开发者专项"。本轮每个工具�
 
 **外场 R01-R09（×2 轮，全 9223）：**
 
-| 工具 | 第1轮 | 第2轮 | 关键校准 |
-| --- | --- | --- | --- |
-| agent-browser | 9✅ | 9✅ | **R06 两轮实测都是 ✅（非上表 ⚠️）**——经 options UI 改徽标并在真实页验证 `REAL-SITE-2026 · v1.0.0`，坐实上表那笔 ⚠️ 只是 Codex Subagent 观察漏判 |
-| chrome-devtools-mcp | 8✅+1 N-R | 8✅+1⚠️* | **R08 无运行时 route**：这轮 gh server 已在运行、用不上 daemon 的 `--blockedUrlPattern` 启动入口，只能 JS 层降级 → 判 N-R/⚠️*，比上表 ✅*（启动级阻断）更严，但方向一致——它没有运行时拦截 API |
-| bb-browser | 7✅+1⚠️+1 N-R | 7✅+1❌+1 N-R | R06 在 ⚠️↔❌ 间抖动（chrome-extension URL 改写 bug 这轮够不着逃生通道）；R08 无 route 原语稳定 N-R |
-| playwright-cli | 9 N-R | 9 N-R | 两轮稳定复现 `connectOverCDP` 撞扩展 `service_worker` target 断言、连接建不起来 |
+<figure class="dtable" role="group" aria-label="外场 R01-R09 两轮独立复跑结果与关键校准">
+<div class="dt-head"><span class="dt-kicker">复跑校准 · 外场 ×2 轮（全 9223）</span></div>
+<div class="dt-scroll"><table><thead><tr><th>工具</th><th>第 1 轮</th><th>第 2 轮</th><th>关键校准</th></tr></thead><tbody>
+<tr class="dt-flow"><td>agent-browser</td><td>9✅</td><td>9✅</td><td><strong>R06 两轮实测都是 ✅（非上表 ⚠️）</strong>——经 options UI 改徽标并在真实页验证 <code>REAL-SITE-2026 · v1.0.0</code>，坐实上表那笔 ⚠️ 只是 Codex Subagent 观察漏判</td></tr>
+<tr class="dt-flow"><td>chrome-devtools-mcp</td><td>8✅+1 N-R</td><td>8✅+1⚠️*</td><td><strong>R08 无运行时 route</strong>：这轮 gh server 已在运行、用不上 daemon 的 <code>--blockedUrlPattern</code> 启动入口，只能 JS 层降级 → 判 N-R/⚠️*，比上表 ✅*（启动级阻断）更严，但方向一致——它没有运行时拦截 API</td></tr>
+<tr class="dt-flow"><td>bb-browser</td><td>7✅+1⚠️+1 N-R</td><td>7✅+1❌+1 N-R</td><td>R06 在 ⚠️↔❌ 间抖动（chrome-extension URL 改写 bug 这轮够不着逃生通道）；R08 无 route 原语稳定 N-R</td></tr>
+<tr class="dt-flow"><td>playwright-cli</td><td>9 N-R</td><td>9 N-R</td><td>两轮稳定复现 <code>connectOverCDP</code> 撞扩展 <code>service_worker</code> target 断言、连接建不起来</td></tr>
+</tbody></table></div>
+</figure>
 
 **靶场 T01-T20（21 卡含 T10a/b，×2 轮，混合浏览器）：**
 
-| 工具 | 第1轮 | 第2轮 |
-| --- | --- | --- |
-| chrome-devtools-mcp | 21✅（零逃生） | 20✅+1⚠️(T10b) |
-| agent-browser | 20✅+1⚠️(T10b) | 21✅ |
-| playwright-cli | 20✅+1 N-R(T10a) | 18✅+1⚠️(T09)+2 N-R(T10a/b) |
-| bb-browser | 16✅+4❌(T04/T09/T11/T17)+1 N-R | 14✅+4❌+3⚠️ |
+<figure class="dtable" role="group" aria-label="靶场 T01-T20 两轮独立复跑结果">
+<div class="dt-head"><span class="dt-kicker">复跑校准 · 靶场 ×2 轮（21 卡含 T10a/b）</span></div>
+<div class="dt-scroll"><table><thead><tr><th>工具</th><th>第 1 轮</th><th>第 2 轮</th></tr></thead><tbody>
+<tr class="dt-flow"><td>chrome-devtools-mcp</td><td>21✅（零逃生）</td><td>20✅+1⚠️(T10b)</td></tr>
+<tr class="dt-flow"><td>agent-browser</td><td>20✅+1⚠️(T10b)</td><td>21✅</td></tr>
+<tr class="dt-flow"><td>playwright-cli</td><td>20✅+1 N-R(T10a)</td><td>18✅+1⚠️(T09)+2 N-R(T10a/b)</td></tr>
+<tr class="dt-flow"><td>bb-browser</td><td>16✅+4❌(T04/T09/T11/T17)+1 N-R</td><td>14✅+4❌+3⚠️</td></tr>
+</tbody></table></div>
+</figure>
 
 **一致性**：外场 36 格里 34 格两轮一致；靶场 84 格里 77 格一致（91.7%）、**0 格事实错误**，7 处抖动全落在 T09/T10b/T13/T18 这类"逃生能否兜底 / 持久化口径 / unpacked reload flake"的边界格。所有动态字段两轮完全吻合，可作为这一时点的权威观测：GitHub 未读 **70**、npm `@playwright/test` **v1.61.0** / 周下载 **42,613,659** / Apache-2.0、React DevTools 评分 **4.0（1,633）** / **5,000,000** 用户、靶场标准答案（BENCH-7341 / SKU-8821 / hero.svg / 雷霆工作站 15999 / SHADOW-99 / STREAM-721 / CACHE-BUST-42 / OAUTH-314 / FLAKE-307 等）全部答对。
 

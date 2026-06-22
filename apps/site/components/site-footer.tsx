@@ -3,6 +3,12 @@ import Link from "next/link";
 import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
 import { cn } from "@/lib/utils/cn";
 
+// 构建戳：CI 在每次部署时注入 commit SHA 与时间（见 .github/workflows/pages.yml）。
+// 本地开发无此环境变量时显示 "dev"。用来一眼判断线上页面是不是最新一次 push。
+const BUILD_SHA_FULL = process.env.NEXT_PUBLIC_BUILD_SHA ?? "";
+const BUILD_SHA = BUILD_SHA_FULL ? BUILD_SHA_FULL.slice(0, 7) : "dev";
+const BUILD_TIME = (process.env.NEXT_PUBLIC_BUILD_TIME ?? "").slice(0, 16).replace("T", " ");
+
 const FOOTER_SECTIONS = [
   { href: "/", label: "首页" },
   { href: `/category/${CATEGORY_DEFINITIONS.tech.slug}`, label: CATEGORY_DEFINITIONS.tech.label },
@@ -50,6 +56,16 @@ export function SiteFooter({ wide = false }: { wide?: boolean }) {
           <p className="font-mono-ui text-[0.72rem] uppercase tracking-[0.14em] text-[#6b6457]/80">
             {SITE.subtitle}
           </p>
+          <a
+            href={BUILD_SHA_FULL ? `https://github.com/ffffhx/garden-lab/commit/${BUILD_SHA_FULL}` : undefined}
+            target="_blank"
+            rel="noreferrer"
+            title="本页构建版本（commit）——和仓库最新 commit 对得上就是最新；点开看对应提交"
+            className="font-mono-ui text-[0.72rem] tracking-[0.08em] text-[#6b6457]/70 transition hover:text-[#8f2d20]"
+          >
+            build {BUILD_SHA}
+            {BUILD_TIME ? ` · ${BUILD_TIME}` : ""}
+          </a>
           <a
             href="#top"
             className="font-mono-ui inline-flex items-center gap-1.5 self-start text-[0.72rem] uppercase tracking-[0.14em] text-[#6b6457] transition hover:gap-2.5 hover:text-[#8f2d20] sm:self-auto"

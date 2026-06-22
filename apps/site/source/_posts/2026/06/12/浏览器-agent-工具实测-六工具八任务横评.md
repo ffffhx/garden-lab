@@ -679,12 +679,43 @@ coverPosition: "below-title"
 
 四维一摊开就清楚了——**能力（原生）playwright 最强、token agent-browser 最省、稳定性 DevTools 最稳、速度三家平手**，没有一个工具四项全赢。等权归一综合是 **playwright 居首（92）**；agent-browser（83）主要赢在 token（且只省 ~4%）和"能可预测地 attach 一个固定的真实登录态 9223"（playwright 的 attach 看浏览器状态）。所以"只装一款"取决于你最看重哪一维：
 
-<div class="bv-pick" style="margin:1.4rem 0;padding:.9rem 1.1rem;border-left:4px solid #4f7233;background:var(--paper-soft,#faf6ec);border-radius:.5rem;font-size:.92rem;line-height:1.65">
-<b>没有四维全赢的工具，按你最看重的维度选：</b><br>
-• <b>综合最均衡 / 最看重原生能力</b> → <b>playwright-cli</b>（原生 30、四维等权第一、token 也接近最省）；软肋：attach 真实 9223 要确保有页面在场，否则会崩（崩得响、不静默）。<br>
-• <b>最看重 token + 反复复用同一个固定的真实登录态 9223</b> → <b>agent-browser</b>（token 最省、daemon 式 attach 最可预测、原生 route）；代价：原生只 24（7 题靠 eval 补）+ 一次性 <code>--cdp</code> daemon 复位坑（见 7.2）。<br>
-• <b>纯前端诊断、不在乎 token</b> → <b>Chrome DevTools MCP</b>（最稳、诊断直出，但 token ≈1.6×、无运行时 route）。
+**没有银弹——先定位你自己，再对号入座。** 三个问题基本就分流了：你是**会下场修工具 / 配启动脚本的建设者**，还是要**开箱即稳的消费者**？Agent 是**自主无人盯**还是**有人盯**？**在不在乎 token**？关键在于：**能力天花板是你改不动的、得优先；而 bug 是你能修的、可以折价看**。下面按"优势 × 适合谁"摊开六个工具。
+
+<figure class="cardmx" role="group" aria-label="按使用风格选工具：每个工具的优势、缺陷与适合人群卡片">
+<style>
+.cardmx{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--paper-vsoft:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--serif:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);--mono:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);--grn:#4f7233;--red:#8f2d20;--amb:#9a6516;--cyan:#3f6d79;--pur:#54579a;--gray:#7a6f57;margin:1.6rem 0;padding:clamp(15px,3.2vw,24px);font-family:var(--serif);color:var(--ink);line-height:1.5;background:radial-gradient(130% 90% at 88% 0%,var(--paper-soft),transparent 60%),linear-gradient(160deg,var(--paper-vsoft),var(--paper-deep));border:1px solid var(--hair);border-radius:14px}
+.cardmx *{box-sizing:border-box;min-width:0}
+.cardmx .cm-kick{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);display:inline-flex;align-items:center;gap:8px}
+.cardmx .cm-kick::before{content:"";width:20px;height:1px;background:var(--cyan)}
+.cardmx .cm-title{font-size:clamp(15px,3vw,19px);font-weight:700;margin:6px 0 10px}
+.cardmx .cm-axes{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.cardmx .cm-axis{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);background:var(--paper-soft);border:1px solid var(--hair);border-radius:20px;padding:3px 10px}
+.cardmx .cm-grid{display:grid;gap:11px;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr))}
+.cardmx .cm-card{border:1px solid var(--hair);border-left:4px solid var(--a,var(--ink));border-radius:10px;padding:11px 13px;background:color-mix(in srgb,var(--paper-soft) 70%,transparent)}
+.cardmx .cm-name{font-family:var(--mono);font-weight:700;font-size:13.5px;color:var(--a,var(--ink));display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+.cardmx .cm-pin{font-family:var(--serif);font-size:10px;font-weight:600;color:#fbf7ee;background:var(--a,var(--ink));padding:2px 8px;border-radius:20px;white-space:nowrap}
+.cardmx .cm-sec{font-size:12px;line-height:1.55;margin:5px 0;color:var(--ink-soft)}
+.cardmx .cm-sec .lbl{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;padding:1px 6px;border-radius:5px;margin-right:5px;white-space:nowrap}
+.cardmx .lbl.good{color:var(--grn);background:#e7eedd}
+.cardmx .lbl.bad{color:var(--amb);background:#f4e8cc}
+.cardmx .lbl.hard{color:var(--red);background:#f1ddd6}
+.cardmx .cm-fit{font-size:11.5px;line-height:1.5;margin-top:7px;padding-top:7px;border-top:1px dashed var(--hair);color:var(--ink-soft)}
+.cardmx .cm-fit b{color:var(--grn)}.cardmx .cm-fit i{color:var(--red);font-style:normal}
+.cardmx .cm-mini{opacity:.92}
+.cardmx .cm-foot{margin-top:13px;border-top:1px dashed var(--hair);padding-top:9px;font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.55}
+</style>
+<div class="cm-kick">综合 · 没有银弹</div><div class="cm-title">按使用风格选工具 —— 优势 × 适合谁</div>
+<div class="cm-axes"><span class="cm-axis">轴① 建设者(会修/会配) ↔ 消费者(要开箱即稳)</span><span class="cm-axis">轴② 自主无人盯 ↔ 有人盯</span><span class="cm-axis">轴③ 在乎 token ↔ 不在乎</span></div>
+<div class="cm-grid">
+<div class="cm-card" style="--a:var(--cyan)"><div class="cm-name">agent-browser<span class="cm-pin">建设者 · 全包</span></div><div class="cm-sec"><span class="lbl good">优势</span>能力面最广（raw CDP 全包：route+HAR+扩展 options+可移植 state）、<b>天花板最高</b>；token 最省、速度第一梯队；state 可移植（跨机免登录）；开源小项目、可提 MR 影响。</div><div class="cm-sec"><span class="lbl bad">缺陷·浅·可修</span>选择器点视口外元素静默空点（走 <code>@ref</code> 可避）、<code>--cdp</code> daemon 粘滞需复位。</div><div class="cm-fit"><b>适合</b>会下场修工具 / 配防坑规则的建设者；在乎成本；要跨机复用登录态；想"一个工具全包"。 <i>不适合</i>要开箱即稳的被动用户（静默失败会咬人）。</div></div>
+<div class="cm-card" style="--a:var(--pur)"><div class="cm-name">playwright-cli<span class="cm-pin">干净 · 诚实</span></div><div class="cm-sec"><span class="lbl good">优势</span>原生原语最干净（<b>原生 30 最高</b>、actionability 防 flake）、<b>失败大声诚实</b>；CI 友好、自启浏览器回归最稳；原生 route。</div><div class="cm-sec"><span class="lbl bad">缺陷·浅·harness 可修</span>attach 到<b>没有任何页面</b>的 9223 会崩（<code>setDownloadBehavior</code>）——attach 前塞一个 <code>about:blank</code> 即稳定规避（并存扩展也不崩），<b>无需改源码</b>。</div><div class="cm-fit"><b>适合</b>自启浏览器自动化 / 回归 / CI、要干净可复现脚本；会配启动脚本的建设者（这条坑基本不存在）。 <i>不适合</i>要零配置就可靠接管你日常那台带一堆扩展的 Chrome。</div></div>
+<div class="cm-card" style="--a:var(--grn)"><div class="cm-name">Chrome DevTools MCP<span class="cm-pin">开箱即稳</span></div><div class="cm-sec"><span class="lbl good">优势</span><b>最稳、零静默失败、最可预测</b>；F12 诊断直出（perf/LCP/Network/SW/source map）；attach 真实 Chrome 可靠。</div><div class="cm-sec"><span class="lbl hard">缺陷·偏架构·难逆</span>无运行时 route（只能 JS 层 initScript 降级）、绑 userDataDir 不可移植、token 最贵（≈1.6×）。</div><div class="cm-fit"><b>适合</b>要开箱即稳、自主无人盯、不在乎成本；纯前端排障 / 诊断为主。 <i>不适合</i>在乎 token、要 mock 真实流量、要跨机复用登录态。</div></div>
+<div class="cm-card" style="--a:var(--gray)"><div class="cm-name">bb-browser<span class="cm-pin">trace 因果链</span></div><div class="cm-sec"><span class="lbl good">优势</span>trace 因果链（<code>request→trigger→click</code>，别家给不了）、读取类够快；<code>--port</code> 读真实登录态。</div><div class="cm-sec"><span class="lbl hard">缺陷·当前较重</span>0.14.2 click 注入 bug + URL 归一化 bug、够不着特权页；26 个通过里 18 个靠降级（原生仅 8）、最慢。</div><div class="cm-fit"><b>适合</b>想用 trace 因果链、或把固定网站封成 site adapter（且愿意等它修 bug）。 <i>不适合</i>当通用主力。</div></div>
+<div class="cm-card cm-mini" style="--a:var(--amb)"><div class="cm-name">@chrome<span class="cm-pin">Codex 专属</span></div><div class="cm-sec"><span class="lbl good">优势</span>默认 Profile 登录态开箱即用、轻量 CDP 观察；开完整 CDP 后能读 Network body / timing。</div><div class="cm-sec"><span class="lbl hard">缺陷</span>进不了特权页 / 扩展 options、无可靠 route、证明不了指定 9223；能力随权限开关摆动。</div><div class="cm-fit"><b>适合</b>Codex 用户做默认 Profile 的阅读 / 轻量观察。</div></div>
+<div class="cm-card cm-mini" style="--a:var(--gray)"><div class="cm-name">@browser<span class="cm-pin">Codex 专属</span></div><div class="cm-sec"><span class="lbl good">优势</span>轻量、快、零配置。</div><div class="cm-sec"><span class="lbl hard">缺陷</span>不继承真实登录态、缺诊断面、无 upload / route。</div><div class="cm-fit"><b>适合</b>Codex 用户做最简单的页面读取 / 操作。</div></div>
 </div>
+<div class="cm-foot">一句话：会修工具的建设者押"天花板最高、缺陷可修"的 agent-browser / playwright；要开箱即稳、自主无人盯、不在乎成本的，选诚实可预测的 DevTools MCP。缺陷标"浅·可修"= 你能在 harness 或一个 PR 里搞定；"偏架构·难逆"= 得逆着工具定位改、较难。</div>
+</figure>
 
 T09/T10/T11 把战场从 localhost 网页挪到真实登录态与扩展安全域，其中涉及真实登录态的几格由两轮互相独立的隔离子 Agent 实测（一轮 Claude Code 主控、一轮 Codex），结论一致，差异只在评分口径（详见 4.7）。2026-06-20 又追加了 T10c，专门测“工具能否绑定用户指定的现成 9223 profile”，避免把默认 profile、自管 state 和指定 CDP profile 混成一个概念。
 

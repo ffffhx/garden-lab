@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ArticleBody } from "@/components/article-body";
 import { BlogPetFeedBadge } from "@/components/blog-pet-feed-badge";
+import { BuildStamp } from "@/components/build-stamp";
 import { PostMeta } from "@/components/post-meta";
 import { PostToc } from "@/components/post-toc";
 import { TOC_MIN_HEADINGS } from "@/lib/content/config";
@@ -62,7 +63,10 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="space-y-5">
           {post.coverPosition === "above-title" ? coverImage : null}
           <div className="space-y-4">
-            <span className="riso-sticker riso-sticker--terra">Post · 文章</span>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="riso-sticker riso-sticker--terra">Post · 文章</span>
+              <BuildStamp />
+            </div>
             <h1 className="font-display max-w-[72rem] break-words text-balance text-3xl font-semibold leading-[1.06] tracking-[-0.02em] text-[#1a1815] [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
               {post.title}
             </h1>

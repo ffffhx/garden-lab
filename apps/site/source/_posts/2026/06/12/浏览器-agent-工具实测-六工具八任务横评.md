@@ -593,17 +593,97 @@ coverPosition: "below-title"
 
 #### 成本 × 能力 × 速度：只装一款选谁
 
-把三轴一起看（**速度只用 Claude 同宿主可比的两轮**；Codex 耗时是 subagent 自报、跨宿主不可比，不参与排速度）：
+综合推荐看四个维度——**能力（原生）、稳定性、速度、token**。先各给一张完整图，最后一张归一化叠在一起：
+
+<figure class="dv dv-cap" role="group" aria-label="能力排序图：按原生成功格数排名，降级成功单列">
+<style>
+.dv{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--paper-vsoft:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--serif:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);--mono:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);--cyan:#3f6d79;--grn:#4f7233;--amb:#9a6516;--red:#8f2d20;--pur:#54579a;--gray:#917f5c;margin:1.5rem 0;padding:clamp(15px,3.2vw,24px);font-family:var(--serif);color:var(--ink);line-height:1.5;background:radial-gradient(130% 90% at 90% 0%,var(--paper-soft),transparent 60%),linear-gradient(160deg,var(--paper-vsoft),var(--paper-deep));border:1px solid var(--hair);border-radius:14px;position:relative;overflow:hidden}
+.dv *{box-sizing:border-box;min-width:0}
+.dv-head{margin-bottom:13px}
+.dv-kick{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);display:inline-flex;align-items:center;gap:8px}
+.dv-kick::before{content:"";width:20px;height:1px;background:var(--cyan)}
+.dv-title{font-size:clamp(14px,2.8vw,18px);font-weight:700;margin:6px 0 3px}
+.dv-sub{font-size:12px;color:var(--muted);max-width:64ch}
+.dv-sub b{color:var(--ink-soft);font-weight:600}
+.dv-row{display:grid;grid-template-columns:clamp(94px,20%,140px) 1fr;gap:10px;align-items:center;margin:6px 0}
+.dv-name{font-family:var(--mono);font-size:11.5px;color:var(--ink);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-name small{display:block;font-weight:400;font-size:9.5px;color:var(--muted)}
+.dv-track{position:relative;height:24px;border-radius:6px;background:rgba(26,24,21,.05);overflow:hidden;display:flex}
+.dv-seg{height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:#fbf7ee;white-space:nowrap;overflow:hidden}
+.dv-seg.s-grn{background:var(--grn)}
+.dv-seg.s-deg{background:repeating-linear-gradient(45deg,#a6781f,#a6781f 4px,#c79433 4px,#c79433 8px);color:#2a2008}
+.dv-seg.s-warn{background:#c9a84f;color:#3a2e08}
+.dv-seg.s-red{background:var(--red)}
+.dv-bar{position:relative;height:24px;border-radius:6px;background:rgba(26,24,21,.05);overflow:hidden}
+.dv-fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-family:var(--mono);font-size:11px;font-weight:700;color:#fbf7ee}
+.dv-fill.f-best{background:var(--grn)}.dv-fill.f-mid{background:var(--cyan)}.dv-fill.f-worst{background:var(--red)}
+.dv-flag{font-family:var(--mono);font-size:9px;font-weight:700;margin-left:6px;padding:1px 5px;border-radius:10px}
+.dv-flag.best{color:var(--grn);background:#e7eedd}.dv-flag.worst{color:var(--red);background:#f1ddd6}
+.dv-foot{margin-top:12px;border-top:1px dashed var(--hair);padding-top:9px;font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.5}
+.dv-dots{font-size:13px;letter-spacing:2px;color:var(--grn)}.dv-dots i{color:var(--hair);font-style:normal}
+.dv-flaw{font-size:11px;color:var(--ink-soft);margin-top:2px}.dv-flaw b{color:var(--red)}
+@media (max-width:560px){.dv-row{grid-template-columns:84px 1fr}.dv-seg{font-size:9px}}
+</style>
+<div class="dv-head"><span class="dv-kick">维度 ① 能力</span><div class="dv-title">原生能力排序（同口径 31 格）</div><div class="dv-sub"><b>绿=原生成功</b>（工具自带原语直接做成，越长越强）；<b>斜纹=降级成功</b>（靠 eval/CDP 逃生补出来、不算原生）；黄=部分完成；红=失败。整条都=31 格，看绿条长短排名。</div></div>
+<div class="dv-row"><div class="dv-name">playwright-cli<small>Playwright 引擎</small></div><div class="dv-track"><span class="dv-seg s-grn" style="flex:30">原生 30</span><span class="dv-seg s-deg" style="flex:1"></span></div></div>
+<div class="dv-row"><div class="dv-name">DevTools MCP<small>CDP+DevTools</small></div><div class="dv-track"><span class="dv-seg s-grn" style="flex:28">原生 28</span><span class="dv-seg s-deg" style="flex:3">降3</span></div></div>
+<div class="dv-row"><div class="dv-name">agent-browser<small>CDP</small></div><div class="dv-track"><span class="dv-seg s-grn" style="flex:24">原生 24</span><span class="dv-seg s-deg" style="flex:7">降级 7</span></div></div>
+<div class="dv-row"><div class="dv-name">@chrome<small>开权限</small></div><div class="dv-track"><span class="dv-seg s-grn" style="flex:21">原生 21</span><span class="dv-seg s-deg" style="flex:3">3</span><span class="dv-seg s-warn" style="flex:1"></span><span class="dv-seg s-red" style="flex:6">失6</span></div></div>
+<div class="dv-row"><div class="dv-name">@chrome<small>无完整CDP</small></div><div class="dv-track"><span class="dv-seg s-grn" style="flex:14">原生 14</span><span class="dv-seg s-warn" style="flex:3">部3</span><span class="dv-seg s-red" style="flex:14">失败 14</span></div></div>
+<div class="dv-row"><div class="dv-name">@browser<small>in-app</small></div><div class="dv-track"><span class="dv-seg s-grn" style="flex:13">原生 13</span><span class="dv-seg s-warn" style="flex:4">部4</span><span class="dv-seg s-red" style="flex:14">失败 14</span></div></div>
+<div class="dv-row"><div class="dv-name">bb-browser<small>CDP</small></div><div class="dv-track"><span class="dv-seg s-grn" style="flex:8">原生8</span><span class="dv-seg s-deg" style="flex:18">降级 18</span><span class="dv-seg s-warn" style="flex:1"></span><span class="dv-seg s-red" style="flex:4">失4</span></div></div>
+<div class="dv-foot">原生第一是 playwright(30)，其次 DevTools(28)、agent-browser(24)。注意 bb-browser 的 26 个"通过"里 18 个是降级——原生只有 8。数据＝第 2 节热力图同口径。</div>
+</figure>
+
+<figure class="dv dv-stab" role="group" aria-label="稳定性图：可靠性评级 + 原生纯度 + 已知硬伤">
+<div class="dv-head"><span class="dv-kick">维度 ② 稳定性</span><div class="dv-title">可靠性评级（按已知硬伤 + 原生纯度）</div><div class="dv-sub">只比真正在竞争"只装一款"的四个 CDP 工具。<b>原生纯度</b>＝原生成功 ÷ 总通过（越高越少靠 hack）；评级综合纯度与<b>已知可靠性硬伤</b>。</div></div>
+<div class="dv-row"><div class="dv-name">DevTools MCP</div><div><div class="dv-dots">◆◆◆◆◆</div><div class="dv-flaw">原生纯度 90%；<b>无已知可靠性硬伤</b>——跨轮零失败、最少降级、零静默失败。</div></div></div>
+<div class="dv-row"><div class="dv-name">playwright-cli</div><div><div class="dv-dots">◆◆◆◆<i>◆</i></div><div class="dv-flaw">原生纯度 97%；唯一硬伤：<b>attach 真实 9223 看浏览器状态</b>（无打开页面则崩，但崩得很响、不静默）。</div></div></div>
+<div class="dv-row"><div class="dv-name">agent-browser</div><div><div class="dv-dots">◆◆◆<i>◆◆</i></div><div class="dv-flaw">原生纯度 77%；硬伤：<b>选择器点视口外元素静默空点</b>（@ref 可避）+ <b>--cdp daemon 粘滞</b>需复位（两者都"静默"，最坑）。</div></div></div>
+<div class="dv-row"><div class="dv-name">bb-browser</div><div><div class="dv-dots">◆<i>◆◆◆◆</i></div><div class="dv-flaw">原生纯度 31%；硬伤：<b>0.14.2 click 注入 bug + URL 归一化 bug</b>——26 个通过里 18 个靠 CDP/eval 兜底。</div></div></div>
+<div class="dv-foot">"静默失败"比"响亮崩溃"更坑（Agent 会以为成功一路错下去，见 §5）——所以 playwright 的"会崩但崩得响"反而比 agent-browser 的静默空点更可控。</div>
+</figure>
+
+<figure class="dv dv-speed" role="group" aria-label="速度图：Claude 同宿主耗时，越短越好">
+<div class="dv-head"><span class="dv-kick">维度 ③ 速度</span><div class="dv-title">耗时（Claude 同宿主两轮均值 · min）</div><div class="dv-sub">越短越好。只用 Claude 轮（同宿主可比）；@chrome/@browser 仅 Codex 轮、跨宿主不可比，未入。三家挤在 ~25min、实质平手，只有 bb 慢 1.8×。</div></div>
+<div class="dv-row"><div class="dv-name">DevTools MCP</div><div class="dv-bar"><span class="dv-fill f-best" style="width:55%">24.6<span class="dv-flag best">最快</span></span></div></div>
+<div class="dv-row"><div class="dv-name">playwright-cli</div><div class="dv-bar"><span class="dv-fill f-mid" style="width:57%">25.4</span></div></div>
+<div class="dv-row"><div class="dv-name">agent-browser</div><div class="dv-bar"><span class="dv-fill f-mid" style="width:58%">26.1</span></div></div>
+<div class="dv-row"><div class="dv-name">bb-browser</div><div class="dv-bar"><span class="dv-fill f-worst" style="width:100%">44.9<span class="dv-flag worst">≈1.8×</span></span></div></div>
+<div class="dv-foot">条长按 bb=100% 归一。前三家差 ~1.5min，落在轮次噪声里＝平手。</div>
+</figure>
+
+<figure class="dv dv-token" role="group" aria-label="token 消耗图：Claude 同宿主，越少越好">
+<div class="dv-head"><span class="dv-kick">维度 ④ token</span><div class="dv-title">token 消耗（Claude 同宿主两轮均值 · k）</div><div class="dv-sub">越少越好。同宿主可比口径。这是四维里<b>唯一拉得开差距</b>的一项：agent-browser 最省、DevTools 最贵（≈1.6×）。</div></div>
+<div class="dv-row"><div class="dv-name">agent-browser</div><div class="dv-bar"><span class="dv-fill f-best" style="width:61%">198<span class="dv-flag best">最省</span></span></div></div>
+<div class="dv-row"><div class="dv-name">playwright-cli</div><div class="dv-bar"><span class="dv-fill f-best" style="width:63%">206</span></div></div>
+<div class="dv-row"><div class="dv-name">bb-browser</div><div class="dv-bar"><span class="dv-fill f-mid" style="width:78%">253</span></div></div>
+<div class="dv-row"><div class="dv-name">DevTools MCP</div><div class="dv-bar"><span class="dv-fill f-worst" style="width:100%">325<span class="dv-flag worst">≈1.6×</span></span></div></div>
+<div class="dv-foot">条长按 DevTools=100% 归一。agent-browser 与 playwright 几乎并列最省（差 ~4%）；DevTools 的诊断直出是用 token 换的。</div>
+</figure>
+
+<figure class="dv dv-quad" role="group" aria-label="四维度归一化综合对比图">
+<div class="dv-head"><span class="dv-kick">综合 · 四维归一</span><div class="dv-title">四维度归一化对比（每项 0–100，越高越好）</div><div class="dv-sub">把四维各自归一到 0–100（速度/token 取倒数：越省/越快得分越高），等权平均得"综合"。<b>等权下 playwright 领先</b>；若你给 token 加大权重，agent-browser 会反超。</div></div>
+<div class="dv-row" style="grid-template-columns:clamp(94px,20%,140px) repeat(5,1fr);gap:6px"><div class="dv-name" style="font-size:10px;color:var(--muted)">维度→</div><div class="dv-name" style="font-size:10px;color:var(--muted);text-align:center">能力</div><div class="dv-name" style="font-size:10px;color:var(--muted);text-align:center">稳定</div><div class="dv-name" style="font-size:10px;color:var(--muted);text-align:center">速度</div><div class="dv-name" style="font-size:10px;color:var(--muted);text-align:center">token</div><div class="dv-name" style="font-size:10px;color:var(--grn);text-align:center">综合</div></div>
+<div class="dv-row" style="grid-template-columns:clamp(94px,20%,140px) repeat(5,1fr);gap:6px"><div class="dv-name" style="color:var(--pur)">playwright-cli</div><div class="dv-bar"><span class="dv-fill" style="width:97%;background:var(--pur)">97</span></div><div class="dv-bar"><span class="dv-fill" style="width:80%;background:var(--pur)">80</span></div><div class="dv-bar"><span class="dv-fill" style="width:97%;background:var(--pur)">97</span></div><div class="dv-bar"><span class="dv-fill" style="width:95%;background:var(--pur)">95</span></div><div class="dv-bar"><span class="dv-fill f-best" style="width:92%">92</span></div></div>
+<div class="dv-row" style="grid-template-columns:clamp(94px,20%,140px) repeat(5,1fr);gap:6px"><div class="dv-name" style="color:var(--cyan)">agent-browser</div><div class="dv-bar"><span class="dv-fill" style="width:77%;background:var(--cyan)">77</span></div><div class="dv-bar"><span class="dv-fill" style="width:60%;background:var(--cyan)">60</span></div><div class="dv-bar"><span class="dv-fill" style="width:94%;background:var(--cyan)">94</span></div><div class="dv-bar"><span class="dv-fill" style="width:100%;background:var(--cyan)">100</span></div><div class="dv-bar"><span class="dv-fill f-mid" style="width:83%">83</span></div></div>
+<div class="dv-row" style="grid-template-columns:clamp(94px,20%,140px) repeat(5,1fr);gap:6px"><div class="dv-name" style="color:var(--grn)">DevTools MCP</div><div class="dv-bar"><span class="dv-fill" style="width:90%;background:var(--grn)">90</span></div><div class="dv-bar"><span class="dv-fill" style="width:100%;background:var(--grn)">100</span></div><div class="dv-bar"><span class="dv-fill" style="width:100%;background:var(--grn)">100</span></div><div class="dv-bar"><span class="dv-fill" style="width:20%;background:var(--grn)">20</span></div><div class="dv-bar"><span class="dv-fill f-mid" style="width:78%">78</span></div></div>
+<div class="dv-row" style="grid-template-columns:clamp(94px,20%,140px) repeat(5,1fr);gap:6px"><div class="dv-name" style="color:var(--gray)">bb-browser</div><div class="dv-bar"><span class="dv-fill" style="width:26%;background:var(--gray)">26</span></div><div class="dv-bar"><span class="dv-fill" style="width:20%;background:var(--gray)">20</span></div><div class="dv-bar"><span class="dv-fill" style="width:20%;background:var(--gray)">20</span></div><div class="dv-bar"><span class="dv-fill" style="width:65%;background:var(--gray)">65</span></div><div class="dv-bar"><span class="dv-fill f-worst" style="width:33%">33</span></div></div>
+<div class="dv-foot">归一口径：能力＝原生/31；稳定＝评级/5；速度/token＝同宿主倒数归一。等权综合：playwright 92 ＞ agent-browser 83 ＞ DevTools 78 ＞ bb 33——**四维等权下 playwright 是最强全能；agent-browser 主要赢在 token（且只多 ~4%）**。权重不同结论会变，见下文。</div>
+</figure>
+
 
 - **速度**：agent-browser / DevTools MCP / playwright-cli 三家挤在 **~24.6–26.1 min**，彼此差 ~1.5 min（落在轮次噪声里）、**实质平手**；真正慢的只有 bb-browser（**~45 min ≈ 1.8×**）。
 - **token**：agent-browser **最省（~198k）**，DevTools MCP **最贵（~325k ≈ 1.6×）**，两者做的是同样多的活——这是三轴里**唯一拉得开差距**的一项。
-- **能力**：agent-browser、DevTools MCP、playwright-cli **同口径都 31/31、并列最强**；其中 agent-browser、playwright-cli 还原生支持运行时 route + 可移植 state，DevTools MCP 没有运行时 route、且绑 userDataDir 不可移植。
+- **能力（原生）**：**playwright-cli 原生 30 居首**，DevTools MCP 28、agent-browser 24 次之（agent-browser 的"31/31"是 24 原生 + 7 降级补出来的）；route + 可移植 state 上 agent-browser、playwright 都原生支持，DevTools MCP 没有运行时 route、也不可移植。
 
-能力三家并列、速度又平手，决定权就落在 **token + 接管真实 9223 的可靠性**：agent-browser token 最省、且能稳定 attach 9223（playwright 的 attach 看浏览器状态、Claude 成本轮就没接上改自管；DevTools MCP 不可移植）——综合指向 agent-browser。
+四维一摊开就清楚了——**能力（原生）playwright 最强、token agent-browser 最省、稳定性 DevTools 最稳、速度三家平手**，没有一个工具四项全赢。等权归一综合是 **playwright 居首（92）**；agent-browser（83）主要赢在 token（且只省 ~4%）和"能可预测地 attach 一个固定的真实登录态 9223"（playwright 的 attach 看浏览器状态）。所以"只装一款"取决于你最看重哪一维：
 
 <div class="bv-pick" style="margin:1.4rem 0;padding:.9rem 1.1rem;border-left:4px solid #4f7233;background:var(--paper-soft,#faf6ec);border-radius:.5rem;font-size:.92rem;line-height:1.65">
-<b>只装一款 → agent-browser。</b> 能力与另两家并列满分（同口径 31/31），但它 <b>token 最省（≈ DevTools MCP 的 60%）、速度与最快者打平、且能稳定接管真实 9223</b>——等于<b>花最少的 token、用差不多的时间，把最全的活干了</b>。代价是一次性的 <code>--cdp</code> daemon 接入坑（先 <code>close --all</code> 复位一次，见 7.2）+ 少数任务掉 eval 兜底。<br>
-<b style="color:#8f2d20">唯一例外</b>：如果你的活<b>纯粹是前端调试</b>（perf / Console / source map / 网络面板）、追求最稳零逃生、<b>且不在乎 token</b> → 选 <b>Chrome DevTools MCP</b>（快一丢丢、最稳，但每轮多烧 ≈60% token、且没有运行时 route）。按具体任务场景细分见前面第 1 节。
+<b>没有四维全赢的工具，按你最看重的维度选：</b><br>
+• <b>综合最均衡 / 最看重原生能力</b> → <b>playwright-cli</b>（原生 30、四维等权第一、token 也接近最省）；软肋：attach 真实 9223 要确保有页面在场，否则会崩（崩得响、不静默）。<br>
+• <b>最看重 token + 反复复用同一个固定的真实登录态 9223</b> → <b>agent-browser</b>（token 最省、daemon 式 attach 最可预测、原生 route）；代价：原生只 24（7 题靠 eval 补）+ 一次性 <code>--cdp</code> daemon 复位坑（见 7.2）。<br>
+• <b>纯前端诊断、不在乎 token</b> → <b>Chrome DevTools MCP</b>（最稳、诊断直出，但 token ≈1.6×、无运行时 route）。
 </div>
 
 T09/T10/T11 把战场从 localhost 网页挪到真实登录态与扩展安全域，其中涉及真实登录态的几格由两轮互相独立的隔离子 Agent 实测（一轮 Claude Code 主控、一轮 Codex），结论一致，差异只在评分口径（详见 4.7）。2026-06-20 又追加了 T10c，专门测“工具能否绑定用户指定的现成 9223 profile”，避免把默认 profile、自管 state 和指定 CDP profile 混成一个概念。

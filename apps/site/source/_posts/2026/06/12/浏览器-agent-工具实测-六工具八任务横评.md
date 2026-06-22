@@ -153,10 +153,10 @@ coverPosition: "below-title"
 
 没人会把六个工具都装上。如果只留一个，我认为最重要的能力是：能**复用真实登录态**（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用）——这一条先淘汰不继承登录态的 `@browser`。剩下能接到真实受管持久 profile 的几个里，真正的决赛只在**两个满分选手**之间：agent-browser 和 Chrome DevTools MCP，两者都是 **31/31**。再往下比就分出胜负了：agent-browser **token 最省（~198k）、最快（~26min）、state 可移植**，而且唯二**原生支持网络层 route/mock**；DevTools MCP 最稳（eval 逃生最少、零失败）、F12 式诊断直出，常见 fetch/XHR 够用，可一旦要 abort、改 header、拦非 JS 发起的请求，JS 层就够不着，鲁棒性弱一档。再叠加 **token 最贵（~325k，约 agent-browser 的 1.6×）、绑 userDataDir 不可移植**两条，天平就压向 agent-browser：能力同样满格，但更省、更快、可移植、route 更硬。
 
-在这些候选里，**只能装一款就选 agent-browser**（极少数例外场景见文末速查表）。
+在这些候选里，**没有"绝对最优"的一款——取决于你的使用风格**：会下场修工具 / 配启动脚本、要能力全包、在乎成本 → **agent-browser**；要干净诚实、做 CI / 回归 → **playwright-cli**；要开箱即稳、自主无人盯、不在乎成本 → **Chrome DevTools MCP**。完整的"优势 × 适合谁"对照见后文「按使用风格选工具」卡片图。
 
 
-<figure class="pickflow" role="group" aria-label="第一节 浏览器工具选型路由图：先过登录态硬前提，通用单选落到 agent-browser">
+<figure class="pickflow" role="group" aria-label="第一节 浏览器工具选型路由图：先过登录态硬前提淘汰 @browser，剩下按使用风格分流——建设者全包 agent-browser、干净诚实 playwright、开箱即稳 DevTools MCP">
 <style>
 .pickflow{
   --pf-paper-soft: var(--paper-soft, #faf6ec);
@@ -398,8 +398,8 @@ coverPosition: "below-title"
 <span class="pf-grain" aria-hidden="true"></span>
 <div class="pf-head">
   <span class="pf-kicker">§1 选型路由</span>
-  <div class="pf-title">只装一把，选 agent-browser</div>
-  <div class="pf-sub">先过登录态硬前提，剩下的满分选手里通用单选落到 agent-browser。</div>
+  <div class="pf-title">没有银弹 —— 按使用风格分流</div>
+  <div class="pf-sub">先过登录态硬前提（淘汰 @browser）；剩下的没有谁绝对最优，按"你是哪种人"对号入座，完整"优势 × 适合谁"见后文卡片图。</div>
 </div>
 <div class="pf-stage">
   <div class="pf-node pf-gate" data-step="1">
@@ -408,30 +408,29 @@ coverPosition: "below-title"
     <small>你登录过的 GitHub / 内网 / 在调应用——Agent 直接接着用，免重登。不继承登录态的 @browser 在这关出局。</small>
   </div>
   <div class="pf-flow" aria-hidden="true"></div>
-  <div class="pf-node pf-hero" data-step="2">
-    <span class="pf-hero-halo" aria-hidden="true"></span>
-    <span class="pf-tag" aria-hidden="true">通用单选 · MAIN</span>
-    <b>agent-browser</b>
-    <small>同口径满分 31/31，token 最省（~198k）、最快（~26min）、state 可移植，还唯二原生支持协议层 route/mock（比 JS 层补丁更鲁棒）。软肋是选择器点视口外元素会静默空点（走 @ref 可避开）+ daemon 粘滞——靠用法和重试吸收，不是能力洞。</small>
-    <span class="pf-pill">能力无洞，一把够用</span>
-  </div>
+  <div class="pf-bhead" aria-hidden="true">没有银弹 → 按使用风格分流</div>
+  <div class="pf-unit"><div class="pf-node" data-step="2" style="border-left:4px solid #3f6d79"><span class="pf-tag" aria-hidden="true" style="color:#3f6d79">会修/会配 · 要全包 · 在乎成本</span><b>agent-browser</b><small>能力面最广（raw CDP 全包）、token 最省、state 可移植；缺陷（选择器空点 / daemon 粘滞）可修。</small></div></div>
+  <div class="pf-unit"><div class="pf-node" data-step="3" style="border-left:4px solid #54579a"><span class="pf-tag" aria-hidden="true" style="color:#54579a">要干净诚实 · CI / 回归</span><b>playwright-cli</b><small>原生最干净、失败大声诚实；attach 前塞个 about:blank 即稳，不用改源码。</small></div></div>
+  <div class="pf-unit"><div class="pf-node" data-step="4" style="border-left:4px solid #4f7233"><span class="pf-tag" aria-hidden="true" style="color:#4f7233">开箱即稳 · 自主无人盯 · 不在乎成本</span><b>Chrome DevTools MCP</b><small>最稳、零静默失败、诊断直出；代价 token ≈1.6×、不可移植。</small></div></div>
 </div>
 <div class="pf-foot" aria-hidden="true">
   <span class="pf-leg"><span class="pf-dot d-amb"></span>硬前提</span>
-  <span class="pf-leg"><span class="pf-dot d-green"></span>通用首选 · agent-browser</span>
+  <span class="pf-leg"><span class="pf-dot d-cyan"></span>建设者 → agent-browser</span>
+  <span class="pf-leg"><span class="pf-dot d-pur"></span>干净诚实 → playwright</span>
+  <span class="pf-leg"><span class="pf-dot d-green"></span>开箱即稳 → DevTools MCP</span>
 </div>
 </figure>
 
-**它的软肋，以及为什么不致命**：click 走 CSS/text 选择器点**视口外**元素会**静默空点**——它知道元素存在（快照读的是 DOM 结构，跟在不在屏幕上无关），但这条点击路缺了"先滚进视口 + 点后校验落点"，坐标落空却仍报成功（走快照 `@ref` 路径会先滚到位、可避开，见 4.1）；另外常驻 daemon 的 `--cdp` 命中目标 profile 会粘滞（见 7.2）。但这些都是**工程细节、不是能力缺口**——靠走 `@ref` 点击、点前 `scrollintoview`、重试、连接前先 `connect 9223` + `get cdp-url` 复位就能吸收。换句话说：两者能力都满格，分胜负的是成本（token 省 ~40%）、可移植性，以及 route 的鲁棒性（协议层 vs JS 层）——这三条把单选的天平压向 agent-browser。
+分流图每一支的取舍，一句话版（完整"优势 × 适合谁"见后文卡片图）：
 
-**其余四个为什么落选**：
+- **agent-browser**：能力面最广（raw CDP 全包）、token 最省、state 可移植——建设者"一个工具全包"之选；软肋是选择器点视口外元素会**静默空点**（走 `@ref` 可避，见 4.1）+ `--cdp` daemon 粘滞需复位（见 7.2），都是可修的工程坑、不是能力洞。
+- **playwright-cli**：原生原语最干净（原生 30 最高）、失败大声诚实、CI / 回归最稳；attach 到没页面的 9223 会崩，但 attach 前塞个 `about:blank` 就稳（不用改源码，见 4.7）。
+- **Chrome DevTools MCP**：最稳、零静默失败、F12 诊断直出——开箱即稳、自主无人盯首选；代价是 token ≈1.6×、无运行时 route、绑 userDataDir 不可移植。
+- **bb-browser**：trace 因果链是独门（`request→trigger→click`）；但 0.14.2 click 注入有 bug、到不了 `chrome://` / 扩展特权页、44.9min 最慢，当前不宜当主力。
+- **@chrome（Codex）**：默认 Profile 登录态开箱即用、轻量观察；但进不了特权页 / 扩展 options、无可靠 route、证明不了指定 9223。
+- **@browser（Codex）**：不继承真实登录态，硬前提这关就出局。
 
-- **@chrome**：无完整 CDP 时缺 Network body / Runtime fetch / route/mock；开完整 CDP 后 T02/T03/T07/T18 会翻盘，但三条硬边界仍在——证明不了绑定用户指定的 9223 profile、进不了 `chrome://extensions` / `chrome-extension://.../options.html`、没有可靠 route/mock API。是默认 Profile 的轻量观察器，不是完整 F12。
-- **@browser**：不继承真实登录态，硬前提这关就出局。
-- **bb-browser**：能用 `--port` 读真实登录态，但 0.14.2 的 click 注入有 bug、又到不了 `chrome://` / `chrome-extension://` 特权页，通用操作频繁靠 eval 兜底，44.9min 也是全场最慢。
-- **playwright-cli**：纯自动化最稳（综合通过率最高、几乎零 eval 自救），attach 9223 本身能成；但成败**取决于 9223 当下的浏览器状态**——有打开的页面时 attach 稳定成功（并存多个扩展 service_worker 也不崩），无任何页面时会崩在 `Browser.setDownloadBehavior`（详见 4.7）。因为依赖这个外部状态、可预测性不足，所以定位为"自启浏览器回归测试"的首选、而非"真实 profile 主力"。
-
-只有极少数情况才需要在 agent-browser 之外再补一把（它本身已覆盖 route 与可移植 state，所以加装项比原先少得多）：
+再按具体任务场景快查一下（卡片图的精简版）：
 
 <figure class="dtable" role="group" aria-label="agent-browser 之外极少数需要加装第二把工具的例外场景表">
 <style>
@@ -980,7 +979,7 @@ T12–T20 是我后来补的一组前端开发者专项题。它们的目标不�
 - **@browser 5✅3⚠️1 N-R**：普通 DOM、iframe、SSE 完成态、可访问性、表格统计都能做；但 raw asset/source map 被拦、Service Worker live bypass 拿不到、文件上传没有 API。它适合轻量观察，不适合完整前端调试。
 - **@chrome（无完整 CDP）4✅2⚠️3❌，开完整 CDP 后 9/9**：早期前端专项轮的 9 N-R 是 Codex Chrome Extension disabled，不是无完整 CDP 的真实上限。2026-06-21 关掉完整 CDP 后复测，T14/T15/T17/T19/T20 这类页面级任务能跑，T12/T16 只能部分定位；T13 缺 viewport，T18 缺 upload API，T07/T02/T03 这类 DevTools 面仍失败。开完整 CDP 后默认 Profile 复测把 T12-T20 全部跑通，其中 T13 仍需要 hit-test 后临时隐藏遮挡层。这个变化很关键：@chrome 的上限取决于当前权限开关，而不是工具名本身。
 
-这组补测坐实了"纯前端排障"这个例外场景：DevTools MCP 从"理论上更像 F12"变成了"实测九个前端专项仍然第一"。各场景分工因此清晰：**纯前端排障 DevTools MCP 第一；自动化回归 playwright-cli 首选；而通用单选仍是覆盖最全、能接真实 profile 的 agent-browser；开权限后的 @chrome 是默认 Profile 里的轻量 CDP 观察器，但仍缺扩展特权页、指定 9223 证明和可靠 route/mock。**
+这组补测坐实了"纯前端排障"这个例外场景：DevTools MCP 从"理论上更像 F12"变成了"实测九个前端专项仍然第一"。各场景分工因此清晰（没有银弹、按风格选，详见综合卡片图）：**纯前端排障 / 开箱即稳 DevTools MCP 第一；自动化回归 / CI playwright-cli 首选；要全包 + 在乎成本 + 会下场修的建设者 agent-browser；开权限后的 @chrome 是默认 Profile 里的轻量 CDP 观察器，但仍缺扩展特权页、指定 9223 证明和可靠 route/mock。**
 
 ### 5. 跨工具规律：比单格结论更长寿的部分
 

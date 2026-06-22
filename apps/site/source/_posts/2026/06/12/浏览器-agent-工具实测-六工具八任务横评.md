@@ -550,7 +550,7 @@ coverPosition: "below-title"
 <div class="bc-foot">两轮(R1 9223 / R2 9224)。<b>耗时/token 两轮稳</b>，可比；<b>browserOps/eval 自救摆动大</b>(同 subagent 口径不一，只看趋势)。agent-browser R1 的 29✅ 是子代理漏报 R06，R2 干净 30✅。bb-browser R2 已含 R09 重测✅(上次 N-R 是站点网络抽风)。playwright-cli 自管有 5 题快速失败(自管无真实登录态/扩展、npm 被 Cloudflare 拦)，低耗时不等于“做了同样多题”。</div>
 </figure>
 
-四条读数：① **bb-browser 是成本黑洞**——47.9min ≈ agent-browser 的 1.86×，调用/操作数最高却结果最差（4❌），根因还是 4.6 那个 click 事件 bug 逼出的处处 eval 重试——纯工具缺陷把成本顶上去。② **devtools-mcp 操作最省（169）、token 最贵（322.7k）**——MCP 每次回传冗长 a11y 快照/网络体，单 op 很贵，但能力最稳（28✅、零 ❌）。③ **agent-browser 综合最省**——耗时、token 双低，结果还最全；④ **playwright-cli 的低成本要打折看**：它有 5 题没做成、都记 ✕——自管浏览器没真实登录态/扩展（R02/R06/T10a）、npm 被 Cloudflare 拦（R04/R07），这些快速失败反而压低了耗时/token。
+四条读数：① **bb-browser 是成本黑洞**——47.9min ≈ agent-browser 的 1.86×，调用/操作数最高却结果最差（4❌），根因还是 4.6 那个 click 事件 bug 逼出的处处 eval 重试——纯工具缺陷把成本顶上去。② **devtools-mcp 操作最省（169）、token 最贵（322.7k）**——MCP 每次回传冗长 a11y 快照/网络体，单 op 很贵，但能力最稳（28✅、零 ❌）。③ **agent-browser 综合最省**——耗时、token 双低，结果还最全；④ **playwright-cli 的低成本要打折看**：这是**自管浏览器轮**（那轮没 attach 上 9223），5 题快速失败——自管无真实登录态/扩展（R02/R06/T10a）、npm 被 Cloudflare 拦（R04/R07），压低了耗时/token。注意这不代表能力弱：它**同口径覆盖是 31/31**（attach 上 9223 的 Codex 轮 28✅，见总表），软肋在 attach 可靠性而非能力。
 
 **② Codex 轮（gpt-5.5）**：多测了 Codex 专属的 `@chrome` / `@browser`。耗时是各 subagent 自报、**不可跨宿主与 Claude 轮直接比**。
 
@@ -597,12 +597,12 @@ coverPosition: "below-title"
 
 - **速度**：agent-browser / DevTools MCP / playwright-cli 三家挤在 **~24.6–26.1 min**，彼此差 ~1.5 min（落在轮次噪声里）、**实质平手**；真正慢的只有 bb-browser（**~45 min ≈ 1.8×**）。
 - **token**：agent-browser **最省（~198k）**，DevTools MCP **最贵（~325k ≈ 1.6×）**，两者做的是同样多的活——这是三轴里**唯一拉得开差距**的一项。
-- **能力**：agent-browser 与 DevTools MCP 并列最强；agent-browser 还独占运行时 route + HAR + 扩展 options + 可移植登录态。
+- **能力**：agent-browser、DevTools MCP、playwright-cli **同口径都 31/31、并列最强**；其中 agent-browser、playwright-cli 还原生支持运行时 route + 可移植 state，DevTools MCP 没有运行时 route、且绑 userDataDir 不可移植。
 
-速度既是平手，决定权就落在 **token + 能力**——两者都指向 agent-browser。
+能力三家并列、速度又平手，决定权就落在 **token + 接管真实 9223 的可靠性**：agent-browser token 最省、且能稳定 attach 9223（playwright 的 attach 看浏览器状态、Claude 成本轮就没接上改自管；DevTools MCP 不可移植）——综合指向 agent-browser。
 
 <div class="bv-pick" style="margin:1.4rem 0;padding:.9rem 1.1rem;border-left:4px solid #4f7233;background:var(--paper-soft,#faf6ec);border-radius:.5rem;font-size:.92rem;line-height:1.65">
-<b>只装一款 → agent-browser。</b> 三轴里它：能力第一梯队、token 最省（≈ DevTools MCP 的 60%）、速度与最快者打平——等于<b>花最少的 token、用差不多的时间，把最全的活干了</b>。代价是一次性的 <code>--cdp</code> daemon 接入坑（先 <code>close --all</code> 复位一次，见 7.2）+ 少数任务掉 eval 兜底。<br>
+<b>只装一款 → agent-browser。</b> 能力与另两家并列满分（同口径 31/31），但它 <b>token 最省（≈ DevTools MCP 的 60%）、速度与最快者打平、且能稳定接管真实 9223</b>——等于<b>花最少的 token、用差不多的时间，把最全的活干了</b>。代价是一次性的 <code>--cdp</code> daemon 接入坑（先 <code>close --all</code> 复位一次，见 7.2）+ 少数任务掉 eval 兜底。<br>
 <b style="color:#8f2d20">唯一例外</b>：如果你的活<b>纯粹是前端调试</b>（perf / Console / source map / 网络面板）、追求最稳零逃生、<b>且不在乎 token</b> → 选 <b>Chrome DevTools MCP</b>（快一丢丢、最稳，但每轮多烧 ≈60% token、且没有运行时 route）。按具体任务场景细分见前面第 1 节。
 </div>
 

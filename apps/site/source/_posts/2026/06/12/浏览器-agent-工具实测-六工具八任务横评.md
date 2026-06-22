@@ -13,16 +13,13 @@ tags:
   - Agent
   - Playwright
   - Benchmark
-excerpt: "实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli：二十道固定任务覆盖网页登录、Network 排障、性能诊断、扩展特权页、三种登录态路线、Source Map、Service Worker、iframe、文件上传与键盘可访问性；另已跑完 R01-R09 真实网站外场任务，覆盖 Chrome Web Store、真实扩展注入、真实 Network 响应体、请求拦截和 HAR/trace。结论不是谁最强，而是什么场景该选谁。"
+excerpt: "实测 @chrome、@browser、agent-browser、bb-browser、Chrome DevTools MCP 和 playwright-cli：二十道固定任务覆盖网页登录、Network 排障、性能诊断、扩展特权页、三种登录态路线、Source Map、Service Worker、iframe、文件上传与键盘可访问性；9道 真实网站外场任务，覆盖 Chrome Web Store、真实扩展注入、真实 Network 响应体、请求拦截和 HAR/trace。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 
 ## 摘要
-
-如果你正在选浏览器 Agent 工具。先看三件事：它能不能复用真实登录态，能不能拿到 Network，能不能进入 `chrome://` 和扩展设置页。
-
-我用 `@chrome`、`@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP`、`playwright-cli` 6个工具，跑了20道有标准答案的固定靶场题，外加 9道 真实网站外场题——覆盖从网页登录、Network、性能诊断，到扩展安全域、真实登录态、Source Map、Service Worker、iframe、文件上传和键盘可访问性。每个单元格都由上下文干净的 Subagent 实测，结果汇进第 2 节那张总表。任务设计、各轮口径与复测细节见第 3 节。
+我用 `@chrome`、`@browser`、`agent-browser`、`bb-browser`、`Chrome DevTools MCP`、`playwright-cli` 6个工具，跑了20道有标准答案的固定靶场题，外加 9道 真实网站外场题——覆盖从网页登录、Network、性能诊断，到扩展安全域、真实登录态、Source Map、Service Worker、iframe、文件上传和键盘可访问性。每个单元格都由上下文干净的 Subagent 实测。
 
 这篇文章按"结论 → 过程 → 原理"三段组织：
 
@@ -154,7 +151,7 @@ coverPosition: "below-title"
 
 ### 1. 选型路由：按任务场景反推工具
 
-没人会把六个工具都装上。如果只留一个，我认为最重要的是：能**复用真实登录态**（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用）——这一条先淘汰不继承登录态的 `@browser`。剩下能接到真实 9223 / 受管持久 profile 的几个里，真正的决赛只在**两个满分选手**之间：agent-browser 和 Chrome DevTools MCP，两者都是 **31/31**。再往下比就分出胜负了：agent-browser **token 最省（~198k）、最快（~26min）、state 可移植**，而且唯二**原生支持网络层 route/mock**；DevTools MCP 最稳（eval 逃生最少、零失败）、F12 式诊断直出，常见 fetch/XHR 够用，可一旦要 abort、改 header、拦非 JS 发起的请求，JS 层就够不着，鲁棒性弱一档。再叠加 **token 最贵（~325k，约 agent-browser 的 1.6×）、绑 userDataDir 不可移植**两条，天平就压向 agent-browser：能力同样满格，但更省、更快、可移植、route 更硬。
+没人会把六个工具都装上。如果只留一个，我认为最重要的能力是：能**复用真实登录态**（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用）——这一条先淘汰不继承登录态的 `@browser`。剩下能接到真实 9223 / 受管持久 profile 的几个里，真正的决赛只在**两个满分选手**之间：agent-browser 和 Chrome DevTools MCP，两者都是 **31/31**。再往下比就分出胜负了：agent-browser **token 最省（~198k）、最快（~26min）、state 可移植**，而且唯二**原生支持网络层 route/mock**；DevTools MCP 最稳（eval 逃生最少、零失败）、F12 式诊断直出，常见 fetch/XHR 够用，可一旦要 abort、改 header、拦非 JS 发起的请求，JS 层就够不着，鲁棒性弱一档。再叠加 **token 最贵（~325k，约 agent-browser 的 1.6×）、绑 userDataDir 不可移植**两条，天平就压向 agent-browser：能力同样满格，但更省、更快、可移植、route 更硬。
 
 在这些候选里，**只能装一款就选 agent-browser**（极少数例外场景见文末速查表）。
 
@@ -415,7 +412,7 @@ coverPosition: "below-title"
     <span class="pf-hero-halo" aria-hidden="true"></span>
     <span class="pf-tag" aria-hidden="true">通用单选 · MAIN</span>
     <b>agent-browser</b>
-    <small>同口径满分 31/31，token 最省（~198k）、最快（~26min）、state 可移植，还唯二原生支持协议层 route/mock（比 JS 层补丁更鲁棒）。软肋只有 click / daemon 稳定性——靠重试 + connect 9223 复核就能吸收，不是能力洞。</small>
+    <small>同口径满分 31/31，token 最省（~198k）、最快（~26min）、state 可移植，还唯二原生支持协议层 route/mock（比 JS 层补丁更鲁棒）。软肋是选择器点视口外元素会静默空点（走 @ref 可避开）+ daemon 粘滞——靠用法和重试吸收，不是能力洞。</small>
     <span class="pf-pill">能力无洞，一把够用</span>
   </div>
 </div>
@@ -425,7 +422,7 @@ coverPosition: "below-title"
 </div>
 </figure>
 
-**它的软肋，以及为什么不致命**：click 事件偶发不稳、常驻 daemon 的 `--cdp` 命中目标 profile 会粘滞（见 7.2）。但这些都是**工程细节、不是能力缺口**——靠重试、snapshot 复核、连接前先 `connect 9223` + `get cdp-url` 复位就能吸收。换句话说：两者能力都满格，分胜负的是成本（token 省 ~40%）、可移植性，以及 route 的鲁棒性（协议层 vs JS 层）——这三条把单选的天平压向 agent-browser。
+**它的软肋，以及为什么不致命**：click 走 CSS/text 选择器点**视口外**元素会**静默空点**——它知道元素存在（快照读的是 DOM 结构，跟在不在屏幕上无关），但这条点击路缺了"先滚进视口 + 点后校验落点"，坐标落空却仍报成功（走快照 `@ref` 路径会先滚到位、可避开，见 4.1）；另外常驻 daemon 的 `--cdp` 命中目标 profile 会粘滞（见 7.2）。但这些都是**工程细节、不是能力缺口**——靠走 `@ref` 点击、点前 `scrollintoview`、重试、连接前先 `connect 9223` + `get cdp-url` 复位就能吸收。换句话说：两者能力都满格，分胜负的是成本（token 省 ~40%）、可移植性，以及 route 的鲁棒性（协议层 vs JS 层）——这三条把单选的天平压向 agent-browser。
 
 **其余四个为什么落选**：
 

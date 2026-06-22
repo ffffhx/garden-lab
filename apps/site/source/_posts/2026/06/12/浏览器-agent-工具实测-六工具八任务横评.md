@@ -155,7 +155,7 @@ coverPosition: "below-title"
 
 ### 1. 选型路由：按任务场景反推工具
 
-没人会把六个工具都装上。如果只能留一把，先过一道硬前提：要能**复用真实登录态**（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用）——这一条先淘汰不继承登录态的 `@browser`。剩下能接到真实 9223 / 受管持久 profile 的几个里，真正的决赛只在**两个满分选手**之间：agent-browser 和 Chrome DevTools MCP，两者在同口径 31 格里都是 **31/31**。再往下比就分出胜负了：agent-browser **token 最省（~198k）、最快（~26min）、state 可移植**，而且唯二**原生支持网络层 route/mock**；DevTools MCP 最稳（eval 逃生最少）、F12 式诊断直出，但它**没有网络层 route**——这让它从根上越不过 T04（请求 mock）这道分水岭，是个**后付补不上的能力缺口**。两者的取舍因此很清晰：agent-browser 的弱点（click 不稳、daemon 粘滞）是能靠重试 + `connect 9223` 复核吸收的工程细节，不是能力洞；而 DevTools MCP 的洞补不上。”能力的洞补不上，但稳定性能靠运维补上”——所以选没有洞的那把。
+没人会把六个工具都装上。如果只能留一把，先过一道硬前提：要能**复用真实登录态**（你登录过的 GitHub、内网、自己在调的应用，Agent 要能直接接着用）——这一条先淘汰不继承登录态的 `@browser`。剩下能接到真实 9223 / 受管持久 profile 的几个里，真正的决赛只在**两个满分选手**之间：agent-browser 和 Chrome DevTools MCP，两者在同口径 31 格里都是 **31/31**。再往下比就分出胜负了：agent-browser **token 最省（~198k）、最快（~26min）、state 可移植**，而且唯二**原生支持网络层 route/mock**；DevTools MCP 最稳（eval 逃生最少、零失败）、F12 式诊断直出，T04 它也过了——但走的是 **JS 层 initScript 补丁**（注入脚本改 fetch/XHR），不是 agent-browser 那种**协议层 route**：常见 fetch/XHR 够用，可一旦要 abort、改 header、拦非 JS 发起的请求，JS 层就够不着，鲁棒性弱一档。再叠加 **token 最贵（~325k，约 agent-browser 的 1.6×）、绑 userDataDir 不可移植**两条，单选的天平就压向 agent-browser：能力同样满格，但更省、更快、可移植、route 更硬。代价是 agent-browser 的 click 不稳、daemon 粘滞——但这是能靠重试 + `connect 9223` 复核吸收的工程细节，而非能力差距。
 
 在这些候选里，**只能装一款就选 agent-browser**；唯一例外是"纯前端调试"场景——那时换 Chrome DevTools MCP。
 
@@ -416,7 +416,7 @@ coverPosition: "below-title"
     <span class="pf-hero-halo" aria-hidden="true"></span>
     <span class="pf-tag" aria-hidden="true">通用单选 · MAIN</span>
     <b>agent-browser</b>
-    <small>同口径满分 31/31，token 最省（~198k）、最快（~26min）、state 可移植，还唯二原生支持网络层 route/mock。软肋只有 click / daemon 稳定性——靠重试 + connect 9223 复核就能吸收，不是能力洞。</small>
+    <small>同口径满分 31/31，token 最省（~198k）、最快（~26min）、state 可移植，还唯二原生支持协议层 route/mock（比 JS 层补丁更鲁棒）。软肋只有 click / daemon 稳定性——靠重试 + connect 9223 复核就能吸收，不是能力洞。</small>
     <span class="pf-pill">能力无洞，一把够用</span>
   </div>
   <div class="pf-flow" aria-hidden="true"></div>
@@ -425,7 +425,7 @@ coverPosition: "below-title"
     <div class="pf-node pf-b1" data-step="3">
       <span class="pf-tag" aria-hidden="true">纯前端调试 · 例外</span>
       <b>Chrome DevTools MCP</b>
-      <small>只调试不改流量、不在乎 token、不需要跨机时换它：最稳、eval 逃生最少、F12 式诊断直出。它唯一的硬伤（没有网络层 route）在这个场景里恰好用不到。</small>
+      <small>只调试不改流量、不在乎 token、不需要跨机时换它：最稳、eval 逃生最少、F12 式诊断直出。它的 mock 走 JS 层 initScript（非协议层 route），这点差异在本场景里恰好用不到。</small>
     </div>
   </div>
 </div>
@@ -440,13 +440,13 @@ coverPosition: "below-title"
 
 - **满分覆盖、没有能力洞**：同口径 31/31，T01-T20 靶场 + R01-R09 真实外场全过（逐格判定见第 2 节总表）；
 - **token 最省、速度最快**：Claude 轮约 198k token / 26min，是四个 CDP 工具里单位成本最低、收尾最快的；
-- **唯二真正的网络层 route**：mock / 拦截 / 改写 / abort 流量原生支持，直接拿下 T04 这道别家越不过的分水岭；
+- **唯二真正的协议层 route**：mock / 拦截 / 改写 / abort 流量原生支持；DevTools MCP、bb-browser 也能过 T04，但靠 JS 层补丁，碰到 abort / 改 header / 非 JS 发起的请求就够不着——agent-browser 在 route 这条线上更硬；
 - **state 可移植**：导出 state 文件，换机器、换目录照样带登录态，跨机免登录开箱即用；
 - **能接真实 profile**：严格 `connect 9223` + `get cdp-url` 复核后，能稳定跑一轮真实登录态外场。
 
-**它的软肋，以及为什么不致命**：click 事件偶发不稳、常驻 daemon 的 `--cdp` 命中目标 profile 会粘滞（见 7.2）。但这些都是**工程细节、不是能力缺口**——靠重试、snapshot 复核、连接前先 `connect 9223` + `get cdp-url` 复位就能吸收。"能力的洞补不上，但稳定性能靠运维补上"，这正是它压过 DevTools MCP 的根本理由。
+**它的软肋，以及为什么不致命**：click 事件偶发不稳、常驻 daemon 的 `--cdp` 命中目标 profile 会粘滞（见 7.2）。但这些都是**工程细节、不是能力缺口**——靠重试、snapshot 复核、连接前先 `connect 9223` + `get cdp-url` 复位就能吸收。换句话说：两者能力都满格，分胜负的是成本（token 省 ~40%）、可移植性，以及 route 的鲁棒性（协议层 vs JS 层）——这三条把单选的天平压向 agent-browser。
 
-**唯一会让我改判的情况**：用途锁死在"纯前端调试、不在乎 token、不需要 mock 也不需要跨机"。这时换 **Chrome DevTools MCP**——它把 F12 调试流程包成 Agent 工具，Network 响应体、性能诊断直出、扩展特权页，以及 console/source map、SW、iframe、file input、键盘可访问性的证据链全覆盖，而且 eval 逃生最少、最稳。它唯一的硬伤（没有网络层 route）在"只调试不改流量"的场景里恰好用不到，所以这个例外里它反而更顺手。实操上别让它接管你的日常主 Chrome（会抢焦点、误改账号状态，见第 5 节），而是开一个**专用调试 profile**、用 `--browserUrl` 连它的 CDP 端口。
+**唯一会让我改判的情况**：用途锁死在"纯前端调试、不在乎 token、不需要 mock 也不需要跨机"。这时换 **Chrome DevTools MCP**——它把 F12 调试流程包成 Agent 工具，Network 响应体、性能诊断直出、扩展特权页，以及 console/source map、SW、iframe、file input、键盘可访问性的证据链全覆盖，而且 eval 逃生最少、最稳。它的 mock 走 JS 层 initScript、非协议层 route，但在"只调试不改流量"的场景里这点差异恰好用不到，所以这个例外里它反而更顺手。实操上别让它接管你的日常主 Chrome（会抢焦点、误改账号状态，见第 5 节），而是开一个**专用调试 profile**、用 `--browserUrl` 连它的 CDP 端口。
 
 **其余四个为什么落选**：
 

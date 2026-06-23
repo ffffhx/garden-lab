@@ -20,15 +20,13 @@ coverPosition: "below-title"
 
 日常用 Chrome 的人都遇到过这些场景：
 
-- 想在一个干净环境里复现 bug，同时保持日常浏览器干净；
-- 想把主账号的登录态搬到测试 Profile 上跑一遍回归，验证完即弃；
-- 想把一个浏览器交给 Agent 自动化，同时让它带着真实登录态。
+- 想把一个浏览器交给 Agent 自动化，同时让它带着真实登录。
 
-ProfilePilot 的定位很明确：站在你已经使用的真实 Chrome 数据之上工作，保留浏览器的真实性和本机可解释性。它面向的是日常多 Profile 管理、隔离测试、以及 Agent 自动化这类需要真实登录态的场景。
+ProfilePilot 的定位很明确：站在你已经使用的真实 Chrome 数据之上工作，不污染、不抢占你的系统默认的profile。它面向的是日常多 Profile 管理、隔离测试、以及 Agent 自动化这类需要真实登录态的场景。
 
 这个定位决定了它的全部技术选择：要站在真实 Chrome 之上，就只能去读 Chrome 落在磁盘上的真实文件、去解析系统的进程表。**它的工程难度，全部来自「在没有官方 API 的地方，把事情做对、做安全」。**
 
-## 2. 整体架构：三进程 + 一个 5000 多行的 ProfileManager
+## 2. 整体架构：三进程 + 一个按职责拆成 11 个模块的主进程核心
 
 先看进程边界。它使用的是 Electron 常见的隔离配置：渲染进程开启上下文隔离、禁用 Node 直连；但 `sandbox` 明确是 `false`，所以这里不能说成 Electron sandbox 模式：
 
@@ -44,7 +42,7 @@ mainWindow = new BrowserWindow({
 });
 ```
 
-渲染进程（`src/renderer/app.ts`，3800 多行的纯 UI 逻辑）不能直接读文件、起进程，它要做任何事都得通过 preload 暴露的桥：
+渲染进程（`src/renderer/` 下一组纯 UI 模块，共 13 个文件，用 esbuild 打包）不能直接读文件、起进程，它要做任何事都得通过 preload 暴露的桥：
 
 ```ts
 // src/preload.ts —— 把一组受控方法挂到 window.profileManager
@@ -58,16 +56,16 @@ const profileManagerApi: ProfileManagerApi = {
 contextBridge.exposeInMainWorld("profileManager", profileManagerApi);
 ```
 
-主进程 `main.ts` 只做一件事：把渲染进程发来的每个请求（走 IPC，即进程间通信）转发给 `ProfileManager` 这个真正干活的对象。所有真实逻辑——读 `Local State`、跑 `ps`、复制文件、连 CDP——都集中在 `src/main/profile-manager.ts` 这一个文件里。
+主进程 `main.ts` 只做一件事：把渲染进程发来的每个请求（走 IPC，即进程间通信）转发给 `ProfileManager` 这个真正干活的对象。这些真实逻辑——读 `Local State`、跑 `ps`、复制文件、连 CDP——按职责分布在 `src/main/` 下的多个模块里：`chrome-launch.ts`（Profile 扫描 / 启动 / 写 `CLAUDE.md`）、`account-sync.ts`（账号同步事务）、`process-scan.ts`（`ps` / `lsof` 解析）、`cdp-client.ts`（CDP 可达性）、`extension-scan.ts` / `extension-migration.ts`（扩展迁移）、`fs-util.ts` / `fs-copy.ts`（路径校验与拷贝）等，`profile-manager.ts` 自己是约 2000 行的编排层。下文为叙述方便，仍以「ProfileManager」统称这部分主进程核心。
 
 整条调用链长这样：
 
 ```
-渲染进程 app.ts
+渲染进程 src/renderer/
   → window.profileManager.syncAccount(req)      (preload 桥)
     → ipcRenderer.invoke("profiles:account:sync")
       → main.ts 的 ipcMain.handle
-        → profileManager.syncAccount(...)        (5000 多行核心)
+        → profileManager.syncAccount(...)        (主进程核心，拆分到 src/main/ 多个模块)
           → 读文件 / 跑 ps / 复制目录 / 连 CDP
 ```
 
@@ -509,4 +507,4 @@ function isSafePathSegment(value: string): boolean {
 
 如果你要拿它做一次分享，我会把落点放在第 7 节那段 `replacePathWithStagedCopy`——它用最朴素的 `fs.rename` 三步，把一个听起来很吓人的「热数据迁移」做成了不会留下中间态的原子操作。**很多工具的差距，恰恰就在这种「失败了会怎样」的地方。**
 
-> 观察基于 `profilepilot@0.1.0`、`2026-06-16` 的源码；核心实现集中在 `src/main/profile-manager.ts`。文中代码均为讲解裁剪版，省略了部分边界分支与日志。
+> 观察基于 `profilepilot@0.1.0` 的源码；主进程核心按职责分布在 `src/main/` 下的多个模块中，编排层是 `src/main/profile-manager.ts`。文中代码均为讲解裁剪版，省略了部分边界分支与日志。

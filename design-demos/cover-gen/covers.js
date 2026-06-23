@@ -93,6 +93,10 @@ window.COVERS = (function () {
       ["企业部署", "AI 硬件", "机器人 IPO", "产品设计", "增长信任"],
       "AI 正在进入组织、供应链、机器人市场和产品信任体系。",
       "Samsung Codex · Lingyi · Coowa · Apple design · Polymarket"),
+    news("2026/06/23/2026-06-23-x-上-ai-与前端热点速览", "2026-06-23",
+      ["安全修复", "模型编排", "算力交易", "机器人安全", "能源约束"],
+      "AI 工程正在进入安全、算力、机器人与能源基础设施层。",
+      "OpenAI Daybreak · Sakana Fugu · Reflection AI · NVIDIA Halos · Microsoft/Chevron"),
   ];
 
   const T = [

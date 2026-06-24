@@ -24,8 +24,8 @@ coverPosition: "below-title"
 1. 购买一个支持 HTTP/HTTPS 的 ISP / residential proxy。
 2. 用 Clash Verge Rev 管理配置。
 3. 让底层 Mihomo 核心在本机监听 `127.0.0.1:7897`。
-4. 在规则里只匹配 `claude.ai`、`claude.com`、`anthropic.com`。
-5. 浏览器走 macOS 系统代理，Claude Code CLI 额外通过 `HTTP_PROXY` / `HTTPS_PROXY` 指向本机端口。
+4. 在规则里只匹配 `claude.ai`、`claude.com`、`anthropic.com`、`claudeusercontent.com`。
+5. 浏览器走 macOS 系统代理，Claude Code CLI 额外通过 `HTTP_PROXY` / `HTTPS_PROXY` 指向本机端口；如果同时开了 Bifrost 这类也会写系统代理的工具，还要先确认当前系统代理到底指向 `7897` 还是别的本机端口。
 6. 用 Clash 连接列表、规则命中、`curl --proxy` 和响应里的边缘节点信息确认流量路径。
 
 这篇不是“买哪个代理最便宜”的推荐，也不包含任何真实代理账号、密码、订单链接。它整理的是这次配置过程中最容易混淆的概念：AWS IP、住宅 IP、ISP、HTTP 代理、SOCKS、本机代理端口、系统代理、CLI 环境变量、`DIRECT`、连接关闭，以及为什么 Clash 首页显示中国 IP 并不代表 Claude 没走英国出口。
@@ -107,6 +107,7 @@ SOCKS5 更通用。它不专门服务 HTTP，而是把“我要连哪个 host、
 这也是为什么 Claude Code CLI 更适合先按 HTTP/HTTPS 代理处理：命令行生态里最通用、最容易生效的方式就是设置：
 
 ```bash
+NO_PROXY=localhost,127.0.0.1,::1
 HTTP_PROXY=http://127.0.0.1:7897
 HTTPS_PROXY=http://127.0.0.1:7897
 ```
@@ -127,6 +128,8 @@ HTTPS_PROXY=http://127.0.0.1:7897
 8. 远端代理替你访问 Claude。
 
 所以监听端口的是 Clash / Mihomo，不是浏览器。浏览器是客户端，它主动连 `127.0.0.1:7897`。
+
+这条链路有一个隐含前提：当前 macOS 系统代理确实指向 Clash / Mihomo 的 `7897`。如果另一个工具也在写系统代理，例如 Bifrost 把 HTTP/HTTPS 代理改成 `127.0.0.1:8899`，那浏览器第一跳会先进入 Bifrost，而不是直接进入 Clash。此时只有 Bifrost 显式把 Claude 相关域名再转发到 `127.0.0.1:7897`，Clash 规则才会命中。
 
 如果是系统代理模式，链路大概是：
 
@@ -208,10 +211,19 @@ rules:
   - DOMAIN-SUFFIX,claude.ai,Claude
   - DOMAIN-SUFFIX,claude.com,Claude
   - DOMAIN-SUFFIX,anthropic.com,Claude
+  - DOMAIN-SUFFIX,claudeusercontent.com,Claude
   - MATCH,DIRECT
 ```
 
-这里的 `DIRECT` 不是另一个代理节点，而是直连：不经过远端代理，直接从当前网络出口访问。
+这里的 `DIRECT` 不是另一个代理节点，而是直连：不经过远端代理，直接从当前网络出口访问。`claudeusercontent.com` 主要覆盖 Claude Web 的 artifacts、bridge 或用户内容相关资源；如果只看主站聊天，短时间内可能感觉不到它缺失，但要说“Claude 相关访问”就应该一起覆盖。
+
+如果还同时使用 Bifrost 调试前端，推荐不要让 Clash 抢系统代理，而是保留：
+
+```text
+Chrome -> Bifrost 8899 -> Clash 7897 -> Claude
+```
+
+也就是在 Bifrost 规则里只对 Claude 相关域名加上类似 `proxy://127.0.0.1:7897` 的上游代理规则。这样 Coze 的前端资源仍然可以被 Bifrost 转到本地 dev server，Claude 流量也能继续交给 Clash 分流。
 
 ## 8. 为什么首页 IP 信息显示中国，但 Claude 仍然可能走英国
 
@@ -230,14 +242,14 @@ Clash Verge Rev 首页的“IP 信息”卡片通常会请求一个 IP 查询服
 更准确的验证方法是看目标域名：
 
 1. Clash 连接列表里，`claude.ai:443` 的链路是否显示 `Claude / IPRoyal-UK`。
-2. 规则页面里，`DomainSuffix(claude.ai)`、`DomainSuffix(anthropic.com)`、`DomainSuffix(claude.com)` 的命中次数是否增长。
+2. 规则页面里，`DomainSuffix(claude.ai)`、`DomainSuffix(anthropic.com)`、`DomainSuffix(claude.com)`、`DomainSuffix(claudeusercontent.com)` 的命中次数是否增长。
 3. 用命令指定本机代理访问 Claude：
 
 ```bash
 curl -I --proxy http://127.0.0.1:7897 https://claude.ai/restricted
 ```
 
-如果返回头里出现类似 London / LHR 方向的边缘节点信息，这就是一个很强的侧面证据：这条请求确实从英国方向出去过。
+如果返回头里出现类似 London / LHR 方向的边缘节点信息，它可以作为一条侧面证据：这条请求大概率落到了英国方向的边缘节点。更稳妥的判断仍然要和 Clash 连接列表、规则命中次数一起看，不要只凭一个响应头下结论。
 
 如果你想让首页 IP 信息也显示英国，需要把 IP 查询服务也加进代理规则，或者切到全局代理模式。但这样会让更多日常网站走代理，可能影响访问速度，也可能把不需要代理的网站搞坏。
 
@@ -266,6 +278,12 @@ DOMAIN-SUFFIX,claude.com,Claude
 
 规则补上以后，新建连接会按新规则走。但旧连接不会自动“改道”。代理规则通常是在连接创建时决定的，已经建立的 TCP/HTTPS 连接会继续按原来的路径跑，直到连接关闭。
 
+同理，如果后面发现 artifacts、预览内容或某些 Claude Web 子资源没有走代理，也要检查是不是漏了：
+
+```yaml
+DOMAIN-SUFFIX,claudeusercontent.com,Claude
+```
+
 这也解释了 Clash 里的“关闭连接”按钮：它不是多余的。浏览器、HTTP/2、WebSocket、SSE、连接池都会保留一段时间的长连接。手动关闭旧连接后，浏览器下一次请求会重新建立连接，再命中新规则。
 
 ## 10. Claude Code CLI 需要单独配置吗
@@ -275,6 +293,7 @@ DOMAIN-SUFFIX,claude.com,Claude
 很多 CLI 不会主动读取系统代理。更稳妥的做法是给 CLI 进程显式设置环境变量：
 
 ```bash
+NO_PROXY=localhost,127.0.0.1,::1 \
 HTTP_PROXY=http://127.0.0.1:7897 \
 HTTPS_PROXY=http://127.0.0.1:7897 \
 claude
@@ -284,7 +303,7 @@ claude
 
 | 场景 | 代理入口 |
 | --- | --- |
-| Chrome / Safari 等 GUI 应用 | macOS 系统代理 |
+| Chrome / Safari 等 GUI 应用 | macOS 系统代理；如果 Bifrost、PAC 或浏览器扩展改写了代理，要以实际入口为准 |
 | Claude Code CLI | `HTTP_PROXY` / `HTTPS_PROXY` |
 | 其他 CLI | 需要按工具单独判断 |
 
@@ -302,7 +321,7 @@ claude
 以后遇到类似问题，不建议先盯着“我的 IP 查询网站显示哪里”。更稳的顺序是：
 
 1. 先看本机代理有没有监听：例如 `127.0.0.1:7897` 是否存在。
-2. 再看系统代理是否指向它。
+2. 再看系统代理当前指向谁：是 Clash 的 `7897`，还是 Bifrost、PAC、浏览器扩展或其他代理入口。
 3. 再看目标域名有没有对应规则。
 4. 再看 Clash 连接列表里这条连接走的是代理组还是 `DIRECT`。
 5. 再看规则命中次数是否增长。
@@ -315,8 +334,10 @@ claude
 | Clash 首页 IP 为什么是中国 | 因为 IP 查询站点命中了 `MATCH,DIRECT` |
 | Claude 是否走英国代理 | 看 `claude.ai:443` 的连接链路和规则命中 |
 | `claude.com` 为什么直连 | 缺了 `DOMAIN-SUFFIX,claude.com,Claude` |
+| artifacts 或用户内容资源为什么直连 | 可能缺了 `DOMAIN-SUFFIX,claudeusercontent.com,Claude` |
 | 规则改了为什么旧连接还在 | 连接创建时已决定路径，需要关闭旧连接重连 |
 | Claude Code CLI 是否走代理 | 看是否设置 `HTTP_PROXY` / `HTTPS_PROXY` |
+| 浏览器为什么没进 Clash | 先看 macOS 系统代理是否被 Bifrost 等工具写到了别的端口 |
 
 ## 12. 最终心智模型
 
@@ -336,8 +357,10 @@ claude
 - 买 AWS/VPS：改变出口，但大概率是机房 IP。
 - 买 residential / ISP proxy：租代理出口，不是拥有 IP。
 - 开系统代理：主要影响遵守系统代理的 GUI 应用。
+- 同时开多个系统代理工具：谁最后写 macOS 系统代理，浏览器通常先进入谁；另一个代理只有被显式转发过去才会参与。
 - 设置 `HTTP_PROXY` / `HTTPS_PROXY`：主要影响支持这些变量的 CLI。
 - 配 Clash 规则：决定哪些域名走代理，哪些直连。
+- 配 Bifrost 上游代理：可以让浏览器先进入 Bifrost，再把特定域名显式转给 Clash。
 - 首页 IP 卡片：只代表那个 IP 查询服务自己的路由，不代表所有域名。
 - 关闭连接：让旧的 TCP/HTTPS 长连接断开，新规则才更容易立刻生效。
 

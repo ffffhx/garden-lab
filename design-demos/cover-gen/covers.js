@@ -97,6 +97,10 @@ window.COVERS = (function () {
       ["安全修复", "模型编排", "算力交易", "机器人安全", "能源约束"],
       "AI 工程正在进入安全、算力、机器人与能源基础设施层。",
       "OpenAI Daybreak · Sakana Fugu · Reflection AI · NVIDIA Halos · Microsoft/Chevron"),
+    news("2026/06/24/2026-06-24-x-上-ai-与前端热点速览", "2026-06-24",
+      ["AI 眼镜", "Slack agent", "视频生成", "超级计算", "AI 爬虫"],
+      "AI 产品正在进入协作现场、随身硬件、创作链路与内容授权边界。",
+      "Meta Glasses · Claude Tag · Seedance 2.5 · LineShine · Cloudflare/beehiiv"),
   ];
 
   const T = [

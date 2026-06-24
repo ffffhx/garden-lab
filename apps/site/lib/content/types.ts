@@ -28,6 +28,7 @@ export type PostSummary = {
   assetBasePath: string;
   cover: string | null;
   coverPosition: CoverPosition;
+  hidden: boolean;
 };
 
 export type PostCardSummary = Omit<PostSummary, "date">;

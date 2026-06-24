@@ -117,6 +117,7 @@ function toSummary(post: Post): PostSummary {
     assetBasePath: post.assetBasePath,
     cover: post.cover,
     coverPosition: post.coverPosition,
+    hidden: post.hidden,
   };
 }
 
@@ -164,6 +165,7 @@ function loadPosts() {
       const coverPosition = normalizeCoverPosition(parsed.data.coverPosition);
       const contentImageSize = normalizeContentImageSize(parsed.data.contentImageSize);
       const reading = readingTime(decodeContentForReadingTime(compiled.content));
+      const hidden = parsed.data.hidden === true;
 
       return {
         slug,
@@ -177,6 +179,7 @@ function loadPosts() {
         assetBasePath,
         cover,
         coverPosition,
+        hidden,
         content: compiled.content,
         contentHtml: compiled.contentHtml,
         contentImageSize,
@@ -196,15 +199,23 @@ function getPostRecords() {
 }
 
 export function getAllPosts() {
-  return getPostRecords().map(toSummary);
+  return getPostRecords()
+    .filter((post) => !post.hidden)
+    .map(toSummary);
 }
 
 export function getArticlePosts() {
-  return getPostRecords().filter(isArticlePost).map(toSummary);
+  return getPostRecords()
+    .filter((post) => !post.hidden)
+    .filter(isArticlePost)
+    .map(toSummary);
 }
 
 export function getDailyNewsPosts() {
-  return getPostRecords().filter(isDailyNewsPost).map(toSummary);
+  return getPostRecords()
+    .filter((post) => !post.hidden)
+    .filter(isDailyNewsPost)
+    .map(toSummary);
 }
 
 export function getAllPostSlugs() {

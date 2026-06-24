@@ -1,5 +1,5 @@
 ---
-title: "Claude Code 代理配置复盘：从住宅 IP 到 Clash Verge Rev 分流"
+title: "Claude Code 代理配置复盘：飞连、Bifrost 与 Clash Verge Rev 同时开启时怎么判断链路"
 date: "2026-06-10 17:54:00"
 categories:
   - 技术
@@ -8,27 +8,56 @@ tags:
   - 代理
   - Clash
   - Mihomo
+  - Bifrost
+  - 飞连
+  - VPN
   - 网络
   - macOS
-excerpt: "整理一次从 AWS/VPS、住宅 IP、ISP 代理、HTTP/SOCKS 协议，到 Clash Verge Rev 分流和 Claude Code CLI 环境变量验证的完整配置复盘。重点不是买哪个代理，而是把出口 IP、系统代理、本机端口、规则命中和连接验证这些概念分清楚。"
+excerpt: "整理一次公司研发环境里更真实的 Claude Code 代理链路：飞连负责公司内网和底层路由，Bifrost 负责浏览器系统代理与本地前端转发，Clash Verge Rev / Mihomo 负责 Claude 域名分流，Claude Code CLI 还要单独用 HTTP_PROXY / HTTPS_PROXY 配置。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 
 ## 摘要
 
-这次折腾的目标很具体：**只让 Claude / Claude Code 相关访问走一个英国代理出口，其他网站继续直连**。
+这次折腾的目标很具体：**在公司同事日常会同时打开飞连、Bifrost 和 Clash Verge Rev 的环境里，只让 Claude / Claude Code 相关访问走一个英国代理出口，Coze 本地调试和公司内网访问仍然保持原来的链路**。
 
-最后可用的方案是：
+最后可用的方案不是“让某一个工具接管全部流量”，而是把三层分清楚：
 
-1. 购买一个支持 HTTP/HTTPS 的 ISP / residential proxy。
-2. 用 Clash Verge Rev 管理配置。
-3. 让底层 Mihomo 核心在本机监听 `127.0.0.1:7897`。
-4. 在规则里只匹配 `claude.ai`、`claude.com`、`anthropic.com`、`claudeusercontent.com`。
-5. 浏览器走 macOS 系统代理，Claude Code CLI 额外通过 `HTTP_PROXY` / `HTTPS_PROXY` 指向本机端口；如果同时开了 Bifrost 这类也会写系统代理的工具，还要先确认当前系统代理到底指向 `7897` 还是别的本机端口。
-6. 用 Clash 连接列表、规则命中、`curl --proxy` 和响应里的边缘节点信息确认流量路径。
+1. 飞连负责公司内网和底层路由。极速 / 分流模式下，普通公网默认路由通常仍走 `en0`；全局模式下可能走 `utunX`。
+2. Bifrost 负责前端调试入口，常见状态是把 macOS 系统 HTTP/HTTPS 代理写到 `127.0.0.1:8899`。
+3. Clash Verge Rev 管理配置，底层 Mihomo 核心监听 `127.0.0.1:7897`。
+4. 浏览器第一跳以 `scutil --proxy` 为准：如果系统代理被 Bifrost 写到 `8899`，Chrome 会先进入 Bifrost，而不是直接进入 Clash。
+5. Bifrost 只对 Claude 相关域名显式串联到 Clash，例如 `proxy://127.0.0.1:7897`；Coze、本地 dev server 和其他调试规则仍交给 Bifrost 自己处理。
+6. Claude Code CLI 不要指望 macOS 系统代理，需要额外通过 `HTTP_PROXY` / `HTTPS_PROXY` 指向 `127.0.0.1:7897`。
+7. Clash 规则只匹配 `claude.ai`、`claude.com`、`anthropic.com`、`claudeusercontent.com`，其他流量继续 `DIRECT`。
 
-这篇不是“买哪个代理最便宜”的推荐，也不包含任何真实代理账号、密码、订单链接。它整理的是这次配置过程中最容易混淆的概念：AWS IP、住宅 IP、ISP、HTTP 代理、SOCKS、本机代理端口、系统代理、CLI 环境变量、`DIRECT`、连接关闭，以及为什么 Clash 首页显示中国 IP 并不代表 Claude 没走英国出口。
+这篇不是“买哪个代理最便宜”的推荐，也不包含任何真实代理账号、密码、订单链接。它整理的是这次配置过程中最容易混淆的概念：飞连 / VPN、Bifrost、Clash Verge Rev、Mihomo、系统代理、本机代理端口、CLI 环境变量、默认路由、`DIRECT`、连接关闭，以及为什么 Clash 首页显示中国 IP 并不代表 Claude 没走英国出口。
+
+如果只想照着排查，先记住这条最常见的浏览器链路：
+
+```text
+Chrome
+  -> macOS 系统代理
+  -> Bifrost 127.0.0.1:8899
+  -> Bifrost 对 Claude 域名显式上游转发
+  -> Clash / Mihomo 127.0.0.1:7897
+  -> Claude 规则组
+  -> 英国代理出口
+  -> claude.ai / claude.com / anthropic.com / claudeusercontent.com
+```
+
+而 Claude Code CLI 是另一条链：
+
+```text
+claude 命令
+  -> HTTP_PROXY / HTTPS_PROXY
+  -> Clash / Mihomo 127.0.0.1:7897
+  -> Claude 规则组
+  -> 英国代理出口
+```
+
+下面这张图保留的是“浏览器或 CLI 已经进入 Clash / Mihomo 后”的简化分流视角；如果 Bifrost 正在写系统代理，浏览器第一跳仍要按上面的 Bifrost 链路理解。
 
 <figure class="fz094" data-reveal role="group" aria-label="Claude 代理分流链路示意：浏览器与 Claude Code CLI 经本机代理端口，由 Mihomo 规则分流到英国代理或直连"><style>.fz094{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--soft2:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--green:#4f7233;--green-bg:#e7eedd;--cyan:#3f6d79;--cyan-bg:#dcebed;--cyan-bd:#8fbcc4;--amber:#9a6516;--amber-bg:#f4e8cc;--amber-bd:#d9b66a;--red:#8f2d20;--red-bg:#f1ddd6;--gray:#917f5c;--gray-bg:#ece4d2;--mono:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);margin:0;padding:clamp(16px,3vw,30px);background:linear-gradient(160deg,var(--paper-soft,#faf6ec),var(--paper-deep,#ece5d5));border:1px solid var(--hair,rgba(26,24,21,.18));border-radius:14px;font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);color:var(--ink,#1a1815);box-sizing:border-box;overflow:hidden}.fz094 *{box-sizing:border-box}.fz094 .ttl{font-size:clamp(19px,2.6vw,26px);font-weight:800;letter-spacing:.5px;margin:0 0 4px}.fz094 .sub{font-size:clamp(12px,1.5vw,14px);color:var(--muted,#6a6155);margin:0 0 clamp(16px,2.5vw,24px);line-height:1.5}.fz094 .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:clamp(6px,1.4vw,14px)}.fz094 .col{display:flex;flex-direction:column;gap:clamp(12px,2vw,20px)}.fz094 .node{border-radius:12px;padding:clamp(10px,1.6vw,15px) clamp(11px,1.8vw,17px);border:1.5px solid;background:var(--soft2,#f7f1e4);box-shadow:0 6px 16px rgba(16,21,26,.07);position:relative}.fz094 .node b{display:block;font-size:clamp(14px,1.9vw,18px);font-weight:800;letter-spacing:.4px;line-height:1.2}.fz094 .node small{display:block;font-family:var(--mono,ui-monospace,"SFMono-Regular",monospace);font-size:clamp(10px,1.4vw,13px);margin-top:5px;line-height:1.45}.fz094 .src{background:var(--green-bg,#e7eedd);border-color:var(--green,#4f7233)}.fz094 .src b{color:var(--green,#4f7233)}.fz094 .src small{color:var(--ink-soft,#3c362c)}.fz094 .hub{background:var(--amber-bg,#f4e8cc);border-color:var(--amber-bd,#d9b66a);text-align:left}.fz094 .hub b{color:var(--amber,#9a6516)}.fz094 .hub small{color:var(--ink-soft,#3c362c)}.fz094 .hub .ex{font-family:var(--font-serif-body,"Songti SC",serif);font-size:clamp(10px,1.4vw,12px);color:var(--muted,#6a6155);margin-top:4px}.fz094 .dst-uk{background:var(--cyan-bg,#dcebed);border-color:var(--cyan-bd,#8fbcc4)}.fz094 .dst-uk b{color:var(--cyan,#3f6d79)}.fz094 .dst-uk small{color:var(--cyan,#3f6d79)}.fz094 .dst-dir{background:var(--gray-bg,#ece4d2);border-color:var(--gray,#917f5c)}.fz094 .dst-dir b{color:var(--ink-soft,#3c362c)}.fz094 .dst-dir small{color:var(--muted,#6a6155)}.fz094 .lane{position:relative;height:3px;min-width:26px;border-radius:2px;background:var(--hair,rgba(26,24,21,.18));overflow:visible}.fz094 .lane::after{content:"";position:absolute;right:-1px;top:50%;width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid var(--muted,#6a6155);transform:translateY(-50%)}.fz094 .lane .pulse{position:absolute;top:0;left:0;height:100%;width:42%;border-radius:2px;background:linear-gradient(90deg,transparent,var(--c,#9a6516),transparent);animation:fz094run 4.5s ease-in-out infinite}.fz094 .lane.l2 .pulse{animation-delay:1.1s}.fz094 .lane.uk{--c:#3f6d79}.fz094 .lane.uk::after{border-left-color:var(--cyan,#3f6d79)}.fz094 .lane.dir{--c:#917f5c}.fz094 .lane.dir::after{border-left-color:var(--gray,#917f5c)}.fz094 .midcol{display:flex;flex-direction:column;justify-content:center;gap:clamp(34px,8vw,80px);align-items:stretch}.fz094 .dstcol{gap:clamp(18px,3vw,34px)}.fz094 .node.hub::before{content:"";position:absolute;inset:0;border-radius:12px;box-shadow:0 0 0 0 rgba(154,101,22,.35);animation:fz094breathe 8s ease-in-out infinite;pointer-events:none}.fz094 .dst-uk::before{content:"";position:absolute;inset:0;border-radius:12px;box-shadow:0 0 0 0 rgba(63,109,121,.3);animation:fz094breathe 8s ease-in-out infinite;animation-delay:.8s;pointer-events:none}.fz094 .note{margin-top:clamp(16px,2.6vw,24px);display:flex;gap:9px;align-items:flex-start;padding:clamp(10px,1.6vw,14px) clamp(12px,1.8vw,16px);background:var(--red-bg,#f1ddd6);border:1px solid var(--red,#8f2d20);border-left-width:4px;border-radius:8px}.fz094 .note .tag{flex:0 0 auto;font-weight:800;color:var(--red,#8f2d20);font-size:clamp(12px,1.6vw,14px)}.fz094 .note p{margin:0;font-size:clamp(11px,1.5vw,13.5px);line-height:1.55;color:var(--ink-soft,#3c362c)}@keyframes fz094run{0%{left:-42%;opacity:0}18%{opacity:1}82%{opacity:1}100%{left:100%;opacity:0}}@keyframes fz094breathe{0%,100%{box-shadow:0 0 0 0 rgba(154,101,22,0)}50%{box-shadow:0 0 0 5px rgba(154,101,22,.16)}}@media(max-width:560px){.fz094 .flow{grid-template-columns:1fr;gap:10px}.fz094 .lane{height:24px;width:100%;min-width:0;transform:rotate(0)}.fz094 .lane::after{right:50%;top:auto;bottom:-1px;transform:translateX(50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid var(--muted,#6a6155);border-bottom:0}.fz094 .lane.uk::after,.fz094 .lane.dir::after{border-top-color:var(--c,#917f5c);border-left-color:transparent}.fz094 .lane .pulse{width:100%;height:42%;top:auto;left:0;animation:fz094runv 4.5s ease-in-out infinite;background:linear-gradient(180deg,transparent,var(--c,#9a6516),transparent)}.fz094 .midcol,.fz094 .dstcol{gap:14px;justify-content:flex-start}.fz094 .col{flex-direction:column}}@keyframes fz094runv{0%{top:-42%;opacity:0}18%{opacity:1}82%{opacity:1}100%{top:100%;opacity:0}}@media (prefers-reduced-motion:reduce){.fz094 .lane .pulse{animation:none;left:0;top:0;width:100%;height:100%;opacity:.5}.fz094 .node.hub::before,.fz094 .dst-uk::before{animation:none;box-shadow:none}}</style><p class="ttl">这次最终采用的分流链路</p><p class="sub">不同应用先进入本机代理端口，Mihomo 根据目标域名决定走远端代理还是直连</p><div class="flow"><div class="col"><div class="node src"><b>浏览器</b><small>system proxy</small></div><div class="node src"><b>Claude Code CLI</b><small>HTTP_PROXY</small></div></div><div class="midcol"><div class="lane l1"><span class="pulse"></span></div><div class="lane l2"><span class="pulse"></span></div></div><div class="col"><div class="node hub"><b>本机代理端口</b><small>127.0.0.1:7897</small><div class="ex">Clash Verge Rev 管理，Mihomo 执行</div></div></div><div class="midcol"><div class="lane uk"><span class="pulse"></span></div><div class="lane dir"><span class="pulse"></span></div></div><div class="col dstcol"><div class="node dst-uk"><b>Claude 相关域名</b><small>claude.ai / claude.com</small><small>anthropic.com -&gt; UK</small></div><div class="node dst-dir"><b>其他域名</b><small>MATCH -&gt; DIRECT</small></div></div></div><div class="note"><span class="tag">重点</span><p>IP 查询网站如果不在 Claude 规则里，会命中 DIRECT，所以首页 IP 信息不能代表 Claude 的出口。</p></div></figure>
 
@@ -129,9 +158,122 @@ HTTPS_PROXY=http://127.0.0.1:7897
 
 所以监听端口的是 Clash / Mihomo，不是浏览器。浏览器是客户端，它主动连 `127.0.0.1:7897`。
 
-这条链路有一个隐含前提：当前 macOS 系统代理确实指向 Clash / Mihomo 的 `7897`。如果另一个工具也在写系统代理，例如 Bifrost 把 HTTP/HTTPS 代理改成 `127.0.0.1:8899`，那浏览器第一跳会先进入 Bifrost，而不是直接进入 Clash。此时只有 Bifrost 显式把 Claude 相关域名再转发到 `127.0.0.1:7897`，Clash 规则才会命中。
+这条链路有一个隐含前提：当前 macOS 系统代理确实指向 Clash / Mihomo 的 `7897`。公司同事真实使用时往往不是这样，因为飞连、Bifrost 和 Clash Verge Rev 会同时在线，其中 Bifrost 也会写 macOS 系统代理。
 
-如果是系统代理模式，链路大概是：
+### 5.1 三个工具各自在哪一层
+
+先把角色分开：
+
+| 工具 | 主要层次 | 负责的问题 | 常见入口 |
+| --- | --- | --- | --- |
+| 飞连 | VPN / 路由层 | 公司内网、零信任接入、是否接管默认路由 | `utunX` 虚拟网卡 |
+| Bifrost | 浏览器系统代理 / 前端调试层 | 把真实域名代理到本地 dev server，也可以串上游代理 | `127.0.0.1:8899` |
+| Clash Verge Rev | 代理客户端控制台 | 管理代理配置、连接列表和规则 | GUI |
+| Mihomo / Clash.Meta | 代理核心 | 监听本机端口、匹配规则、转发流量 | `127.0.0.1:7897` |
+| Claude Code CLI | 命令行进程 | 是否读取代理环境变量 | `HTTP_PROXY` / `HTTPS_PROXY` |
+
+飞连和 Clash 不是同一层：飞连回答“底层包从哪个网络接口出去”，Clash 回答“进入代理核心之后哪些域名走远端代理”。Bifrost 又是另一个入口：它通常先接住浏览器流量，再按规则决定转给本地 dev server、直连，还是显式交给 Clash。
+
+### 5.2 浏览器第一跳要以 `scutil --proxy` 为准
+
+判断 Chrome / Safari 这类 GUI 应用的第一跳，不要看哪个工具开着，而要看当前 macOS 系统代理到底写到了哪里：
+
+```bash
+scutil --proxy
+```
+
+如果看到的是：
+
+```text
+HTTPProxy : 127.0.0.1
+HTTPPort : 8899
+HTTPSProxy : 127.0.0.1
+HTTPSPort : 8899
+```
+
+那浏览器第一跳就是 Bifrost。此时不要再把浏览器链路写成：
+
+```text
+Chrome -> Clash 7897 -> Claude
+```
+
+更准确的是：
+
+```text
+Chrome
+  -> Bifrost 8899
+  -> Bifrost 命中 Claude 域名的上游代理规则
+  -> Clash / Mihomo 7897
+  -> Claude 规则组
+  -> 英国代理出口
+```
+
+也就是说，Clash 只有在 Bifrost 显式转发过去时才会参与浏览器这条链。Bifrost / Whistle 这类规则里可以用类似下面的上游代理写法：
+
+```text
+proxy://127.0.0.1:7897
+```
+
+或者：
+
+```text
+http-proxy://127.0.0.1:7897
+```
+
+这才是“显式串联”：不是因为 Bifrost 和 Clash 都开着，它们就天然串起来了；而是 Bifrost 的规则明确把某些域名转给了 Clash。
+
+### 5.3 飞连要看默认路由和代理节点路由
+
+飞连这一层回答的是另一个问题：浏览器或 Clash 再往外连远端代理节点时，底层包是走本地网络，还是进入飞连的 VPN 隧道。
+
+先看默认路由：
+
+```bash
+route -n get default
+```
+
+如果核心输出类似：
+
+```text
+gateway: 192.168.1.1
+interface: en0
+```
+
+说明没有更精确路由时，普通公网流量默认从真实网卡 `en0` 出去。这通常对应飞连的极速 / 分流模式：公司内网走飞连，下发的内网网段进 `utunX`，普通公网不一定进 VPN。
+
+如果默认接口是 `utun4`、`utun5` 这类虚拟网卡，就说明飞连或其他 VPN 可能接管了默认路由。此时即使浏览器先进入 Bifrost、Bifrost 再进入 Clash，Clash 连接远端代理节点的那段底层流量也可能先走 VPN。
+
+更精确的判断不是查 `claude.ai`，而是查“远端代理节点 IP”的路由：
+
+```bash
+route -n get 代理节点IP
+```
+
+看输出里的 `interface`：
+
+| `interface` | 含义 |
+| --- | --- |
+| `en0` / `en1` | 到代理节点这段直接走本地网络 |
+| `utunX` | 到代理节点这段被 VPN 接管 |
+
+这一步能区分“代理参与了处理”和“代理这条链路底层有没有再叠加 VPN”。两者不是同一个问题。
+
+### 5.4 CLI 不跟浏览器走同一套入口
+
+Claude Code CLI 这一层要单独处理。很多命令行工具不会主动读取 macOS 系统代理，即使浏览器已经通过 Bifrost 正常访问 Claude，`claude` 命令也可能仍然直连。
+
+所以 CLI 更稳妥的路径是直接把环境变量指向 Clash：
+
+```bash
+NO_PROXY=localhost,127.0.0.1,::1 \
+HTTP_PROXY=http://127.0.0.1:7897 \
+HTTPS_PROXY=http://127.0.0.1:7897 \
+claude
+```
+
+如果你把这段做成 wrapper / alias，就不需要每次手动导出环境变量。这里的 `NO_PROXY` 很重要，它避免本机回环地址、localhost、本地 dev server 请求也绕进代理。
+
+如果没有 Bifrost，或者当前系统代理确实由 Clash / Mihomo 直接写到 `7897`，链路才大概是：
 
 ```text
 Chrome
@@ -217,13 +359,15 @@ rules:
 
 这里的 `DIRECT` 不是另一个代理节点，而是直连：不经过远端代理，直接从当前网络出口访问。`claudeusercontent.com` 主要覆盖 Claude Web 的 artifacts、bridge 或用户内容相关资源；如果只看主站聊天，短时间内可能感觉不到它缺失，但要说“Claude 相关访问”就应该一起覆盖。
 
-如果还同时使用 Bifrost 调试前端，推荐不要让 Clash 抢系统代理，而是保留：
+如果还同时使用 Bifrost 调试前端，推荐不要让 Clash 抢系统代理，而是保留 Bifrost 作为浏览器第一入口：
 
 ```text
 Chrome -> Bifrost 8899 -> Clash 7897 -> Claude
 ```
 
 也就是在 Bifrost 规则里只对 Claude 相关域名加上类似 `proxy://127.0.0.1:7897` 的上游代理规则。这样 Coze 的前端资源仍然可以被 Bifrost 转到本地 dev server，Claude 流量也能继续交给 Clash 分流。
+
+这也是公司同事同时打开飞连、Bifrost、Clash Verge Rev 时最稳的心智模型：Bifrost 负责接住浏览器，Clash 只处理被显式转过来的 Claude 流量，飞连只在底层路由命中公司内网或全局 VPN 时参与。
 
 ## 8. 为什么首页 IP 信息显示中国，但 Claude 仍然可能走英国
 
@@ -316,28 +460,97 @@ claude
 - 如果 `claude` 的 wrapper / alias 写进了 `~/.zshrc`，新终端里的 Claude Code CLI 也会继续带代理。
 - 如果只是临时在当前终端执行了一次 `export HTTP_PROXY=...`，重启或新开终端后就不一定还在。
 
-## 11. 这次最有用的排查顺序
+## 11. 飞连 + Bifrost + Clash 同时开启时的排查顺序
 
-以后遇到类似问题，不建议先盯着“我的 IP 查询网站显示哪里”。更稳的顺序是：
+以后遇到类似问题，不建议先盯着“我的 IP 查询网站显示哪里”。在公司同事常见环境里，更稳的顺序是从入口一路往出口查：
 
-1. 先看本机代理有没有监听：例如 `127.0.0.1:7897` 是否存在。
-2. 再看系统代理当前指向谁：是 Clash 的 `7897`，还是 Bifrost、PAC、浏览器扩展或其他代理入口。
-3. 再看目标域名有没有对应规则。
-4. 再看 Clash 连接列表里这条连接走的是代理组还是 `DIRECT`。
-5. 再看规则命中次数是否增长。
-6. 最后用 `curl --proxy` 对具体目标域名做一次命令行验证。
+1. 先看飞连模式和默认路由：
+
+```bash
+route -n get default
+```
+
+如果 `interface` 是 `en0` / `en1`，普通公网默认不进 VPN；如果是 `utunX`，说明 VPN 可能接管了默认路由。
+
+2. 再看浏览器第一跳是谁：
+
+```bash
+scutil --proxy
+```
+
+如果 HTTP/HTTPS 代理是 `127.0.0.1:8899`，浏览器第一跳是 Bifrost；如果是 `127.0.0.1:7897`，浏览器第一跳才是 Clash / Mihomo。
+
+3. 确认本机端口是否真的在监听：
+
+```bash
+lsof -nP -iTCP:8899 -sTCP:LISTEN
+lsof -nP -iTCP:7897 -sTCP:LISTEN
+```
+
+`8899` 通常对应 Bifrost，`7897` 通常对应 Clash / Mihomo。端口不存在时，后面的规则都不会生效。
+
+4. 如果浏览器第一跳是 Bifrost，检查 Bifrost 里 Claude 域名是否显式串到 Clash：
+
+```text
+proxy://127.0.0.1:7897
+```
+
+或者：
+
+```text
+http-proxy://127.0.0.1:7897
+```
+
+没有这一步，Chrome 进入 Bifrost 后不一定会再进入 Clash。
+
+5. 再看 Clash 规则是否覆盖完整：
+
+```yaml
+DOMAIN-SUFFIX,claude.ai,Claude
+DOMAIN-SUFFIX,claude.com,Claude
+DOMAIN-SUFFIX,anthropic.com,Claude
+DOMAIN-SUFFIX,claudeusercontent.com,Claude
+```
+
+6. 看 Clash 连接列表和规则命中次数：
+
+- `claude.ai:443`、`claude.com:443` 是否走 `Claude / IPRoyal-UK`
+- `DomainSuffix(claudeusercontent.com)` 命中次数是否增长
+- 旧连接是否需要手动关闭后重连
+
+7. 对 Claude Code CLI 单独查环境变量或 wrapper：
+
+```bash
+env | grep -E '^(HTTP_PROXY|HTTPS_PROXY|NO_PROXY)='
+```
+
+如果 CLI 没有 `HTTP_PROXY` / `HTTPS_PROXY`，它不一定会跟着浏览器走。
+
+8. 最后对具体目标做命令行验证：
+
+```bash
+curl -I --proxy http://127.0.0.1:7897 https://claude.ai/restricted
+```
+
+如果还想确认“到远端代理节点这一段底层有没有进飞连”，查远端代理节点 IP 的路由：
+
+```bash
+route -n get 代理节点IP
+```
 
 对应到这次配置，核心判断是：
 
 | 问题 | 应该看哪里 |
 | --- | --- |
+| 浏览器第一跳是谁 | `scutil --proxy` |
+| Bifrost 是否把 Claude 转给 Clash | Bifrost 规则里是否有 `proxy://127.0.0.1:7897` |
 | Clash 首页 IP 为什么是中国 | 因为 IP 查询站点命中了 `MATCH,DIRECT` |
 | Claude 是否走英国代理 | 看 `claude.ai:443` 的连接链路和规则命中 |
 | `claude.com` 为什么直连 | 缺了 `DOMAIN-SUFFIX,claude.com,Claude` |
 | artifacts 或用户内容资源为什么直连 | 可能缺了 `DOMAIN-SUFFIX,claudeusercontent.com,Claude` |
 | 规则改了为什么旧连接还在 | 连接创建时已决定路径，需要关闭旧连接重连 |
 | Claude Code CLI 是否走代理 | 看是否设置 `HTTP_PROXY` / `HTTPS_PROXY` |
-| 浏览器为什么没进 Clash | 先看 macOS 系统代理是否被 Bifrost 等工具写到了别的端口 |
+| 飞连有没有接管公网默认流量 | `route -n get default` 和代理节点 IP 的路由 |
 
 ## 12. 最终心智模型
 
@@ -345,10 +558,12 @@ claude
 
 ```text
 应用
-  -> 是否使用系统代理或环境变量
-  -> 本机代理端口
+  -> 是否使用系统代理、Bifrost 入口或 CLI 环境变量
+  -> Bifrost / Clash 这些本机代理入口
+  -> 是否显式串联到 Clash / Mihomo
   -> 代理核心规则匹配
   -> DIRECT 或远端代理
+  -> 底层路由是否被飞连接管
   -> 目标网站看到的出口 IP
 ```
 
@@ -357,13 +572,14 @@ claude
 - 买 AWS/VPS：改变出口，但大概率是机房 IP。
 - 买 residential / ISP proxy：租代理出口，不是拥有 IP。
 - 开系统代理：主要影响遵守系统代理的 GUI 应用。
-- 同时开多个系统代理工具：谁最后写 macOS 系统代理，浏览器通常先进入谁；另一个代理只有被显式转发过去才会参与。
+- 同时开 Bifrost 和 Clash：谁最后写 macOS 系统代理，浏览器通常先进入谁；另一个代理只有被显式转发过去才会参与。
 - 设置 `HTTP_PROXY` / `HTTPS_PROXY`：主要影响支持这些变量的 CLI。
 - 配 Clash 规则：决定哪些域名走代理，哪些直连。
 - 配 Bifrost 上游代理：可以让浏览器先进入 Bifrost，再把特定域名显式转给 Clash。
+- 开飞连：决定公司内网或默认路由是否进入 VPN 隧道；它和 Clash 规则不是同一层。
 - 首页 IP 卡片：只代表那个 IP 查询服务自己的路由，不代表所有域名。
 - 关闭连接：让旧的 TCP/HTTPS 长连接断开，新规则才更容易立刻生效。
 
-所以最后的结论很简单：**代理配置不要看一个全局现象，要看“某个应用访问某个域名时，命中了哪条规则，最后从哪个出口出去”。**
+所以最后的结论很简单：**代理配置不要看一个全局现象，要看“某个应用访问某个域名时，第一跳是谁，是否显式串联，命中了哪条规则，底层路由从哪个接口出去，最后目标网站看到哪个出口”。**
 
 这也是为什么我最终更倾向于用 Clash Verge Rev + Mihomo，而不是自己维护一个临时代理脚本。前者把监听、规则、连接、日志、重连、系统代理这些日常问题都放进了一个成熟控制面；我们真正要维护的，只是几条清晰、可验证、范围足够小的规则。

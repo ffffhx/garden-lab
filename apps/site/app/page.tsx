@@ -11,6 +11,14 @@ import { STANDALONE_PROJECTS } from "@/lib/standalone-projects";
 
 const heroVerbs = ["写作", "构建", "观察"];
 
+function getCategoryHref(categorySlug: string) {
+  if (categorySlug === CATEGORY_DEFINITIONS.dailyNews.slug) {
+    return "/daily-news";
+  }
+
+  return `/category/${categorySlug}`;
+}
+
 function SectionHead({
   kicker,
   title,
@@ -92,7 +100,7 @@ export default function HomePage() {
             {publicCategories.map((category, index) => (
               <Link
                 key={category.slug}
-                href={`/category/${category.slug}`}
+                href={getCategoryHref(category.slug)}
                 className="group flex items-baseline gap-4 border-b border-[#1a1815]/15 py-4 transition hover:bg-[#1a1815]/[0.03]"
               >
                 <span className="font-display w-9 shrink-0 text-2xl text-[#8f2d20]">
@@ -107,7 +115,7 @@ export default function HomePage() {
                   </span>
                 </span>
                 <span className="tabular shrink-0 text-xs text-[#6a6155]">
-                  {category.posts.length} 篇
+                  {category.posts.length} {category.slug === CATEGORY_DEFINITIONS.dailyNews.slug ? "期" : "篇"}
                 </span>
               </Link>
             ))}

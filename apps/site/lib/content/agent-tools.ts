@@ -1,6 +1,14 @@
 import { CATEGORY_DEFINITIONS } from "@/lib/content/config";
+import {
+  getDailyNewsIssueDateSlug,
+  isDailyNewsIssueTitle,
+} from "@/lib/content/daily-news-date";
 import type { CategoryKey, PostCardSummary } from "@/lib/content/types";
 import { normalizeBasePath, withBasePath } from "@/lib/utils/site-path";
+
+export type AgentPostIndexSource = PostCardSummary & {
+  date?: Date;
+};
 
 export type AgentPostSummary = {
   slug: string;
@@ -13,6 +21,7 @@ export type AgentPostSummary = {
   }>;
   tags: string[];
   dateText: string;
+  dailyNewsDateSlug?: string;
   readingTimeText: string;
   url: string;
 };
@@ -60,10 +69,21 @@ export function normalizeAgentCategory(value: unknown) {
 }
 
 export function buildAgentPostIndex(
-  posts: PostCardSummary[],
+  posts: AgentPostIndexSource[],
   basePath = process.env.NEXT_PUBLIC_BASE_PATH
 ): AgentPostSummary[] {
   return posts.map((post) => {
+    const dailyNewsDateSlug =
+      post.categories.includes(CATEGORY_DEFINITIONS.dailyNews.key) &&
+      isDailyNewsIssueTitle(post.title) &&
+      post.date instanceof Date &&
+      !Number.isNaN(post.date.getTime())
+        ? getDailyNewsIssueDateSlug(post.title, post.date)
+        : undefined;
+    const urlPath = dailyNewsDateSlug
+      ? `/daily-news/${dailyNewsDateSlug}/`
+      : `/post/${post.slug}/`;
+
     return {
       slug: post.slug,
       title: post.title,
@@ -79,8 +99,9 @@ export function buildAgentPostIndex(
       }),
       tags: post.tags,
       dateText: post.dateText,
+      dailyNewsDateSlug,
       readingTimeText: post.readingTimeText,
-      url: withBasePath(`/post/${post.slug}/`, basePath),
+      url: withBasePath(urlPath, basePath),
     };
   });
 }
@@ -199,4 +220,42 @@ export function extractPostSlugFromPathname(
   } catch {
     return match[1];
   }
+}
+
+export function extractDailyNewsDateSlugFromPathname(
+  pathname: string,
+  basePath = process.env.NEXT_PUBLIC_BASE_PATH
+) {
+  const normalizedBasePath = normalizeBasePath(basePath);
+  let normalizedPathname = pathname || "/";
+
+  if (
+    normalizedBasePath &&
+    (normalizedPathname === normalizedBasePath ||
+      normalizedPathname.startsWith(`${normalizedBasePath}/`))
+  ) {
+    normalizedPathname = normalizedPathname.slice(normalizedBasePath.length) || "/";
+  }
+
+  const match = normalizedPathname.match(/^\/daily-news\/(\d{4}-\d{2}-\d{2})\/?$/);
+
+  return match?.[1] ?? null;
+}
+
+export function isDailyNewsIndexPathname(
+  pathname: string,
+  basePath = process.env.NEXT_PUBLIC_BASE_PATH
+) {
+  const normalizedBasePath = normalizeBasePath(basePath);
+  let normalizedPathname = pathname || "/";
+
+  if (
+    normalizedBasePath &&
+    (normalizedPathname === normalizedBasePath ||
+      normalizedPathname.startsWith(`${normalizedBasePath}/`))
+  ) {
+    normalizedPathname = normalizedPathname.slice(normalizedBasePath.length) || "/";
+  }
+
+  return normalizedPathname === "/daily-news" || normalizedPathname === "/daily-news/";
 }

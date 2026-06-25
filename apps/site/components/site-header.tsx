@@ -22,7 +22,7 @@ const NAV_LINKS: NavItem[] = [
     private: true,
   },
   {
-    href: `/category/${CATEGORY_DEFINITIONS.dailyNews.slug}`,
+    href: "/daily-news",
     label: CATEGORY_DEFINITIONS.dailyNews.label,
   },
   { href: "/pet", label: "桌宠", private: true },

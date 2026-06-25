@@ -8,7 +8,7 @@ const FOOTER_SECTIONS = [
   { href: "/", label: "首页" },
   { href: `/category/${CATEGORY_DEFINITIONS.tech.slug}`, label: CATEGORY_DEFINITIONS.tech.label },
   {
-    href: `/category/${CATEGORY_DEFINITIONS.dailyNews.slug}`,
+    href: "/daily-news",
     label: CATEGORY_DEFINITIONS.dailyNews.label,
   },
 ];

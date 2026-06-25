@@ -2,15 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildAgentPostIndex,
+  extractDailyNewsDateSlugFromPathname,
   extractPostSlugFromPathname,
   getAgentPostBySlug,
+  isDailyNewsIndexPathname,
   listRecentAgentPosts,
   normalizeAgentCategory,
   searchAgentPosts,
+  type AgentPostIndexSource,
 } from "../../lib/content/agent-tools";
-import type { PostCardSummary } from "../../lib/content/types";
 
-const posts: PostCardSummary[] = [
+const posts: AgentPostIndexSource[] = [
   {
     slug: "openai-codex-source",
     title: "OpenAI Codex 源码解析",
@@ -18,6 +20,7 @@ const posts: PostCardSummary[] = [
     categories: ["tech"],
     tags: ["Codex", "Agent"],
     dateText: "2026-04-15",
+    date: new Date(2026, 3, 15, 12),
     readingTimeText: "6 min read",
     assetBasePath: "/post-assets/openai-codex-source",
     cover: null,
@@ -30,6 +33,7 @@ const posts: PostCardSummary[] = [
     categories: ["fitness"],
     tags: ["训练"],
     dateText: "2026-04-16",
+    date: new Date(2026, 3, 16, 12),
     readingTimeText: "4 min read",
     assetBasePath: "/post-assets/bench-press",
     cover: null,
@@ -37,13 +41,27 @@ const posts: PostCardSummary[] = [
   },
   {
     slug: "daily-ai-news",
-    title: "AI 与前端热点速览",
+    title: "每日新闻：2026-04-24 AI 与前端热点速览",
     excerpt: "每日新闻与工程圈观察。",
     categories: ["dailyNews"],
     tags: ["AI", "前端"],
     dateText: "2026-04-24",
+    date: new Date(2026, 3, 24, 12),
     readingTimeText: "3 min read",
     assetBasePath: "/post-assets/daily-ai-news",
+    cover: null,
+    coverPosition: "above-title",
+  },
+  {
+    slug: "codex-monthly-update",
+    title: "Codex 和 Claude Code 最近一个月更新了什么",
+    excerpt: "月度工作台观察。",
+    categories: ["dailyNews"],
+    tags: ["Codex", "Claude Code"],
+    dateText: "2026-04-24",
+    date: new Date(2026, 3, 24, 12),
+    readingTimeText: "10 min read",
+    assetBasePath: "/post-assets/codex-monthly-update",
     cover: null,
     coverPosition: "above-title",
   },
@@ -58,6 +76,16 @@ describe("agent post tools", () => {
       url: "/garden-lab/post/openai-codex-source/",
       categories: [{ key: "tech", slug: "tech", label: "技术" }],
     });
+    expect(index[2]).toMatchObject({
+      slug: "daily-ai-news",
+      dailyNewsDateSlug: "2026-04-24",
+      url: "/garden-lab/daily-news/2026-04-24/",
+    });
+    expect(index[3]).toMatchObject({
+      slug: "codex-monthly-update",
+      url: "/garden-lab/post/codex-monthly-update/",
+    });
+    expect(index[3].dailyNewsDateSlug).toBeUndefined();
   });
 
   it("normalizes category keys, slugs, and labels", () => {
@@ -86,5 +114,9 @@ describe("agent post tools", () => {
     expect(extractPostSlugFromPathname("/garden-lab/post/bench-press/", "/garden-lab")).toBe(
       "bench-press"
     );
+    expect(
+      extractDailyNewsDateSlugFromPathname("/garden-lab/daily-news/2026-04-24/", "/garden-lab")
+    ).toBe("2026-04-24");
+    expect(isDailyNewsIndexPathname("/garden-lab/daily-news/", "/garden-lab")).toBe(true);
   });
 });

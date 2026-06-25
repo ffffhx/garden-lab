@@ -26,4 +26,11 @@ describe("SiteHeader", () => {
     expect(markup).not.toContain('href="/pet"');
     expect(markup).not.toContain(">桌宠</a>");
   });
+
+  it("links daily news to the module instead of the category article list", () => {
+    const markup = renderToStaticMarkup(createElement(SiteHeader));
+
+    expect(markup).toContain('href="/daily-news"');
+    expect(markup).not.toContain('href="/category/daily-news"');
+  });
 });

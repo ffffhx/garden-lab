@@ -9,7 +9,7 @@ import { getAllPosts } from "../lib/content/posts";
 // 每一页的 HTML（约 50K flight payload）。改为静态文件后，普通访客不再下载它，
 // 只有支持 WebMCP 的浏览器/agent 在用到工具时才 fetch，显著减小每页 HTML 体积。
 const posts = getAllPosts();
-const index = buildAgentPostIndex(posts.map(({ date, ...post }) => post));
+const index = buildAgentPostIndex(posts);
 
 const outDir = join(process.cwd(), "public");
 mkdirSync(outDir, { recursive: true });

@@ -3,7 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CategorySearchList } from "@/components/category-search-list";
+import { DailyNewsModule } from "@/components/daily-news-module";
+import { CATEGORY_DEFINITIONS } from "@/lib/content/config";
 import { getAllCategories, getCategoryBySlug } from "@/lib/content/categories";
+import { getDailyNewsEntries, getLatestDailyNewsPost } from "@/lib/content/daily-news";
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
@@ -45,6 +48,17 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   if (!category) {
     notFound();
+  }
+
+  if (category.slug === CATEGORY_DEFINITIONS.dailyNews.slug) {
+    const entries = getDailyNewsEntries();
+    const post = getLatestDailyNewsPost();
+
+    if (!post) {
+      notFound();
+    }
+
+    return <DailyNewsModule entries={entries} post={post} />;
   }
 
   const color = CATEGORY_COLORS[category.slug] ?? "yellow";

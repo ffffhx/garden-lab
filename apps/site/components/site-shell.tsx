@@ -17,19 +17,21 @@ export function SiteShell({
 }) {
   const shellClassName = "site-grain min-h-screen";
   const isPostRoute = currentPathname?.startsWith("/post/") ?? false;
-  const frameWidthClassName = isPostRoute ? "max-w-[1680px] 2xl:px-10" : "max-w-7xl";
+  const isDailyNewsRoute = currentPathname?.startsWith("/daily-news") ?? false;
+  const isReadingRoute = isPostRoute || isDailyNewsRoute;
+  const frameWidthClassName = isReadingRoute ? "max-w-[1680px] 2xl:px-10" : "max-w-7xl";
   const contentClassName = cn(
     "mx-auto flex min-h-[calc(100vh-9rem)] w-full flex-col px-4 pb-16 pt-7 sm:px-6 lg:px-8",
     frameWidthClassName,
     // 文章页用 .article-content 自己的入场动画，这里只给列表/首页等非文章页加柔和淡入
-    isPostRoute ? null : "page-enter"
+    isReadingRoute ? null : "page-enter"
   );
 
   return (
     <div id="top" className={shellClassName}>
-      <SiteHeader currentPathname={currentPathname} wide={isPostRoute} />
+      <SiteHeader currentPathname={currentPathname} wide={isReadingRoute} />
       <div className={contentClassName}>{children}</div>
-      <SiteFooter wide={isPostRoute} />
+      <SiteFooter wide={isReadingRoute} />
       {showPet ? (
         <PrivateFeatureGate>
           <BlogPet />

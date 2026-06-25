@@ -3,8 +3,10 @@
 import { useEffect } from "react";
 
 import {
+  extractDailyNewsDateSlugFromPathname,
   extractPostSlugFromPathname,
   getAgentPostBySlug,
+  isDailyNewsIndexPathname,
   listRecentAgentPosts,
   searchAgentPosts,
   type AgentPostSummary,
@@ -72,11 +74,21 @@ function getCurrentArticleHeadings() {
 function getCurrentPost(posts: AgentPostSummary[]) {
   const slug = extractPostSlugFromPathname(window.location.pathname);
 
-  if (!slug) {
-    return null;
+  if (slug) {
+    return getAgentPostBySlug(posts, slug);
   }
 
-  return getAgentPostBySlug(posts, slug);
+  const dailyNewsDateSlug = extractDailyNewsDateSlugFromPathname(window.location.pathname);
+
+  if (dailyNewsDateSlug) {
+    return posts.find((post) => post.dailyNewsDateSlug === dailyNewsDateSlug) ?? null;
+  }
+
+  if (isDailyNewsIndexPathname(window.location.pathname)) {
+    return posts.find((post) => post.categories.some((category) => category.key === "dailyNews")) ?? null;
+  }
+
+  return null;
 }
 
 function createTools(posts: AgentPostSummary[]): WebMcpTool[] {

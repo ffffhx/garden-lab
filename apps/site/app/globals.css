@@ -3809,6 +3809,115 @@ html.desktop-pet-document body {
   box-shadow: 0 40px 96px -52px rgba(15, 23, 42, 0.55);
 }
 
+.daily-news-issue .article-content > h2:first-child {
+  margin-top: 1.2rem;
+}
+
+.daily-news-issue .article-content > h2:first-child::before {
+  margin-top: 0;
+}
+
+.daily-news-module .edition-bar {
+  border-top: 0;
+  border-bottom-color: rgb(26 24 21 / 0.16);
+  padding-top: 0.25rem;
+  padding-bottom: 0.65rem;
+}
+
+.daily-news-module .daily-news-issue {
+  border-color: rgb(26 24 21 / 0.1);
+  border-top-color: rgb(26 24 21 / 0.16);
+  border-radius: 6px;
+  background: rgb(250 246 236 / 0.82);
+  box-shadow:
+    0 1px 0 rgb(255 250 240 / 0.95) inset,
+    0 28px 80px -64px rgb(26 24 21 / 0.45);
+}
+
+.daily-news-sidebar .riso-card {
+  border-color: rgb(26 24 21 / 0.09);
+  border-top-color: rgb(26 24 21 / 0.12);
+  border-radius: 6px;
+  background: rgb(255 250 240 / 0.46);
+}
+
+.daily-news-pane,
+.daily-news-sidebar {
+  scrollbar-color: rgb(143 45 32 / 0.22) transparent;
+  scrollbar-width: thin;
+}
+
+.daily-news-pane::-webkit-scrollbar,
+.daily-news-sidebar::-webkit-scrollbar {
+  width: 7px;
+}
+
+.daily-news-pane::-webkit-scrollbar-thumb,
+.daily-news-sidebar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(143 45 32 / 0.18);
+}
+
+.daily-news-pane::-webkit-scrollbar-track,
+.daily-news-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.daily-news-issue .article-content h2[id="来源列表"] + ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.daily-news-issue .article-content h2[id="来源列表"] + ul > li {
+  position: relative;
+  margin: 0;
+  border-top: 2px solid rgb(143 45 32 / 0.72);
+  border-right: 1px solid rgb(26 24 21 / 0.14);
+  border-bottom: 1px solid rgb(26 24 21 / 0.14);
+  border-left: 1px solid rgb(26 24 21 / 0.14);
+  background: rgb(255 250 240 / 0.58);
+  padding: 0.95rem 1rem 1rem;
+  color: rgb(60 54 44);
+}
+
+.daily-news-issue .article-content h2[id="来源列表"] + ul > li::before {
+  content: "SOURCE";
+  display: block;
+  margin-bottom: 0.55rem;
+  font-family: var(--font-mono-ui), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgb(143 45 32);
+}
+
+.daily-news-issue .article-content h2[id="来源列表"] + ul > li > ul {
+  margin-top: 0.7rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.daily-news-issue .article-content h2[id="来源列表"] + ul > li > ul > li {
+  margin-top: 0;
+  border-top: 1px solid rgb(26 24 21 / 0.1);
+  padding: 0.62rem 0 0.66rem;
+  line-height: 1.55;
+}
+
+.daily-news-issue .article-content h2[id="来源列表"] + ul > li > ul > li:last-child {
+  padding-bottom: 0;
+}
+
+.daily-news-issue .article-content h2[id="来源列表"] + ul a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
 /* —— 全站滚动条：暖色细滚动条，呼应主题 —— */
 * {
   scrollbar-width: thin;

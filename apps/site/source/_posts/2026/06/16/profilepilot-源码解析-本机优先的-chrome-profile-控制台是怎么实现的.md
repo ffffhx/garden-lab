@@ -18,7 +18,7 @@ coverPosition: "below-title"
 
 ## 1. 它解决什么问题，定位在哪
 
-日常用 Chrome 的人都遇到过这些场景：
+很多时候我们都有这个需求：
 
 - 想把一个浏览器交给 Agent 自动化，同时让它带着真实登录。
 
@@ -28,7 +28,7 @@ ProfilePilot 的定位很明确：站在你已经使用的真实 Chrome 数据�
 
 ## 2. 整体架构：三进程 + 一个按职责拆成 11 个模块的主进程核心
 
-先看进程边界。它使用的是 Electron 常见的隔离配置：渲染进程开启上下文隔离、禁用 Node 直连；但 `sandbox` 明确是 `false`，所以这里不能说成 Electron sandbox 模式：
+先看进程边界。它使用的是 Electron 常见的隔离配置：渲染进程开启上下文隔离、禁用 Node 直连；
 
 ```ts
 // src/main/main.ts —— 创建窗口时的关键配置
@@ -36,7 +36,7 @@ mainWindow = new BrowserWindow({
   webPreferences: {
     preload: path.join(__dirname, "../preload.js"),
     contextIsolation: true,   // 渲染进程与 preload 的上下文隔离
-    nodeIntegration: false,   // 网页里拿不到 require / Node API
+    nodeIntegration: false,   // Electron 页面里拿不到 require / Node API
     sandbox: false            // 没有启用 Electron sandbox
   }
 });

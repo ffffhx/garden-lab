@@ -5,6 +5,7 @@ import { ArticleSelectionTooltip } from "@/components/article-selection-tooltip"
 import { BenchHeatmapTooltip } from "@/components/bench-heatmap-tooltip";
 import { BenchReveal } from "@/components/bench-reveal";
 import { PrivateFeatureGate } from "@/components/private-feature-access";
+import { RequestGatesLab } from "@/components/request-gates-lab";
 import type { ContentImageSize, Heading } from "@/lib/content/types";
 
 type ArticleBodyProps = {
@@ -46,6 +47,7 @@ export function ArticleBody({
       </ArticleSelectionTooltip>
       <BenchHeatmapTooltip articleContentId={articleContentId} />
       <BenchReveal articleContentId={articleContentId} />
+      <RequestGatesLab articleContentId={articleContentId} />
       {enableAiChat ? (
         <PrivateFeatureGate>
           <ArticleAiChat

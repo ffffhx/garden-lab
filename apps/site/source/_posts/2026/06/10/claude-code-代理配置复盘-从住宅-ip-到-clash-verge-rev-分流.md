@@ -1,5 +1,5 @@
 ---
-title: "Claude Code 代理配置复盘：飞连、Bifrost 与 Clash Verge Rev 同时开启时怎么判断链路"
+title: "Claude Code 代理链路复盘：一条请求在飞连、Bifrost 和 Clash 之间怎么走"
 date: "2026-06-10 17:54:00"
 categories:
   - 技术
@@ -13,202 +13,223 @@ tags:
   - VPN
   - 网络
   - macOS
-excerpt: "整理一次公司研发环境里更真实的 Claude Code 代理链路：飞连负责公司内网和底层路由，Bifrost 负责浏览器系统代理与本地前端转发，Clash Verge Rev / Mihomo 负责 Claude 域名分流，Claude Code CLI 还要单独用 HTTP_PROXY / HTTPS_PROXY 配置。"
+excerpt: "从一条真实网络请求出发，复盘浏览器和 Claude Code CLI 在飞连、Bifrost、Clash Verge Rev / Mihomo 同时在线时的完整链路：应用先决定第一跳，代理再决定转发目标，最后由 macOS 路由决定从 en0 还是 utunX 出去。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 
 ## 摘要
 
-这次折腾的目标很具体：**在公司同事日常会同时打开飞连、Bifrost 和 Clash Verge Rev 的环境里，只让 Claude / Claude Code 相关访问走一个英国代理出口，Coze 本地调试和公司内网访问仍然保持原来的链路**。
+很多代理问题看起来像是“哪个工具没开”，但更准确地说，它们是在问网络八股文里的那个经典问题：**当我访问一个网站时，一条请求到底是怎么发出去的？**
 
-最后可用的方案不是“让某一个工具接管全部流量”，而是把三层分清楚：
+这次的环境更贴近公司研发机的日常状态：
 
-1. 飞连负责公司内网和底层路由。极速 / 分流模式下，普通公网默认路由通常仍走 `en0`；全局模式下可能走 `utunX`。
-2. Bifrost 负责前端调试入口，常见状态是把 macOS 系统 HTTP/HTTPS 代理写到 `127.0.0.1:8899`。
-3. Clash Verge Rev 管理配置，底层 Mihomo 核心监听 `127.0.0.1:7897`。
-4. 浏览器第一跳以 `scutil --proxy` 为准：如果系统代理被 Bifrost 写到 `8899`，Chrome 会先进入 Bifrost，而不是直接进入 Clash。
-5. Bifrost 只对 Claude 相关域名显式串联到 Clash，例如 `proxy://127.0.0.1:7897`；Coze、本地 dev server 和其他调试规则仍交给 Bifrost 自己处理。
-6. Claude Code CLI 不要指望 macOS 系统代理，需要额外通过 `HTTP_PROXY` / `HTTPS_PROXY` 指向 `127.0.0.1:7897`。
-7. Clash 规则只匹配 `claude.ai`、`claude.com`、`anthropic.com`、`claudeusercontent.com`，其他流量继续 `DIRECT`。
+- 飞连开着。
+- Bifrost 开着。
+- Clash Verge Rev / Mihomo 开着。
+- 浏览器可能在访问 Claude。
+- 终端里可能在运行 Claude Code CLI。
+- macOS 系统代理、CLI 环境变量、Bifrost 规则、Clash 规则、路由表会同时影响结果。
 
-这篇不是“买哪个代理最便宜”的推荐，也不包含任何真实代理账号、密码、订单链接。它整理的是这次配置过程中最容易混淆的概念：飞连 / VPN、Bifrost、Clash Verge Rev、Mihomo、系统代理、本机代理端口、CLI 环境变量、默认路由、`DIRECT`、连接关闭，以及为什么 Clash 首页显示中国 IP 并不代表 Claude 没走英国出口。
-
-如果只想照着排查，先记住这条最常见的浏览器链路：
+这篇文章的核心结论是：
 
 ```text
-Chrome
-  -> macOS 系统代理
-  -> Bifrost 127.0.0.1:8899
-  -> Bifrost 对 Claude 域名显式上游转发
-  -> Clash / Mihomo 127.0.0.1:7897
-  -> Claude 规则组
-  -> 英国代理出口
-  -> claude.ai / claude.com / anthropic.com / claudeusercontent.com
+Bifrost 8899 / Clash 7897 是应用层代理入口；
+utunX / en0 是网络层路由出口；
+它们可以出现在同一条请求链路里，但不是同一层东西。
 ```
 
-而 Claude Code CLI 是另一条链：
+所以排查时不能只问“我开了 Clash 吗”或者“我开了飞连吗”，而要问：
 
 ```text
-claude 命令
-  -> HTTP_PROXY / HTTPS_PROXY
-  -> Clash / Mihomo 127.0.0.1:7897
-  -> Claude 规则组
-  -> 英国代理出口
+这个应用发出的这个请求，
+第一跳是谁？
+有没有被显式转给下一个代理？
+代理规则命中了什么？
+代理程序往外连的时候，底层路由走 en0 还是 utunX？
+目标网站最后看到哪个出口？
 ```
 
-下面这张图保留的是“浏览器或 CLI 已经进入 Clash / Mihomo 后”的简化分流视角；如果 Bifrost 正在写系统代理，浏览器第一跳仍要按上面的 Bifrost 链路理解。
+先从下面这个交互动画开始：它把一条请求画成一个红色请求包，左边先经过蓝色的应用层入口门，右边再经过绿色的网络层路由门，然后把每一步拆开。
 
-<figure class="fz094" data-reveal role="group" aria-label="Claude 代理分流链路示意：浏览器与 Claude Code CLI 经本机代理端口，由 Mihomo 规则分流到英国代理或直连"><style>.fz094{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--soft2:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--green:#4f7233;--green-bg:#e7eedd;--cyan:#3f6d79;--cyan-bg:#dcebed;--cyan-bd:#8fbcc4;--amber:#9a6516;--amber-bg:#f4e8cc;--amber-bd:#d9b66a;--red:#8f2d20;--red-bg:#f1ddd6;--gray:#917f5c;--gray-bg:#ece4d2;--mono:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);margin:0;padding:clamp(16px,3vw,30px);background:linear-gradient(160deg,var(--paper-soft,#faf6ec),var(--paper-deep,#ece5d5));border:1px solid var(--hair,rgba(26,24,21,.18));border-radius:14px;font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);color:var(--ink,#1a1815);box-sizing:border-box;overflow:hidden}.fz094 *{box-sizing:border-box}.fz094 .ttl{font-size:clamp(19px,2.6vw,26px);font-weight:800;letter-spacing:.5px;margin:0 0 4px}.fz094 .sub{font-size:clamp(12px,1.5vw,14px);color:var(--muted,#6a6155);margin:0 0 clamp(16px,2.5vw,24px);line-height:1.5}.fz094 .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:clamp(6px,1.4vw,14px)}.fz094 .col{display:flex;flex-direction:column;gap:clamp(12px,2vw,20px)}.fz094 .node{border-radius:12px;padding:clamp(10px,1.6vw,15px) clamp(11px,1.8vw,17px);border:1.5px solid;background:var(--soft2,#f7f1e4);box-shadow:0 6px 16px rgba(16,21,26,.07);position:relative}.fz094 .node b{display:block;font-size:clamp(14px,1.9vw,18px);font-weight:800;letter-spacing:.4px;line-height:1.2}.fz094 .node small{display:block;font-family:var(--mono,ui-monospace,"SFMono-Regular",monospace);font-size:clamp(10px,1.4vw,13px);margin-top:5px;line-height:1.45}.fz094 .src{background:var(--green-bg,#e7eedd);border-color:var(--green,#4f7233)}.fz094 .src b{color:var(--green,#4f7233)}.fz094 .src small{color:var(--ink-soft,#3c362c)}.fz094 .hub{background:var(--amber-bg,#f4e8cc);border-color:var(--amber-bd,#d9b66a);text-align:left}.fz094 .hub b{color:var(--amber,#9a6516)}.fz094 .hub small{color:var(--ink-soft,#3c362c)}.fz094 .hub .ex{font-family:var(--font-serif-body,"Songti SC",serif);font-size:clamp(10px,1.4vw,12px);color:var(--muted,#6a6155);margin-top:4px}.fz094 .dst-uk{background:var(--cyan-bg,#dcebed);border-color:var(--cyan-bd,#8fbcc4)}.fz094 .dst-uk b{color:var(--cyan,#3f6d79)}.fz094 .dst-uk small{color:var(--cyan,#3f6d79)}.fz094 .dst-dir{background:var(--gray-bg,#ece4d2);border-color:var(--gray,#917f5c)}.fz094 .dst-dir b{color:var(--ink-soft,#3c362c)}.fz094 .dst-dir small{color:var(--muted,#6a6155)}.fz094 .lane{position:relative;height:3px;min-width:26px;border-radius:2px;background:var(--hair,rgba(26,24,21,.18));overflow:visible}.fz094 .lane::after{content:"";position:absolute;right:-1px;top:50%;width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid var(--muted,#6a6155);transform:translateY(-50%)}.fz094 .lane .pulse{position:absolute;top:0;left:0;height:100%;width:42%;border-radius:2px;background:linear-gradient(90deg,transparent,var(--c,#9a6516),transparent);animation:fz094run 4.5s ease-in-out infinite}.fz094 .lane.l2 .pulse{animation-delay:1.1s}.fz094 .lane.uk{--c:#3f6d79}.fz094 .lane.uk::after{border-left-color:var(--cyan,#3f6d79)}.fz094 .lane.dir{--c:#917f5c}.fz094 .lane.dir::after{border-left-color:var(--gray,#917f5c)}.fz094 .midcol{display:flex;flex-direction:column;justify-content:center;gap:clamp(34px,8vw,80px);align-items:stretch}.fz094 .dstcol{gap:clamp(18px,3vw,34px)}.fz094 .node.hub::before{content:"";position:absolute;inset:0;border-radius:12px;box-shadow:0 0 0 0 rgba(154,101,22,.35);animation:fz094breathe 8s ease-in-out infinite;pointer-events:none}.fz094 .dst-uk::before{content:"";position:absolute;inset:0;border-radius:12px;box-shadow:0 0 0 0 rgba(63,109,121,.3);animation:fz094breathe 8s ease-in-out infinite;animation-delay:.8s;pointer-events:none}.fz094 .note{margin-top:clamp(16px,2.6vw,24px);display:flex;gap:9px;align-items:flex-start;padding:clamp(10px,1.6vw,14px) clamp(12px,1.8vw,16px);background:var(--red-bg,#f1ddd6);border:1px solid var(--red,#8f2d20);border-left-width:4px;border-radius:8px}.fz094 .note .tag{flex:0 0 auto;font-weight:800;color:var(--red,#8f2d20);font-size:clamp(12px,1.6vw,14px)}.fz094 .note p{margin:0;font-size:clamp(11px,1.5vw,13.5px);line-height:1.55;color:var(--ink-soft,#3c362c)}@keyframes fz094run{0%{left:-42%;opacity:0}18%{opacity:1}82%{opacity:1}100%{left:100%;opacity:0}}@keyframes fz094breathe{0%,100%{box-shadow:0 0 0 0 rgba(154,101,22,0)}50%{box-shadow:0 0 0 5px rgba(154,101,22,.16)}}@media(max-width:560px){.fz094 .flow{grid-template-columns:1fr;gap:10px}.fz094 .lane{height:24px;width:100%;min-width:0;transform:rotate(0)}.fz094 .lane::after{right:50%;top:auto;bottom:-1px;transform:translateX(50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid var(--muted,#6a6155);border-bottom:0}.fz094 .lane.uk::after,.fz094 .lane.dir::after{border-top-color:var(--c,#917f5c);border-left-color:transparent}.fz094 .lane .pulse{width:100%;height:42%;top:auto;left:0;animation:fz094runv 4.5s ease-in-out infinite;background:linear-gradient(180deg,transparent,var(--c,#9a6516),transparent)}.fz094 .midcol,.fz094 .dstcol{gap:14px;justify-content:flex-start}.fz094 .col{flex-direction:column}}@keyframes fz094runv{0%{top:-42%;opacity:0}18%{opacity:1}82%{opacity:1}100%{top:100%;opacity:0}}@media (prefers-reduced-motion:reduce){.fz094 .lane .pulse{animation:none;left:0;top:0;width:100%;height:100%;opacity:.5}.fz094 .node.hub::before,.fz094 .dst-uk::before{animation:none;box-shadow:none}}</style><p class="ttl">这次最终采用的分流链路</p><p class="sub">不同应用先进入本机代理端口，Mihomo 根据目标域名决定走远端代理还是直连</p><div class="flow"><div class="col"><div class="node src"><b>浏览器</b><small>system proxy</small></div><div class="node src"><b>Claude Code CLI</b><small>HTTP_PROXY</small></div></div><div class="midcol"><div class="lane l1"><span class="pulse"></span></div><div class="lane l2"><span class="pulse"></span></div></div><div class="col"><div class="node hub"><b>本机代理端口</b><small>127.0.0.1:7897</small><div class="ex">Clash Verge Rev 管理，Mihomo 执行</div></div></div><div class="midcol"><div class="lane uk"><span class="pulse"></span></div><div class="lane dir"><span class="pulse"></span></div></div><div class="col dstcol"><div class="node dst-uk"><b>Claude 相关域名</b><small>claude.ai / claude.com</small><small>anthropic.com -&gt; UK</small></div><div class="node dst-dir"><b>其他域名</b><small>MATCH -&gt; DIRECT</small></div></div></div><div class="note"><span class="tag">重点</span><p>IP 查询网站如果不在 Claude 规则里，会命中 DIRECT，所以首页 IP 信息不能代表 Claude 的出口。</p></div></figure>
+<figure class="request-gates-html" data-rg-step="0" role="group" aria-label="可交互的请求链路模拟器：选择请求场景、飞连、Bifrost 和 Clash Verge 状态后查看代理路径">
+  <style>
+    .request-gates-html{--paper:#faf6ec;--paper2:#ece5d5;--ink:#1a1815;--soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--blue:#315f80;--blue2:#dcebed;--green:#416f35;--green2:#e7eedd;--red:#a43a25;--red2:#f1ddd6;--gold:#9a6516;--gold2:#f4e8cc;--plain:#fffaf0;margin:1.45rem 0;padding:clamp(16px,3vw,26px);border:1px solid var(--hair);border-radius:8px;background:linear-gradient(180deg,var(--paper),var(--paper2));color:var(--ink);font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);overflow:hidden}
+    .request-gates-html *{box-sizing:border-box}.request-gates-html .rg-state{position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;clip:rect(0 0 0 0)}.request-gates-html .rg-shell{position:relative}.request-gates-html .rg-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-end;margin-bottom:1rem}.request-gates-html .rg-kicker{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.76rem;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}.request-gates-html .rg-title{font-size:clamp(1.18rem,2.7vw,1.65rem);font-weight:800;line-height:1.25;margin:.18rem 0 0}.request-gates-html .rg-tools{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:flex-end;align-items:center}.request-gates-html .rg-legend{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:flex-end;font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.72rem;color:var(--muted)}.request-gates-html .rg-pill,.request-gates-html .rg-step-action{border:1px solid var(--hair);border-radius:999px;padding:.2rem .5rem;background:rgba(255,255,255,.34);white-space:nowrap}.request-gates-html .rg-step-action{cursor:pointer;color:var(--ink);font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.72rem;line-height:1;padding:.42rem .62rem;transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease}.request-gates-html .rg-step-action:hover{background:rgba(244,232,204,.75);border-color:#d9b66a;transform:translateY(-1px)}.request-gates-html .rg-step-action:focus-visible{outline:2px solid #315f80;outline-offset:2px}.request-gates-html .rg-step-action:disabled{opacity:.52;cursor:not-allowed;transform:none;background:rgba(255,255,255,.18);border-color:var(--hair)}.request-gates-html .rg-step-action:disabled:hover{box-shadow:none;transform:none}
+    .request-gates-html .rg-control-matrix{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin-bottom:1rem}.request-gates-html .rg-control-group{border:1px solid var(--hair);border-radius:8px;background:rgba(255,255,255,.25);padding:.62rem}.request-gates-html .rg-mode-title{margin:0 0 .48rem;color:var(--muted);font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}.request-gates-html .rg-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem}.request-gates-html .group-request .rg-options{grid-template-columns:repeat(5,minmax(0,1fr))}.request-gates-html .group-clash .rg-options{grid-template-columns:repeat(4,minmax(0,1fr))}.request-gates-html label{cursor:pointer;border:1px solid var(--hair);border-radius:8px;background:rgba(255,255,255,.4);padding:.52rem .55rem;min-height:66px;display:block;transition:background .2s ease,border-color .2s ease,transform .2s ease,box-shadow .2s ease}.request-gates-html label:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(26,24,21,.08)}.request-gates-html label b{display:block;font-size:.88rem;line-height:1.22}.request-gates-html label small{display:block;margin-top:.22rem;color:var(--muted);font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.64rem;line-height:1.34}
+    #rg-req-browser:checked~.rg-shell label[for=rg-req-browser],#rg-req-cli:checked~.rg-shell label[for=rg-req-cli],#rg-req-local:checked~.rg-shell label[for=rg-req-local],#rg-req-intranet:checked~.rg-shell label[for=rg-req-intranet],#rg-req-claude:checked~.rg-shell label[for=rg-req-claude]{background:rgba(220,235,237,.92);border-color:#8fbcc4;box-shadow:0 0 0 3px rgba(49,95,128,.12)}#rg-feilian-speed:checked~.rg-shell label[for=rg-feilian-speed],#rg-feilian-global:checked~.rg-shell label[for=rg-feilian-global],#rg-feilian-off:checked~.rg-shell label[for=rg-feilian-off]{background:rgba(231,238,221,.92);border-color:#b7c99f;box-shadow:0 0 0 3px rgba(65,111,53,.12)}#rg-bifrost-off:checked~.rg-shell label[for=rg-bifrost-off],#rg-bifrost-direct:checked~.rg-shell label[for=rg-bifrost-direct],#rg-bifrost-chain:checked~.rg-shell label[for=rg-bifrost-chain]{background:rgba(220,235,237,.92);border-color:#8fbcc4;box-shadow:0 0 0 3px rgba(49,95,128,.12)}#rg-clash-off:checked~.rg-shell label[for=rg-clash-off],#rg-clash-skip:checked~.rg-shell label[for=rg-clash-skip],#rg-clash-direct:checked~.rg-shell label[for=rg-clash-direct],#rg-clash-node:checked~.rg-shell label[for=rg-clash-node]{background:rgba(244,232,204,.95);border-color:#d9b66a;box-shadow:0 0 0 3px rgba(154,101,22,.12)}
+    .request-gates-html .rg-readout{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:0 0 1rem;font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.7rem;color:var(--muted)}.request-gates-html .rg-readout b{font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);font-size:.84rem;color:var(--ink)}.request-gates-html .rg-chip{display:none;border:1px solid var(--hair);border-radius:999px;background:rgba(255,255,255,.44);padding:.18rem .48rem}#rg-req-browser:checked~.rg-shell .chip-req-browser,#rg-req-cli:checked~.rg-shell .chip-req-cli,#rg-req-local:checked~.rg-shell .chip-req-local,#rg-req-intranet:checked~.rg-shell .chip-req-intranet,#rg-req-claude:checked~.rg-shell .chip-req-claude,#rg-feilian-speed:checked~.rg-shell .chip-feilian-speed,#rg-feilian-global:checked~.rg-shell .chip-feilian-global,#rg-feilian-off:checked~.rg-shell .chip-feilian-off,#rg-bifrost-off:checked~.rg-shell .chip-bifrost-off,#rg-bifrost-direct:checked~.rg-shell .chip-bifrost-direct,#rg-bifrost-chain:checked~.rg-shell .chip-bifrost-chain,#rg-clash-off:checked~.rg-shell .chip-clash-off,#rg-clash-skip:checked~.rg-shell .chip-clash-skip,#rg-clash-direct:checked~.rg-shell .chip-clash-direct,#rg-clash-node:checked~.rg-shell .chip-clash-node{display:inline-flex}
+    .request-gates-html .rg-board{position:relative;border:1px solid var(--hair);border-radius:8px;background:linear-gradient(135deg,rgba(250,246,236,.94),rgba(236,229,213,.76)),repeating-linear-gradient(90deg,rgba(26,24,21,.035) 0 1px,transparent 1px 22px);overflow:hidden;padding:1.05rem}.request-gates-html .rg-board-title{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.75rem}.request-gates-html .rg-board-title>div{display:grid;gap:.12rem}.request-gates-html .rg-board-title b{font-size:1rem}.request-gates-html .rg-board-title small{color:var(--muted);font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.66rem}.request-gates-html .rg-stage{position:relative;min-height:0}.request-gates-html .rg-path{display:none;position:relative;grid-template-columns:repeat(var(--cols,5),minmax(112px,1fr));gap:.72rem;align-items:stretch;padding-bottom:50px}.request-gates-html .rg-step{position:relative;z-index:2;min-height:128px;border:1.5px solid var(--hair);border-radius:11px 11px 5px 5px;background:rgba(250,246,236,.92);box-shadow:0 6px 16px rgba(26,24,21,.07);padding:.62rem .62rem 2.3rem;overflow:visible;transition:box-shadow .24s ease,transform .24s ease,opacity .24s ease}.request-gates-html .rg-step b{display:block;font-size:.9rem;line-height:1.22}.request-gates-html .rg-step small{display:block;margin-top:.28rem;color:var(--muted);font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.62rem;line-height:1.42}.request-gates-html .rg-hop{position:absolute;left:.62rem;right:.62rem;bottom:.48rem;padding-top:.28rem;border-top:1px solid rgba(26,24,21,.16);color:var(--blue);font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.55rem;line-height:1.22;max-height:2.85em;overflow:hidden}.request-gates-html .rg-hop:before{content:"->";font-weight:800;margin-right:.25rem;color:var(--red)}.request-gates-html .rg-hop.green{color:var(--green)}.request-gates-html .rg-hop.gold{color:var(--gold)}.request-gates-html .rg-hop.warn{color:var(--red)}.request-gates-html .rg-step.source{background:var(--red2);border-color:#d49a8e}.request-gates-html .rg-step.app,.request-gates-html .rg-step.bifrost,.request-gates-html .rg-step.clash{background:var(--blue2);border-color:#8fbcc4}.request-gates-html .rg-step.route,.request-gates-html .rg-step.loop{background:var(--green2);border-color:#b7c99f}.request-gates-html .rg-step.remote,.request-gates-html .rg-step.target{background:var(--gold2);border-color:#d9b66a}.request-gates-html .rg-step.fail{background:var(--red2);border-color:#c8897b;box-shadow:0 0 0 4px rgba(164,58,37,.11),0 8px 20px rgba(26,24,21,.08)}.request-gates-html .rg-step.ghost{opacity:.46;background:rgba(250,246,236,.7)}.request-gates-html .rg-step:before{content:"";position:absolute;left:calc(100% + .14rem);top:50%;width:.32rem;height:.32rem;border-radius:50%;background:rgba(164,58,37,.45);box-shadow:.42rem 0 0 rgba(164,58,37,.32);transform:translateY(-50%)}.request-gates-html .rg-step:last-of-type:before{display:none}.request-gates-html .rg-step[data-stamp]:after{content:attr(data-stamp);position:absolute;right:.48rem;top:.42rem;width:38px;height:38px;display:grid;place-items:center;border:2px solid currentColor;border-radius:50%;color:rgba(164,58,37,.76);font-weight:900;font-size:.66rem;transform:rotate(-12deg) scale(.86);opacity:0;animation:rg-stamp 7.2s ease-out infinite;animation-delay:var(--d,0s);transition:opacity .22s ease,transform .22s ease}.request-gates-html .rg-step.route[data-stamp]:after,.request-gates-html .rg-step.loop[data-stamp]:after{color:rgba(65,111,53,.76)}.request-gates-html .rg-step.remote[data-stamp]:after,.request-gates-html .rg-step.target[data-stamp]:after{color:rgba(154,101,22,.78)}
+    .request-gates-html .gate-leaves{position:absolute;top:0;left:0;right:0;height:30px;pointer-events:none}.request-gates-html .gate-leaves:before,.request-gates-html .gate-leaves:after{content:"";position:absolute;top:7px;width:47%;height:25px;background:linear-gradient(180deg,#c6a061,#9c7740);border:1px solid rgba(26,24,21,.38);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);transition:transform .26s ease}.request-gates-html .gate-leaves:before{left:2px;transform-origin:left center;animation:rg-door-left 7.2s ease-in-out infinite;animation-delay:var(--d,0s)}.request-gates-html .gate-leaves:after{right:2px;transform-origin:right center;animation:rg-door-right 7.2s ease-in-out infinite;animation-delay:var(--d,0s)}.request-gates-html .rg-step.app,.request-gates-html .rg-step.net-gate{padding-top:2.25rem}.request-gates-html .rg-runner{position:absolute;left:5%;bottom:6px;width:30px;height:46px;z-index:8;transform:translateX(-50%);animation:rg-run-5 7.2s cubic-bezier(.45,0,.52,1) infinite}.request-gates-html .cols-3 .rg-runner{animation-name:rg-run-3}.request-gates-html .cols-4 .rg-runner{animation-name:rg-run-4}.request-gates-html .cols-5 .rg-runner{animation-name:rg-run-5}.request-gates-html .cols-6 .rg-runner{animation-name:rg-run-6}.request-gates-html .cols-7 .rg-runner{animation-name:rg-run-7}.request-gates-html .rg-runner .ci{position:absolute;inset:0;animation:rg-bob .42s ease-in-out infinite}.request-gates-html .rg-runner .ch{position:absolute;left:50%;top:1px;width:13px;height:13px;margin-left:-6.5px;border-radius:50%;background:#e9d8c2;border:1.5px solid var(--ink)}.request-gates-html .rg-runner .cc{position:absolute;left:50%;top:-1px;width:16px;height:7px;margin-left:-8px;border-radius:7px 7px 0 0;background:var(--red)}.request-gates-html .rg-runner .cb{position:absolute;left:50%;top:13px;width:18px;height:18px;margin-left:-9px;border-radius:6px;background:var(--red);border:1.5px solid #7d2a1a}.request-gates-html .rg-runner .cp{position:absolute;left:-6px;top:15px;width:13px;height:13px;border-radius:3px;background:var(--gold2);border:1.5px solid var(--gold);z-index:-1}.request-gates-html .rg-runner .cp:after{content:"包";position:absolute;inset:0;display:grid;place-items:center;font-size:.42rem;color:var(--gold);font-weight:800}.request-gates-html .rg-runner .cl{position:absolute;top:29px;left:50%;width:4px;height:13px;border-radius:2px;background:#5a2417;transform-origin:top center}.request-gates-html .rg-runner .cl.a{margin-left:-5px;animation:rg-step-a .42s ease-in-out infinite}.request-gates-html .rg-runner .cl.b{margin-left:1px;animation:rg-step-b .42s ease-in-out infinite}.request-gates-html .rg-runner .cm{position:absolute;top:15px;left:50%;margin-left:6px;width:3.5px;height:12px;border-radius:2px;background:var(--red);transform-origin:top center;animation:rg-step-b .42s ease-in-out infinite}.request-gates-html .rg-path.fail-path .rg-runner{animation-name:rg-run-fail}.request-gates-html .rg-path.fail-path .rg-runner .cb{animation:rg-fail-pulse 1.2s ease-in-out infinite}.request-gates-html.is-stepped .rg-runner{left:var(--runner-left,12.5%);animation:none!important;transition:left .34s cubic-bezier(.2,.72,.2,1)}.request-gates-html.is-stepped .rg-step[data-stamp]:after,.request-gates-html.is-stepped .gate-leaves:before,.request-gates-html.is-stepped .gate-leaves:after{animation:none!important}.request-gates-html.is-stepped .rg-step[data-stamp]:after{opacity:0;transform:rotate(-18deg) scale(1.18)}.request-gates-html.is-stepped .rg-step.is-done{opacity:.72}.request-gates-html.is-stepped .rg-step.is-done[data-stamp]:after{opacity:.45;transform:rotate(-12deg) scale(.82)}.request-gates-html.is-stepped .rg-step.is-current{transform:translateY(-2px);box-shadow:0 0 0 4px rgba(49,95,128,.14),0 10px 24px rgba(26,24,21,.1)}.request-gates-html.is-stepped .rg-step.is-current[data-stamp]:after{opacity:.95;transform:rotate(-8deg) scale(1)}.request-gates-html.is-stepped .rg-step.is-current .gate-leaves:before{transform:perspective(220px) rotateY(-78deg)}.request-gates-html.is-stepped .rg-step.is-current .gate-leaves:after{transform:perspective(220px) rotateY(78deg)}
+    .request-gates-html .fe,.request-gates-html .target-web,.request-gates-html .target-claude{display:none}#rg-feilian-speed:checked~.rg-shell .fe-speed,#rg-feilian-global:checked~.rg-shell .fe-global,#rg-feilian-off:checked~.rg-shell .fe-off,#rg-req-browser:checked~.rg-shell .target-web,#rg-req-claude:checked~.rg-shell .target-claude{display:inline}.request-gates-html .rg-notices{display:none}.request-gates-html .rg-notice{display:block;border:1px solid var(--hair);border-left:4px solid var(--blue);border-radius:8px;background:rgba(255,255,255,.38);padding:.58rem .68rem;color:var(--muted);font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.65rem;line-height:1.42}.request-gates-html .rg-notice b{display:block;color:var(--ink);font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);font-size:.86rem;margin-bottom:.15rem}.request-gates-html .rg-notice.warn{border-left-color:var(--red);background:rgba(241,221,214,.46)}.request-gates-html .rg-notice.good{border-left-color:var(--green)}.request-gates-html .rg-notice.gold{border-left-color:var(--gold);background:rgba(244,232,204,.52)}
+    #rg-req-local:checked~.rg-shell .path-local,#rg-req-cli:checked~#rg-clash-skip:checked~.rg-shell .path-cli-skip,#rg-req-cli:checked~#rg-clash-off:checked~.rg-shell .path-cli-off,#rg-req-cli:checked~#rg-clash-direct:checked~.rg-shell .path-cli-direct,#rg-req-cli:checked~#rg-clash-node:checked~.rg-shell .path-cli-node,#rg-req-browser:checked~#rg-bifrost-off:checked~#rg-clash-skip:checked~.rg-shell .path-browser-bf-off,#rg-req-claude:checked~#rg-bifrost-off:checked~#rg-clash-skip:checked~.rg-shell .path-browser-bf-off,#rg-req-browser:checked~#rg-bifrost-off:checked~#rg-clash-off:checked~.rg-shell .path-browser-clash-off,#rg-req-claude:checked~#rg-bifrost-off:checked~#rg-clash-off:checked~.rg-shell .path-browser-clash-off,#rg-req-browser:checked~#rg-bifrost-off:checked~#rg-clash-direct:checked~.rg-shell .path-browser-clash-direct,#rg-req-claude:checked~#rg-bifrost-off:checked~#rg-clash-direct:checked~.rg-shell .path-browser-clash-direct,#rg-req-browser:checked~#rg-bifrost-off:checked~#rg-clash-node:checked~.rg-shell .path-browser-clash-node,#rg-req-claude:checked~#rg-bifrost-off:checked~#rg-clash-node:checked~.rg-shell .path-browser-clash-node,#rg-req-browser:checked~#rg-bifrost-direct:checked~.rg-shell .path-browser-bf-direct,#rg-req-claude:checked~#rg-bifrost-direct:checked~.rg-shell .path-browser-bf-direct,#rg-req-browser:checked~#rg-bifrost-chain:checked~#rg-clash-off:checked~.rg-shell .path-browser-chain-off,#rg-req-claude:checked~#rg-bifrost-chain:checked~#rg-clash-off:checked~.rg-shell .path-browser-chain-off,#rg-req-browser:checked~#rg-bifrost-chain:checked~#rg-clash-skip:checked~.rg-shell .path-browser-chain-skip,#rg-req-claude:checked~#rg-bifrost-chain:checked~#rg-clash-skip:checked~.rg-shell .path-browser-chain-skip,#rg-req-browser:checked~#rg-bifrost-chain:checked~#rg-clash-direct:checked~.rg-shell .path-browser-chain-direct,#rg-req-claude:checked~#rg-bifrost-chain:checked~#rg-clash-direct:checked~.rg-shell .path-browser-chain-direct,#rg-req-browser:checked~#rg-bifrost-chain:checked~#rg-clash-node:checked~.rg-shell .path-browser-chain-node,#rg-req-claude:checked~#rg-bifrost-chain:checked~#rg-clash-node:checked~.rg-shell .path-browser-chain-node,#rg-req-intranet:checked~#rg-feilian-speed:checked~#rg-bifrost-off:checked~#rg-clash-skip:checked~.rg-shell .path-intra-bf-off,#rg-req-intranet:checked~#rg-feilian-global:checked~#rg-bifrost-off:checked~#rg-clash-skip:checked~.rg-shell .path-intra-bf-off,#rg-req-intranet:checked~#rg-feilian-off:checked~#rg-bifrost-off:checked~#rg-clash-skip:checked~.rg-shell .path-intra-bf-off-no,#rg-req-intranet:checked~#rg-bifrost-off:checked~#rg-clash-off:checked~.rg-shell .path-intra-clash-off,#rg-req-intranet:checked~#rg-feilian-speed:checked~#rg-bifrost-off:checked~#rg-clash-direct:checked~.rg-shell .path-intra-clash-direct,#rg-req-intranet:checked~#rg-feilian-global:checked~#rg-bifrost-off:checked~#rg-clash-direct:checked~.rg-shell .path-intra-clash-direct,#rg-req-intranet:checked~#rg-feilian-off:checked~#rg-bifrost-off:checked~#rg-clash-direct:checked~.rg-shell .path-intra-clash-direct-no,#rg-req-intranet:checked~#rg-bifrost-off:checked~#rg-clash-node:checked~.rg-shell .path-intra-clash-node,#rg-req-intranet:checked~#rg-feilian-speed:checked~#rg-bifrost-direct:checked~.rg-shell .path-intra-bf-direct,#rg-req-intranet:checked~#rg-feilian-global:checked~#rg-bifrost-direct:checked~.rg-shell .path-intra-bf-direct,#rg-req-intranet:checked~#rg-feilian-off:checked~#rg-bifrost-direct:checked~.rg-shell .path-intra-bf-direct-no,#rg-req-intranet:checked~#rg-bifrost-chain:checked~#rg-clash-off:checked~.rg-shell .path-intra-chain-off,#rg-req-intranet:checked~#rg-bifrost-chain:checked~#rg-clash-skip:checked~.rg-shell .path-intra-chain-skip,#rg-req-intranet:checked~#rg-feilian-speed:checked~#rg-bifrost-chain:checked~#rg-clash-direct:checked~.rg-shell .path-intra-chain-direct,#rg-req-intranet:checked~#rg-feilian-global:checked~#rg-bifrost-chain:checked~#rg-clash-direct:checked~.rg-shell .path-intra-chain-direct,#rg-req-intranet:checked~#rg-feilian-off:checked~#rg-bifrost-chain:checked~#rg-clash-direct:checked~.rg-shell .path-intra-chain-direct-no,#rg-req-intranet:checked~#rg-bifrost-chain:checked~#rg-clash-node:checked~.rg-shell .path-intra-chain-node{display:grid}
+    .request-gates-html .rg-side{margin-top:1rem;border:1px solid var(--hair);border-radius:8px;background:rgba(255,255,255,.35);padding:.9rem;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.72rem;min-width:0}.request-gates-html .rg-panel{border-left:4px solid var(--blue);padding:.22rem 0 .22rem .72rem;min-width:0}.request-gates-html .rg-panel.green{border-left-color:var(--green)}.request-gates-html .rg-panel.gold{border-left-color:var(--gold)}.request-gates-html .rg-panel.warn{border-left-color:var(--red)}.request-gates-html .rg-panel b{display:block;font-size:.88rem;line-height:1.3}.request-gates-html .rg-panel small{display:block;margin-top:.34rem;color:var(--muted);font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.62rem;line-height:1.45}.request-gates-html figcaption{margin:.8rem 0 0;color:var(--muted);font-size:.9rem;line-height:1.6}
+    @keyframes rg-run-3{0%{left:6%;opacity:0}5%,16%{left:6%;opacity:1}46%,60%{left:50%;opacity:1}84%,95%{left:94%;opacity:1}100%{left:94%;opacity:0}}@keyframes rg-run-4{0%{left:5%;opacity:0}5%,14%{left:5%;opacity:1}34%,45%{left:35%}61%,72%{left:65%}90%,97%{left:95%;opacity:1}100%{left:95%;opacity:0}}@keyframes rg-run-5{0%{left:4%;opacity:0}5%,13%{left:4%;opacity:1}27%,38%{left:27%}47%,58%{left:50%}67%,78%{left:73%}90%,97%{left:96%;opacity:1}100%{left:96%;opacity:0}}@keyframes rg-run-6{0%{left:4%;opacity:0}5%,12%{left:4%;opacity:1}22%,32%{left:22%}40%,50%{left:40%}58%,68%{left:58%}76%,86%{left:76%}93%,98%{left:96%;opacity:1}100%{left:96%;opacity:0}}@keyframes rg-run-7{0%{left:3%;opacity:0}5%,11%{left:3%;opacity:1}18%,27%{left:18%}33%,42%{left:33%}48%,57%{left:49%}63%,72%{left:64%}78%,87%{left:80%}94%,98%{left:96%;opacity:1}100%{left:96%;opacity:0}}@keyframes rg-run-fail{0%{left:5%;opacity:0}8%,18%{left:5%;opacity:1}42%,55%{left:48%}78%,100%{left:86%;opacity:1}}@keyframes rg-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}@keyframes rg-step-a{0%,100%{transform:rotate(24deg)}50%{transform:rotate(-24deg)}}@keyframes rg-step-b{0%,100%{transform:rotate(-24deg)}50%{transform:rotate(24deg)}}@keyframes rg-stamp{0%,12%{opacity:0;transform:rotate(-20deg) scale(1.45)}18%,32%{opacity:.9;transform:rotate(-10deg) scale(.92)}46%,100%{opacity:0;transform:rotate(-10deg) scale(.92)}}@keyframes rg-door-left{0%,15%{transform:perspective(220px) rotateY(0)}23%,35%{transform:perspective(220px) rotateY(-78deg)}48%,100%{transform:perspective(220px) rotateY(0)}}@keyframes rg-door-right{0%,15%{transform:perspective(220px) rotateY(0)}23%,35%{transform:perspective(220px) rotateY(78deg)}48%,100%{transform:perspective(220px) rotateY(0)}}@keyframes rg-fail-pulse{0%,100%{background:var(--red)}50%{background:#2d2a26}}@media(max-width:1120px){.request-gates-html .rg-control-matrix{grid-template-columns:1fr}.request-gates-html .group-request .rg-options,.request-gates-html .group-clash .rg-options{grid-template-columns:repeat(2,minmax(0,1fr))}.request-gates-html .rg-path{grid-template-columns:repeat(2,minmax(0,1fr));padding-bottom:0}.request-gates-html .rg-runner,.request-gates-html .rg-step:before{display:none}.request-gates-html .rg-notices,.request-gates-html .rg-side{grid-template-columns:1fr 1fr}}@media(max-width:680px){.request-gates-html{padding:14px}.request-gates-html .rg-head{display:block}.request-gates-html .rg-tools{justify-content:flex-start;margin-top:.7rem}.request-gates-html .rg-options,.request-gates-html .group-request .rg-options,.request-gates-html .group-clash .rg-options{grid-template-columns:1fr}.request-gates-html .rg-path,.request-gates-html .rg-notices,.request-gates-html .rg-side{grid-template-columns:1fr}.request-gates-html .rg-board{padding:.75rem}.request-gates-html .gate-leaves{display:none}.request-gates-html .rg-step.app,.request-gates-html .rg-step.net-gate{padding-top:.62rem}}@media(prefers-reduced-motion:reduce){.request-gates-html .rg-board *{animation:none!important}.request-gates-html .rg-runner{display:none}}
+  </style>
+  <input class="rg-state" type="radio" name="rg-request" id="rg-req-browser">
+  <input class="rg-state" type="radio" name="rg-request" id="rg-req-cli">
+  <input class="rg-state" type="radio" name="rg-request" id="rg-req-local">
+  <input class="rg-state" type="radio" name="rg-request" id="rg-req-intranet">
+  <input class="rg-state" type="radio" name="rg-request" id="rg-req-claude" checked>
+  <input class="rg-state" type="radio" name="rg-feilian-mode" id="rg-feilian-speed" checked>
+  <input class="rg-state" type="radio" name="rg-feilian-mode" id="rg-feilian-global">
+  <input class="rg-state" type="radio" name="rg-feilian-mode" id="rg-feilian-off">
+  <input class="rg-state" type="radio" name="rg-bifrost-mode" id="rg-bifrost-off">
+  <input class="rg-state" type="radio" name="rg-bifrost-mode" id="rg-bifrost-direct">
+  <input class="rg-state" type="radio" name="rg-bifrost-mode" id="rg-bifrost-chain" checked>
+  <input class="rg-state" type="radio" name="rg-clash-mode" id="rg-clash-off">
+  <input class="rg-state" type="radio" name="rg-clash-mode" id="rg-clash-skip">
+  <input class="rg-state" type="radio" name="rg-clash-mode" id="rg-clash-direct">
+  <input class="rg-state" type="radio" name="rg-clash-mode" id="rg-clash-node" checked>
+  <div class="rg-shell">
+    <div class="rg-head"><div><div class="rg-kicker">Interactive request lab</div><div class="rg-title">四个开关，拼出这条请求的真实路径</div></div><div class="rg-tools"><button class="rg-step-action" type="button" data-rg-prev aria-label="后退一步" disabled>后退一步</button><button class="rg-step-action" type="button" data-rg-next aria-label="前进一步">前进一步</button><div class="rg-legend"><span class="rg-pill">蓝色：应用层代理</span><span class="rg-pill">绿色：飞连/网络层</span><span class="rg-pill">黄色：代理出口/目标</span></div></div></div>
+    <div class="rg-control-matrix">
+      <div class="rg-control-group group-request"><div class="rg-mode-title">请求场景</div><div class="rg-options" role="radiogroup" aria-label="请求场景"><label for="rg-req-browser"><b>浏览器</b><small>Chrome 访问普通外网</small></label><label for="rg-req-cli"><b>CLI</b><small>Claude Code 访问 Claude</small></label><label for="rg-req-local"><b>localhost</b><small>本机 127.0.0.1 / ::1</small></label><label for="rg-req-intranet"><b>内网</b><small>公司域名 / 网段</small></label><label for="rg-req-claude"><b>Claude</b><small>浏览器访问 Claude 域名</small></label></div></div>
+      <div class="rg-control-group"><div class="rg-mode-title">飞连状态</div><div class="rg-options" role="radiogroup" aria-label="飞连状态"><label for="rg-feilian-speed"><b>极速模式</b><small>按目标覆盖；外网可能 en0</small></label><label for="rg-feilian-global"><b>全局模式</b><small>公网目标先进入 utunX</small></label><label for="rg-feilian-off"><b>不开</b><small>没有飞连隧道接管</small></label></div></div>
+      <div class="rg-control-group"><div class="rg-mode-title">Bifrost 状态</div><div class="rg-options" role="radiogroup" aria-label="Bifrost 状态"><label for="rg-bifrost-off"><b>关闭</b><small>浏览器不进 8899</small></label><label for="rg-bifrost-direct"><b>DIRECT</b><small>接住系统代理但直连</small></label><label for="rg-bifrost-chain"><b>串联 Clash</b><small>显式转给 127.0.0.1:7897</small></label></div></div>
+      <div class="rg-control-group group-clash"><div class="rg-mode-title">Clash Verge 状态</div><div class="rg-options" role="radiogroup" aria-label="Clash Verge 状态"><label for="rg-clash-off"><b>关闭</b><small>7897 不监听</small></label><label for="rg-clash-skip"><b>未进入</b><small>请求没有到 Clash</small></label><label for="rg-clash-direct"><b>DIRECT</b><small>进了 Clash 但直连</small></label><label for="rg-clash-node"><b>命中节点</b><small>规则转远端代理</small></label></div></div>
+    </div>
+    <div class="rg-readout" aria-label="当前选择"><b>当前选择</b><span class="rg-chip chip-req-browser">请求：浏览器</span><span class="rg-chip chip-req-cli">请求：CLI</span><span class="rg-chip chip-req-local">请求：localhost</span><span class="rg-chip chip-req-intranet">请求：内网</span><span class="rg-chip chip-req-claude">请求：Claude</span><span class="rg-chip chip-feilian-speed">飞连：极速</span><span class="rg-chip chip-feilian-global">飞连：全局</span><span class="rg-chip chip-feilian-off">飞连：不开</span><span class="rg-chip chip-bifrost-off">Bifrost：关闭</span><span class="rg-chip chip-bifrost-direct">Bifrost：DIRECT</span><span class="rg-chip chip-bifrost-chain">Bifrost：串联 Clash</span><span class="rg-chip chip-clash-off">Clash：关闭</span><span class="rg-chip chip-clash-skip">Clash：未进入</span><span class="rg-chip chip-clash-direct">Clash：DIRECT</span><span class="rg-chip chip-clash-node">Clash：命中节点</span></div>
+    <div class="rg-board">
+      <div class="rg-board-title"><div><b>当前路径</b><small data-rg-meter>第 1 步：发起端</small></div><small>点按钮让小人前进或后退；路径只画实际经过的应用层门和网络层门。</small></div>
+      <div class="rg-stage">
+        <div class="rg-path path-local cols-4" style="--cols:4"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>发起端</b><small>localhost / 127.0.0.1 / ::1</small></div><div class="rg-step app" data-stamp="NO" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>NO_PROXY 命中，本机地址不交给代理。</small></div><div class="rg-step loop net-gate" data-stamp="lo0" style="--d:2s"><span class="gate-leaves"></span><b>网络层门 / loopback</b><small>走 lo0 本机闭环，不经过 en0 / utunX。</small></div><div class="rg-step target" data-stamp="达" style="--d:3s"><b>本机服务</b><small>Bifrost、Clash、飞连选择都应该被忽略。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-cli-skip cols-4" style="--cols:4"><div class="rg-step source" data-stamp="CLI" style="--d:.1s"><b>Claude Code CLI</b><small>没有 HTTP_PROXY / wrapper，或者显式选择未进入 Clash。</small></div><div class="rg-step app ghost" data-stamp="跳" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>跳过 7897；Bifrost 系统代理对 CLI 通常无效。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:2s"><span class="gate-leaves"></span><b>网络层门 / macOS 路由</b><small><span class="fe fe-speed">极速：普通 Claude 外联多半回 en0，除非目标被覆盖。</span><span class="fe fe-global">全局：CLI 直连流量先走 utunX，再到飞连网关。</span><span class="fe fe-off">飞连不开：普通公网回 en0。</span></small></div><div class="rg-step target" data-stamp="达" style="--d:3s"><b>Claude</b><small>目标看到的是底层路由出口，不是 Clash 节点。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-cli-off cols-3 fail-path" style="--cols:3"><div class="rg-step source" data-stamp="CLI" style="--d:.1s"><b>Claude Code CLI</b><small>环境变量或 wrapper 指向 127.0.0.1:7897。</small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>CLI 主动连接 Clash 代理端口。</small></div><div class="rg-step fail" data-stamp="断" style="--d:2s"><b>Clash 关闭</b><small>7897 没有监听，请求在本机代理入口失败。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-cli-direct cols-5" style="--cols:5"><div class="rg-step source" data-stamp="CLI" style="--d:.1s"><b>Claude Code CLI</b><small>HTTP_PROXY / HTTPS_PROXY 指向 7897。</small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>请求直接进入 Clash，不经过 Bifrost。</small></div><div class="rg-step clash" data-stamp="DIR" style="--d:2s"><b>Clash DIRECT</b><small>规则命中直连，Mihomo 不连远端节点。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:3s"><span class="gate-leaves"></span><b>网络层门 / macOS 路由</b><small><span class="fe fe-speed">极速：普通外网多半从 en0 出去。</span><span class="fe fe-global">全局：DIRECT 流量先进入 utunX。</span><span class="fe fe-off">飞连不开：从 en0 出去。</span></small></div><div class="rg-step target" data-stamp="达" style="--d:4s"><b>Claude</b><small>Claude 看到的是直连出口，不是英国节点。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-cli-node cols-6" style="--cols:6"><div class="rg-step source" data-stamp="CLI" style="--d:.1s"><b>Claude Code CLI</b><small>HTTP_PROXY / HTTPS_PROXY 指向 7897。</small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>CLI 直接进入 Clash，Bifrost 不参与。</small></div><div class="rg-step clash" data-stamp="节点" style="--d:2s"><b>Clash 命中节点</b><small>Mihomo 规则选择远端代理。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:3s"><span class="gate-leaves"></span><b>网络层门 / 连远端节点</b><small><span class="fe fe-speed">极速：连英国节点这段通常走 en0，除非被飞连覆盖。</span><span class="fe fe-global">全局：连英国节点这段先走 utunX，再到飞连网关。</span><span class="fe fe-off">飞连不开：连英国节点这段走 en0。</span></small></div><div class="rg-step remote" data-stamp="UK" style="--d:4s"><b>远端代理节点</b><small>节点收到原始 CONNECT / TLS 流量后再访问 Claude。</small></div><div class="rg-step target" data-stamp="达" style="--d:5s"><b>Claude</b><small>Claude 最终看到远端节点 IP。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-browser-bf-off cols-4" style="--cols:4"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small><span class="target-web">普通外网请求</span><span class="target-claude">Claude 域名请求</span></small></div><div class="rg-step app ghost" data-stamp="跳" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理没有交给 Bifrost，也没有交给 Clash。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:2s"><span class="gate-leaves"></span><b>网络层门 / macOS 路由</b><small><span class="fe fe-speed">极速：普通外网可能仍走 en0。</span><span class="fe fe-global">全局：外联先进入 utunX。</span><span class="fe fe-off">飞连不开：从 en0 出去。</span></small></div><div class="rg-step target" data-stamp="达" style="--d:3s"><b><span class="target-web">目标网站</span><span class="target-claude">Claude</span></b><small>本机代理没进场，目标看到底层路由出口。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-browser-clash-off cols-3 fail-path" style="--cols:3"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small><span class="target-web">普通外网请求</span><span class="target-claude">Claude 域名请求</span></small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理直接指向 Clash 7897，Bifrost 不参与。</small></div><div class="rg-step fail" data-stamp="断" style="--d:2s"><b>Clash 关闭</b><small>7897 不监听，请求停在本机代理入口。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-browser-clash-direct cols-5" style="--cols:5"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small><span class="target-web">普通外网请求</span><span class="target-claude">Claude 域名请求</span></small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理第一跳直接进入 Clash。</small></div><div class="rg-step clash" data-stamp="DIR" style="--d:2s"><b>Clash DIRECT</b><small>Mihomo 收到请求，但规则选择直连。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:3s"><span class="gate-leaves"></span><b>网络层门 / macOS 路由</b><small><span class="fe fe-speed">极速：DIRECT 目标按覆盖判断，普通外网可能 en0。</span><span class="fe fe-global">全局：DIRECT 流量先进入 utunX。</span><span class="fe fe-off">飞连不开：DIRECT 流量走 en0。</span></small></div><div class="rg-step target" data-stamp="达" style="--d:4s"><b><span class="target-web">目标网站</span><span class="target-claude">Claude</span></b><small>目标看到直连出口，不是代理节点。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-browser-clash-node cols-6" style="--cols:6"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small><span class="target-web">普通外网请求</span><span class="target-claude">Claude 域名请求</span></small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理第一跳直接进入 Clash，Bifrost 不参与。</small></div><div class="rg-step clash" data-stamp="节点" style="--d:2s"><b>Clash 命中节点</b><small>Mihomo 选择远端代理。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:3s"><span class="gate-leaves"></span><b>网络层门 / 连远端节点</b><small><span class="fe fe-speed">极速：连节点这段通常走 en0，除非被飞连覆盖。</span><span class="fe fe-global">全局：连节点这段先走 utunX，再到飞连网关。</span><span class="fe fe-off">飞连不开：连节点这段走 en0。</span></small></div><div class="rg-step remote" data-stamp="UK" style="--d:4s"><b>远端代理节点</b><small>节点再代表你访问最终网站。</small></div><div class="rg-step target" data-stamp="达" style="--d:5s"><b><span class="target-web">目标网站</span><span class="target-claude">Claude</span></b><small>最终看到远端代理节点 IP。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-browser-bf-direct cols-5" style="--cols:5"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small><span class="target-web">普通外网请求</span><span class="target-claude">Claude 域名请求</span></small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理先进 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="DIR" style="--d:2s"><b>Bifrost DIRECT</b><small>规则选择直连，不转发到 7897。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:3s"><span class="gate-leaves"></span><b>网络层门 / macOS 路由</b><small><span class="fe fe-speed">极速：普通外网可能仍走 en0。</span><span class="fe fe-global">全局：Bifrost 外连先进入 utunX。</span><span class="fe fe-off">飞连不开：Bifrost 从 en0 外连。</span></small></div><div class="rg-step target" data-stamp="达" style="--d:4s"><b><span class="target-web">目标网站</span><span class="target-claude">Claude</span></b><small>Clash 旁观，目标看不到远端节点 IP。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-browser-chain-off cols-4 fail-path" style="--cols:4"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>系统代理交给 Bifrost。</small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>浏览器进入 127.0.0.1:8899。</small></div><div class="rg-step bifrost" data-stamp="转" style="--d:2s"><b>Bifrost 串联</b><small>规则要求转给 127.0.0.1:7897。</small></div><div class="rg-step fail" data-stamp="断" style="--d:3s"><b>Clash 关闭</b><small>7897 不监听，请求停在本机。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-browser-chain-skip cols-4 fail-path" style="--cols:4"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>系统代理交给 Bifrost。</small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>浏览器进入 8899。</small></div><div class="rg-step bifrost" data-stamp="转" style="--d:2s"><b>Bifrost 串联</b><small>这一状态要求请求进入 Clash。</small></div><div class="rg-step fail" data-stamp="矛盾" style="--d:3s"><b>Clash 未进入</b><small>和“Bifrost 串联 Clash”冲突，不能当作一条真实路径。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-browser-chain-direct cols-6" style="--cols:6"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small><span class="target-web">普通外网请求</span><span class="target-claude">Claude 域名请求</span></small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理先进 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="转" style="--d:2s"><b>Bifrost 串联</b><small>显式上游转给 7897。</small></div><div class="rg-step clash" data-stamp="DIR" style="--d:3s"><b>Clash DIRECT</b><small>进了 Clash，但规则选择直连。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:4s"><span class="gate-leaves"></span><b>网络层门 / macOS 路由</b><small><span class="fe fe-speed">极速：DIRECT 目标按覆盖判断，普通外网可能 en0。</span><span class="fe fe-global">全局：DIRECT 流量先进入 utunX。</span><span class="fe fe-off">飞连不开：DIRECT 流量走 en0。</span></small></div><div class="rg-step target" data-stamp="达" style="--d:5s"><b><span class="target-web">目标网站</span><span class="target-claude">Claude</span></b><small>目标看到直连出口，不是代理节点。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-browser-chain-node cols-7" style="--cols:7"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small><span class="target-web">普通外网请求</span><span class="target-claude">Claude 域名请求</span></small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理先进 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="转" style="--d:2s"><b>Bifrost 串联</b><small>把 HTTP CONNECT / TLS 转给 7897。</small></div><div class="rg-step clash" data-stamp="节点" style="--d:3s"><b>Clash 命中节点</b><small>Mihomo 选择远端代理。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:4s"><span class="gate-leaves"></span><b>网络层门 / 连远端节点</b><small><span class="fe fe-speed">极速：连节点这段通常走 en0，除非被飞连覆盖。</span><span class="fe fe-global">全局：连节点这段先走 utunX，再到飞连网关。</span><span class="fe fe-off">飞连不开：连节点这段走 en0。</span></small></div><div class="rg-step remote" data-stamp="UK" style="--d:5s"><b>远端代理节点</b><small>节点再代表你访问最终网站。</small></div><div class="rg-step target" data-stamp="达" style="--d:6s"><b><span class="target-web">目标网站</span><span class="target-claude">Claude</span></b><small>最终看到远端代理节点 IP。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-bf-off cols-5" style="--cols:5"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网域名 / 网段。</small></div><div class="rg-step app ghost" data-stamp="跳" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>Bifrost 和 Clash 都没接住，直接进入系统路由。</small></div><div class="rg-step route net-gate" data-stamp="utun" style="--d:2s"><span class="gate-leaves"></span><b>网络层门 / utunX</b><small><span class="fe fe-speed">极速：公司网段命中覆盖路由，先进入 utunX。</span><span class="fe fe-global">全局：内网目标先进入 utunX。</span></small></div><div class="rg-step route" data-stamp="网关" style="--d:3s"><b>飞连网关</b><small>飞连客户端把内层目标送到企业网关，网关再转发到公司网络。</small></div><div class="rg-step target" data-stamp="内网" style="--d:4s"><b>公司内网</b><small>这是内网目标的正常方向，不应该送到远端代理节点。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-bf-off-no cols-4 fail-path" style="--cols:4"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网域名 / 网段。</small></div><div class="rg-step app ghost" data-stamp="跳" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>Bifrost 和 Clash 都没接住，直接进入系统路由。</small></div><div class="rg-step fail" data-stamp="断" style="--d:2s"><b>没有飞连网关</b><small>飞连不开，内网网段没有可用企业隧道。</small></div><div class="rg-step fail" data-stamp="不可达" style="--d:3s"><b>公司内网不可达</b><small>这时需要先打开飞连，或确认内网有其他可达路径。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-clash-off cols-3 fail-path" style="--cols:3"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网域名 / 网段。</small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理直接指向 Clash 7897，Bifrost 不参与。</small></div><div class="rg-step fail" data-stamp="断" style="--d:2s"><b>Clash 关闭</b><small>7897 不监听，请求停在本机代理入口。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-clash-direct cols-6" style="--cols:6"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网域名 / 网段。</small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理第一跳直接进入 Clash。</small></div><div class="rg-step clash" data-stamp="DIR" style="--d:2s"><b>Clash DIRECT</b><small>规则没有命中远端节点，交回网络层。</small></div><div class="rg-step route net-gate" data-stamp="utun" style="--d:3s"><span class="gate-leaves"></span><b>网络层门 / utunX</b><small><span class="fe fe-speed">极速：公司网段命中覆盖路由，先进入 utunX。</span><span class="fe fe-global">全局：内网目标先进入 utunX。</span></small></div><div class="rg-step route" data-stamp="网关" style="--d:4s"><b>飞连网关</b><small>飞连网关再把请求送入企业网络。</small></div><div class="rg-step target" data-stamp="内网" style="--d:5s"><b>公司内网</b><small>Clash DIRECT 之后仍由飞连覆盖路由接管内网。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-clash-direct-no cols-5 fail-path" style="--cols:5"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网域名 / 网段。</small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理第一跳直接进入 Clash。</small></div><div class="rg-step clash" data-stamp="DIR" style="--d:2s"><b>Clash DIRECT</b><small>规则直连，交回系统路由。</small></div><div class="rg-step fail" data-stamp="断" style="--d:3s"><b>没有飞连网关</b><small>飞连不开，DIRECT 之后也没有企业隧道可走。</small></div><div class="rg-step fail" data-stamp="不可达" style="--d:4s"><b>公司内网不可达</b><small>需要让飞连先接上企业网络。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-clash-node cols-6 fail-path" style="--cols:6"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网域名 / 网段。</small></div><div class="rg-step app" data-stamp="7897" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>系统代理第一跳直接进入 Clash。</small></div><div class="rg-step clash" data-stamp="节点" style="--d:2s"><b>Clash 命中节点</b><small>内网目标被错误送往远端代理。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:3s"><span class="gate-leaves"></span><b>网络层门 / 连远端节点</b><small><span class="fe fe-speed">极速：连远端节点这段按覆盖判断。</span><span class="fe fe-global">全局：连远端节点这段先走 utunX。</span><span class="fe fe-off">飞连不开：连远端节点这段走 en0。</span></small></div><div class="rg-step remote" data-stamp="UK" style="--d:4s"><b>远端代理节点</b><small>远端节点通常访问不到你的公司内网。</small></div><div class="rg-step fail" data-stamp="错" style="--d:5s"><b>内网不可达</b><small>规则应改成 DIRECT / 飞连路径。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-bf-direct cols-6" style="--cols:6"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网域名 / 网段。</small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>浏览器先进 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="DIR" style="--d:2s"><b>Bifrost DIRECT</b><small>内网规则直连，不转给 Clash。</small></div><div class="rg-step route net-gate" data-stamp="utun" style="--d:3s"><span class="gate-leaves"></span><b>网络层门 / utunX</b><small><span class="fe fe-speed">极速：公司网段命中覆盖路由，先进入 utunX。</span><span class="fe fe-global">全局：内网目标先进入 utunX。</span></small></div><div class="rg-step route" data-stamp="网关" style="--d:4s"><b>飞连网关</b><small>飞连网关再把请求送入企业网络。</small></div><div class="rg-step target" data-stamp="内网" style="--d:5s"><b>公司内网</b><small>这是内网目标的正常方向。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-bf-direct-no cols-5 fail-path" style="--cols:5"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网域名 / 网段。</small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>浏览器先进 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="DIR" style="--d:2s"><b>Bifrost DIRECT</b><small>内网规则直连，不转给 Clash。</small></div><div class="rg-step fail" data-stamp="断" style="--d:3s"><b>没有飞连网关</b><small>飞连不开，直连也没有企业隧道可走。</small></div><div class="rg-step fail" data-stamp="不可达" style="--d:4s"><b>公司内网不可达</b><small>需要让飞连先接上企业网络。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-chain-off cols-4 fail-path" style="--cols:4"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网。</small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>进入 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="转" style="--d:2s"><b>Bifrost 串联</b><small>错误地要求转给 7897。</small></div><div class="rg-step fail" data-stamp="断" style="--d:3s"><b>Clash 关闭</b><small>7897 不监听，请求失败。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-chain-skip cols-4 fail-path" style="--cols:4"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网。</small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>进入 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="转" style="--d:2s"><b>Bifrost 串联</b><small>这一状态要求进入 Clash。</small></div><div class="rg-step fail" data-stamp="矛盾" style="--d:3s"><b>Clash 未进入</b><small>和串联配置冲突，不能视为真实链路。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-chain-direct cols-7" style="--cols:7"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网。</small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>进入 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="转" style="--d:2s"><b>Bifrost 串联</b><small>转给 Clash，但后续规则仍可 DIRECT。</small></div><div class="rg-step clash" data-stamp="DIR" style="--d:3s"><b>Clash DIRECT</b><small>没有命中远端节点。</small></div><div class="rg-step route net-gate" data-stamp="utun" style="--d:4s"><span class="gate-leaves"></span><b>网络层门 / utunX</b><small><span class="fe fe-speed">极速：公司网段命中覆盖路由，先进入 utunX。</span><span class="fe fe-global">全局：内网目标先进入 utunX。</span></small></div><div class="rg-step route" data-stamp="网关" style="--d:5s"><b>飞连网关</b><small>网关把请求继续送入企业网络。</small></div><div class="rg-step target" data-stamp="内网" style="--d:6s"><b>公司内网</b><small>虽然绕了一圈，但最终仍应该经飞连网关到公司内网。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-chain-direct-no cols-6 fail-path" style="--cols:6"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网。</small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>进入 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="转" style="--d:2s"><b>Bifrost 串联</b><small>转给 Clash，但后续规则仍可 DIRECT。</small></div><div class="rg-step clash" data-stamp="DIR" style="--d:3s"><b>Clash DIRECT</b><small>没有命中远端节点。</small></div><div class="rg-step fail" data-stamp="断" style="--d:4s"><b>没有飞连网关</b><small>飞连不开，DIRECT 之后也没有企业隧道可走。</small></div><div class="rg-step fail" data-stamp="不可达" style="--d:5s"><b>公司内网不可达</b><small>需要让飞连先接上企业网络。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+        <div class="rg-path path-intra-chain-node cols-7 fail-path" style="--cols:7"><div class="rg-step source" data-stamp="起" style="--d:.1s"><b>浏览器</b><small>访问公司内网。</small></div><div class="rg-step app" data-stamp="8899" style="--d:1s"><span class="gate-leaves"></span><b>应用层门</b><small>进入 Bifrost。</small></div><div class="rg-step bifrost" data-stamp="转" style="--d:2s"><b>Bifrost 串联</b><small>把内网请求送到 Clash。</small></div><div class="rg-step clash" data-stamp="节点" style="--d:3s"><b>Clash 命中节点</b><small>内网目标被错误送往远端代理。</small></div><div class="rg-step route net-gate" data-stamp="路" style="--d:4s"><span class="gate-leaves"></span><b>网络层门 / 连远端节点</b><small><span class="fe fe-speed">极速：连远端节点这段按覆盖判断。</span><span class="fe fe-global">全局：连远端节点这段先走 utunX。</span><span class="fe fe-off">飞连不开：连远端节点这段走 en0。</span></small></div><div class="rg-step remote" data-stamp="UK" style="--d:5s"><b>远端代理节点</b><small>远端节点通常访问不到你的公司内网。</small></div><div class="rg-step fail" data-stamp="错" style="--d:6s"><b>内网不可达</b><small>规则应改成 DIRECT / 飞连路径。</small></div><div class="rg-runner"><span class="ci"><span class="cp"></span><span class="cc"></span><span class="ch"></span><span class="cm"></span><span class="cb"></span><span class="cl a"></span><span class="cl b"></span></span></div></div>
+      </div>
+      <div class="rg-notices" aria-label="当前组合判断"><div class="rg-notice"><b>这组选择怎么走</b><span>选择任意场景后，这里会按应用层门、网络层门和最终出口重新解释链路。</span></div><div class="rg-notice"><b>当前代理入口 / 出口</b><span>这里会随选择显示 macOS 系统代理是否进入 8899，以及远端代理节点是否被使用。</span></div><div class="rg-notice good"><b>状态说明</b><span>没有进入路径的工具表示这条请求没有触发它。</span></div></div>
+    </div>
+    <div class="rg-side"><div class="rg-panel"><b>请求场景</b><small>这里会随浏览器、CLI、localhost、内网、Claude 场景切换。</small></div><div class="rg-panel"><b>应用层门：Bifrost</b><small>说明系统代理是否进入 8899，以及是否转给 7897。</small></div><div class="rg-panel gold"><b>应用层门：Clash Verge</b><small>说明请求是否进入 7897，以及 DIRECT / 节点是否真正生效。</small></div><div class="rg-panel green"><b>网络层门：飞连</b><small>说明 en0、utunX 和飞连网关和最终出口。</small></div></div>
+  </div>
+  <figcaption>这个交互图表达的是决策顺序，不是抓包结果：“两扇门”是抽象层次，第一扇是应用层门（系统代理、Bifrost、Clash 7897），第二扇是网络层门（<code>en0</code>、<code>utunX</code>）；如果网络层命中飞连隧道，图里会继续画出隧道另一端的飞连网关。路径只画真实经过的节点；被跳过的工具会在上方动态说明里解释。</figcaption>
+</figure>
 
-## 1. 最初的问题：买一台美国 AWS 服务器行不行
+## 1. 先用五层模型把位置摆正
 
-如果买一台美国 AWS / Lightsail / EC2 服务器，然后把自己的流量代理到这台服务器，目标网站看到的出口 IP 通常就是这台美国服务器的公网 IP。
+如果用常见的五层模型来划分，这几个东西大致在不同层：
 
-但这里有一个关键差别：
-
-- **目标网站看到的是美国 IP**：这一点通常成立。
-- **目标网站也能知道它是 AWS / 云厂商 / 机房 IP**：这一点也通常成立。
-
-所以 AWS/VPS 可以改变出口位置，但它不是住宅 IP。很多风控系统会把 IP 分成几类：
-
-| 类型 | 常见归属 | 风控观感 |
+| 层级 | 这一层关心什么 | 这次涉及的东西 |
 | --- | --- | --- |
-| 家宽公网 IP | 中国移动、中国联通、Comcast、Verizon 等 ISP | 更像普通家庭用户 |
-| 住宅代理 IP | ISP 分配给住宅网络或住宅代理池 | 通常比机房 IP 更自然 |
-| ISP / static residential proxy | 运营商名下、但以代理服务形式出租 | 介于住宅和托管代理之间，常用于稳定出口 |
-| 云厂商 / 机房 IP | AWS、GCP、Azure、DigitalOcean 等 | 容易被识别为数据中心 |
-| VPS 自带 IP | VPS 服务商机房段 | 本质仍是机房 IP |
+| 应用层 | HTTP、HTTPS、SOCKS、代理协议、应用是否读系统代理 | Chrome、Claude Code CLI、Bifrost `8899`、Clash / Mihomo `7897` |
+| 传输层 | TCP / UDP 连接 | 浏览器连本机代理端口，代理程序连远端节点 |
+| 网络层 | IP、路由、默认路由、目标 IP 从哪个接口出去 | `route -n get`、`en0`、`utunX` |
+| 链路层 | 网卡、虚拟网卡如何承载 IP 包 | Wi-Fi、以太网、VPN 虚拟接口 |
+| 物理层 | 真实硬件链路 | 无线网卡、有线网卡 |
 
-一句话：**买 VPS 是买服务器，服务器自然带一个公网 IP；买代理通常是租一个可认证访问的代理出口，不等于拥有这个 IP。**
+这里最容易混的是：
 
-## 2. ISP、住宅 IP、云厂商 IP到底差在哪
-
-`ISP` 是 `Internet Service Provider`，也就是互联网服务提供商。国内常见的是中国移动、中国联通、中国电信；海外常见的是 Comcast、AT&T、Verizon、Spectrum 等。
-
-你家里宽带拿到的公网 IP，一般就是 ISP 分配的。比如家里用中国移动宽带，公网出口大概率会显示为中国移动相关网络。它可能是动态 IP，也可能经过运营商 NAT；是否真有独立公网 IP，要看宽带套餐和运营商网络。
-
-`住宅 IP` 可以粗略理解成“看起来来自家庭宽带用户的 IP”。它的归属一般是 ISP，而不是 AWS 这类云厂商。
-
-`云厂商 IP` 则通常属于数据中心。它也能正常访问网站，但很多风控系统会把它标成 hosting、datacenter、cloud、VPS、server 等类别。
-
-所以这个理解基本成立：
-
-> 住宅 IP 通常属于 ISP；云厂商 IP 通常属于机房 IP。
-
-但要补一句：市面上卖的 `ISP proxy` 或 `static residential proxy` 不一定真是某户人家的路由器，它更像是代理服务商向你出租一个归属在 ISP 名下、可长期使用的代理出口。
-
-## 3. 购买页里的 proxy、proxy amount 和那些加价项
-
-代理购买页上的很多词，看起来像中文翻译问题，其实背后是计费模型。
-
-| 页面词 | 更准确的理解 |
-| --- | --- |
-| `$4.00/proxy` | 每一个代理出口每月 4 美元，不是每个 IP 包、每个请求或每台设备 |
-| `1 proxy` | 买 1 个代理实例，通常对应一组 host、port、username、password |
-| `Proxy amount` | 自定义要买几个代理；左侧卡片是快捷套餐，右侧输入框是手动数量 |
-| `30 days` | 这个代理可用 30 天，到期前后看服务商续费规则 |
-| `Enable multi-device access` | 允许多个设备同时用同一个代理，一般每增加一个设备另收费用 |
-| `Get 0 fraud risk IPs` | 加钱购买更低 fraud score / 更干净声誉的 IP，不能理解成绝对零风险 |
-
-技术上，一个 proxy 可以被多个人或多台设备使用，只要服务商允许并且并发限制没超。但对 Claude 这类强风控服务来说，共享使用会带来几个问题：
-
-- 同一个出口同时出现多地、多设备、多账号行为，画像容易变乱。
-- 服务商可能限制并发连接数、设备数或带宽。
-- 如果别人滥用同一个出口，IP 声誉会被拖低。
-
-所以个人使用时，更稳妥的做法是：**一个人、一组代理、固定地区、固定用途**。不要把一个出口同时给很多设备或很多账号混用。
-
-## 4. HTTP/HTTPS 代理和 SOCKS 代理到底有什么区别
-
-HTTP 代理、HTTPS 代理和 SOCKS 代理都可以放在应用层理解，但它们“理解请求”的程度不一样。
-
-| 类型 | 代理看到什么 | 适合什么 | 常见支持 |
-| --- | --- | --- | --- |
-| HTTP proxy | HTTP 请求行、Header、目标地址 | 网页、API、CLI 的 HTTP 请求 | `HTTP_PROXY` |
-| HTTPS proxy | 通常通过 `CONNECT host:443` 建立隧道 | HTTPS 网站、HTTPS API | `HTTPS_PROXY` |
-| SOCKS5 proxy | 更通用的 TCP/UDP 转发目标 | 不只 HTTP 的流量 | 需要应用显式支持 |
-
-HTTP/HTTPS 代理更像是“我知道你要访问哪个 HTTP 目标，我来帮你建立连接”。对于 HTTPS，代理通常不会解密网站内容，只是收到 `CONNECT claude.ai:443` 这类请求，然后建立一条 TCP 隧道。
-
-SOCKS5 更通用。它不专门服务 HTTP，而是把“我要连哪个 host、哪个端口”的请求转给代理。很多浏览器和代理客户端支持 SOCKS5，但并不是每个 CLI 都天然支持。
-
-这也是为什么 Claude Code CLI 更适合先按 HTTP/HTTPS 代理处理：命令行生态里最通用、最容易生效的方式就是设置：
-
-```bash
-NO_PROXY=localhost,127.0.0.1,::1
-HTTP_PROXY=http://127.0.0.1:7897
-HTTPS_PROXY=http://127.0.0.1:7897
+```text
+127.0.0.1:8899
+127.0.0.1:7897
+utun4
+en0
 ```
 
-## 5. 浏览器不是被“拦截”，而是主动把请求交给代理
+它们不是同一种东西。
 
-这里最容易误解的一句话是：“本机代理接收浏览器发来的网络请求。”
+`127.0.0.1:8899` 和 `127.0.0.1:7897` 是本机应用层代理端口。浏览器或 CLI 可以主动连接这些端口，把 HTTP / HTTPS 请求交给代理程序。
 
-这不是说用户在地址栏输入内容时，有个程序把你的输入截走了。真实链路更像这样：
+`utun4` 和 `en0` 是网络接口。它们不理解 Claude，也不理解 HTTP 代理规则。它们只是在更底层回答一个问题：**某个目标 IP 的包，应该从哪个接口出去？**
 
-1. 你在浏览器输入 `https://claude.ai/restricted`。
-2. 浏览器准备发起网络连接。
-3. 浏览器读取系统代理设置或自己的代理设置。
-4. 如果系统代理是 `127.0.0.1:7897`，浏览器就先连接本机这个端口。
-5. 本机代理程序收到请求，看到目标是 `claude.ai:443`。
-6. 本机代理按规则判断：这个域名应该走 `IPRoyal-UK`。
-7. 本机代理再连接远端代理。
-8. 远端代理替你访问 Claude。
+## 2. 一条请求先要决定“第一跳”
 
-所以监听端口的是 Clash / Mihomo，不是浏览器。浏览器是客户端，它主动连 `127.0.0.1:7897`。
+所谓第一跳，就是应用准备发起连接时，先把请求交给谁。
 
-这条链路有一个隐含前提：当前 macOS 系统代理确实指向 Clash / Mihomo 的 `7897`。公司同事真实使用时往往不是这样，因为飞连、Bifrost 和 Clash Verge Rev 会同时在线，其中 Bifrost 也会写 macOS 系统代理。
-
-### 5.1 三个工具各自在哪一层
-
-先把角色分开：
-
-| 工具 | 主要层次 | 负责的问题 | 常见入口 |
-| --- | --- | --- | --- |
-| 飞连 | VPN / 路由层 | 公司内网、零信任接入、是否接管默认路由 | `utunX` 虚拟网卡 |
-| Bifrost | 浏览器系统代理 / 前端调试层 | 把真实域名代理到本地 dev server，也可以串上游代理 | `127.0.0.1:8899` |
-| Clash Verge Rev | 代理客户端控制台 | 管理代理配置、连接列表和规则 | GUI |
-| Mihomo / Clash.Meta | 代理核心 | 监听本机端口、匹配规则、转发流量 | `127.0.0.1:7897` |
-| Claude Code CLI | 命令行进程 | 是否读取代理环境变量 | `HTTP_PROXY` / `HTTPS_PROXY` |
-
-飞连和 Clash 不是同一层：飞连回答“底层包从哪个网络接口出去”，Clash 回答“进入代理核心之后哪些域名走远端代理”。Bifrost 又是另一个入口：它通常先接住浏览器流量，再按规则决定转给本地 dev server、直连，还是显式交给 Clash。
-
-### 5.2 浏览器第一跳要以 `scutil --proxy` 为准
-
-判断 Chrome / Safari 这类 GUI 应用的第一跳，不要看哪个工具开着，而要看当前 macOS 系统代理到底写到了哪里：
+对浏览器来说，第一跳通常要看 macOS 系统代理：
 
 ```bash
 scutil --proxy
 ```
 
-如果看到的是：
+如果看到 HTTP / HTTPS 代理指向：
 
 ```text
-HTTPProxy : 127.0.0.1
-HTTPPort : 8899
-HTTPSProxy : 127.0.0.1
-HTTPSPort : 8899
+127.0.0.1:8899
 ```
 
-那浏览器第一跳就是 Bifrost。此时不要再把浏览器链路写成：
+那么浏览器第一跳就是 Bifrost。
+
+如果指向：
 
 ```text
-Chrome -> Clash 7897 -> Claude
+127.0.0.1:7897
 ```
 
-更准确的是：
+那么浏览器第一跳就是 Clash / Mihomo。
+
+如果系统代理是关闭的：
+
+```text
+HTTPEnable : 0
+HTTPSEnable : 0
+SOCKSEnable : 0
+```
+
+那就不能直接说浏览器会进入 Bifrost 或 Clash。除非浏览器自己的代理设置、扩展、PAC 或企业策略另外接管了流量，否则它可能直接走系统网络栈。
+
+对 Claude Code CLI 来说，第一跳又是另一回事。CLI 不一定读取 macOS 系统代理，更稳的方式是显式配置环境变量：
+
+```bash
+NO_PROXY=localhost,127.0.0.1,::1 \
+HTTP_PROXY=http://127.0.0.1:7897 \
+HTTPS_PROXY=http://127.0.0.1:7897 \
+claude
+```
+
+所以同一台机器上可能同时成立：
+
+```text
+浏览器第一跳：Bifrost 8899
+Claude Code CLI 第一跳：Clash 7897
+```
+
+这不是冲突，只是两个应用的入口不同。
+
+## 3. 浏览器访问 Claude：先看 Bifrost 有没有显式串到 Clash
+
+假设我在 Chrome 打开：
+
+```text
+https://claude.ai
+```
+
+这条请求不是一上来就直接飞到 Claude。浏览器会先看自己的代理设置或 macOS 系统代理。
+
+如果系统代理指向 Bifrost：
 
 ```text
 Chrome
-  -> Bifrost 8899
-  -> Bifrost 命中 Claude 域名的上游代理规则
-  -> Clash / Mihomo 7897
-  -> Claude 规则组
-  -> 英国代理出口
+  -> macOS 系统代理
+  -> Bifrost 127.0.0.1:8899
 ```
 
-也就是说，Clash 只有在 Bifrost 显式转发过去时才会参与浏览器这条链。Bifrost / Whistle 这类规则里可以用类似下面的上游代理写法：
+到这里为止，请求还没有进入 Clash。Bifrost 和 Clash 都开着，并不代表它们自动串起来。
+
+只有当 Bifrost 规则里明确写了类似：
 
 ```text
 proxy://127.0.0.1:7897
@@ -220,276 +241,411 @@ proxy://127.0.0.1:7897
 http-proxy://127.0.0.1:7897
 ```
 
-这才是“显式串联”：不是因为 Bifrost 和 Clash 都开着，它们就天然串起来了；而是 Bifrost 的规则明确把某些域名转给了 Clash。
-
-### 5.3 飞连要看默认路由和代理节点路由
-
-飞连这一层回答的是另一个问题：浏览器或 Clash 再往外连远端代理节点时，底层包是走本地网络，还是进入飞连的 VPN 隧道。
-
-先看默认路由：
-
-```bash
-route -n get default
-```
-
-如果核心输出类似：
-
-```text
-gateway: 192.168.1.1
-interface: en0
-```
-
-说明没有更精确路由时，普通公网流量默认从真实网卡 `en0` 出去。这通常对应飞连的极速 / 分流模式：公司内网走飞连，下发的内网网段进 `utunX`，普通公网不一定进 VPN。
-
-如果默认接口是 `utun4`、`utun5` 这类虚拟网卡，就说明飞连或其他 VPN 可能接管了默认路由。此时即使浏览器先进入 Bifrost、Bifrost 再进入 Clash，Clash 连接远端代理节点的那段底层流量也可能先走 VPN。
-
-更精确的判断不是查 `claude.ai`，而是查“远端代理节点 IP”的路由：
-
-```bash
-route -n get 代理节点IP
-```
-
-看输出里的 `interface`：
-
-| `interface` | 含义 |
-| --- | --- |
-| `en0` / `en1` | 到代理节点这段直接走本地网络 |
-| `utunX` | 到代理节点这段被 VPN 接管 |
-
-这一步能区分“代理参与了处理”和“代理这条链路底层有没有再叠加 VPN”。两者不是同一个问题。
-
-### 5.4 CLI 不跟浏览器走同一套入口
-
-Claude Code CLI 这一层要单独处理。很多命令行工具不会主动读取 macOS 系统代理，即使浏览器已经通过 Bifrost 正常访问 Claude，`claude` 命令也可能仍然直连。
-
-所以 CLI 更稳妥的路径是直接把环境变量指向 Clash：
-
-```bash
-NO_PROXY=localhost,127.0.0.1,::1 \
-HTTP_PROXY=http://127.0.0.1:7897 \
-HTTPS_PROXY=http://127.0.0.1:7897 \
-claude
-```
-
-如果你把这段做成 wrapper / alias，就不需要每次手动导出环境变量。这里的 `NO_PROXY` 很重要，它避免本机回环地址、localhost、本地 dev server 请求也绕进代理。
-
-如果没有 Bifrost，或者当前系统代理确实由 Clash / Mihomo 直接写到 `7897`，链路才大概是：
+这条 Claude 请求才会继续进入 Clash / Mihomo：
 
 ```text
 Chrome
-  -> macOS 系统代理配置
-  -> 127.0.0.1:7897
-  -> Mihomo 规则匹配
-  -> IPRoyal-UK
-  -> claude.ai
+  -> Bifrost 127.0.0.1:8899
+  -> Clash / Mihomo 127.0.0.1:7897
 ```
 
-如果是 TUN / 虚拟网卡模式，则更像是系统把 IP 包交给虚拟网卡，代理核心再根据 DNS、IP、SNI 等信息做分流。这次最终采用的是系统代理模式，不需要先理解 TUN。
-
-<figure class="fz095" data-reveal role="group" aria-label="本机代理请求链路示意：浏览器主动读取代理设置、连接本机端口，由代理核心规则决定走远端代理还是直连"><style>.fz095{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--cy:#3f6d79;--cyb:#dcebed;--cye:#8fbcc4;--gr:#917f5c;--grb:#ece4d2;background:var(--paper-soft,#faf6ec);color:var(--ink,#1a1815);font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);border:1px solid var(--hair,rgba(26,24,21,.18));border-radius:14px;padding:clamp(16px,3.4vw,30px);margin:1.5rem 0;line-height:1.5;box-sizing:border-box;overflow:hidden}.fz095 *{box-sizing:border-box}.fz095 .hd{margin-bottom:1.1rem}.fz095 .t1{font-size:clamp(1.05rem,2.6vw,1.45rem);font-weight:800;letter-spacing:.01em;color:var(--ink,#1a1815)}.fz095 .t2{font-size:clamp(.78rem,1.7vw,.92rem);color:var(--muted,#6a6155);margin-top:.34rem;font-weight:600}.fz095 .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:.5rem;margin-bottom:1.3rem}.fz095 .node{flex:1 1 130px;min-width:0;background:var(--paper-deep,#ece5d5);border:1.5px solid var(--hair,rgba(26,24,21,.18));border-radius:11px;padding:.7rem .8rem;display:flex;flex-direction:column;justify-content:center;opacity:0;transform:translateY(7px);animation:fz-rise .7s ease forwards}.fz095 .node b{font-size:clamp(.9rem,1.9vw,1.04rem);font-weight:800;color:var(--ink,#1a1815)}.fz095 .node small{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.74rem;color:var(--muted,#6a6155);margin-top:.28rem;word-break:break-all}.fz095 .n1{background:var(--cyb,#dcebed);border-color:var(--cye,#8fbcc4)}.fz095 .n1 b{color:var(--cy,#3f6d79)}.fz095 .n2{background:var(--paper-deep,#ece5d5);animation-delay:.35s}.fz095 .n3{background:var(--cyb,#dcebed);border-color:var(--cye,#8fbcc4);animation-delay:.7s}.fz095 .n3 b{color:var(--cy,#3f6d79)}.fz095 .n4{flex:0 1 96px;background:var(--grb,#ece4d2);border-color:rgba(145,127,92,.5);animation-delay:1.05s}.fz095 .n4 b{color:var(--gr,#917f5c)}.fz095 .arr{flex:0 0 26px;align-self:center;display:flex;align-items:center;justify-content:center;color:var(--ink-soft,#3c362c)}.fz095 .arr i{position:relative;width:18px;height:2px;background:var(--ink-soft,#3c362c);display:block}.fz095 .arr i:after{content:"";position:absolute;right:-1px;top:-3px;border-left:6px solid var(--ink-soft,#3c362c);border-top:4px solid transparent;border-bottom:4px solid transparent}.fz095 .arr i:before{content:"";position:absolute;left:0;top:0;height:2px;width:5px;background:var(--cy,#3f6d79);animation:fz-run 3.6s linear infinite}.fz095 .lower{display:grid;grid-template-columns:1fr 1.05fr;gap:clamp(.9rem,2.6vw,1.7rem);align-items:start}.fz095 .key{border-left:3px solid var(--cye,#8fbcc4);padding-left:.85rem}.fz095 .key h4{margin:0 0 .5rem;font-size:clamp(.95rem,2vw,1.1rem);font-weight:800;color:var(--ink,#1a1815)}.fz095 .key p{margin:.36rem 0;font-size:clamp(.78rem,1.7vw,.9rem);color:var(--ink-soft,#3c362c)}.fz095 .branch{display:flex;flex-direction:column;gap:.7rem;position:relative}.fz095 .res{position:relative;border-radius:10px;padding:.62rem .8rem .68rem 1.5rem;border:1.5px solid var(--hair,rgba(26,24,21,.18))}.fz095 .res b{display:block;font-size:clamp(.86rem,1.8vw,1rem);font-weight:800}.fz095 .res small{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.74rem;color:var(--muted,#6a6155);margin-top:.2rem;display:block;word-break:break-all}.fz095 .res:before{content:"";position:absolute;left:.7rem;top:50%;transform:translateY(-50%);width:9px;height:9px;border-radius:50%}.fz095 .hit{background:var(--cyb,#dcebed);border-color:var(--cye,#8fbcc4)}.fz095 .hit b{color:var(--cy,#3f6d79)}.fz095 .hit:before{background:var(--cy,#3f6d79);box-shadow:0 0 0 0 rgba(63,109,121,.5);animation:fz-pulse 5.2s ease-in-out infinite}.fz095 .miss{background:var(--grb,#ece4d2);border-color:rgba(145,127,92,.5)}.fz095 .miss b{color:var(--gr,#917f5c)}.fz095 .miss:before{background:var(--gr,#917f5c)}.fz095 .blbl{font-size:.72rem;color:var(--muted,#6a6155);font-weight:600;margin-bottom:-.2rem}.fz095 .blbl span{display:inline-block;border-bottom:1.5px solid var(--hair,rgba(26,24,21,.18));padding:0 .4rem .15rem}@keyframes fz-rise{to{opacity:1;transform:translateY(0)}}@keyframes fz-run{0%{left:0;opacity:0}15%{opacity:1}85%{opacity:1}100%{left:13px;opacity:0}}@keyframes fz-pulse{0%,100%{box-shadow:0 0 0 0 rgba(63,109,121,.45)}45%{box-shadow:0 0 0 6px rgba(63,109,121,0)}}@media(max-width:560px){.fz095 .flow{flex-direction:column}.fz095 .node,.fz095 .n4{flex:1 1 auto}.fz095 .arr{transform:rotate(90deg);height:18px}.fz095 .lower{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){.fz095 .node{opacity:1;transform:none;animation:none}.fz095 .arr i:before,.fz095 .hit:before{animation:none}.fz095 .hit:before{box-shadow:none}}</style><div class="hd"><div class="t1">浏览器不是被拦截，而是主动连接代理</div><div class="t2">代理链路发生在"准备发起网络连接"之后，不是发生在地址栏输入阶段</div></div><div class="flow"><div class="node n1"><b>输入网址</b><small>claude.ai</small></div><div class="arr"><i></i></div><div class="node n2"><b>读取代理设置</b><small>macOS / browser</small></div><div class="arr"><i></i></div><div class="node n3"><b>连接本机端口</b><small>127.0.0.1:7897</small></div><div class="arr"><i></i></div><div class="node n4"><b>规则</b><small>route</small></div></div><div class="lower"><div class="key"><h4>关键区别</h4><p>监听的是代理核心，不是浏览器。</p><p>浏览器在发起连接前读取代理设置。</p><p>是否走远端代理，要等本机代理按规则判断。</p></div><div class="branch"><div class="blbl"><span>规则判断后的两种出口</span></div><div class="res hit"><b>命中 Claude 规则</b><small>IPRoyal-UK -&gt; target</small></div><div class="res miss"><b>没有命中规则</b><small>DIRECT -&gt; target</small></div></div></div></figure>
-
-## 6. 为什么不继续自己写本地代理
-
-中间曾经尝试过自己写一个本地 HTTP 代理和 PAC：
-
-| 组件 | 地址 |
-| --- | --- |
-| 本地 HTTP 代理 | `127.0.0.1:17890` |
-| PAC 服务 | `127.0.0.1:17891` |
-
-想法是：只让 `claude.ai`、`anthropic.com` 这类域名走上游代理，其他全部直连。
-
-这个方案能说明原理，但不适合长期使用。原因是代理程序要处理大量边界：
-
-- HTTP `CONNECT` 的解析和转发。
-- HTTPS 隧道的双向转发。
-- DNS、超时、连接复用、文件描述符上限。
-- 浏览器并发连接、长连接和重试。
-- 规则变更后旧连接如何处理。
-- 非 Claude 流量误入代理后的兼容性。
-
-实际使用时，系统 HTTP/HTTPS 代理一旦全局指向这个自写代理，非 Claude 的流量也可能进入它。后来访问 `code.coze.cn/subscription` 出问题，本质就是这个自写代理的兼容性和资源管理不够成熟。
-
-结论很明确：**为了学习可以自己写代理；为了日常稳定使用，应该交给 Clash / Mihomo 这类成熟代理核心。**
-
-## 7. Surge、Clash Verge Rev 和 Mihomo 分别是什么
-
-Surge、Clash Verge Rev、Mihomo 不是同一层东西。
-
-| 名称 | 更像哪一层 | 作用 |
-| --- | --- | --- |
-| Surge | 商业代理客户端 + 规则管理工具 + 网络调试工具 | macOS/iOS 上成熟但收费 |
-| Clash Verge Rev | 图形界面客户端 | 管理配置、开启系统代理、查看连接和规则 |
-| Mihomo / Clash.Meta | 代理核心 | 监听本机端口、解析规则、转发流量 |
-
-可以把 Clash Verge Rev 理解成“控制台”和“壳”，Mihomo 才是实际干活的引擎。
-
-这次最终配置是：
-
-- Clash Verge Rev 管理配置。
-- Mihomo 监听本机端口 `127.0.0.1:7897`。
-- macOS 系统 HTTP/HTTPS 代理指向这个端口。
-- 规则只把 Claude 相关域名送到英国代理，其他走 `DIRECT`。
-
-配置片段可以抽象成这样：
-
-```yaml
-proxies:
-  - name: IPRoyal-UK
-    type: http
-    server: <proxy-host>
-    port: <proxy-port>
-    username: <username>
-    password: <password>
-
-proxy-groups:
-  - name: Claude
-    type: select
-    proxies:
-      - IPRoyal-UK
-      - DIRECT
-
-rules:
-  - DOMAIN-SUFFIX,claude.ai,Claude
-  - DOMAIN-SUFFIX,claude.com,Claude
-  - DOMAIN-SUFFIX,anthropic.com,Claude
-  - DOMAIN-SUFFIX,claudeusercontent.com,Claude
-  - MATCH,DIRECT
-```
-
-这里的 `DIRECT` 不是另一个代理节点，而是直连：不经过远端代理，直接从当前网络出口访问。`claudeusercontent.com` 主要覆盖 Claude Web 的 artifacts、bridge 或用户内容相关资源；如果只看主站聊天，短时间内可能感觉不到它缺失，但要说“Claude 相关访问”就应该一起覆盖。
-
-如果还同时使用 Bifrost 调试前端，推荐不要让 Clash 抢系统代理，而是保留 Bifrost 作为浏览器第一入口：
-
-```text
-Chrome -> Bifrost 8899 -> Clash 7897 -> Claude
-```
-
-也就是在 Bifrost 规则里只对 Claude 相关域名加上类似 `proxy://127.0.0.1:7897` 的上游代理规则。这样 Coze 的前端资源仍然可以被 Bifrost 转到本地 dev server，Claude 流量也能继续交给 Clash 分流。
-
-这也是公司同事同时打开飞连、Bifrost、Clash Verge Rev 时最稳的心智模型：Bifrost 负责接住浏览器，Clash 只处理被显式转过来的 Claude 流量，飞连只在底层路由命中公司内网或全局 VPN 时参与。
-
-## 8. 为什么首页 IP 信息显示中国，但 Claude 仍然可能走英国
-
-Clash Verge Rev 首页的“IP 信息”卡片通常会请求一个 IP 查询服务。这个服务本身不是 Claude 域名。
-
-如果规则最后是：
-
-```yaml
-- MATCH,DIRECT
-```
-
-那么不在 Claude 规则里的普通 IP 查询网站就会直连。直连时显示中国、北京、运营商网络，都很正常。
-
-这不代表 `claude.ai` 没有走代理，只代表“这个 IP 查询网站”没有走代理。
-
-更准确的验证方法是看目标域名：
-
-1. Clash 连接列表里，`claude.ai:443` 的链路是否显示 `Claude / IPRoyal-UK`。
-2. 规则页面里，`DomainSuffix(claude.ai)`、`DomainSuffix(anthropic.com)`、`DomainSuffix(claude.com)`、`DomainSuffix(claudeusercontent.com)` 的命中次数是否增长。
-3. 用命令指定本机代理访问 Claude：
-
-```bash
-curl -I --proxy http://127.0.0.1:7897 https://claude.ai/restricted
-```
-
-如果返回头里出现类似 London / LHR 方向的边缘节点信息，它可以作为一条侧面证据：这条请求大概率落到了英国方向的边缘节点。更稳妥的判断仍然要和 Clash 连接列表、规则命中次数一起看，不要只凭一个响应头下结论。
-
-如果你想让首页 IP 信息也显示英国，需要把 IP 查询服务也加进代理规则，或者切到全局代理模式。但这样会让更多日常网站走代理，可能影响访问速度，也可能把不需要代理的网站搞坏。
-
-所以这次选择保守策略：**只代理 Claude 相关域名，不追求首页 IP 卡片显示英国。**
-
-## 9. 为什么连接列表里会出现 `claude.com:443 DIRECT`
-
-一开始规则里只写了：
+进入 Clash / Mihomo 之后，才轮到 Clash 规则判断：
 
 ```yaml
 DOMAIN-SUFFIX,claude.ai,Claude
+DOMAIN-SUFFIX,claude.com,Claude
 DOMAIN-SUFFIX,anthropic.com,Claude
+DOMAIN-SUFFIX,claudeusercontent.com,Claude
+MATCH,DIRECT
 ```
 
-后来发现连接列表里有一条：
+如果命中 Claude 规则，它会走 Claude 规则组里的远端代理节点。
+
+于是链路变成：
 
 ```text
-claude.com:443  DIRECT
+Chrome
+  -> Bifrost 8899
+  -> Clash / Mihomo 7897
+  -> 远端代理节点
+  -> claude.ai
 ```
 
-这说明 `claude.com` 没被规则覆盖，于是落到了最后的 `MATCH,DIRECT`。修正方式就是补一条：
+然后还有最后一层：Clash / Mihomo 作为本机进程，要连接远端代理节点。这个“往外连”的底层 IP 包，才会进入 macOS 路由判断：
 
-```yaml
-DOMAIN-SUFFIX,claude.com,Claude
+```text
+远端代理节点 IP
+  -> route 决定走 en0 还是 utunX
 ```
 
-规则补上以后，新建连接会按新规则走。但旧连接不会自动“改道”。代理规则通常是在连接创建时决定的，已经建立的 TCP/HTTPS 连接会继续按原来的路径跑，直到连接关闭。
+## 4. Claude Code CLI 发请求：它不一定经过 Bifrost
 
-同理，如果后面发现 artifacts、预览内容或某些 Claude Web 子资源没有走代理，也要检查是不是漏了：
+终端里的 Claude Code CLI 和浏览器不一定走同一条入口。
 
-```yaml
-DOMAIN-SUFFIX,claudeusercontent.com,Claude
-```
-
-这也解释了 Clash 里的“关闭连接”按钮：它不是多余的。浏览器、HTTP/2、WebSocket、SSE、连接池都会保留一段时间的长连接。手动关闭旧连接后，浏览器下一次请求会重新建立连接，再命中新规则。
-
-## 10. Claude Code CLI 需要单独配置吗
-
-浏览器一般会遵守 macOS 系统代理，但命令行工具不一定。
-
-很多 CLI 不会主动读取系统代理。更稳妥的做法是给 CLI 进程显式设置环境变量：
+如果给 CLI 显式设置：
 
 ```bash
-NO_PROXY=localhost,127.0.0.1,::1 \
-HTTP_PROXY=http://127.0.0.1:7897 \
-HTTPS_PROXY=http://127.0.0.1:7897 \
-claude
+HTTP_PROXY=http://127.0.0.1:7897
+HTTPS_PROXY=http://127.0.0.1:7897
 ```
 
-这次最终做法是给 `claude` 包一层启动脚本，让它每次启动都带上这两个环境变量。这样浏览器和 Claude Code CLI 的路径分开处理：
+那么 Claude Code CLI 的链路是：
 
-| 场景 | 代理入口 |
-| --- | --- |
-| Chrome / Safari 等 GUI 应用 | macOS 系统代理；如果 Bifrost、PAC 或浏览器扩展改写了代理，要以实际入口为准 |
-| Claude Code CLI | `HTTP_PROXY` / `HTTPS_PROXY` |
-| 其他 CLI | 需要按工具单独判断 |
+```text
+claude
+  -> HTTP_PROXY / HTTPS_PROXY
+  -> Clash / Mihomo 127.0.0.1:7897
+  -> Clash 规则判断
+  -> 远端代理节点
+  -> Claude API / Claude Web 相关目标
+```
 
-顺手也检查并更新了 Claude Code CLI：本机原来是 `2.1.92`，后来更新到 `2.1.170`。
+注意这里通常不经过 Bifrost，除非你专门把 CLI 的代理指到 Bifrost：
 
-电脑重启后是否还生效，要拆开看：
+```bash
+HTTP_PROXY=http://127.0.0.1:8899
+```
 
-- Clash Verge Rev 的配置文件会保留。
-- 如果 Clash Verge Rev 设置了开机启动，并且系统代理自动开启，浏览器侧会继续生效。
-- 如果 `claude` 的 wrapper / alias 写进了 `~/.zshrc`，新终端里的 Claude Code CLI 也会继续带代理。
-- 如果只是临时在当前终端执行了一次 `export HTTP_PROXY=...`，重启或新开终端后就不一定还在。
+如果 CLI 没有代理变量，链路会变成：
 
-## 11. 飞连 + Bifrost + Clash 同时开启时的排查顺序
+```text
+claude
+  -> 直接解析目标域名
+  -> 直接连接目标 IP
+  -> route 决定 en0 / utunX
+```
 
-以后遇到类似问题，不建议先盯着“我的 IP 查询网站显示哪里”。在公司同事常见环境里，更稳的顺序是从入口一路往出口查：
+这时 Clash 完全没参与。
 
-1. 先看飞连模式和默认路由：
+所以“浏览器能访问 Claude”不等于“Claude Code CLI 也一定能访问”。浏览器可能靠 Bifrost 或系统代理进了 Clash；CLI 如果没有 `HTTP_PROXY` / `HTTPS_PROXY`，可能仍然直连。
+
+## 5. Clash / Mihomo 到底做了什么
+
+Clash Verge Rev 是图形界面和配置控制台，Mihomo / Clash.Meta 才是实际处理请求的代理核心。
+
+它在本机监听一个端口，比如：
+
+```text
+127.0.0.1:7897
+```
+
+当浏览器、Bifrost 或 CLI 把请求交给它之后，Mihomo 会做几件事：
+
+1. 看目标域名或目标 IP。
+2. 按规则决定命中哪个策略组。
+3. 如果命中 `DIRECT`，就由本机直接连目标。
+4. 如果命中远端代理节点，就先连接那个代理节点。
+5. 连接远端代理节点时，再交给 macOS 路由决定从哪个网络接口出去。
+
+对于 HTTPS，最常见的是 HTTP `CONNECT` 隧道。标准语义是：客户端请求代理建立到目标服务器的 tunnel，成功后代理在两边之间双向转发数据。这个语义可以在 [RFC 9110 的 CONNECT 章节](https://datatracker.ietf.org/doc/html/rfc9110#section-9.3.6) 里看到。
+
+所以方向是：
+
+```text
+Clash 主动连接英国代理节点
+英国代理节点主动连接 Claude
+```
+
+不是：
+
+```text
+英国代理节点 -> 回头请求 Clash
+```
+
+如果是 HTTP CONNECT 代理，过程可以简化成：
+
+```text
+1. Clash 连接英国代理节点 IP:端口
+2. Clash 对英国代理节点说：请帮我连 claude.ai:443
+3. 英国代理节点连接 claude.ai:443
+4. 连接建立后，英国代理节点在两边之间双向转发数据
+```
+
+SOCKS5 的模型也类似：客户端先连接 SOCKS 服务端，再发送 relay request，SOCKS 服务端评估请求后建立对应连接。[RFC 1928](https://datatracker.ietf.org/doc/html/rfc1928) 里把 SOCKS 描述成 application layer 和 transport layer 之间的 shim，而不是网络层网关。
+
+## 6. 飞连在这条链路里的位置
+
+飞连不是 HTTP 代理入口。它更接近底层网络路由和 VPN 隧道。
+
+所以飞连通常不回答：
+
+```text
+这个域名是不是 Claude？
+这个请求是不是应该走 IPRoyal-UK？
+```
+
+它回答的是：
+
+```text
+这个目标 IP 的包，从 en0 出去，还是从 utunX 出去？
+```
+
+可以先看默认路由：
 
 ```bash
 route -n get default
 ```
 
-如果 `interface` 是 `en0` / `en1`，普通公网默认不进 VPN；如果是 `utunX`，说明 VPN 可能接管了默认路由。
+但只看 `default` 不够。飞连全局模式可以不把 `default` 这一条直接改成 `utunX`，而是保留：
 
-2. 再看浏览器第一跳是谁：
+```text
+default -> en0
+```
+
+同时下发一组更具体的公网覆盖路由。路由匹配按“最长前缀优先”，所以真实访问某些公网 IP 时，这些更具体的路由会盖过 `default`。因此 `route -n get default` 显示 `en0`，不等于外网请求没有进入飞连。
+
+更靠谱的方式是查具体目标：
+
+```bash
+route -n get 1.1.1.1
+route -n get 8.8.8.8
+route -n get 远端代理节点IP
+```
+
+如果远端代理节点 IP 走 `utunX`，说明 Clash 连接远端代理节点这段底层流量又叠了一层飞连隧道。
+
+这条链就变成：
+
+```text
+Chrome / Claude Code CLI
+  -> Clash / Mihomo 7897
+  -> 远端代理节点 IP
+  -> route 命中 utunX
+  -> 本机飞连隧道入口
+  -> 飞连网关
+  -> 远端代理节点
+  -> Claude
+```
+
+这里有两个关键点。
+
+第一，`utunX` 不是飞连网关。`utunX` 是本机上的虚拟隧道接口，表示这条流量已经被 macOS 交给飞连客户端接管。飞连网关是隧道另一端的远端服务端。
+
+第二，**飞连网关不是业务目标。** Clash 真正想连的是“英国代理节点 IP:端口”。只是这段连接的内层包被系统路由送进了 `utunX`。飞连客户端把它封装成外层包发给飞连网关，飞连网关解封装以后，继续把内层包送往原本的目标，也就是英国代理节点。
+
+所以可以分成两层目标：
+
+```text
+外层目标：飞连网关
+内层目标：英国代理节点
+```
+
+走 `utunX` 不代表最后访问 Claude 的就是飞连 IP。更准确地说：
+
+```text
+飞连决定 Clash 怎么到达英国代理节点；
+英国代理节点决定 Claude 最终看到哪个出口 IP。
+```
+
+如果没有 Clash 远端代理，只是 DIRECT 被飞连接管：
+
+```text
+Chrome
+  -> 网络层门：目标是 Claude IP
+  -> utunX
+  -> 飞连网关
+  -> Claude
+```
+
+这时 Claude 看到的是飞连 / 公司 VPN 出口。
+
+如果有 Clash 远端代理，并且 Clash 连接英国代理这段被飞连接管：
+
+```text
+Chrome / Claude Code CLI
+  -> Clash 选择英国代理节点
+  -> 网络层门：目标是英国代理节点 IP
+  -> utunX
+  -> 飞连网关
+  -> 英国代理节点
+  -> Claude
+```
+
+这时英国代理服务商看到的来源是飞连网关的出口 IP；Claude 看到的是英国代理节点的出口 IP。
+
+## 7. 几条常见请求路径
+
+第一种：浏览器经 Bifrost 再经 Clash 访问 Claude。
+
+```text
+Chrome
+  -> macOS 系统代理指向 8899
+  -> Bifrost
+  -> Bifrost 规则显式转给 7897
+  -> Clash / Mihomo
+  -> 命中 Claude 规则
+  -> 下一跳变成英国代理节点 IP
+  -> route 决定 en0 / utunX
+  -> 如果命中 utunX：utunX -> 飞连网关
+  -> 英国代理节点
+  -> Claude
+```
+
+第二种：浏览器直接经 Clash 访问 Claude。
+
+```text
+Chrome
+  -> macOS 系统代理指向 7897
+  -> Clash / Mihomo
+  -> 命中 Claude 规则
+  -> 下一跳变成英国代理节点 IP
+  -> route 决定 en0 / utunX
+  -> 如果命中 utunX：utunX -> 飞连网关
+  -> 英国代理节点
+  -> Claude
+```
+
+第三种：Claude Code CLI 直接经 Clash。
+
+```text
+claude
+  -> HTTP_PROXY / HTTPS_PROXY 指向 7897
+  -> Clash / Mihomo
+  -> 命中 Claude 规则
+  -> 下一跳变成英国代理节点 IP
+  -> route 决定 en0 / utunX
+  -> 如果命中 utunX：utunX -> 飞连网关
+  -> 英国代理节点
+  -> Claude
+```
+
+第四种：CLI 没有代理变量。
+
+```text
+claude
+  -> 没有 HTTP_PROXY / HTTPS_PROXY
+  -> 直接连接目标
+  -> route 决定 en0 / utunX
+  -> 如果命中 utunX：utunX -> 飞连网关
+  -> 目标网站
+```
+
+这时 Clash 没参与。是否能访问，取决于目标、DNS、飞连路由和当前网络环境。
+
+第五种：浏览器访问公司内网或本地调试页面。
+
+```text
+Chrome
+  -> Bifrost 8899
+  -> Bifrost 规则命中本地 dev server 或公司内网
+  -> 本地服务
+
+Chrome
+  -> Bifrost 8899（如果系统代理交给 Bifrost）
+  -> Bifrost DIRECT / 或关闭
+  -> macOS route 命中公司网段
+  -> utunX
+  -> 飞连网关
+  -> 公司内网
+```
+
+这条链路不一定进入 Clash。本地 dev server 仍然应该留在本机闭环；公司内网则应该先进入飞连在本机创建的 `utunX` 隧道，再到飞连网关，最后由网关送进企业网络。Bifrost 的重点不是“所有流量都翻到国外”，而是作为浏览器调试入口，把不同域名送到不同地方。
+
+## 8. 本机验证快照
+
+下面是一段本机环境快照，不是所有人的固定配置。它的价值在于说明怎么验证，而不是要求每台机器都长一样。验证时飞连处于全局模式。
+
+当前 `scutil --proxy` 显示系统代理关闭：
+
+```text
+HTTPEnable : 0
+HTTPSEnable : 0
+ProxyAutoConfigEnable : 0
+SOCKSEnable : 0
+```
+
+这说明此刻不能把浏览器链路直接写成“浏览器一定先进入 Bifrost 或 Clash”。要么浏览器另有自己的代理设置，要么它没有通过 macOS 系统代理进入这些端口。
+
+但两个本机服务端口确实在监听：
+
+```text
+Bifrost       *:8899
+verge-mihomo  127.0.0.1:7897
+```
+
+路由层则是另一件事。默认路由仍然是：
+
+```text
+default -> en0
+```
+
+但几个具体公网目标都命中 `utun4`：
+
+```text
+claude.ai  -> 160.79.104.10 -> utun4
+example.com -> 104.20.23.154 -> utun4
+openai.com  -> 104.18.33.45  -> utun4
+1.1.1.1     -> utun4
+8.8.8.8     -> utun4
+```
+
+也就是说，在这个全局模式实测状态下，访问外网不是只走 `en0`；具体目标 IP 会先进 `utun4`，再由飞连客户端送往飞连网关。`route -n get default` 仍显示 `en0`，只是说明默认兜底路由在 `en0`，不能代表具体目标的最终接口。
+
+本机 Clash 里选中的英国代理节点 IP 也命中 `utun4`。真实 IP 不写进文章，但这个结果说明：**当前环境里，Mihomo 连接英国代理节点这段底层流量会先进飞连隧道，再到飞连网关，然后才到英国代理节点。**
+
+我还用直连请求看过 `utun4` 的接口计数：
+
+```bash
+curl --noproxy '*' https://example.com
+```
+
+请求前后 `utun4` 的字节计数增加。这个验证说明它不是只停留在路由表推断，而是实际流量也经过了飞连隧道接口。
+
+最后，用 curl 明确指定本机 Clash 代理：
+
+```bash
+curl -I -v --proxy http://127.0.0.1:7897 https://claude.ai/restricted
+```
+
+可以看到关键过程：
+
+```text
+Connected to 127.0.0.1 port 7897
+Establish HTTP proxy tunnel to claude.ai:443
+CONNECT claude.ai:443 HTTP/1.1
+HTTP/1.1 200 Connection established
+```
+
+返回头里还出现了 `cf-ray: ...-LHR`。这不是唯一证据，但能作为侧面信号：这条经 `7897` 发起的 Claude 请求，确实落到了 London / LHR 方向的边缘节点。
+
+把这些证据合起来，当前这台机器上“指定走 Clash 访问 Claude”的链路可以写成：
+
+```text
+curl / Claude Code CLI
+  -> 127.0.0.1:7897
+  -> Clash / Mihomo
+  -> 英国代理节点 IP
+  -> route 命中 utun4
+  -> 本机飞连隧道入口
+  -> 飞连网关
+  -> 英国代理节点
+  -> Claude
+```
+
+## 9. 排查顺序
+
+以后不要先问“我开了哪个工具”，而是按请求链路从前往后查。
+
+第一步，看浏览器第一跳：
 
 ```bash
 scutil --proxy
 ```
 
-如果 HTTP/HTTPS 代理是 `127.0.0.1:8899`，浏览器第一跳是 Bifrost；如果是 `127.0.0.1:7897`，浏览器第一跳才是 Clash / Mihomo。
+第二步，看 CLI 是否有代理变量：
 
-3. 确认本机端口是否真的在监听：
+```bash
+env | grep -E '^(HTTP_PROXY|HTTPS_PROXY|NO_PROXY)='
+```
+
+第三步，看本机代理端口是否存在：
 
 ```bash
 lsof -nP -iTCP:8899 -sTCP:LISTEN
 lsof -nP -iTCP:7897 -sTCP:LISTEN
 ```
 
-`8899` 通常对应 Bifrost，`7897` 通常对应 Clash / Mihomo。端口不存在时，后面的规则都不会生效。
-
-4. 如果浏览器第一跳是 Bifrost，检查 Bifrost 里 Claude 域名是否显式串到 Clash：
+第四步，如果浏览器第一跳是 Bifrost，看 Bifrost 是否显式转给 Clash：
 
 ```text
 proxy://127.0.0.1:7897
@@ -501,9 +657,7 @@ proxy://127.0.0.1:7897
 http-proxy://127.0.0.1:7897
 ```
 
-没有这一步，Chrome 进入 Bifrost 后不一定会再进入 Clash。
-
-5. 再看 Clash 规则是否覆盖完整：
+第五步，看 Clash 规则是否覆盖目标域名：
 
 ```yaml
 DOMAIN-SUFFIX,claude.ai,Claude
@@ -512,74 +666,60 @@ DOMAIN-SUFFIX,anthropic.com,Claude
 DOMAIN-SUFFIX,claudeusercontent.com,Claude
 ```
 
-6. 看 Clash 连接列表和规则命中次数：
-
-- `claude.ai:443`、`claude.com:443` 是否走 `Claude / IPRoyal-UK`
-- `DomainSuffix(claudeusercontent.com)` 命中次数是否增长
-- 旧连接是否需要手动关闭后重连
-
-7. 对 Claude Code CLI 单独查环境变量或 wrapper：
+第六步，看底层路由：
 
 ```bash
-env | grep -E '^(HTTP_PROXY|HTTPS_PROXY|NO_PROXY)='
+route -n get default
+route -n get 远端代理节点IP
 ```
 
-如果 CLI 没有 `HTTP_PROXY` / `HTTPS_PROXY`，它不一定会跟着浏览器走。
-
-8. 最后对具体目标做命令行验证：
+第七步，必要时测几个具体公网 IP：
 
 ```bash
-curl -I --proxy http://127.0.0.1:7897 https://claude.ai/restricted
+for ip in 1.1.1.1 8.8.8.8 223.5.5.5; do
+  echo "== $ip =="
+  route -n get "$ip" | egrep 'gateway|interface'
+done
 ```
 
-如果还想确认“到远端代理节点这一段底层有没有进飞连”，查远端代理节点 IP 的路由：
+第八步，用指定代理的 curl 验证代理入口是否真的能建立 tunnel：
 
 ```bash
-route -n get 代理节点IP
+curl -I -v --proxy http://127.0.0.1:7897 https://claude.ai/restricted
 ```
 
-对应到这次配置，核心判断是：
+这一步验证的是“进了 7897 以后能不能通过代理访问 Claude”，不是验证浏览器一定走了 7897。浏览器是否走 7897，仍然要回到第一步看第一跳。
 
-| 问题 | 应该看哪里 |
-| --- | --- |
-| 浏览器第一跳是谁 | `scutil --proxy` |
-| Bifrost 是否把 Claude 转给 Clash | Bifrost 规则里是否有 `proxy://127.0.0.1:7897` |
-| Clash 首页 IP 为什么是中国 | 因为 IP 查询站点命中了 `MATCH,DIRECT` |
-| Claude 是否走英国代理 | 看 `claude.ai:443` 的连接链路和规则命中 |
-| `claude.com` 为什么直连 | 缺了 `DOMAIN-SUFFIX,claude.com,Claude` |
-| artifacts 或用户内容资源为什么直连 | 可能缺了 `DOMAIN-SUFFIX,claudeusercontent.com,Claude` |
-| 规则改了为什么旧连接还在 | 连接创建时已决定路径，需要关闭旧连接重连 |
-| Claude Code CLI 是否走代理 | 看是否设置 `HTTP_PROXY` / `HTTPS_PROXY` |
-| 飞连有没有接管公网默认流量 | `route -n get default` 和代理节点 IP 的路由 |
+## 10. 最终心智模型
 
-## 12. 最终心智模型
+最后可以把整篇压缩成一句话：
 
-这次真正需要建立的心智模型不是“买一个 IP 就完事”，而是下面这条链：
+```text
+proxy 是应用层入口，utun 是网络层出口；
+请求先被应用决定交给谁，再由代理决定转给谁，最后由路由决定从哪里出去。
+```
+
+更完整一点：
 
 ```text
 应用
-  -> 是否使用系统代理、Bifrost 入口或 CLI 环境变量
-  -> Bifrost / Clash 这些本机代理入口
-  -> 是否显式串联到 Clash / Mihomo
-  -> 代理核心规则匹配
-  -> DIRECT 或远端代理
-  -> 底层路由是否被飞连接管
-  -> 目标网站看到的出口 IP
+  -> 是否读系统代理、浏览器代理设置或 CLI 环境变量
+  -> Bifrost / Clash 这类本机应用层代理入口
+  -> 是否显式串到下一个代理
+  -> Clash / Mihomo 规则匹配
+  -> DIRECT 或远端代理节点
+  -> macOS 路由表
+  -> en0 或 utunX
+  -> 目标网站看到的出口
 ```
 
-每一层都可能让结果不同：
+这样理解之后，很多现象就不奇怪了：
 
-- 买 AWS/VPS：改变出口，但大概率是机房 IP。
-- 买 residential / ISP proxy：租代理出口，不是拥有 IP。
-- 开系统代理：主要影响遵守系统代理的 GUI 应用。
-- 同时开 Bifrost 和 Clash：谁最后写 macOS 系统代理，浏览器通常先进入谁；另一个代理只有被显式转发过去才会参与。
-- 设置 `HTTP_PROXY` / `HTTPS_PROXY`：主要影响支持这些变量的 CLI。
-- 配 Clash 规则：决定哪些域名走代理，哪些直连。
-- 配 Bifrost 上游代理：可以让浏览器先进入 Bifrost，再把特定域名显式转给 Clash。
-- 开飞连：决定公司内网或默认路由是否进入 VPN 隧道；它和 Clash 规则不是同一层。
-- 首页 IP 卡片：只代表那个 IP 查询服务自己的路由，不代表所有域名。
-- 关闭连接：让旧的 TCP/HTTPS 长连接断开，新规则才更容易立刻生效。
+- 浏览器能访问，不代表 CLI 能访问。
+- Bifrost 和 Clash 都开着，不代表自动串联。
+- `route -n get default` 是 `en0`，不代表飞连没有接管具体公网 IP。
+- `utunX` 不是 HTTP 代理端口，它只是底层路由出口。
+- `8899` / `7897` 不是网卡，它们只是本机代理程序监听的应用层入口。
+- 走了飞连网关，不等于最后业务目标变成飞连；飞连只是把内层目标继续送出去。
 
-所以最后的结论很简单：**代理配置不要看一个全局现象，要看“某个应用访问某个域名时，第一跳是谁，是否显式串联，命中了哪条规则，底层路由从哪个接口出去，最后目标网站看到哪个出口”。**
-
-这也是为什么我最终更倾向于用 Clash Verge Rev + Mihomo，而不是自己维护一个临时代理脚本。前者把监听、规则、连接、日志、重连、系统代理这些日常问题都放进了一个成熟控制面；我们真正要维护的，只是几条清晰、可验证、范围足够小的规则。
+这篇文章真正想解决的不是“怎么把所有流量都代理掉”，而是让每一条请求都有可解释、可验证的路径。只要能说清楚“第一跳是谁、下一跳是谁、规则命中谁、底层路由从哪里出去”，代理问题就不再是一团糊。

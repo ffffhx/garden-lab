@@ -101,6 +101,10 @@ window.COVERS = (function () {
       ["AI 眼镜", "Slack agent", "视频生成", "超级计算", "AI 爬虫"],
       "AI 产品正在进入协作现场、随身硬件、创作链路与内容授权边界。",
       "Meta Glasses · Claude Tag · Seedance 2.5 · LineShine · Cloudflare/beehiiv"),
+    news("2026/06/25/2026-06-25-x-上-ai-与前端热点速览", "2026-06-25",
+      ["Jalapeño", "Modular", "GPTZero", "Krea 2", "版权诉讼"],
+      "AI 重排底层栈：推理芯片、跨硬件软件、内容真实性、开放权重、授权边界。",
+      "OpenAI/Broadcom · Qualcomm/Modular · Superhuman/GPTZero · Krea 2 · OpenAI/Microsoft"),
   ];
 
   const T = [

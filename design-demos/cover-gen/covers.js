@@ -105,6 +105,10 @@ window.COVERS = (function () {
       ["Jalapeño", "Modular", "GPTZero", "Krea 2", "版权诉讼"],
       "AI 重排底层栈：推理芯片、跨硬件软件、内容真实性、开放权重、授权边界。",
       "OpenAI/Broadcom · Qualcomm/Modular · Superhuman/GPTZero · Krea 2 · OpenAI/Microsoft"),
+    news("2026/06/26/2026-06-26-x-上-ai-与前端热点速览", "2026-06-26",
+      ["模型准入", "Agent 长任务", "AI Coding", "内存成本", "云监管"],
+      "AI 进入硬边界：模型发布、长任务编排、训练竞争、硬件成本与云监管同时收紧。",
+      "GPT-5.6 · Codex agents · Google/Anthropic · Apple RAM · AWS/Azure DMA"),
   ];
 
   const T = [

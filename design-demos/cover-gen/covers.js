@@ -109,6 +109,10 @@ window.COVERS = (function () {
       ["模型准入", "Agent 长任务", "AI Coding", "内存成本", "云监管"],
       "AI 进入硬边界：模型发布、长任务编排、训练竞争、硬件成本与云监管同时收紧。",
       "GPT-5.6 · Codex agents · Google/Anthropic · Apple RAM · AWS/Azure DMA"),
+    news("2026/06/27/2026-06-27-x-上-ai-与前端热点速览", "2026-06-27",
+      ["模型准入", "模型恢复", "GPU 成本", "AI 订阅", "内存供应"],
+      "AI 的默认功能，开始被准入、供应、价格和监管边界重新定价。",
+      "GPT-5.6 Sol · Mythos 5 · AWS GPU · Microsoft 365 · Apple/CXMT"),
   ];
 
   const T = [

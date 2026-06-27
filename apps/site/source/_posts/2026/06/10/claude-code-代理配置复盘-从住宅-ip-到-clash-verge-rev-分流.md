@@ -18,6 +18,20 @@ cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 
+<figure class="proxy-chain-video" role="group" aria-label="73 秒视频讲解：一条请求在飞连、Bifrost、Clash 之间怎么走">
+  <style>
+    .proxy-chain-video{margin:1.6rem 0;padding:clamp(14px,2.4vw,22px);border:1px solid rgba(26,24,21,.18);border-radius:10px;background:linear-gradient(180deg,#faf6ec,#ece5d5)}
+    .proxy-chain-video video{width:100%;height:auto;display:block;border:1px solid rgba(26,24,21,.16);border-radius:7px;background:#faf6ec}
+    .proxy-chain-video figcaption{margin:.75rem 0 0;color:#6a6155;font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:.82rem;line-height:1.6}
+    .proxy-chain-video figcaption b{color:#1a1815;font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);font-size:.92rem}
+  </style>
+  <video controls preload="metadata" playsinline poster="/post-assets/2026/06/10/claude-code-%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE%E5%A4%8D%E7%9B%98-%E4%BB%8E%E4%BD%8F%E5%AE%85-ip-%E5%88%B0-clash-verge-rev-%E5%88%86%E6%B5%81/proxy-chain-explainer-poster.jpg">
+    <source src="/post-assets/2026/06/10/claude-code-%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE%E5%A4%8D%E7%9B%98-%E4%BB%8E%E4%BD%8F%E5%AE%85-ip-%E5%88%B0-clash-verge-rev-%E5%88%86%E6%B5%81/proxy-chain-explainer.mp4" type="video/mp4" />
+    你的浏览器不支持 video 播放，<a href="/post-assets/2026/06/10/claude-code-%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE%E5%A4%8D%E7%9B%98-%E4%BB%8E%E4%BD%8F%E5%AE%85-ip-%E5%88%B0-clash-verge-rev-%E5%88%86%E6%B5%81/proxy-chain-explainer.mp4">点此下载 MP4</a>。
+  </video>
+  <figcaption><b>73 秒视频版（含中文旁白）</b>：从「飞连 / Bifrost / Clash 同时在线」到「proxy 是应用层入口、utun 是网络层出口」，把这条请求链路一镜走通。想快速建立心智模型可以先看视频，细节仍以下文为准。</figcaption>
+</figure>
+
 ## 摘要
 
 很多代理问题看起来像是“哪个工具没开”，但更准确地说，它们是在问网络八股文里的那个经典问题：**当我访问一个网站时，一条请求到底是怎么发出去的？**

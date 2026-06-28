@@ -8,9 +8,17 @@
   --ink: #1a1815;          /* 近黑墨色 */
   --ink-soft: #3c362c;     /* 正文 */
   --muted: #6a6155;
-  --rule: rgba(26, 24, 21, 0.85);
-  --hair: rgba(26, 24, 21, 0.2);
+  --rule: rgb(var(--ink-rgb) / 0.85);
+  --hair: rgb(var(--ink-rgb) / 0.2);
   --red: #8f2d20;          /* 期号 / 序号 / 强调的酒红 */
+  --muted-soft: #8a7d6c;   /* 更浅的元信息灰 */
+  --paper-bright: #fffaf0; /* 提亮纸面（表格/代码块高光） */
+
+  /* RGB 通道值：供 rgb(var(--x-rgb) / a) 透明度叠色使用，夜间模式整体翻转 */
+  --ink-rgb: 26 24 21;
+  --paper-rgb: 250 246 236;
+  --paper-bright-rgb: 255 250 240;
+  --red-rgb: 143 45 32;
 
   /* 兼容旧变量名（站点其它处仍在引用），统一收敛到年鉴配色 */
   --brand: var(--ink);
@@ -30,6 +38,49 @@
   /* 期号 / 栏目标签 / 元信息：等宽 */
   --font-mono: var(--font-mono-ui), "SFMono-Regular", ui-monospace, "JetBrains Mono",
     "Menlo", monospace;
+}
+
+/* —— 把年鉴配色注册为 Tailwind 颜色 token（inline：工具类直接引用 var()，夜间整体翻转）——
+   这样 text-ink / bg-paper-soft / border-red 等工具类与 globals.css 里的 var() 同步切换 */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-soft: var(--paper-soft);
+  --color-paper-deep: var(--paper-deep);
+  --color-paper-bright: var(--paper-bright);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-red: var(--red);
+}
+
+/* —— 夜间模式：暖墨褐。深褐纸张 + 暖白墨字 + 提亮酒红，延续印刷年鉴的暖调 —— */
+.dark {
+  --paper: #1a1714;
+  --paper-soft: #232019;
+  --paper-deep: #15110e;
+  --paper-bright: #2b271f;
+  --ink: #e7ddca;          /* 强文字（原近黑墨色） */
+  --ink-soft: #d8cdb8;     /* 正文 */
+  --muted: #a99f8c;
+  --muted-soft: #897f6e;
+  --rule: rgba(231, 221, 202, 0.82);
+  --hair: rgba(231, 221, 202, 0.18);
+  --red: #d2553f;          /* 提亮酒红，保证暗底对比 */
+
+  --ink-rgb: 231 221 202;
+  --paper-rgb: 35 32 25;
+  --paper-bright-rgb: 43 39 31;
+  --red-rgb: 210 85 63;
+
+  color-scheme: dark;
+}
+
+/* 夜间下纸张点纹改为极淡暖白点，避免暗点叠暗底「消失」 */
+.dark .site-grain::before {
+  background-image:
+    radial-gradient(circle at center, rgba(231, 221, 202, 0.05) 0.5px, transparent 0.6px);
+  opacity: 0.5;
 }
 
 html {
@@ -141,7 +192,7 @@ button:disabled,
 }
 
 ::selection {
-  background: rgba(143, 45, 32, 0.18);
+  background: rgb(var(--red-rgb) / 0.18);
 }
 
 .site-grain {
@@ -158,7 +209,7 @@ button:disabled,
   content: "";
   opacity: 0.6;
   background-image:
-    radial-gradient(circle at center, rgba(26, 24, 21, 0.045) 0.5px, transparent 0.6px);
+    radial-gradient(circle at center, rgb(var(--ink-rgb) / 0.045) 0.5px, transparent 0.6px);
   background-size: 4px 4px;
 }
 
@@ -170,14 +221,14 @@ button:disabled,
   border: 1px solid var(--hair);
   border-top: 2.5px solid var(--rule);
   border-radius: 0;
-  background: rgba(250, 246, 236, 0.7);
+  background: rgb(var(--paper-rgb) / 0.7);
   transition:
     background 200ms ease,
     transform 200ms ease;
 }
 
 .riso-card:hover {
-  background: rgba(250, 246, 236, 0.96);
+  background: rgb(var(--paper-rgb) / 0.96);
 }
 
 /* 颜色修饰类在年鉴里统一收敛（保留以兼容已有 JSX） */
@@ -836,9 +887,9 @@ button:disabled,
 
 .article-content p code,
 .article-content li code {
-  border: 1px solid rgb(26 24 21 / 0.16);
+  border: 1px solid rgb(var(--ink-rgb) / 0.16);
   border-radius: 0.25rem;
-  background: rgb(26 24 21 / 0.04);
+  background: rgb(var(--ink-rgb) / 0.04);
   padding: 0.12rem 0.4rem;
   font-size: 0.9em;
   color: var(--red);
@@ -877,7 +928,7 @@ button:disabled,
 
 .article-content blockquote {
   border-left: 3px solid var(--red);
-  background: rgba(26, 24, 21, 0.035);
+  background: rgb(var(--ink-rgb) / 0.035);
   padding: 0.85rem 1.35rem;
   color: var(--ink-soft);
   font-style: italic;
@@ -895,7 +946,7 @@ button:disabled,
 .article-content a {
   color: var(--red);
   text-decoration: underline;
-  text-decoration-color: rgb(143 45 32 / 0.4);
+  text-decoration-color: rgb(var(--red-rgb) / 0.4);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.22em;
   transition: text-decoration-color 160ms ease;
@@ -3819,31 +3870,31 @@ html.desktop-pet-document body {
 
 .daily-news-module .edition-bar {
   border-top: 0;
-  border-bottom-color: rgb(26 24 21 / 0.16);
+  border-bottom-color: rgb(var(--ink-rgb) / 0.16);
   padding-top: 0.25rem;
   padding-bottom: 0.65rem;
 }
 
 .daily-news-module .daily-news-issue {
-  border-color: rgb(26 24 21 / 0.1);
-  border-top-color: rgb(26 24 21 / 0.16);
+  border-color: rgb(var(--ink-rgb) / 0.1);
+  border-top-color: rgb(var(--ink-rgb) / 0.16);
   border-radius: 6px;
-  background: rgb(250 246 236 / 0.82);
+  background: rgb(var(--paper-rgb) / 0.82);
   box-shadow:
-    0 1px 0 rgb(255 250 240 / 0.95) inset,
-    0 28px 80px -64px rgb(26 24 21 / 0.45);
+    0 1px 0 rgb(var(--paper-bright-rgb) / 0.95) inset,
+    0 28px 80px -64px rgb(var(--ink-rgb) / 0.45);
 }
 
 .daily-news-sidebar .riso-card {
-  border-color: rgb(26 24 21 / 0.09);
-  border-top-color: rgb(26 24 21 / 0.12);
+  border-color: rgb(var(--ink-rgb) / 0.09);
+  border-top-color: rgb(var(--ink-rgb) / 0.12);
   border-radius: 6px;
-  background: rgb(255 250 240 / 0.46);
+  background: rgb(var(--paper-bright-rgb) / 0.46);
 }
 
 .daily-news-pane,
 .daily-news-sidebar {
-  scrollbar-color: rgb(143 45 32 / 0.22) transparent;
+  scrollbar-color: rgb(var(--red-rgb) / 0.22) transparent;
   scrollbar-width: thin;
 }
 
@@ -3855,7 +3906,7 @@ html.desktop-pet-document body {
 .daily-news-pane::-webkit-scrollbar-thumb,
 .daily-news-sidebar::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgb(143 45 32 / 0.18);
+  background: rgb(var(--red-rgb) / 0.18);
 }
 
 .daily-news-pane::-webkit-scrollbar-track,
@@ -3875,11 +3926,11 @@ html.desktop-pet-document body {
 .daily-news-issue .article-content h2[id="来源列表"] + ul > li {
   position: relative;
   margin: 0;
-  border-top: 2px solid rgb(143 45 32 / 0.72);
-  border-right: 1px solid rgb(26 24 21 / 0.14);
-  border-bottom: 1px solid rgb(26 24 21 / 0.14);
-  border-left: 1px solid rgb(26 24 21 / 0.14);
-  background: rgb(255 250 240 / 0.58);
+  border-top: 2px solid rgb(var(--red-rgb) / 0.72);
+  border-right: 1px solid rgb(var(--ink-rgb) / 0.14);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.14);
+  border-left: 1px solid rgb(var(--ink-rgb) / 0.14);
+  background: rgb(var(--paper-bright-rgb) / 0.58);
   padding: 0.95rem 1rem 1rem;
   color: rgb(60 54 44);
 }
@@ -3893,7 +3944,7 @@ html.desktop-pet-document body {
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.14em;
-  color: rgb(143 45 32);
+  color: var(--red);
 }
 
 .daily-news-issue .article-content h2[id="来源列表"] + ul > li > ul {
@@ -3904,7 +3955,7 @@ html.desktop-pet-document body {
 
 .daily-news-issue .article-content h2[id="来源列表"] + ul > li > ul > li {
   margin-top: 0;
-  border-top: 1px solid rgb(26 24 21 / 0.1);
+  border-top: 1px solid rgb(var(--ink-rgb) / 0.1);
   padding: 0.62rem 0 0.66rem;
   line-height: 1.55;
 }
@@ -4053,7 +4104,7 @@ summary:focus-visible,
 .article-content .bench-layers .bl-band:hover,
 .article-content .bench-planes .pl-layer:hover {
   transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(26, 24, 21, 0.1);
+  box-shadow: 0 4px 16px rgb(var(--ink-rgb) / 0.1);
 }
 .article-content .bench-pos .po-row:hover {
   background-color: var(--paper-soft, #faf6ec);

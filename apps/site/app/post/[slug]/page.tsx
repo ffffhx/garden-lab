@@ -45,7 +45,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const showToc = post.headings.length >= TOC_MIN_HEADINGS;
   const coverImage = post.cover ? (
-    <div className="overflow-hidden rounded-2xl border-[1.5px] border-[#1a1815]/70 bg-[#ece5d5]">
+    <div className="overflow-hidden rounded-2xl border-[1.5px] border-ink/70 bg-paper-deep">
       <img
         src={post.cover}
         alt={`${post.title} 封面`}
@@ -67,7 +67,7 @@ export default async function PostPage({ params }: PostPageProps) {
               <span className="riso-sticker riso-sticker--terra">Post · 文章</span>
               <BuildStamp />
             </div>
-            <h1 className="font-display max-w-[72rem] break-words text-balance text-3xl font-semibold leading-[1.06] tracking-[-0.02em] text-[#1a1815] [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
+            <h1 className="font-display max-w-[72rem] break-words text-balance text-3xl font-semibold leading-[1.06] tracking-[-0.02em] text-ink [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
               {post.title}
             </h1>
           </div>

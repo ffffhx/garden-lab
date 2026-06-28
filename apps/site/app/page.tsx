@@ -29,12 +29,12 @@ function SectionHead({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-end justify-between gap-4 border-b-2 border-[#1a1815] pb-3">
+    <div className="flex items-end justify-between gap-4 border-b-2 border-ink pb-3">
       <div>
-        <p className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[#8f2d20]">
+        <p className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-red">
           {kicker}
         </p>
-        <h2 className="font-display mt-1.5 text-3xl tracking-tight text-[#1a1815] sm:text-[2.6rem]">
+        <h2 className="font-display mt-1.5 text-3xl tracking-tight text-ink sm:text-[2.6rem]">
           {title}
         </h2>
       </div>
@@ -67,9 +67,9 @@ export default function HomePage() {
 
       {/* —— Hero / 报头引言 —— */}
       <section className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-0">
-        <div className="lg:border-r lg:border-[#1a1815]/25 lg:pr-12">
+        <div className="lg:border-r lg:border-ink/25 lg:pr-12">
           <p className="riso-sticker mb-5">{SITE.subtitle}</p>
-          <h1 className="font-display text-[2.7rem] leading-[1.08] text-[#1a1815] sm:text-6xl lg:text-[4.2rem]">
+          <h1 className="font-display text-[2.7rem] leading-[1.08] text-ink sm:text-6xl lg:text-[4.2rem]">
             {heroVerbs.map((verb, index) => (
               <React.Fragment key={verb}>
                 <span className="riso-mark">{verb}</span>
@@ -79,13 +79,13 @@ export default function HomePage() {
             <br />
             都在这座数字花园里生长。
           </h1>
-          <p className="drop-cap mt-7 max-w-2xl text-lg leading-[1.85] text-[#3c362c]">
+          <p className="drop-cap mt-7 max-w-2xl text-lg leading-[1.85] text-ink-soft">
             一座持续生长的数字花园，收录源码解析与工程实践、亲手做的项目，以及日常的技术观察。一边搭建一边修剪，让每一篇手记都留下年轮。
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-5">
             <Link
               href={`/category/${CATEGORY_DEFINITIONS.tech.slug}`}
-              className="inline-flex min-h-11 items-center rounded-none border-[1.5px] border-[#1a1815] bg-[#1a1815] px-5 text-sm font-semibold !text-[#faf6ec] transition hover:bg-[#8f2d20] hover:border-[#8f2d20]"
+              className="inline-flex min-h-11 items-center rounded-none border-[1.5px] border-ink bg-ink px-5 text-sm font-semibold !text-paper-soft transition hover:bg-red hover:border-red"
             >
               开始阅读 →
             </Link>
@@ -93,7 +93,7 @@ export default function HomePage() {
         </div>
 
         <div className="lg:pl-12">
-          <p className="font-mono-ui border-b border-[#1a1815]/25 pb-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[#8f2d20]">
+          <p className="font-mono-ui border-b border-ink/25 pb-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-red">
             本卷分区 · Contents
           </p>
           <div>
@@ -101,20 +101,20 @@ export default function HomePage() {
               <Link
                 key={category.slug}
                 href={getCategoryHref(category.slug)}
-                className="group flex items-baseline gap-4 border-b border-[#1a1815]/15 py-4 transition hover:bg-[#1a1815]/[0.03]"
+                className="group flex items-baseline gap-4 border-b border-ink/15 py-4 transition hover:bg-ink/[0.03]"
               >
-                <span className="font-display w-9 shrink-0 text-2xl text-[#8f2d20]">
+                <span className="font-display w-9 shrink-0 text-2xl text-red">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="font-display block text-xl text-[#1a1815] transition group-hover:text-[#8f2d20]">
+                  <span className="font-display block text-xl text-ink transition group-hover:text-red">
                     {category.label}
                   </span>
-                  <span className="mt-0.5 block text-xs leading-5 text-[#6a6155]">
+                  <span className="mt-0.5 block text-xs leading-5 text-muted">
                     {category.description}
                   </span>
                 </span>
-                <span className="tabular shrink-0 text-xs text-[#6a6155]">
+                <span className="tabular shrink-0 text-xs text-muted">
                   {category.posts.length} {category.slug === CATEGORY_DEFINITIONS.dailyNews.slug ? "期" : "篇"}
                 </span>
               </Link>
@@ -129,7 +129,7 @@ export default function HomePage() {
           kicker="Standalone Projects"
           title="已独立维护的项目"
           action={
-            <p className="hidden max-w-xs text-xs leading-6 text-[#6a6155] sm:block sm:text-right">
+            <p className="hidden max-w-xs text-xs leading-6 text-muted sm:block sm:text-right">
               独立维护的小项目都放在这里，保留简短索引和公开地址。
             </p>
           }
@@ -139,27 +139,27 @@ export default function HomePage() {
             const card = (
               <article className="riso-card group flex min-h-[16rem] flex-col p-5">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-[#8f2d20]">
+                  <span className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-red">
                     {String(index + 1).padStart(2, "0")} · {project.badge}
                   </span>
                   {project.private ? <PrivateBadge withText /> : null}
                 </div>
-                <h3 className="font-display mt-4 text-2xl leading-tight text-[#1a1815]">
+                <h3 className="font-display mt-4 text-2xl leading-tight text-ink">
                   {project.title}
                 </h3>
-                <p className="font-mono-ui mt-1 text-[0.7rem] uppercase tracking-[0.08em] text-[#6a6155]">
+                <p className="font-mono-ui mt-1 text-[0.7rem] uppercase tracking-[0.08em] text-muted">
                   {project.productName}
                 </p>
-                <p className="mt-3 text-[0.95rem] leading-7 text-[#3c362c]">{project.description}</p>
+                <p className="mt-3 text-[0.95rem] leading-7 text-ink-soft">{project.description}</p>
                 <div className="mt-auto pt-5">
-                  <p className="break-all font-mono text-[0.7rem] text-[#6a6155]">
+                  <p className="break-all font-mono text-[0.7rem] text-muted">
                     {project.displayUrl}
                   </p>
                   <a
                     href={project.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="font-mono-ui mt-3 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#1a1815] transition hover:gap-2.5 hover:text-[#8f2d20]"
+                    className="font-mono-ui mt-3 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-ink transition hover:gap-2.5 hover:text-red"
                   >
                     打开网站 →
                   </a>

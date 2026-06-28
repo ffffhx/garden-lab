@@ -61,8 +61,8 @@ function ArchiveIssueLink({
       : "group block min-w-0 max-w-full overflow-hidden rounded-[6px] px-3 py-3 transition";
   const inactiveClass =
     variant === "mobile"
-      ? "bg-[#fffaf0]/62 text-[#3c362c] ring-1 ring-[#1a1815]/10 hover:bg-[#fffaf0] hover:ring-[#8f2d20]/35"
-      : "text-[#3c362c] hover:bg-[#8f2d20]/[0.055] hover:text-[#1a1815]";
+      ? "bg-paper-bright/62 text-ink-soft ring-1 ring-ink/10 hover:bg-paper-bright hover:ring-red/35"
+      : "text-ink-soft hover:bg-red/[0.055] hover:text-ink";
 
   return (
     <Link
@@ -70,7 +70,7 @@ function ArchiveIssueLink({
       aria-current={active ? "page" : undefined}
       className={[
         baseClass,
-        active ? "bg-[#1a1815] text-[#faf6ec] shadow-[0_14px_30px_-26px_rgba(26,24,21,0.65)]" : inactiveClass,
+        active ? "bg-ink text-paper-soft shadow-[0_14px_30px_-26px_rgba(26,24,21,0.65)]" : inactiveClass,
       ].join(" ")}
     >
       <span className="font-mono-ui block text-[0.72rem] font-semibold uppercase tracking-[0.1em]">
@@ -80,7 +80,7 @@ function ArchiveIssueLink({
         className={[
           "mt-1 block truncate",
           variant === "mobile" ? "text-xs" : "text-sm",
-          active ? "text-[#faf6ec]/82" : "text-[#6a6155] group-hover:text-[#3c362c]",
+          active ? "text-paper-soft/82" : "text-muted group-hover:text-ink-soft",
         ].join(" ")}
       >
         {entryTitle}
@@ -88,7 +88,7 @@ function ArchiveIssueLink({
       <span
         className={[
           "font-mono-ui mt-1.5 block truncate text-[0.64rem] uppercase tracking-[0.08em]",
-          active ? "text-[#faf6ec]/62" : "text-[#8a7d6c]",
+          active ? "text-paper-soft/62" : "text-muted-soft",
         ].join(" ")}
       >
         {entry.archiveMetaText}
@@ -111,19 +111,19 @@ function IssueArchive({
   if (variant === "mobile") {
     return (
       <nav
-        className="min-w-0 max-w-full overflow-hidden rounded-[6px] bg-[#efe6d6]/38 px-3 py-3 xl:hidden"
+        className="min-w-0 max-w-full overflow-hidden rounded-[6px] bg-paper-deep/38 px-3 py-3 xl:hidden"
         aria-label="每日新闻日期档案"
       >
         <div className="mb-3 flex items-baseline justify-between gap-4">
-          <h2 className="font-display text-2xl text-[#1a1815]">日期档案</h2>
-          <span className="font-mono-ui text-[0.68rem] uppercase tracking-[0.14em] text-[#6a6155]">
+          <h2 className="font-display text-2xl text-ink">日期档案</h2>
+          <span className="font-mono-ui text-[0.68rem] uppercase tracking-[0.14em] text-muted">
             {entries.length} 期
           </span>
         </div>
         <div className="max-h-[22rem] min-w-0 max-w-full space-y-4 overflow-y-auto overflow-x-hidden pr-1">
           {archiveMonths.map((month) => (
             <section key={month.key} className="space-y-2">
-              <h3 className="font-mono-ui sticky top-0 z-10 bg-[#faf6ec]/95 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#8f2d20] backdrop-blur">
+              <h3 className="font-mono-ui sticky top-0 z-10 bg-paper-soft/95 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-red backdrop-blur">
                 {month.label}
               </h3>
               <div className="grid min-w-0 max-w-full grid-cols-2 gap-2">
@@ -145,19 +145,19 @@ function IssueArchive({
 
   return (
     <nav
-      className="hidden min-w-0 max-w-full overflow-hidden rounded-[6px] bg-[#efe6d6]/32 px-3 py-4 xl:block"
+      className="hidden min-w-0 max-w-full overflow-hidden rounded-[6px] bg-paper-deep/32 px-3 py-4 xl:block"
       aria-label="每日新闻日期档案"
     >
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="font-display text-2xl text-[#1a1815]">日期档案</h2>
-        <span className="font-mono-ui text-[0.68rem] uppercase tracking-[0.14em] text-[#6a6155]">
+        <h2 className="font-display text-2xl text-ink">日期档案</h2>
+        <span className="font-mono-ui text-[0.68rem] uppercase tracking-[0.14em] text-muted">
           {entries.length} 期
         </span>
       </div>
       <div className="mt-4 min-w-0 max-w-full space-y-5 pr-1">
         {archiveMonths.map((month) => (
           <section key={month.key} className="space-y-1">
-            <h3 className="font-mono-ui sticky top-0 z-10 bg-[#faf6ec]/95 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#8f2d20] backdrop-blur">
+            <h3 className="font-mono-ui sticky top-0 z-10 bg-paper-soft/95 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-red backdrop-blur">
               {month.label}
             </h3>
             {month.entries.map((entry) => (
@@ -181,19 +181,19 @@ function CurrentThreadPanel({ thread }: { thread: DailyNewsCurrentThread }) {
   }
 
   return (
-    <section className="rounded-[6px] bg-[#efe6d6]/45 px-4 py-4 shadow-[inset_0_1px_0_rgba(26,24,21,0.08)] sm:px-5">
+    <section className="rounded-[6px] bg-paper-deep/45 px-4 py-4 shadow-[inset_0_1px_0_rgba(26,24,21,0.08)] sm:px-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-        <p className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[#8f2d20]">
+        <p className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-red">
           Current Thread · 当前主线
         </p>
-        <p className="font-mono-ui text-[0.68rem] uppercase tracking-[0.14em] text-[#6a6155]">
+        <p className="font-mono-ui text-[0.68rem] uppercase tracking-[0.14em] text-muted">
           {thread.label}
         </p>
       </div>
-      <h2 className="font-display mt-3 text-balance text-2xl leading-tight text-[#1a1815] sm:text-3xl">
+      <h2 className="font-display mt-3 text-balance text-2xl leading-tight text-ink sm:text-3xl">
         {thread.title}
       </h2>
-      <p className="mt-2 max-w-5xl text-sm leading-7 text-[#3c362c] sm:text-base">
+      <p className="mt-2 max-w-5xl text-sm leading-7 text-ink-soft sm:text-base">
         {thread.summary}
       </p>
       {thread.topics.length ? (
@@ -201,7 +201,7 @@ function CurrentThreadPanel({ thread }: { thread: DailyNewsCurrentThread }) {
           {thread.topics.map((topic) => (
             <span
               key={topic}
-              className="font-mono-ui border border-[#1a1815]/20 bg-[#fffaf0]/70 px-2.5 py-1 text-[0.64rem] uppercase tracking-[0.08em] text-[#6a6155]"
+              className="font-mono-ui border border-ink/20 bg-paper-bright/70 px-2.5 py-1 text-[0.64rem] uppercase tracking-[0.08em] text-muted"
             >
               {topic}
             </span>
@@ -231,14 +231,14 @@ function IssueNavigator({
   return (
     <nav
       className={[
-        "min-w-0 max-w-full overflow-hidden rounded-[6px] bg-[#fffaf0]/52 px-3 py-4",
+        "min-w-0 max-w-full overflow-hidden rounded-[6px] bg-paper-bright/52 px-3 py-4",
         variant === "mobile" ? "xl:hidden" : "hidden xl:block",
       ].join(" ")}
       aria-label="每日新闻阅读导航"
     >
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="font-display text-2xl text-[#1a1815]">历史漫游</h2>
-        <span className="font-mono-ui text-[0.68rem] uppercase tracking-[0.14em] text-[#6a6155]">
+        <h2 className="font-display text-2xl text-ink">历史漫游</h2>
+        <span className="font-mono-ui text-[0.68rem] uppercase tracking-[0.14em] text-muted">
           Jump
         </span>
       </div>
@@ -255,7 +255,7 @@ function IssueNavigator({
               <div
                 key={item.label}
                 aria-disabled="true"
-                className="min-w-0 max-w-full overflow-hidden rounded-[6px] bg-[#1a1815]/[0.035] px-3 py-3 text-[#8a7d6c]/70"
+                className="min-w-0 max-w-full overflow-hidden rounded-[6px] bg-ink/[0.035] px-3 py-3 text-muted-soft/70"
               >
                 <span className="font-mono-ui block text-[0.66rem] font-semibold uppercase tracking-[0.12em]">
                   {item.label}
@@ -269,16 +269,16 @@ function IssueNavigator({
             <Link
               key={item.label}
               href={item.entry.href}
-              className="group block min-w-0 max-w-full overflow-hidden rounded-[6px] bg-[#faf6ec]/72 px-3 py-3 ring-1 ring-[#1a1815]/10 transition hover:bg-[#1a1815] hover:text-[#faf6ec] hover:ring-[#1a1815]"
+              className="group block min-w-0 max-w-full overflow-hidden rounded-[6px] bg-paper-soft/72 px-3 py-3 ring-1 ring-ink/10 transition hover:bg-ink hover:text-paper-soft hover:ring-ink"
             >
               <span className="font-mono-ui flex items-center justify-between gap-3 text-[0.66rem] font-semibold uppercase tracking-[0.12em]">
                 <span>{item.label}</span>
-                <span className="text-[#8a7d6c] group-hover:text-[#faf6ec]/65">{item.meta}</span>
+                <span className="text-muted-soft group-hover:text-paper-soft/65">{item.meta}</span>
               </span>
               <span className="font-mono-ui mt-2 block text-[0.72rem] font-semibold tracking-[0.08em]">
                 {item.entry.dateSlug}
               </span>
-              <span className="mt-1 block truncate text-sm text-[#6a6155] group-hover:text-[#faf6ec]/78">
+              <span className="mt-1 block truncate text-sm text-muted group-hover:text-paper-soft/78">
                 {getArchiveEntryTitle(item.entry)}
               </span>
             </Link>
@@ -307,40 +307,40 @@ export function DailyNewsModule({ entries, post }: DailyNewsModuleProps) {
           <span>{activeDateSlug}</span>
         </div>
 
-        <section className="grid gap-5 rounded-[6px] bg-[#fffaf0]/38 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end lg:gap-8 sm:px-5">
+        <section className="grid gap-5 rounded-[6px] bg-paper-bright/38 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end lg:gap-8 sm:px-5">
           <div className="min-w-0">
             <span className="riso-sticker riso-sticker--pink">Module · 新闻档案</span>
-            <h1 className="font-display mt-3 max-w-4xl text-balance text-4xl leading-[1.02] text-[#1a1815] sm:text-6xl">
+            <h1 className="font-display mt-3 max-w-4xl text-balance text-4xl leading-[1.02] text-ink sm:text-6xl">
               每日新闻
             </h1>
-            <p className="mt-4 max-w-4xl overflow-hidden text-base leading-8 text-[#3c362c] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:5] sm:text-lg lg:[-webkit-line-clamp:4]">
+            <p className="mt-4 max-w-4xl overflow-hidden text-base leading-8 text-ink-soft [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:5] sm:text-lg lg:[-webkit-line-clamp:4]">
               {post.excerpt}
             </p>
           </div>
 
-          <div className="rounded-[6px] bg-[#efe6d6]/55 px-4 py-4 shadow-[inset_0_1px_0_rgba(26,24,21,0.1)]">
+          <div className="rounded-[6px] bg-paper-deep/55 px-4 py-4 shadow-[inset_0_1px_0_rgba(26,24,21,0.1)]">
             <div className="flex items-start justify-between gap-4">
-              <p className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[#8f2d20]">
+              <p className="font-mono-ui text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-red">
                 Current Edition
               </p>
-              <p className="font-mono-ui text-[0.68rem] uppercase tracking-[0.16em] text-[#6a6155]">
+              <p className="font-mono-ui text-[0.68rem] uppercase tracking-[0.16em] text-muted">
                 No. {String(issueNumber).padStart(2, "0")}
               </p>
             </div>
             <div className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-3">
-              <p className="font-display text-5xl leading-[0.9] text-[#1a1815] sm:text-6xl lg:text-5xl">
+              <p className="font-display text-5xl leading-[0.9] text-ink sm:text-6xl lg:text-5xl">
                 {issueMonth}
               </p>
-              <div className="border-l border-[#8f2d20]/22 pl-3">
-                <p className="font-display text-5xl leading-[0.9] text-[#1a1815] sm:text-6xl lg:text-5xl">
+              <div className="border-l border-red/22 pl-3">
+                <p className="font-display text-5xl leading-[0.9] text-ink sm:text-6xl lg:text-5xl">
                   {issueDay}
                 </p>
-                <p className="font-mono-ui mt-2 text-[0.7rem] uppercase tracking-[0.12em] text-[#6a6155]">
+                <p className="font-mono-ui mt-2 text-[0.7rem] uppercase tracking-[0.12em] text-muted">
                   {issueYear}
                 </p>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-[#6a6155]">
+            <p className="mt-4 text-sm leading-6 text-muted">
               {activeEntry?.dateText ?? post.dateText} ·{" "}
               {activeEntry?.archiveMetaText ?? post.readingTimeText}
             </p>
@@ -358,7 +358,7 @@ export function DailyNewsModule({ entries, post }: DailyNewsModuleProps) {
               <span className="riso-sticker riso-sticker--terra">Edition · 单日速览</span>
               <BuildStamp />
             </div>
-            <h2 className="font-display max-w-[74rem] break-words text-balance text-3xl leading-[1.04] text-[#1a1815] [overflow-wrap:anywhere] sm:text-5xl">
+            <h2 className="font-display max-w-[74rem] break-words text-balance text-3xl leading-[1.04] text-ink [overflow-wrap:anywhere] sm:text-5xl">
               {activeIssueTitle}
             </h2>
             <PostMeta

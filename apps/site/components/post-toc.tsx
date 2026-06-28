@@ -73,7 +73,7 @@ export function PostToc({ headings }: PostTocProps) {
 
   return (
     <aside className="riso-card riso-card--pink p-5 backdrop-blur xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:overscroll-contain 2xl:p-6">
-      <p className="font-mono-ui mb-4 text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#1a1815] xl:sticky xl:top-0 xl:bg-[#faf6ec]/95 xl:pb-3 xl:backdrop-blur">
+      <p className="font-mono-ui mb-4 text-[0.72rem] font-bold uppercase tracking-[0.18em] text-ink xl:sticky xl:top-0 xl:bg-paper-soft/95 xl:pb-3 xl:backdrop-blur">
         目录 · Index
       </p>
       <nav aria-label="文章目录" className="space-y-1">
@@ -82,11 +82,11 @@ export function PostToc({ headings }: PostTocProps) {
             key={heading.id}
             href={`#${heading.id}`}
             className={cn(
-              "block rounded-lg px-3 py-2 text-sm leading-6 text-[#3c362c] transition hover:bg-[#1a1815]/12 hover:text-[#1a1815]",
+              "block rounded-lg px-3 py-2 text-sm leading-6 text-ink-soft transition hover:bg-ink/12 hover:text-ink",
               heading.depth === 3 && "ml-3",
               heading.depth === 4 && "ml-6",
               activeId === heading.id &&
-                "border-l-2 border-[#8f2d20] bg-[#8f2d20]/14 font-semibold text-[#1a1815] hover:bg-[#8f2d20]/14"
+                "border-l-2 border-red bg-red/14 font-semibold text-ink hover:bg-red/14"
             )}
           >
             {heading.text}

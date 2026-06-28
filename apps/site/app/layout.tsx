@@ -54,8 +54,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f4efe4",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4efe4" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1714" },
+  ],
 };
+
+// 在水合前同步应用主题，避免夜间模式刷新时白屏闪烁（FOUC）
+const themeInitScript = `(function(){try{var s=localStorage.getItem('theme');var d=s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;var e=document.documentElement;e.classList.toggle('dark',d);e.style.colorScheme=d?'dark':'light';}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -66,8 +72,10 @@ export default function RootLayout({
     <html
       lang="zh-CN"
       className={`${caslon.variable} ${newsreader.variable} ${splineMono.variable}`}
+      suppressHydrationWarning
     >
       <body>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <RootChrome>{children}</RootChrome>
       </body>
     </html>

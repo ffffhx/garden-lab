@@ -39,14 +39,14 @@ export function PostMeta({
           </span>
         ))}
       </div>
-      <span className="font-mono-ui inline-flex items-center gap-2 text-[0.78rem] tracking-[0.02em] text-[#6b6457]">
-        <span aria-hidden="true" className="text-[#8f2d20]/60">✦</span>
+      <span className="font-mono-ui inline-flex items-center gap-2 text-[0.78rem] tracking-[0.02em] text-muted">
+        <span aria-hidden="true" className="text-red/60">✦</span>
         {dateText}
-        <span aria-hidden="true" className="text-[#1a1815]/60">✦</span>
+        <span aria-hidden="true" className="text-ink/60">✦</span>
         {readingTimeText}
       </span>
       {showTags && tags.length > 0 ? (
-        <span className="text-[#6b6457]/70">{tags.map((tag) => `#${tag}`).join(" ")}</span>
+        <span className="text-muted/70">{tags.map((tag) => `#${tag}`).join(" ")}</span>
       ) : null}
     </div>
   );

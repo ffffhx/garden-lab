@@ -46,22 +46,22 @@ export function PostCard({
           <div className={post.cover ? "space-y-4" : "space-y-3"}>
             <h2
               className={[
-                "font-display break-words font-semibold leading-[1.12] tracking-[-0.015em] text-[#1a1815] [overflow-wrap:anywhere]",
+                "font-display break-words font-semibold leading-[1.12] tracking-[-0.015em] text-ink [overflow-wrap:anywhere]",
                 featured ? "text-3xl sm:text-[2.6rem]" : "text-2xl",
               ].join(" ")}
             >
-              <Link href={`/post/${post.slug}`} className="transition-colors hover:text-[#8f2d20]">
+              <Link href={`/post/${post.slug}`} className="transition-colors hover:text-red">
                 {post.title}
               </Link>
             </h2>
             {featured || !post.cover ? (
-              <p className="text-[0.98rem] leading-8 text-[#3c362c]">{post.excerpt}</p>
+              <p className="text-[0.98rem] leading-8 text-ink-soft">{post.excerpt}</p>
             ) : null}
           </div>
           <div className="mt-auto">
             <Link
               href={`/post/${post.slug}`}
-              className="font-mono-ui inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#1a1815] transition-all group-hover:gap-3 group-hover:text-[#8f2d20]"
+              className="font-mono-ui inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-ink transition-all group-hover:gap-3 group-hover:text-red"
             >
               继续阅读
               <span aria-hidden="true">→</span>
@@ -71,7 +71,7 @@ export function PostCard({
         {post.cover ? (
           <Link
             href={`/post/${post.slug}`}
-            className="block overflow-hidden rounded-2xl border-[1.5px] border-[#1a1815]/70 bg-[#ece5d5]"
+            className="block overflow-hidden rounded-2xl border-[1.5px] border-ink/70 bg-paper-deep"
           >
             <img
               src={post.cover}

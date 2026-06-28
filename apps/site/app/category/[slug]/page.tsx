@@ -70,16 +70,16 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <div className="halftone pointer-events-none absolute inset-0 opacity-[0.4] mix-blend-multiply" />
         <div className="relative">
           <span className={`riso-sticker riso-sticker--${color}`}>Category · 分区</span>
-          <h1 className="font-display mt-4 text-4xl font-semibold tracking-[-0.015em] text-[#1a1815] sm:text-5xl">
+          <h1 className="font-display mt-4 text-4xl font-semibold tracking-[-0.015em] text-ink sm:text-5xl">
             {category.label}
           </h1>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-[#3c362c]">
+          <p className="mt-4 max-w-3xl text-base leading-8 text-ink-soft">
             {category.description}
           </p>
           <div className="mt-6">
             <Link
               href="/"
-              className="font-mono-ui inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-[#1a1815]/70 transition hover:gap-2.5 hover:text-[#8f2d20]"
+              className="font-mono-ui inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-ink/70 transition hover:gap-2.5 hover:text-red"
             >
               <span aria-hidden="true">←</span> 返回首页
             </Link>

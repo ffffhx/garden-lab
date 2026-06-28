@@ -24,7 +24,7 @@ export function CategorySearchList({ posts, label }: CategorySearchListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 border-b border-[#1a1815]/15 pb-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-ink/15 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <label className="relative w-full sm:max-w-sm">
           <span className="sr-only">在「{label}」里按标题搜索</span>
           <input
@@ -32,10 +32,10 @@ export function CategorySearchList({ posts, label }: CategorySearchListProps) {
             value={query}
             onChange={(event) => setQuery(event.currentTarget.value)}
             placeholder={`在「${label}」里搜索标题…`}
-            className="min-h-11 w-full rounded-full border border-[#1a1815]/60 bg-[#faf6ec] px-4 text-sm text-[#1a1815] outline-none transition placeholder:text-[#6a6155]/70 focus:border-[#8f2d20] focus:ring-4 focus:ring-[#8f2d20]/12"
+            className="min-h-11 w-full rounded-full border border-ink/60 bg-paper-soft px-4 text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-red focus:ring-4 focus:ring-red/12"
           />
         </label>
-        <p className="font-mono-ui shrink-0 text-xs uppercase tracking-[0.1em] text-[#6a6155]">
+        <p className="font-mono-ui shrink-0 text-xs uppercase tracking-[0.1em] text-muted">
           {trimmed ? `匹配 ${results.length} 篇` : `共 ${posts.length} 篇`}
         </p>
       </div>

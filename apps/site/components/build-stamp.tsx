@@ -19,7 +19,7 @@ export function BuildStamp({ className }: { className?: string }) {
       rel="noreferrer"
       title="本页构建版本（commit）——和仓库最新 commit 对得上就是最新；点开看对应提交"
       className={cn(
-        "font-mono-ui inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-[#1a1815]/15 bg-[#faf6ec]/80 px-2.5 py-0.5 text-[0.7rem] tracking-[0.06em] text-[#6b6457] transition hover:border-[#8f2d20]/40 hover:text-[#8f2d20]",
+        "font-mono-ui inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-ink/15 bg-paper-soft/80 px-2.5 py-0.5 text-[0.7rem] tracking-[0.06em] text-muted transition hover:border-red/40 hover:text-red",
         className
       )}
     >

@@ -113,6 +113,10 @@ window.COVERS = (function () {
       ["模型准入", "模型恢复", "GPU 成本", "AI 订阅", "内存供应"],
       "AI 的默认功能，开始被准入、供应、价格和监管边界重新定价。",
       "GPT-5.6 Sol · Mythos 5 · AWS GPU · Microsoft 365 · Apple/CXMT"),
+    news("2026/06/28/2026-06-28-x-上-ai-与前端热点速览", "2026-06-28",
+      ["模型恢复", "替代模型", "AI 硬件", "监管信号", "平台分发"],
+      "前沿 AI 与内容平台，都在被准入边界、替代供给和入口分发重新塑形。",
+      "Anthropic Mythos · Sakana Fugu · OpenAI Hardware · DC 监管 · YouTube Clips"),
   ];
 
   const T = [

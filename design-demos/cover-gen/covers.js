@@ -117,6 +117,10 @@ window.COVERS = (function () {
       ["模型恢复", "替代模型", "AI 硬件", "监管信号", "平台分发"],
       "前沿 AI 与内容平台，都在被准入边界、替代供给和入口分发重新塑形。",
       "Anthropic Mythos · Sakana Fugu · OpenAI Hardware · DC 监管 · YouTube Clips"),
+    news("2026/06/29/2026-06-29-x-上-ai-与前端热点速览", "2026-06-29",
+      ["开权重模型", "算力限额", "企业 AI", "年龄门槛", "协作 agent"],
+      "AI 基础设施的边界，正在从能力扩展到供应、合规、企业流程和入口归属。",
+      "GLM-5.2 · Google/Meta Gemini · OpenAI/HP · Australia · Claude Tag"),
   ];
 
   const T = [

@@ -8,8 +8,8 @@ describe("SiteHeader", () => {
   it("uses high-contrast hover styles for navigation links", () => {
     const markup = renderToStaticMarkup(createElement(SiteHeader));
 
-    expect(markup).toContain("hover:bg-[#1a1815]/14");
-    expect(markup).toContain("hover:text-[#1a1815]");
+    expect(markup).toContain("hover:bg-ink/14");
+    expect(markup).toContain("hover:text-ink");
     expect(markup).not.toContain("hover:bg-slate-950");
     expect(markup).not.toContain("hover:text-white");
   });

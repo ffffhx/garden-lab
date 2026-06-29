@@ -30,8 +30,8 @@ describe("PostToc", () => {
     expect(markup).toContain(
       'href="#summary" class="block rounded-lg px-3 py-2 text-sm leading-6'
     );
-    expect(markup).toContain("bg-[#8f2d20]/14");
-    expect(markup).toContain("text-[#1a1815]");
+    expect(markup).toContain("bg-red/14");
+    expect(markup).toContain("text-ink");
   });
 
   it("renders a scrollable toc container for long article navigation", () => {

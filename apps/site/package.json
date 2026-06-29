@@ -63,7 +63,7 @@
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@types/ws": "^8.18.1",
-    "postcss": "^8.5.3",
+    "postcss": "^8.5.16",
     "sharp": "0.34.5",
     "tailwindcss": "^4.1.7",
     "typescript": "^5.8.3",

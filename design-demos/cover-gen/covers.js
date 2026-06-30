@@ -121,6 +121,10 @@ window.COVERS = (function () {
       ["开权重模型", "算力限额", "企业 AI", "年龄门槛", "协作 agent"],
       "AI 基础设施的边界，正在从能力扩展到供应、合规、企业流程和入口归属。",
       "GLM-5.2 · Google/Meta Gemini · OpenAI/HP · Australia · Claude Tag"),
+    news("2026/06/30/2026-06-30-x-上-ai-与前端热点速览", "2026-06-30",
+      ["模型成本", "政府 AI", "AI 音乐", "代码安全", "Codex 硬件"],
+      "AI 的默认入口，正在被成本、合规、内容来源、代码边界和硬件快捷键重新塑形。",
+      "Amazon/Anthropic · California/Claude · TIDAL · Meta · Codex shortcuts"),
   ];
 
   const T = [

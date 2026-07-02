@@ -125,6 +125,10 @@ window.COVERS = (function () {
       ["模型成本", "政府 AI", "AI 音乐", "代码安全", "Codex 硬件"],
       "AI 的默认入口，正在被成本、合规、内容来源、代码边界和硬件快捷键重新塑形。",
       "Amazon/Anthropic · California/Claude · TIDAL · Meta · Codex shortcuts"),
+    news("2026/07/02/2026-07-02-x-上-ai-与前端热点速览", "2026-07-02",
+      ["AI 云", "模型准入", "能源账本", "开放模型", "工具更新"],
+      "AI 的运行账本，正在把算力、准入、能耗、日志和模型选择一起推到产品界面。",
+      "Meta Compute · Fable 5 · AI standards · Google/Amazon · Together AI"),
   ];
 
   const T = [

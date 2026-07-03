@@ -27,7 +27,7 @@ coverPosition: "below-title"
 4. 切换核心不是模拟页面点击，而是后台状态机：查账号、读当前态、退出、登录、写入 Coze Passport、验权。
 5. 个人/主账号走 CloudIdentity SDK 登录链路，企业子账号走 CloudIdentity SaaS userlogin 链路。
 6. 企业 SaaS 登录需要处理密码加盐 RSA 加密、工作流 token、OAuth 跳转和 `webRequest` 捕获 302。
-7. 写 Coze 登录态时调用 Coze Web Passport 接口，带 CSRF、请求签名和 `platform_app_id`。
+7. 写 Coze 登录态时调用 Coze Web Passport 接口，带 CSRF、请求签名和 `platform_app_id`；后台裸 `fetch` 会缺反爬库的动态签名而命中反作弊（错误码 7），所以现在优先把这次请求放进 Coze 页面主世界，借页面上的反爬 hook 补齐签名。
 8. 成功条件以 Coze API 验证为主：uid、enterprise_id、套餐 level、企业角色都要匹配。
 9. content script 只作为页面状态补充信号，主要用于当前态读取、企业页兜底和用户可见反馈。
 10. 遇到额外验证、企业审批中、角色不匹配、同权益账号等情况，状态机会跳过或转入人工验证，而不是盲目报成功。
@@ -41,9 +41,10 @@ coverPosition: "below-title"
 | 项 | 值 |
 | --- | --- |
 | 仓库 | `/Users/bytedance/Code/coze-account-switch-extension` |
-| 观察日期 | `2026-06-03` |
-| 观察 commit | `9da36ab87ae92efeb62771d3fdb9580f522964ad` |
+| 观察日期 | `2026-06-03`（`2026-07-03` 修订） |
+| 观察 commit | `9da36ab`（修订基于 `5e334ae` 及本地工作区） |
 | 工作区状态 | 观察时存在未提交改动，本文基于本地工作区源码阅读 |
+| 修订说明 | `2026-07-03` 补充第 6 节 Passport 后台登录的**风控规避机制**：反作弊错误码 7、限流冷却熔断、浏览器模拟点击兜底，以及在 Coze 页面主世界里借反爬 hook 加签的 `loginCozePassportViaPage` 链路 |
 | 扩展清单 | `manifest.json` |
 | popup 入口 | `src/popup/popup.html`、`src/popup/popup.js` |
 | 后台入口 | `src/background/service-worker.js` |
@@ -203,9 +204,10 @@ async function queryNextAccount(skippedAccounts) { // 从账号服务拿下一�
 5. 如果当前已经是目标账号，打开验证页并直接返回成功。
 6. 如果当前已登录其他账号，调用 Passport logout。
 7. 调 CloudIdentity API 登录目标账号。
-8. 拿 auth code 调 Coze Passport auth login。
-9. 打开或刷新 Coze 验证页。
-10. 轮询 Coze API，直到身份、权益和角色都匹配。
+8. 检查 Passport 登录限流冷却，若在冷却期内直接转人工兜底。
+9. 拿 auth code 调 Coze Passport auth login：有 Coze 标签页时走页面主世界加签，否则退回后台 `fetch`。
+10. 打开或刷新 Coze 验证页。
+11. 轮询 Coze API，直到身份、权益和角色都匹配。
 
 <figure class="fz083" data-reveal role="group" aria-label="Coze 测试账号切换状态机：从查询账号、读当前态、退出登录、CloudIdentity 登录、写入 Coze Passport 到最终验权的可观察步骤"><style>.fz083{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--green:#4f7233;--green-bg:#e7eedd;--green-br:#7c9c54;--cyan:#3f6d79;--cyan-bg:#dcebed;--cyan-br:#8fbcc4;--amber:#9a6516;--amber-bg:#f4e8cc;--amber-br:#d9b66a;--red:#8f2d20;--red-bg:#f1ddd6;--red-br:#cf9b90;--gray:#917f5c;--gray-bg:#ece4d2;background:var(--paper-soft,#faf6ec);border:1px solid var(--hair,rgba(26,24,21,.18));border-radius:14px;padding:clamp(16px,3vw,30px);margin:0;font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);color:var(--ink,#1a1815);box-sizing:border-box;overflow:hidden}.fz083 *{box-sizing:border-box}.fz083 .hd{margin-bottom:clamp(14px,2.4vw,22px)}.fz083 .t{font-size:clamp(17px,2.6vw,25px);font-weight:800;line-height:1.3;letter-spacing:.01em}.fz083 .s{margin-top:6px;font-size:clamp(12px,1.6vw,15px);color:var(--muted,#6a6155);line-height:1.45}.fz083 .row{display:flex;flex-wrap:nowrap;align-items:stretch;gap:0}.fz083 .node{flex:1 1 0;min-width:0;background:var(--paper-deep,#ece5d5);border:1.5px solid var(--hair,rgba(26,24,21,.18));border-radius:14px;padding:clamp(9px,1.4vw,14px);display:flex;flex-direction:column;justify-content:center;opacity:.55;transform:translateY(5px);animation:fz083pop 9s ease-in-out infinite}.fz083 .node .nm{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-weight:700;font-size:clamp(12px,1.7vw,16px);line-height:1.2;word-break:break-word}.fz083 .node .de{margin-top:5px;font-size:clamp(10px,1.4vw,13px);color:var(--ink-soft,#3c362c);line-height:1.35}.fz083 .cyan{background:var(--cyan-bg,#dcebed);border-color:var(--cyan-br,#8fbcc4)}.fz083 .cyan .nm{color:var(--cyan,#3f6d79)}.fz083 .green{background:var(--green-bg,#e7eedd);border-color:var(--green-br,#7c9c54)}.fz083 .green .nm{color:var(--green,#4f7233)}.fz083 .amber{background:var(--amber-bg,#f4e8cc);border-color:var(--amber-br,#d9b66a)}.fz083 .amber .nm{color:var(--amber,#9a6516)}.fz083 .red{background:var(--red-bg,#f1ddd6);border-color:var(--red-br,#cf9b90)}.fz083 .red .nm{color:var(--red,#8f2d20)}.fz083 .gray{background:var(--gray-bg,#ece4d2);border-color:var(--hair,rgba(26,24,21,.18))}.fz083 .gray .nm{color:var(--gray,#917f5c)}.fz083 .ar{flex:0 0 clamp(20px,3.2vw,40px);align-self:center;position:relative;height:14px;margin:0 2px}.fz083 .ar::before{content:"";position:absolute;left:0;right:8px;top:50%;height:2px;transform:translateY(-50%);background:linear-gradient(90deg,var(--muted,#6a6155),var(--muted,#6a6155));background-size:200% 100%;opacity:.5;animation:fz083flow 7s linear infinite}.fz083 .ar::after{content:"";position:absolute;right:0;top:50%;transform:translateY(-50%);border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid var(--muted,#6a6155);opacity:.7}.fz083 .n1{animation-delay:0s}.fz083 .n2{animation-delay:.7s}.fz083 .n3{animation-delay:1.4s}.fz083 .n4{animation-delay:2.1s}.fz083 .n5{animation-delay:3.4s}.fz083 .n6{animation-delay:4.1s}.fz083 .n7{animation-delay:4.8s}.fz083 .n8{animation-delay:5.5s}.fz083 .link{position:relative;height:clamp(26px,4vw,40px);margin:2px clamp(6px,2vw,22px)}.fz083 .link .seg{position:absolute;background:var(--muted,#6a6155);opacity:.5}.fz083 .link .h{right:0;top:0;height:2px;left:50%}.fz083 .link .v{left:0;top:0;width:2px;bottom:8px}.fz083 .link .h2{left:0;bottom:8px;height:2px;width:50%}.fz083 .link .pulse{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--red,#8f2d20);top:-2.5px;right:0;opacity:.8;animation:fz083trace 9s ease-in-out infinite}.fz083 .link .dn{position:absolute;left:-4px;bottom:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid var(--muted,#6a6155);opacity:.7}.fz083 .lbl{position:absolute;top:50%;left:50%;transform:translate(-50%,-130%);font-size:clamp(9px,1.3vw,12px);color:var(--muted,#6a6155);background:var(--paper-soft,#faf6ec);padding:0 6px;white-space:nowrap}.fz083 .ban{margin-top:clamp(12px,2vw,18px);background:var(--ink,#1a1815);border-radius:12px;padding:clamp(12px,2vw,18px) clamp(14px,2.4vw,24px);color:var(--paper-soft,#faf6ec);position:relative;overflow:hidden}.fz083 .ban::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 35%,rgba(250,246,236,.07) 50%,transparent 65%);background-size:280% 100%;animation:fz083sheen 10s ease-in-out infinite}.fz083 .ban .b1{font-weight:800;font-size:clamp(13px,1.9vw,17px);line-height:1.4;position:relative}.fz083 .ban .b1 .sk{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);color:var(--red-br,#cf9b90)}.fz083 .ban .b2{margin-top:6px;font-size:clamp(11px,1.5vw,14px);color:var(--cyan-br,#8fbcc4);line-height:1.4;position:relative}.fz083 .ban .b2 .mo{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace)}@keyframes fz083pop{0%,14%{opacity:.5;transform:translateY(5px)}26%,72%{opacity:1;transform:translateY(0)}90%,100%{opacity:.5;transform:translateY(5px)}}@keyframes fz083flow{0%{background-position:120% 0}100%{background-position:-120% 0}}@keyframes fz083trace{0%,18%{right:0;opacity:0}30%{opacity:.85}50%{right:calc(100% - 7px);opacity:.85}62%,100%{right:calc(100% - 7px);opacity:0}}@keyframes fz083sheen{0%{background-position:160% 0}55%,100%{background-position:-160% 0}}@media(max-width:560px){.fz083 .row{flex-wrap:wrap;gap:8px}.fz083 .node{flex:1 1 42%}.fz083 .ar{display:none}.fz083 .link{margin:4px 18px}}@media(prefers-reduced-motion:reduce){.fz083 .node{animation:none;opacity:1;transform:none}.fz083 .ar::before{animation:none}.fz083 .link .pulse{animation:none;opacity:0}.fz083 .ban::after{animation:none}}</style><div class="hd"><div class="t">切换状态机：每一步都可记录、可跳过、可回补</div><div class="s">状态机先证明当前不是目标，再退出旧账号并登录候选账号。</div></div><div class="row"><div class="node cyan n1"><div class="nm">query-account</div><div class="de">按权益和角色查候选</div></div><div class="ar"></div><div class="node green n2"><div class="nm">acquire-tab</div><div class="de">复用或打开 Coze</div></div><div class="ar"></div><div class="node amber n3"><div class="nm">read-current</div><div class="de">页面和 API 双读</div></div><div class="ar"></div><div class="node red n4"><div class="nm">already target?</div><div class="de">若已匹配则直接收尾</div></div></div><div class="link"><span class="lbl">否 · 退出旧账号</span><span class="seg h"></span><span class="seg v"></span><span class="seg h2"></span><span class="dn"></span><span class="pulse"></span></div><div class="row"><div class="node gray n5"><div class="nm">logout-api</div><div class="de">退出当前 Coze 账号</div></div><div class="ar"></div><div class="node amber n6"><div class="nm">signin-api</div><div class="de">换取 auth code</div></div><div class="ar"></div><div class="node cyan n7"><div class="nm">passport-login</div><div class="de">写入 Coze 登录态</div></div><div class="ar"></div><div class="node green n8"><div class="nm">verify-api</div><div class="de">确认身份权益角色</div></div></div><div class="ban"><div class="b1">失败不是黑盒：额外验证、角色不符、企业待审批都会进入 <span class="sk">skipped accounts</span>。</div><div class="b2"><span class="mo">popup</span> 展示的是后台 <span class="mo">steps</span>，所以用户能知道流程卡在哪里。</div></div></figure>
 
@@ -291,7 +293,9 @@ async function loginEnterpriseUser(account) { // 企业子账号登录入口
 | --- | --- |
 | `checkCozePassportLoginViaApi` | 调当前用户接口，判断 Coze Passport 是否已登录 |
 | `logoutCozePassportViaApi` | 调 logout 接口，`need_redirect=0`，避免页面跳转 |
-| `loginCozePassportViaApi` | 调 auth login 接口，提交 auth code 和 `platform_app_id` |
+| `loginCozePassportViaApi` | 后台 `fetch` 直接调 auth login，提交 auth code 和 `platform_app_id` |
+| `loginCozePassportViaPage` | 把同一个 auth login 请求丢进 Coze 页面主世界执行，借页面反爬 hook 加签 |
+| `loginCozePassport` | 统一入口：有 `tabId` 走页面加签，没有就退回后台 `fetch` |
 | `buildCozePassportRequest` | 构造 URL、body、CSRF header、aid sign 和 query sign |
 
 <figure class="fz085" data-reveal role="group" aria-label="Coze Passport 接口登录链路：读取 CSRF、构造签名、退出旧账号、写入新账号四步流水线，以及签名保护与接口化的对比说明"><style>.fz085{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--soft2:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--cy:#3f6d79;--cyb:#dcebed;--cye:#8fbcc4;--am:#9a6516;--amb:#f4e8cc;--ame:#d9b66a;--rd:#8f2d20;--rdb:#f1ddd6;--rde:#cf9b90;--gy:#917f5c;--gyb:#ece4d2;font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);color:var(--ink);background:linear-gradient(160deg,var(--paper-soft),var(--soft2));border:1px solid var(--hair);border-radius:14px;padding:clamp(16px,3.4vw,30px);margin:0;max-width:1100px;box-sizing:border-box;line-height:1.5}.fz085 *{box-sizing:border-box}.fz085 .hd{font-size:clamp(17px,2.7vw,25px);font-weight:800;letter-spacing:.3px;color:var(--ink)}.fz085 .sub{margin-top:7px;font-size:clamp(12px,1.7vw,15px);color:var(--muted)}.fz085 .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin-top:clamp(16px,2.6vw,24px)}.fz085 .step{flex:1 1 160px;min-width:140px;border-radius:13px;padding:14px 13px;border:1px solid var(--hair);position:relative;background:var(--soft2);opacity:0;transform:translateY(8px);animation:fz-rise .7s ease forwards}.fz085 .step .k{display:inline-block;font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:10px;color:var(--muted);border:1px solid var(--hair);border-radius:5px;padding:1px 6px;margin-bottom:8px}.fz085 .step .t{font-size:clamp(14px,2vw,18px);font-weight:800;line-height:1.25}.fz085 .step .c{margin-top:7px;font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:clamp(10px,1.4vw,12px);color:var(--ink-soft);word-break:break-word}.fz085 .s1{background:var(--gyb);border-color:var(--gy)}.fz085 .s1 .t{color:var(--ink-soft)}.fz085 .s2{background:var(--cyb);border-color:var(--cye)}.fz085 .s2 .t{color:var(--cy)}.fz085 .s3{background:var(--amb);border-color:var(--ame)}.fz085 .s3 .t{color:var(--am)}.fz085 .s4{background:var(--rdb);border-color:var(--rde)}.fz085 .s4 .t{color:var(--rd)}.fz085 .s1{animation-delay:.05s}.fz085 .s2{animation-delay:.3s}.fz085 .s3{animation-delay:.55s}.fz085 .s4{animation-delay:.8s}.fz085 .ar{flex:0 0 26px;align-self:center;height:3px;border-radius:2px;position:relative;background:var(--hair);overflow:visible}.fz085 .ar::before{content:"";position:absolute;left:-2px;top:50%;width:14px;height:3px;border-radius:2px;transform:translateY(-50%);background:linear-gradient(90deg,transparent,var(--rd));animation:fz-pulse 6s ease-in-out infinite}.fz085 .ar::after{content:"";position:absolute;right:-7px;top:50%;transform:translateY(-50%);width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid var(--rd)}.fz085 .a2::before{animation-delay:.6s}.fz085 .a3::before{animation-delay:1.2s}.fz085 .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:clamp(14px,2.4vw,22px)}.fz085 .card{background:var(--paper-soft);border:1px solid var(--hair);border-radius:13px;padding:14px 16px}.fz085 .card h4{margin:0 0 8px;font-size:clamp(14px,1.9vw,17px);font-weight:800;color:var(--ink)}.fz085 .card p{margin:5px 0;font-size:clamp(12px,1.6vw,14px);color:var(--ink-soft);padding-left:14px;position:relative}.fz085 .card p::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--ame)}.fz085 .card.c2 p::before{background:var(--cye)}.fz085 .banner{margin-top:clamp(14px,2.4vw,22px);background:var(--ink);color:var(--paper-soft);border-radius:11px;padding:13px 18px;font-size:clamp(12px,1.7vw,15px);font-weight:700;display:flex;align-items:center;gap:11px;position:relative;overflow:hidden}.fz085 .banner::before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 20%,rgba(143,45,32,.22) 50%,transparent 80%);transform:translateX(-100%);animation:fz-sweep 9s ease-in-out infinite}.fz085 .banner .dot{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:var(--rde);box-shadow:0 0 0 0 rgba(207,155,144,.5);animation:fz-beat 6s ease-in-out infinite}.fz085 .banner span{position:relative}@keyframes fz-rise{to{opacity:1;transform:translateY(0)}}@keyframes fz-pulse{0%,100%{opacity:.35}45%,55%{opacity:1}}@keyframes fz-sweep{0%,60%{transform:translateX(-100%)}90%,100%{transform:translateX(100%)}}@keyframes fz-beat{0%,100%{box-shadow:0 0 0 0 rgba(207,155,144,.5)}50%{box-shadow:0 0 0 6px rgba(207,155,144,0)}}@media(max-width:560px){.fz085 .flow{flex-direction:column}.fz085 .step{flex:1 1 auto;width:100%}.fz085 .ar{align-self:center;width:3px;height:22px;flex-basis:auto}.fz085 .ar::before{left:50%;top:-2px;width:3px;height:14px;transform:translateX(-50%);background:linear-gradient(180deg,transparent,var(--rd))}.fz085 .ar::after{right:auto;left:50%;top:auto;bottom:-7px;transform:translateX(-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid var(--rd);border-bottom:0}.fz085 .cards{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){.fz085 .step{animation:none;opacity:1;transform:none}.fz085 .ar::before,.fz085 .banner::before,.fz085 .banner .dot{animation:none}.fz085 .ar::before{opacity:1}}</style><div class="hd">Coze Passport：用接口退出旧账号，再写入新登录态</div><div class="sub">CloudIdentity auth code 还不是 Coze 登录态，需要 Passport 接口接住。</div><div class="flow"><div class="step s1"><span class="k">step 1</span><div class="t">读取 CSRF</div><div class="c">passport_csrf_token</div></div><div class="ar a1" aria-hidden="true"></div><div class="step s2"><span class="k">step 2</span><div class="t">构造签名</div><div class="c">query sign + aid sign</div></div><div class="ar a2" aria-hidden="true"></div><div class="step s3"><span class="k">step 3</span><div class="t">退出旧账号</div><div class="c">need_redirect = 0</div></div><div class="ar a3" aria-hidden="true"></div><div class="step s4"><span class="k">step 4</span><div class="t">写入新账号</div><div class="c">auth code + app id</div></div></div><div class="cards"><div class="card c1"><h4>签名保护了什么</h4><p>请求路径、公共参数、业务参数和时间戳</p><p>GET 与 POST 的签名输入不同</p></div><div class="card c2"><h4>为什么不用页面点击</h4><p>菜单和 DOM 容易变，接口步骤可测试</p><p>退出和登录都能记录明确 step</p></div></div><div class="banner"><span class="dot" aria-hidden="true"></span><span>Passport login 成功后，还必须继续等 Coze API 验权通过。</span></div></figure>
@@ -319,6 +323,90 @@ async function buildPassportRequest(path, method, data) { // 构造一次 Coze P
 ```
 
 这层的目标不是“绕过登录”，而是复用 Web 登录体系接受的入口，把 CloudIdentity 已经认证过的 auth code 写成 Coze 当前站点的登录态。
+
+### 6.1 被反作弊拦住：为什么后台裸 `fetch` 会失败
+
+上面那套 CSRF、query sign、aid sign，插件都手搓复刻了。但真实跑起来，`auth login` 经常返回 `error_code: 7`。查 Passport 官方错误码文档就会发现，**7 的含义是“命中反作弊”，不是“访问太频繁”的限流**——插件早期把它当限流处理，其实名字取错了。
+
+真正的原因是：Coze 官方前端（`coze-monorepo`）发这个请求时，除了业务签名，还带了一层**动态风控签名**（`a_bogus` / `X-Bogus` / `msToken` 这一类字段），而插件的后台请求没有。这层签名不是官方业务代码算的，而是页面里另外加载的一套字节反爬库（国内 `sdk-glue.js`，海外 `webmssdk.es5.js`）算的。它的工作方式是：
+
+1. 页面在 `<head>` 用 `<script>` 把反爬库加载进来并初始化。
+2. Passport SDK 启动时，把 `/passport` 这些路径**登记**进反爬库的“需要加签清单”。
+3. 反爬库把全局 `window.fetch` **替换成自己的加签版本**——凡是打到清单里路径的请求，都在发出前现算签名、塞进去，再走真正的网络。
+
+关键就在第 3 步：被 hook 的是**全局** `fetch`。所以官方页面上任何代码打到 `/passport`，都被这层透明地加了签，业务代码自己一行签名逻辑都不用写。官方是“白嫖”了这套页面上的能力。
+
+而插件的 `service worker` 是一个没有 `window`、没有被 hook 的 `fetch`、没有反爬库的环境，签名恒缺，于是被判为可疑请求 → 错误码 7。
+
+更麻烦的是，这层签名**没法当静态参数抄过来**：
+
+| 特性 | 后果 |
+| --- | --- |
+| 逐请求变化 | 喂进去的是 URL 和 body，换个请求就变 |
+| 带时间戳 | 过一会儿服务端就判过期 |
+| 绑定运行环境 | 掺了设备指纹、UA 等熵，换环境算出来对不上 |
+| 产自混淆代码 | 算法在远程加密 JS 里，无法离线复刻 |
+
+你能抄到的只是某一次的“产物”，而产物立刻失效。唯一可行的办法是**复用那台正在运行的加签机器**——也就是让请求从装了这套 hook 的页面里发出去。
+
+### 6.2 修复：把登录请求放进 Coze 页面主世界
+
+插件的做法是：不再从 `service worker` 直接 `fetch`，而是用 `chrome.scripting.executeScript({ world: "MAIN" })` 把这次请求丢进 `code.coze.cn` 标签页的**主世界**执行。那里 `window.fetch` 已经被反爬库换成加签版，请求打到 `/passport/web/auth/login/` 时会被透明加签，和官方走的是同一条路。
+
+裁剪后的页面加签逻辑是这样：
+
+```js
+async function loginCozePassportViaPage(authCode, tabId) { // 借 Coze 页面主世界完成加签登录
+  const request = await buildPassportRequest(AUTH_LOGIN_PATH, "POST", { code: authCode }); // 仍先算好业务签名
+  const [{ result }] = await chrome.scripting.executeScript({ // 把请求丢进目标标签页的主世界
+    target: { tabId }, // 必须是一个已加载 code.coze.cn 的标签页
+    world: "MAIN", // 关键：进主世界才能命中页面被 hook 的 fetch
+    func: pagePassportFetch, // 下面这个函数会在页面里跑
+    args: [request], // 把算好业务签名的请求传进去
+  });
+  return parsePassportResponse(result); // 回到后台再按老逻辑解析响应
+}
+
+function pagePassportFetch(request) { // 这个函数在页面主世界里执行
+  if (typeof window._SdkGlueInit === "function") { // 防御性地补登记 /passport
+    window._SdkGlueInit({ bdms: { paths: ["/passport"] } }); // 万一这张标签页还没登记过
+  }
+  return window.fetch(request.url, { // 用页面被 hook 的 fetch 发出去
+    method: request.method, // 反爬库会在这一下自动补上 a_bogus / msToken 等签名
+    headers: request.headers, // 业务签名 header 保持不变
+    body: request.body, // POST body 保持不变
+    credentials: "include", // 带上 code.coze.cn 的 cookie
+  }); // 真正的加签发生在这次 fetch 内部
+}
+```
+
+配套还有两个兜底，处理“页面加签也没救回来”的情况：
+
+- **限流冷却熔断**（`passport-login-cooldown.js`）：一旦命中反作弊，写入一个指数退避的冷却窗口（60 秒起，最长 10 分钟），下次切换先检查冷却，避免连环触发把账号越打越死。
+- **浏览器模拟点击兜底**：真扛不住时，popup 弹出确认，改用真实页面点击登录——这条最慢但最像真人，通常能过。
+
+### 6.3 一个小寓言：活印与城门
+
+> 边关有一道城门，进城的信必须盖“活印”。这印子邪门：它随当天的日头、风向、时辰不停地变，上午盖的，下午就作废。
+>
+> 有个仿造高手，把昨天一封进过城的信翻出来，照着上面的印子一笔一画描到自己信上，自以为天衣无缝。到了城门，守卫扫一眼就把他叉了出去——印是死的，风是活的，对不上。
+>
+> 隔壁老商人从不自己刻印。他每次都把信递到城门口那台会盖章的机关跟前，机关“咔”地一下，按此时此刻的风与日头盖上活印，他再把信送进去，畅通无阻。
+>
+> 徒弟不解：“您那印跟他描的，看着一模一样啊。”老商人说：“**印能抄，风抄不了。他抄的是印，我借的是那台机关。**”
+
+对应到这个插件：
+
+| 寓言 | 现实 |
+| --- | --- |
+| 活印 | 反爬库现算的 `a_bogus` / `msToken` 动态签名 |
+| 印随风变 | 签名绑定时间戳、设备指纹、请求内容，逐次失效 |
+| 仿造高手描印 | 后台裸 `fetch` 想靠静态参数糊弄，命中反作弊（错误码 7） |
+| 城门口会盖章的机关 | Coze 页面里 hook 了 `fetch` 的反爬库 |
+| 把信递到机关跟前 | 用 `executeScript({ world: "MAIN" })` 让请求从页面发出去 |
+| 借机关而非自刻 | 不复刻签名算法，复用页面这台“正在运行的加签机器” |
+
+一句话：**打不过风控，别去伪造它的签名；把请求送到那个天生就会签名的地方，让它替你签。**
 
 ## 7. 验权：成功条件必须来自 Coze 侧事实
 
@@ -377,6 +465,7 @@ content script 仍然有价值，但它不是主裁判。
 | 企业尚未加入或审批中 | 标记跳过，继续查下一个 |
 | CloudIdentity 要求额外验证 | 先跳过当前账号，继续查别的候选 |
 | 候选账号都需要验证 | 打开真实验证页，让用户完成手机、邮箱或 MFA 验证 |
+| Passport 命中反作弊（错误码 7） | 优先靠页面主世界加签重发；仍失败则写入限流冷却窗口，转浏览器模拟点击兜底 |
 | Coze 标签页被关闭 | 记录恢复步骤，重新获取 Coze 标签再试 |
 | popup 关闭后重开 | 通过 lastRun 轮询和 reconcile 回补结果 |
 
@@ -437,7 +526,7 @@ npm run check # 对核心 JS 文件做 node --check 语法检查
 | `account.test.js` | 账号模型、个人/企业判断、权益和角色提取 |
 | `service.test.js` | Stone 请求体、JWT header、排除列表 |
 | `signin-api.test.js` | 个人登录、企业 SaaS 登录、OAuth redirect 捕获 |
-| `coze-passport-api.test.js` | Passport 请求签名、CSRF、login/logout/check |
+| `coze-passport-api.test.js` | Passport 请求签名、CSRF、login/logout/check、页面主世界加签登录与退回逻辑 |
 | `coze-verification-api.test.js` | user level 映射、企业角色、身份匹配 |
 | `switch-controller.test.js` | 状态机步骤、跳过策略、标签页恢复、人工验证 |
 | `service-worker.test.js` | running lastRun 的页面回补条件 |

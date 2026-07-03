@@ -129,6 +129,10 @@ window.COVERS = (function () {
       ["AI 云", "模型准入", "能源账本", "开放模型", "工具更新"],
       "AI 的运行账本，正在把算力、准入、能耗、日志和模型选择一起推到产品界面。",
       "Meta Compute · Fable 5 · AI standards · Google/Amazon · Together AI"),
+    news("2026/07/03/2026-07-03-x-上-ai-与前端热点速览", "2026-07-03",
+      ["企业交付", "AI Coding", "Agent 落地", "芯片供应", "AI Crawler"],
+      "AI 的交付链条，正在把企业现场、开发工具、组织效率、算力和内容访问一起拉直。",
+      "Microsoft Frontier · ZCode · Meta agent · Anthropic chip · Cloudflare"),
   ];
 
   const T = [

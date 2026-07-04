@@ -11,6 +11,8 @@ tags:
   - Tailscale
   - Orca
 excerpt: "为什么 SSH 一断进程就死？tmux 和 orca-remote relay 凭什么能让会话常驻？同一局域网下手机扫码配对连的是什么？不在同一网络时 Tailscale 又解决了什么？这篇文章先用一个说书先生的寓言把 PTY、终端模拟器、sshd、relay、NAT 和 Tailscale 串成一条线，最后附一段实战：公司禁了 Tailscale，如何用反向 SSH 隧道 + 一台公网服务器让手机跨网络连回 Mac 上的 Orca。"
+cover: "cover-v1.png"
+coverPosition: "below-title"
 ---
 
 这篇文章源于一次真实的讨论：用 Orca 远程连接开发机跑 Claude Code，为什么关掉 SSH 之后 agent 还活着？手机和电脑不在同一个网络下，又是怎么连上的？

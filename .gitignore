@@ -38,3 +38,25 @@ _multiconfig.yml
 .playwright-cli/
 .vercel
 .token-board/
+
+# hyperframes 视频 skill 全家桶：安装器生成物，不入库（本地保留）
+**/skills/embedded-captions
+**/skills/faceless-explainer
+**/skills/general-video
+**/skills/hyperframes
+**/skills/hyperframes-animation
+**/skills/hyperframes-cli
+**/skills/hyperframes-core
+**/skills/hyperframes-creative
+**/skills/hyperframes-media
+**/skills/hyperframes-registry
+**/skills/motion-graphics
+**/skills/music-to-video
+**/skills/pr-to-video
+**/skills/product-launch-video
+**/skills/remotion-to-hyperframes
+**/skills/slideshow
+**/skills/talking-head-recut
+**/skills/website-to-video
+# 本地视频产物（178MB，不进 git 历史）
+videos/

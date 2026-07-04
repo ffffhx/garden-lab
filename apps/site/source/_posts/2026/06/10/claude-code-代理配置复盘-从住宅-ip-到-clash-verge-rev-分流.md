@@ -53,6 +53,8 @@ utunX / en0 是网络层路由出口；
 它们可以出现在同一条请求链路里，但不是同一层东西。
 ```
 
+端口号以本机实际监听为准。本文保留当时排查环境里的 `Bifrost 8899` 示例；如果新版 Rust Bifrost 的 `bifrost status` 或 `lsof` 显示监听在 `9900`，就把文中的 `8899` 按实际端口替换理解。Clash / Mihomo 也同理，以 Clash Verge 当前配置里的 mixed-port / HTTP proxy 端口为准。
+
 所以排查时不能只问“我开了 Clash 吗”或者“我开了飞连吗”，而要问：
 
 ```text
@@ -203,9 +205,9 @@ HTTPSEnable : 0
 SOCKSEnable : 0
 ```
 
-那就不能直接说浏览器会进入 Bifrost 或 Clash。除非浏览器自己的代理设置、扩展、PAC 或企业策略另外接管了流量，否则它可能直接走系统网络栈。
+那就不能直接说浏览器会进入 Bifrost 或 Clash。判断条件是：如果浏览器自己的代理设置、扩展、PAC 或企业策略接管了流量，就按对应配置走；如果没有这些额外接管，它就走系统网络栈。
 
-对 Claude Code CLI 来说，第一跳又是另一回事。CLI 不一定读取 macOS 系统代理，更稳的方式是显式配置环境变量：
+对 Claude Code CLI 来说，第一跳又是另一回事。CLI 是否读取 macOS 系统代理由它自己的网络栈决定；要把第一跳钉死，最直接的方式是显式配置环境变量：
 
 ```bash
 NO_PROXY=localhost,127.0.0.1,::1 \
@@ -214,7 +216,7 @@ HTTPS_PROXY=http://127.0.0.1:7897 \
 claude
 ```
 
-所以同一台机器上可能同时成立：
+所以同一台机器上可以同时成立：
 
 ```text
 浏览器第一跳：Bifrost 8899
@@ -292,9 +294,9 @@ Chrome
   -> route 决定走 en0 还是 utunX
 ```
 
-## 4. Claude Code CLI 发请求：它不一定经过 Bifrost
+## 4. Claude Code CLI 发请求：先看它自己的入口
 
-终端里的 Claude Code CLI 和浏览器不一定走同一条入口。
+终端里的 Claude Code CLI 和浏览器是两个进程；它们是否走同一条入口，由各自读取的代理配置决定。
 
 如果给 CLI 显式设置：
 
@@ -314,7 +316,7 @@ claude
   -> Claude API / Claude Web 相关目标
 ```
 
-注意这里通常不经过 Bifrost，除非你专门把 CLI 的代理指到 Bifrost：
+注意这里不经过 Bifrost；只有当你专门把 CLI 的代理指到 Bifrost 时，它才会先进 Bifrost：
 
 ```bash
 HTTP_PROXY=http://127.0.0.1:8899
@@ -331,7 +333,79 @@ claude
 
 这时 Clash 完全没参与。
 
-所以“浏览器能访问 Claude”不等于“Claude Code CLI 也一定能访问”。浏览器可能靠 Bifrost 或系统代理进了 Clash；CLI 如果没有 `HTTP_PROXY` / `HTTPS_PROXY`，可能仍然直连。
+所以“浏览器能访问 Claude”不等于“Claude Code CLI 也一定能访问”。如果浏览器靠 Bifrost 或系统代理进了 Clash，而 CLI 没有 `HTTP_PROXY` / `HTTPS_PROXY`，也没有自己的代理配置，那 CLI 会按自己的默认网络栈直连；如果它被 TUN / VPN / 透明代理命中，则按对应网络层规则走。
+
+### 4.1 终端不是一条统一链路
+
+这里不要把“终端”和“网页”对立起来。代理影响的是网络请求，不是网页这个形态。浏览器会发 HTTP / HTTPS 请求，终端里的 CLI 也会发 HTTP / HTTPS 请求；区别只在于这个进程用什么方式决定代理。
+
+更准确的判断是：
+
+| 进程行为 | 结果 |
+| --- | --- |
+| CLI 读取 `HTTP_PROXY` / `HTTPS_PROXY` | wrapper 或当前 shell 环境变量生效 |
+| CLI 读取 macOS 系统代理 | `scutil --proxy` 里的系统代理生效 |
+| CLI 两者都读取 | 由这个 CLI / 网络库的优先级决定 |
+| CLI 两者都不读取 | 这条请求直连，除非还有 TUN / VPN / 透明代理 |
+| 代理工具开启 TUN / VPN / 透明代理，并且这条连接命中接管规则 | 即使 CLI 不主动读代理，也会在更底层被接管 |
+
+所以不能简单说“Bifrost / Clash 只代理网页，碰不到终端”。它们代理的是进入本机代理端口或被网络层接管的流量。终端程序是否进入这些端口，要看它是否显式使用代理变量、命令行参数、应用配置，或者是否被 TUN / VPN / 透明代理接管。
+
+### 4.2 本机实测：不要用“是不是原生二进制”判断
+
+这次顺手在本机查了一组 CLI，结论是：**是不是 macOS 原生二进制，不能直接推出它会不会读取 macOS 系统代理。**
+
+| 工具 / 入口 | 本机形态 | 对代理的结论 |
+| --- | --- | --- |
+| `/usr/bin/curl` | macOS 自带原生二进制 | 不读 macOS 系统代理；显式 `--proxy` 或 `HTTP_PROXY` / `HTTPS_PROXY` 才走代理 |
+| `git` | 原生二进制，底层走 libcurl | 不读 macOS 系统代理；读 `HTTP_PROXY` / `HTTPS_PROXY` 或 `git config http.proxy` |
+| `python3 urllib.request` | Python 标准库 | 在 macOS 上会读系统代理；清掉环境变量后仍能从 `scutil --proxy` 得到代理 |
+| Node 原生 `https` | Node 运行时 API | 不自动读 macOS 系统代理；也不因为存在 `HTTPS_PROXY` 就自动走代理，需要上层库接入 proxy agent |
+| `claude` | 本机 alias 先进入 Bash wrapper，再 exec Claude 原生二进制 | 当前 `claude` wrapper 明确注入 `HTTP_PROXY` / `HTTPS_PROXY=http://127.0.0.1:7897`，所以第一跳是 Clash |
+| Claude CLI 本体 | `Mach-O 64-bit executable arm64` | 不是 Node 脚本；是否读系统代理不能靠文件类型判断，当前链路以 wrapper 注入的环境变量为准 |
+| `codex` | Node launcher，再 spawn `@openai/codex-darwin-arm64` 原生二进制 | 不是纯 Node CLI；本机运行态能看到原生 `codex` 子进程。是否走系统代理要看实际连接、环境变量和内部网络栈，不能只看入口脚本 |
+
+这个表里最容易误解的是 Codex 和 Claude：
+
+```text
+Codex CLI:
+  node .../bin/codex
+    -> spawn .../vendor/aarch64-apple-darwin/bin/codex
+
+Claude CLI:
+  claude alias
+    -> claude-clash.sh
+    -> exec ~/.local/bin/claude
+```
+
+也就是说，Codex 的命令入口看起来是 Node 脚本，但真正的核心进程是 macOS arm64 原生二进制；Claude 当前入口看起来是 `claude` 命令，但在这台机器上先经过了自己写的 Bash wrapper。两者都不能只凭“是不是 Node”或“是不是 Mach-O”推断代理行为。
+
+### 4.3 wrapper 和 macOS 系统代理谁优先
+
+如果同时存在 wrapper 里的 `HTTP_PROXY` / `HTTPS_PROXY` 和 macOS 系统代理，没有一个由 macOS 统一规定的优先级。最终以这个 CLI 使用的网络库为准。
+
+可以按下面这张表判断：
+
+| 情况 | 谁生效 |
+| --- | --- |
+| CLI 只读取 `HTTP_PROXY` / `HTTPS_PROXY` | wrapper / 环境变量生效 |
+| CLI 只读取 macOS 系统代理 | `scutil --proxy` 生效 |
+| CLI 两者都读取，并且实现把环境变量放在系统代理前面 | wrapper / 环境变量生效 |
+| CLI 两者都读取，并且实现把系统代理放在环境变量前面 | macOS 系统代理生效 |
+| CLI 显式传了 `--proxy` / `--proxy-server` 这类参数，且这个工具支持该参数 | 显式参数生效 |
+| TUN / VPN / 透明代理在更底层接管 | 网络层接管，应用层是否读代理不再是唯一决定因素 |
+
+日常排查时可以把优先级写成一个经验顺序：
+
+```text
+显式命令参数
+  > CLI 自己的配置
+  > HTTP_PROXY / HTTPS_PROXY
+  > macOS 系统代理
+  > 直连 / 系统路由
+```
+
+但这只是很多 CLI 的常见实现，不是操作系统保证。遇到不确定的工具，最终要回到证据：看它的环境变量、看它实际连了哪个本机端口、看 Clash / Bifrost 的连接记录、看 `lsof` 里的 TCP 连接。
 
 ## 5. Clash / Mihomo 到底做了什么
 
@@ -652,9 +726,22 @@ scutil --proxy
 env | grep -E '^(HTTP_PROXY|HTTPS_PROXY|NO_PROXY)='
 ```
 
+这一步只能回答“当前 shell 有没有给后续进程注入代理”。如果要确认某个具体 CLI，继续看它的入口和运行中的 TCP 连接：
+
+```bash
+type -a claude
+type -a codex
+
+ps -axo pid,ppid,comm,args | rg 'claude|codex'
+lsof -nP -a -p <PID> -iTCP
+```
+
+如果 `lsof` 里看到目标进程连到了 `127.0.0.1:7897`，这条连接进入了 Clash / Mihomo；如果连到了 Bifrost 的监听端口，这条连接进入了 Bifrost；如果直接连公网 `:443`，那至少这条 TCP 连接没有先进本机 HTTP 代理端口。
+
 第三步，看本机代理端口是否存在：
 
 ```bash
+lsof -nP -iTCP:9900 -sTCP:LISTEN
 lsof -nP -iTCP:8899 -sTCP:LISTEN
 lsof -nP -iTCP:7897 -sTCP:LISTEN
 ```
@@ -789,6 +876,19 @@ excludeFilter://code.coze.cn/api/
 ```
 
 协议冲突不是“用了代理”导致的，是“偷换了终点”导致的。这也解释了为什么 Clash 装起来毫无负担，而 Bifrost、whistle、Charles、Fiddler 这一族工具第一步都是“安装并信任证书”。
+
+这里也能解释浏览器地址栏里的“不安全”提示。判断条件是：
+
+```text
+浏览器收到的是目标网站自己的公开 CA 证书
+  -> 证书链正常，地址栏按目标网站的真实证书判断
+
+浏览器收到的是 Bifrost 为目标域名现场签发的证书
+  -> 系统已信任 Bifrost CA：浏览器通过证书校验
+  -> 系统未信任 Bifrost CA：浏览器标红，显示不安全
+```
+
+所以公司文档站点显示“不安全”时，不要先下结论说公司站点坏了。先看证书颁发者：如果颁发者是 `Bifrost CA`、`whistle`、`Charles` 这类本机中间人，而不是目标站点的公开 CA 链，那问题在本机 HTTPS 解包证书信任链。处理方式是三选一：安装并信任对应代理工具的 CA 后重启浏览器；关闭这条域名 / 应用的 HTTPS 解包；或者让这条请求不进入该代理工具。
 
 ### 对照表
 

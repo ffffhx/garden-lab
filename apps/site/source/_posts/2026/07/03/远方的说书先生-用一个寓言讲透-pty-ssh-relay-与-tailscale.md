@@ -10,7 +10,7 @@ tags:
   - tmux
   - Tailscale
   - Orca
-excerpt: "为什么 SSH 一断进程就死？tmux 和 orca-remote relay 凭什么能让会话常驻？同一局域网下手机扫码配对连的是什么？不在同一网络时 Tailscale 又解决了什么？这篇文章不讲术语，用一个说书先生的寓言把 PTY、终端模拟器、sshd、relay、NAT 和 Tailscale 串成一条线。"
+excerpt: "为什么 SSH 一断进程就死？tmux 和 orca-remote relay 凭什么能让会话常驻？同一局域网下手机扫码配对连的是什么？不在同一网络时 Tailscale 又解决了什么？这篇文章先用一个说书先生的寓言把 PTY、终端模拟器、sshd、relay、NAT 和 Tailscale 串成一条线，最后附一段实战：公司禁了 Tailscale，如何用反向 SSH 隧道 + 一台公网服务器让手机跨网络连回 Mac 上的 Orca。"
 ---
 
 这篇文章源于一次真实的讨论：用 Orca 远程连接开发机跑 Claude Code，为什么关掉 SSH 之后 agent 还活着？手机和电脑不在同一个网络下，又是怎么连上的？
@@ -173,6 +173,78 @@ orca serve --pairing-address devbox.xxx.ts.net --mobile-pairing
 
 **克劳德只管说书（程序只管面对终端）；谁当听众、听众换不换人、隔不隔千山万水——那是掌柜、驿丞、管家和仙驿的事，一层管一层，谁也不越界。**
 
+## 从寓言到实战：公司禁了 Tailscale，我用反向隧道让手机连回 Mac 的 Orca
+
+寓言讲完，来一段真事——它把上面每一层都用上了。
+
+**处境**：想在手机上跨网络控制我 Mac 上的 [Orca](https://www.onorca.dev/)（一个跑并行 coding agent 的 ADE）。官方推荐的跨网方案是 Tailscale，但我这台是公司统一管控的 Mac，装 Tailscale 一启动就被终端安全软件弹窗拦掉——"应企业安全合规要求，该应用已被禁止使用"。企业禁它不奇怪：它能打穿内外网、绕过公司网络边界，是安全团队的高风险项。
+
+**思路**：回到寓言第六章那条铁律——Mac 躲在 NAT 后面没有公网地址，外面主动敲门一律被门房挡回；但**"主动往外寄信永远畅通"**。于是不打洞、不组网，改用最朴素的一招：**找一台有公网 IP 的服务器当"中转铺"，让 Mac 主动拨过去，把自己的端口"探"到中转铺上**。这就是 SSH 的**反向隧道（remote port forwarding）**，本质和 tmux/relay 一样——借一个够得着的常驻点，让"连接"和"可达性"解耦。
+
+```
+手机(任何网络) → 公网服务器:36768 → 反向SSH隧道 → Mac:6768 上的 Orca
+  (客人)          (中转铺,有公网IP)    (Mac主动拨出的专线)   (说书的总店)
+```
+
+关键点：**没有任何人"主动连 Mac"**，是 Mac 自己拨出去的（门房当正常出站流量放行）；agent 和代码全程在 Mac 上，服务器只是一根管子。
+
+### 落地五步
+
+**① 服务器 sshd：允许隧道端口对外开放**
+
+反向隧道探出的端口，sshd 默认只绑服务器 `localhost`（外面连不到）。开个开关让它听命于客户端：
+
+```bash
+# 服务器上，写一个 drop-in（Ubuntu 24.04 默认 Include sshd_config.d/）
+echo "GatewayPorts clientspecified" | sudo tee /etc/ssh/sshd_config.d/99-orca-tunnel.conf
+sudo systemctl reload ssh   # 温和重读配置，不断开现有连接
+```
+
+**② 服务器防火墙：放行端口**
+
+云服务器有两层防火墙。主机层 `ufw allow 36768/tcp`；**云平台层**（ECS 安全组 / 轻量应用服务器的"防火墙"）也要在控制台加一条入方向规则 `TCP 36768 / 0.0.0.0/0`——这层从 SSH 改不了，是最容易漏的一步（我第一次探测非标端口连不通就是卡在这）。
+
+**③ Mac：反向隧道 + 开机自启/断线自愈**
+
+用 `autossh`（不是 VPN，不会被管控拦）建隧道，做成 launchd 服务常驻：
+
+```bash
+brew install autossh
+# 隧道核心命令：把 Mac:6768 探到 服务器:36768
+autossh -M 0 -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+  -o ExitOnForwardFailure=yes \
+  -R 0.0.0.0:36768:localhost:6768 deploy@<公网服务器>
+```
+
+写进 `~/Library/LaunchAgents/dev.orca.tunnel.plist`，配 `RunAtLoad` + `KeepAlive` + `AUTOSSH_GATETIME=0`，就能开机自启、断线自愈。
+
+**④ 验证**
+
+先在**服务器本机** `curl localhost:36768`——通了说明"隧道 + Mac Orca"这段没问题（这一步不受云防火墙影响）；再从**外部** `curl http://<公网服务器>:36768/`，返回 200 说明云防火墙也放行了，全线贯通。
+
+**⑤ Orca 配对：地址会自动嵌进链接**
+
+隧道让 `<公网服务器>:36768` 等价于 Mac 的 Orca。在桌面 Orca：**Settings → 远程 Orca 服务器 → 「将此应用作为服务器公布」→ 分享此 Orca 服务器 → 新链接**。
+
+这里有个坑：同一页顶部还有个"连接到远程服务器"，那是让**你的 Mac 去连别的 Orca**（反方向），把地址填进那儿会报 `Invalid pairing code`。要用的是最下面的"公布"。
+
+生成的链接里，`orca://pair?code=...` 的 `code` 是一段 base64，解开是：
+
+```json
+{ "v": 2, "endpoint": "ws://<公网服务器>:36768", "deviceToken": "…" }
+```
+
+`endpoint` 已经自动填成了公网中转地址——**地址和密钥都对，不用手改**。手机装 Orca App 扫码（或直接用它给的 `http://<公网服务器>:36768/web-index.html#pairing=…` 在手机浏览器打开），切到 4G 也能连回 Mac。
+
+### 几条要记住的边界
+
+- **安全**：配对链接里带 `deviceToken`，是访问凭证，别外发；好在 Orca 是端到端加密 + 一次性配对，公网上扫到端口但没配过对的人连不进来，中转服务器也只转发密文、读不到内容。
+- **合规**：这套只适合**个人项目**。别把公司代码的 agent 会话穿过个人公网服务器——那和公司禁 Tailscale 想防的是同一类事。公司场景请走内网 devbox + 官方 VPN（飞连）。
+- **局限**：Mac 必须保持唤醒（`caffeinate -s`），Orca 才在线；整条链依赖中转服务器和隧道存活。
+- **等官方**：Orca 正在做[可选的公网云中继（issue #7208）](https://github.com/stablyai/orca/issues/7208)——桌面主动向公共中继建出站连接、手机连中继，届时这套自建隧道就能退休了。
+
+一句话：**Tailscale 被禁，不代表没路——反向隧道用一台公网中转铺，同样把"够不着"变成了"够得着"，而这正是寓言里仙驿在做的事，只是换了种更朴素的实现。**
+
 ## 延伸阅读
 
 想从寓言回到硬核细节，推荐这几篇：
@@ -181,3 +253,5 @@ orca serve --pairing-address devbox.xxx.ts.net --mobile-pairing
 - [A toy remote login server — Julia Evans](https://jvns.ca/blog/2022/07/28/toy-remote-login-server/)：手写一个迷你 SSH 服务器，亲眼看 `top` 因为没有 PTY 而拒绝启动
 - [Linux 伪终端(pty) — sparkdev](https://www.cnblogs.com/sparkdev/p/11605804.html)：中文图解 master/slave 数据流
 - [Remote Orca Servers — Orca Docs](https://www.onorca.dev/docs/remote-servers)：Orca 远程 server 与手机配对的官方文档
+- [Orca issue #7208](https://github.com/stablyai/orca/issues/7208)：给手机端加可选公网云中继的提案（免自建隧道）
+- `man ssh` 里的 `-R` 与 `sshd_config(5)` 的 `GatewayPorts`：反向端口转发的一手文档

@@ -20,7 +20,7 @@
     "holdem:server": "pnpm --filter @garden-lab/site holdem:server",
     "holdem:public-proxy": "pnpm --filter @garden-lab/site holdem:public-proxy",
     "snapshot": "node tools/codex-snapshot/bin/codex-snapshot.mjs",
-    "snapshot:daemon": "SNAPSHOT_SHARE_API_URL=https://124-221-36-36.anyip.dev/token-board SNAPSHOT_SHARE_SITE_URL=https://ffffhx.github.io/garden-lab node tools/codex-snapshot/bin/codex-snapshot.mjs serve --port 4321",
+    "snapshot:daemon": "SNAPSHOT_SHARE_API_URL=https://124-221-36-36.anyip.dev:8443/token-board SNAPSHOT_SHARE_SITE_URL=https://ffffhx.github.io/garden-lab node tools/codex-snapshot/bin/codex-snapshot.mjs serve --port 4321",
     "snapshot:install-daemon": "node tools/codex-snapshot/scripts/launch-agent.mjs install",
     "snapshot:uninstall-daemon": "node tools/codex-snapshot/scripts/launch-agent.mjs uninstall",
     "snapshot:daemon:status": "node tools/codex-snapshot/scripts/launch-agent.mjs status",

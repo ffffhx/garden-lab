@@ -6302,7 +6302,7 @@ Options:
 Examples:
   codex-snapshot list --limit 20
   codex-snapshot export 019e457b --html -o snapshot.html
-  codex-snapshot publish 019e457b --api-url https://124-221-36-36.anyip.dev/token-board
+  codex-snapshot publish 019e457b --api-url https://124-221-36-36.anyip.dev:8443/token-board
   codex-snapshot serve --port 4321
   codex-snapshot record-trae --port 4732`);
 }

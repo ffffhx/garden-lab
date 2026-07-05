@@ -133,6 +133,10 @@ window.COVERS = (function () {
       ["企业交付", "AI Coding", "Agent 落地", "芯片供应", "AI Crawler"],
       "AI 的交付链条，正在把企业现场、开发工具、组织效率、算力和内容访问一起拉直。",
       "Microsoft Frontier · ZCode · Meta agent · Anthropic chip · Cloudflare"),
+    news("2026/07/05/2026-07-05-x-上-ai-与前端热点速览", "2026-07-05",
+      ["Coding 边界", "AI 视频", "芯片贸易", "基建承诺", "验证工具"],
+      "AI 的默认入口，正在被工具权限、内容生产、算力供应和工程验证重新定义。",
+      "Claude Code · Seedance 2.5 · Hong Kong chips · Stargate UK · Leanstral"),
   ];
 
   const T = [

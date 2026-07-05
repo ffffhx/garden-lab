@@ -181,10 +181,9 @@ export default function HomePage() {
         <SectionHead kicker="Latest Writing" title="最新文章" />
         {featuredPosts.length > 0 ? (
           <div className="grid min-w-0 gap-x-6 gap-y-8 lg:grid-cols-2">
-            {featuredPosts.map((post, index) => (
+            {featuredPosts.map((post) => (
               <PostCard
                 key={post.slug}
-                featured={index === 0}
                 post={post}
                 priority={post.slug === priorityCoverSlug}
               />

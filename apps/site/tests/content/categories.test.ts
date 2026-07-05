@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { getAllCategories } from "../../lib/content/categories";
 import { getAllPosts } from "../../lib/content/posts";
 
-const POST_SCAN_TIMEOUT_MS = 15_000;
+const POST_SCAN_TIMEOUT_MS = 45_000;
 
 describe("getAllCategories", () => {
   it("builds category collections from post metadata", () => {

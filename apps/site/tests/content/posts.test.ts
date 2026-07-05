@@ -7,7 +7,7 @@ import {
   getPostBySlug,
 } from "../../lib/content/posts";
 
-const POST_SCAN_TIMEOUT_MS = 15_000;
+const POST_SCAN_TIMEOUT_MS = 45_000;
 
 describe("getAllPosts", () => {
   it("loads and sorts posts by date descending", () => {

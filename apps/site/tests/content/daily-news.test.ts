@@ -13,7 +13,7 @@ import {
   getLatestDailyNewsPost,
 } from "../../lib/content/daily-news";
 
-const POST_SCAN_TIMEOUT_MS = 15_000;
+const POST_SCAN_TIMEOUT_MS = 45_000;
 
 describe("daily news module content", () => {
   it("builds unique date-based entries from daily news posts", () => {

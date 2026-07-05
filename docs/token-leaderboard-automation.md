@@ -12,15 +12,15 @@
 当前阿里云后端地址：
 
 ```text
-https://8-218-149-148.anyip.dev/token-board
+https://124-221-36-36.anyip.dev/token-board
 ```
 
 ## 1. GitHub 登录配置
 
 先在 GitHub 创建一个 OAuth App，并开启 Device Flow：
 
-- Homepage URL: `https://8-218-149-148.anyip.dev/token-board`
-- Authorization callback URL: `https://8-218-149-148.anyip.dev/token-board/api/auth/github/callback`
+- Homepage URL: `https://124-221-36-36.anyip.dev/token-board`
+- Authorization callback URL: `https://124-221-36-36.anyip.dev/token-board/api/auth/github/callback`
 - Device Flow: enabled
 
 GitHub 官方说明：<https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps>

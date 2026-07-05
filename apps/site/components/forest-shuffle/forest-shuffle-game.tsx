@@ -43,7 +43,7 @@ const TOKEN_KEY = "forest-shuffle-client-token-v1";
 const DEFAULT_ROOM_PORT = "8787";
 const PUBLIC_ROOM_WS_URL =
   process.env.NEXT_PUBLIC_FOREST_ROOM_WS_URL?.trim() ||
-  "wss://8-218-149-148.anyip.dev/forest-shuffle-room/ws";
+  "wss://124-221-36-36.anyip.dev/forest-shuffle-room/ws";
 
 interface ConnectionState {
   status: "offline" | "connecting" | "connected";

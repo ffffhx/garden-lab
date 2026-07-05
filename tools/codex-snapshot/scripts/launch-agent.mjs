@@ -19,7 +19,7 @@ const logsDir = path.join(homeDir, "Library", "Logs", "garden-lab");
 const plistPath = path.join(launchAgentsDir, `${label}.plist`);
 const stdoutPath = path.join(logsDir, "codex-snapshot.out.log");
 const stderrPath = path.join(logsDir, "codex-snapshot.err.log");
-const defaultApiUrl = "https://8-218-149-148.anyip.dev/token-board";
+const defaultApiUrl = "https://124-221-36-36.anyip.dev/token-board";
 const defaultSiteUrl = "https://ffffhx.github.io/garden-lab";
 
 const command = process.argv[2] || "status";

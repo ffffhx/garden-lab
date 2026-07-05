@@ -14,6 +14,7 @@ tags:
 excerpt: "从一条消息如何进入系统讲起，拆解 openclaw/openclaw 的 Gateway 控制平面、Agent Loop、Session Queue 和 Capability 插件体系，并说明为什么它更像一个个人 AI 助手平台，而不是普通聊天机器人。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
+hidden: true
 ---
 
 ## 摘要

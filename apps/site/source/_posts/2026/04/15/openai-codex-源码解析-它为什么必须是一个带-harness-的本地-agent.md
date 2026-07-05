@@ -15,6 +15,7 @@ tags:
 excerpt: "从本地 Agent 与普通聊天的差别讲起，拆解 openai/codex 的 CLI、TUI、App Server、Core、Tools、State、Memory 设计，并解释为什么真正的关键不是“会调工具”，而是用 harness 把概率模型变成受控执行系统。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
+hidden: true
 ---
 
 ## 摘要

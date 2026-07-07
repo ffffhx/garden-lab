@@ -137,6 +137,14 @@ window.COVERS = (function () {
       ["Coding 边界", "AI 视频", "芯片贸易", "基建承诺", "验证工具"],
       "AI 的默认入口，正在被工具权限、内容生产、算力供应和工程验证重新定义。",
       "Claude Code · Seedance 2.5 · Hong Kong chips · Stargate UK · Leanstral"),
+    news("2026/07/06/2026-07-06-x-上-ai-与前端热点速览", "2026-07-06",
+      ["拟人 agent", "Robotaxi", "机器人安全", "数据中心", "金融 agent"],
+      "AI 进入真实边界：情感交互、道路、机器、算力和垂直业务都要可审计。",
+      "Doubao/Qwen · Tesla Miami · Humanoid safety · Data centers · LinqAlpha"),
+    news("2026/07/07/2026-07-07-x-上-ai-与前端热点速览", "2026-07-07",
+      ["模型访问", "代码审计", "J-space", "安全法", "搜索入口"],
+      "AI 进入审计层：模型分发、代码安全、内部状态、监管和流量入口都要可解释。",
+      "China models · Mythos · J-space · Illinois SB315 · Search Console"),
   ];
 
   const T = [

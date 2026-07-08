@@ -145,6 +145,10 @@ window.COVERS = (function () {
       ["模型访问", "代码审计", "J-space", "安全法", "搜索入口"],
       "AI 进入审计层：模型分发、代码安全、内部状态、监管和流量入口都要可解释。",
       "China models · Mythos · J-space · Illinois SB315 · Search Console"),
+    news("2026/07/08/2026-07-08-x-上-ai-与前端热点速览", "2026-07-08",
+      ["视觉 agent", "后台任务", "模型路由", "推理芯片", "安全指数"],
+      "AI 进入运行账本：工具调用、后台任务、模型成本、芯片供应和安全承诺都要可记录。",
+      "Muse Image · Claude Cowork · MAI routing · DeepSeek chip · AI Safety Index"),
   ];
 
   const T = [

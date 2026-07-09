@@ -149,6 +149,10 @@ window.COVERS = (function () {
       ["视觉 agent", "后台任务", "模型路由", "推理芯片", "安全指数"],
       "AI 进入运行账本：工具调用、后台任务、模型成本、芯片供应和安全承诺都要可记录。",
       "Muse Image · Claude Cowork · MAI routing · DeepSeek chip · AI Safety Index"),
+    news("2026/07/09/2026-07-09-x-上-ai-与前端热点速览", "2026-07-09",
+      ["长任务模型", "实时语音", "评测审计", "高速 coding", "机器人导航"],
+      "Agent 的执行账本继续细化：长任务、语音、评测、速度和物理行动都要可验证。",
+      "Grok 4.5 · GPT-Live · SWE-Bench Pro · SWE-1.7 · Robostral"),
   ];
 
   const T = [

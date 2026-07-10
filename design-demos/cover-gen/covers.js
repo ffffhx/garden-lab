@@ -153,6 +153,10 @@ window.COVERS = (function () {
       ["长任务模型", "实时语音", "评测审计", "高速 coding", "机器人导航"],
       "Agent 的执行账本继续细化：长任务、语音、评测、速度和物理行动都要可验证。",
       "Grok 4.5 · GPT-Live · SWE-Bench Pro · SWE-1.7 · Robostral"),
+    news("2026/07/10/2026-07-10-x-上-ai-与前端热点速览", "2026-07-10",
+      ["AI 工作台", "Agentic Coding", "使用反思", "开放模型", "内容披露"],
+      "AI 工作台开始成形：模型、工具、开放生态、使用数据和内容标识都要产品化。",
+      "GPT-5.6 · Muse Spark · Claude Reflect · Ollama · Google Ads"),
   ];
 
   const T = [

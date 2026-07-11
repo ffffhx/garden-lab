@@ -157,6 +157,10 @@ window.COVERS = (function () {
       ["AI 工作台", "Agentic Coding", "使用反思", "开放模型", "内容披露"],
       "AI 工作台开始成形：模型、工具、开放生态、使用数据和内容标识都要产品化。",
       "GPT-5.6 · Muse Spark · Claude Reflect · Ollama · Google Ads"),
+    news("2026/07/11/2026-07-11-x-上-ai-与前端热点速览", "2026-07-11",
+      ["监管设计", "AI 硬件", "模型管制", "密钥泄露", "隐私扫描"],
+      "AI 的外部边界变硬：设计、硬件、模型、密钥和隐私都要可审计。",
+      "Meta DSA · Apple/OpenAI · Model exports · CISA · Chat Control"),
   ];
 
   const T = [

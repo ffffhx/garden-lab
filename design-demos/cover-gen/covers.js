@@ -161,6 +161,10 @@ window.COVERS = (function () {
       ["监管设计", "AI 硬件", "模型管制", "密钥泄露", "隐私扫描"],
       "AI 的外部边界变硬：设计、硬件、模型、密钥和隐私都要可审计。",
       "Meta DSA · Apple/OpenAI · Model exports · CISA · Chat Control"),
+    news("2026/07/12/2026-07-12-x-上-ai-与前端热点速览", "2026-07-12",
+      ["开源维护", "AI 硬件", "肖像同意", "安全治理", "网络边界"],
+      "AI 的维护成本回到日常工程：代码、素材、安全和网络都要可解释。",
+      "AI coding PR · Apple/OpenAI · Muse Image · OpenAI Safety · DNS/VPN"),
   ];
 
   const T = [

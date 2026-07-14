@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>离线中 · Garden Lab</title>
+<style>
+  :root {
+    --paper: #f4efe4;
+    --ink: #1a1815;
+    --ink-soft: #3c362c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #1a1714;
+      --ink: #e8e2d4;
+      --ink-soft: #b8b0a0;
+    }
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Georgia, "Songti SC", "Noto Serif CJK SC", serif;
+    text-align: center;
+    padding: 2rem;
+    box-sizing: border-box;
+  }
+  main { max-width: 26rem; }
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 0.8rem 0;
+  }
+  p { color: var(--ink-soft); line-height: 1.8; }
+  button {
+    margin-top: 1rem;
+    padding: 0.6rem 1.6rem;
+    font: inherit;
+    background: none;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>暂时离线</h1>
+  <p>当前没有网络连接，且这一页还没被缓存过。<br />读过的文章离线时仍可打开。</p>
+  <button onclick="location.reload()">重试</button>
+</main>
+</body>
+</html>

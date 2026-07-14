@@ -1,364 +1,758 @@
 ---
-title: "Open Token Board 实现原理：从本机 Token 日志到朋友排行榜"
+title: "Open Token Board 项目复盘：从本机 Token 日志到可信用量平台"
 date: "2026-06-03 21:20:00"
 categories:
   - 技术
 tags:
   - Open Token Board
-  - Token
   - Agent
+  - TypeScript
   - Next.js
   - PostgreSQL
   - GitHub OAuth
-excerpt: "拆解 open-token-board 如何把 Codex、Claude Code、Cursor、Trae 的本机用量日志采集成统一事件，再通过 GitHub Device Flow、后端二次清洗、PostgreSQL/JSON 存储、滚动时间窗口聚合和 Next.js 榜单 UI，做成一个朋友之间可公开查看的 AI 编码 Token 排行榜。"
+  - 数据工程
+  - 工程实践
+excerpt: "一份面向技术面试的源码解析与项目复盘：Open Token Board 如何把 Codex、Claude Code、Gemini CLI、opencode 等本机日志归一成可信事件，用幂等上报、安全全量替换、PostgreSQL 聚合、隐私清洗和回归测试，做成可自托管的 AI 编码用量平台；过程中有哪些口径陷阱、失败方案与工程取舍。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
 ---
 
-## 摘要
+> 本文最初写于 2026 年 6 月 3 日，当时项目还是一张基础朋友榜。项目随后持续演进，本文已按 2026 年 7 月 11 日的 `f6f6638` 源码与 Git 历史重写。代码片段为讲解裁剪版，目标不是背 API，而是理解每个设计解决了什么问题、失败时怎样保护数据，以及面试中怎样建立证据链。
 
-`Open Token Board` 做的是一件很具体的事：把大家本机 AI 编码工具产生的 token 用量，变成一张可以一起看的朋友排行榜。
+## 1. 项目定位与面试开场
 
-先给结论：
+如果面试官只给我 30 秒，我会这样介绍 Open Token Board：
 
-1. 它是一个 `pnpm workspace`，把 `web`、`api`、`core`、`deploy` 和 `npx agent` 分成了清晰边界。
-2. 真正发给朋友安装的是单文件 `token-board-agent`，不是整个仓库。
-3. agent 在本机扫描 `Codex`、`Claude Code`、`Cursor`、`Trae` 的用量记录，并把不同格式归一成 `TokenUsageEvent`。
-4. Codex 日志里的 `total_token_usage` 是累计值，agent 会转成相邻 token_count 之间的增量，避免重复计数。
-5. 首次安装走 GitHub Device Flow，后端签发 agent session token；旧的 upload token 机制还保留作兼容。
-6. 上传到后端后还会再做一次清洗：替换用户身份、截断字段、限制时间范围、hash session id、按配置隐藏模型或项目。
-7. 存储层优先用 PostgreSQL；没有数据库配置时回退到 JSON 文件。两种实现都用事件 `id` 去重。
-8. 排行榜不是预先写死的表，而是查询时按 `1D`、`7D`、`30D`、`90D` 滚动窗口聚合。
-9. 前端页面只读后端 API，不再用假数据兜底；读不到真实服务时会明确显示错误状态。
-10. 站点发布时会把 `token-board-agent` 打成 `token-board-agent.tgz`，和 Next.js 静态页面一起由 GitHub Pages 分发。
+> Open Token Board 是一个可自托管的 AI 编码用量平台。它在用户本机通过轻量 agent 读取 Codex、Claude Code、Gemini CLI 和 opencode 等工具的用量日志，归一、脱敏后可靠上报；服务端用 GitHub 身份绑定数据，以事件主键保证幂等，用 PostgreSQL 完成窗口聚合；前端再提供朋友榜、个人画像、额度墙、Wrapped 和飞书战报。最难的不是画排行榜，而是让多种不断变化的日志在同一时间口径下可对账，并保证重试、断网、重复文件和全量重同步都不会把历史数据算重或清空。
 
-<figure class="fz087" data-reveal role="group" aria-label="从本机日志到朋友排行榜的五段链路示意图"><style>.fz087{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--soft2:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--g:#4f7233;--gb:#e7eedd;--gl:#7c9c54;--c:#3f6d79;--cb:#dcebed;--ce:#8fbcc4;--a:#9a6516;--ab:#f4e8cc;--ae:#d9b66a;--r:#8f2d20;--rb:#f1ddd6;--re:#cf9b90;--p:#54579a;--pb:#e6e7f3;--pe:#a9adcf;--gr:#917f5c;--grb:#ece4d2;font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);color:var(--ink);background:linear-gradient(160deg,var(--paper-soft),var(--soft2));border:1px solid var(--hair);border-radius:14px;padding:clamp(16px,3vw,28px);margin:0;box-sizing:border-box;max-width:100%;overflow:hidden}.fz087 *{box-sizing:border-box}.fz087 .ttl{font-size:clamp(18px,2.6vw,26px);font-weight:800;letter-spacing:.5px;line-height:1.3}.fz087 .sub{margin-top:6px;color:var(--muted);font-size:clamp(12px,1.5vw,15px);line-height:1.5}.fz087 .flow{margin-top:20px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:stretch}.fz087 .node{position:relative;border-radius:14px;padding:14px 12px;border:1.5px solid var(--hair);background:var(--soft2);opacity:0;transform:translateY(10px);animation:fz087in .7s ease forwards}.fz087 .n1{background:var(--gb);border-color:var(--gl);animation-delay:.05s}.fz087 .n2{background:var(--cb);border-color:var(--ce);animation-delay:.45s}.fz087 .n3{background:var(--ab);border-color:var(--ae);animation-delay:.85s}.fz087 .n4{background:var(--grb);border-color:var(--gr);animation-delay:1.25s}.fz087 .n5{background:var(--rb);border-color:var(--re);animation-delay:1.65s}.fz087 .nh{font-size:clamp(13px,1.7vw,17px);font-weight:800;margin-bottom:9px;line-height:1.25}.fz087 .n1 .nh{color:var(--g)}.fz087 .n2 .nh{color:var(--c)}.fz087 .n3 .nh{color:var(--a)}.fz087 .n4 .nh{color:#6f5f3e}.fz087 .n5 .nh{color:var(--r)}.fz087 .it{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:clamp(10px,1.25vw,12.5px);color:var(--ink-soft);padding:3px 0;line-height:1.4;border-top:1px dashed var(--hair)}.fz087 .it:first-of-type{border-top:0}.fz087 .arr{position:absolute;top:50%;right:-9px;width:16px;height:16px;transform:translateY(-50%);z-index:3}.fz087 .arr::before{content:"";position:absolute;left:0;top:50%;width:0;height:0;transform:translateY(-50%);border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:9px solid var(--p);opacity:.85}.fz087 .arr::after{content:"";position:absolute;right:14px;top:50%;width:14px;height:3px;border-radius:2px;transform:translateY(-50%);background:linear-gradient(90deg,transparent,var(--pe),var(--p));background-size:200% 100%;animation:fz087flow 8s linear infinite}.fz087 .pulse{position:absolute;top:50%;right:-9px;transform:translateY(-50%);width:7px;height:7px;border-radius:50%;background:var(--p);z-index:4;animation:fz087pulse 7s linear infinite}.fz087 .n2 .pulse{animation-delay:1.4s}.fz087 .n3 .pulse{animation-delay:2.8s}.fz087 .n4 .pulse{animation-delay:4.2s}.fz087 .foot{margin-top:18px;background:var(--paper-soft);border:1px solid var(--hair);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;justify-content:space-between}.fz087 .fl{flex:1 1 300px;min-width:240px}.fz087 .fh{font-weight:800;font-size:clamp(14px,1.8vw,18px);margin-bottom:8px}.fz087 .fp{color:var(--ink-soft);font-size:clamp(11px,1.4vw,14px);line-height:1.6}.fz087 .chip{flex:0 1 auto;align-self:center;background:var(--pb);border:1px solid var(--pe);color:var(--p);font-weight:800;border-radius:10px;padding:10px 16px;font-size:clamp(11px,1.5vw,15px);line-height:1.4;animation:fz087glow 8s ease-in-out infinite}@keyframes fz087in{to{opacity:1;transform:translateY(0)}}@keyframes fz087flow{0%{background-position:140% 0}100%{background-position:-40% 0}}@keyframes fz087pulse{0%{opacity:0;transform:translate(-2px,-50%) scale(.6)}6%{opacity:1}14%{opacity:1;transform:translate(8px,-50%) scale(1)}22%{opacity:0;transform:translate(14px,-50%) scale(.6)}100%{opacity:0}}@keyframes fz087glow{0%,100%{box-shadow:0 0 0 0 rgba(84,87,154,0)}50%{box-shadow:0 0 0 4px rgba(84,87,154,.12)}}@media(max-width:560px){.fz087 .flow{grid-template-columns:1fr;gap:8px}.fz087 .node{opacity:1;transform:none;animation:fz087in .6s ease forwards}.fz087 .arr{top:auto;bottom:-9px;right:50%;left:50%;transform:translateX(-50%);width:16px;height:16px}.fz087 .arr::before{left:50%;top:0;transform:translateX(-50%);border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid var(--p);border-bottom:0}.fz087 .arr::after{display:none}.fz087 .pulse{top:auto;bottom:-9px;right:50%;left:50%;transform:translateX(-50%)}@keyframes fz087pulse{0%{opacity:0;transform:translate(-50%,-2px) scale(.6)}6%{opacity:1}14%{opacity:1;transform:translate(-50%,8px) scale(1)}22%{opacity:0;transform:translate(-50%,14px) scale(.6)}100%{opacity:0}}}@media(prefers-reduced-motion:reduce){.fz087 .node{animation:none;opacity:1;transform:none}.fz087 .arr::after{animation:none;background-position:0 0}.fz087 .pulse{animation:none;opacity:0}.fz087 .chip{animation:none}}</style><div class="ttl">从本机日志到朋友排行榜的五段链路</div><div class="sub">采集端处理脏数据，服务端保证身份和幂等，前端只读真实 API。</div><div class="flow"><div class="node n1"><div class="nh">1. 本机来源</div><div class="it">Codex JSONL</div><div class="it">Claude history</div><div class="it">Cursor SQLite</div><div class="it">Trae 日志目录</div><span class="arr" aria-hidden="true"></span><span class="pulse" aria-hidden="true"></span></div><div class="node n2"><div class="nh">2. npx Agent</div><div class="it">扫描文件</div><div class="it">解析 token</div><div class="it">Codex 差分</div><div class="it">生成事件 id</div><span class="arr" aria-hidden="true"></span><span class="pulse" aria-hidden="true"></span></div><div class="node n3"><div class="nh">3. API 服务</div><div class="it">验证 agent token</div><div class="it">覆盖用户身份</div><div class="it">二次清洗</div><div class="it">返回 accepted</div><span class="arr" aria-hidden="true"></span><span class="pulse" aria-hidden="true"></span></div><div class="node n4"><div class="nh">4. 存储层</div><div class="it">PostgreSQL 优先</div><div class="it">JSON 文件兜底</div><div class="it">id 主键去重</div><div class="it">replace 按用户清理</div><span class="arr" aria-hidden="true"></span><span class="pulse" aria-hidden="true"></span></div><div class="node n5"><div class="nh">5. UI</div><div class="it">滚动窗口</div><div class="it">用户排名</div><div class="it">模型分布</div><div class="it">个人面板</div></div></div><div class="foot"><div class="fl"><div class="fh">核心边界</div><div class="fp">本机日志可以很脏，但 core 之后只看 TokenUsageEvent。</div><div class="fp">前端不理解原始日志，也不展示 demo 榜单兜底。</div></div><div class="chip">统一事件 + 幂等写入 + 查询时聚合</div></div></figure>
+项目边界可以概括为四点：
 
-本文观察对象如下：
+- **采集边界**：只读取 AI 编码工具已经落盘的本地记录，不修改源文件；
+- **隐私边界**：默认上传 token 计数与有限元数据，不上传 prompt、回复正文、文件内容、完整路径和密钥；
+- **一致性边界**：普通同步允许重试且保持幂等，全量替换必须完整扫描、分批暂存、校验清单后才提交；
+- **部署边界**：静态 Web、npm agent、API 服务与 PostgreSQL 分开部署，仓库仍保持一套共享领域模型。
 
-| 项 | 值 |
-| --- | --- |
-| 仓库 | `/Users/bytedance/Code/open-token-board` |
-| 观察日期 | `2026-06-03` |
-| 观察 commit | `0f679baeb22b62ede9c49c0aa231a3577902998b` |
-| 前端入口 | `apps/web/app/board/page.tsx` |
-| API 入口 | `apps/token-board-api/src/server.ts` |
-| core 聚合 | `packages/token-board-core/src/token-leaderboard.ts` |
-| 发布 agent | `tools/token-board-agent-npx/bin/token-board-agent.mjs` |
+面试时最值得讲的不是功能数量，而是下面四类工程问题：
 
-## 0. 先把几个词讲清楚
+1. 多个工具的日志格式、累计/增量语义和缓存字段都不同，怎样归一成一套可信事件；
+2. agent 每五分钟运行一次，网络也会重试，怎样避免同一用量被重复计算；
+3. 用户要求“用本机历史整体覆盖线上”时，怎样避免先删旧数据、后上传失败；
+4. 数据量增长后，怎样把全表拉回 Node 聚合改成 PostgreSQL 内完成，同时保留轻量 JSON 兜底。
 
-这个项目里最核心的概念不是“排行榜”，而是 `TokenUsageEvent`。
+<style>
+.otb-map{--p:var(--paper-soft,#faf6ec);--d:var(--paper-deep,#ece5d5);--i:var(--ink,#1a1815);--m:var(--muted,#6a6155);--l:color-mix(in srgb,var(--i) 22%,transparent);--v:#6650a8;--g:#4f7233;--a:#a86718;--r:#9a3b2d;--b:#315f9a;margin:1.5rem 0;padding:clamp(14px,2.8vw,24px);border:1.5px solid var(--l);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--p) 94%,var(--v) 6%),var(--p));color:var(--i);overflow:hidden}.otb-map *{box-sizing:border-box}.otb-map .k{margin:0 0 5px;font:700 11px/1.2 var(--font-mono,ui-monospace,monospace);letter-spacing:.14em;text-transform:uppercase;color:var(--v)}.otb-map .t{margin:0 0 16px;font:700 clamp(17px,2.4vw,22px)/1.25 var(--font-display,system-ui,sans-serif)}.otb-map .track{display:flex;align-items:stretch;gap:8px;min-width:0}.otb-map .n{flex:1 1 0;min-width:0;padding:12px;border:1px solid var(--l);border-radius:11px;background:color-mix(in srgb,var(--p) 88%,white 12%)}.otb-map .n b{display:block;font-size:13px;line-height:1.35}.otb-map .n small{display:block;margin-top:5px;font-size:11.5px;line-height:1.45;color:var(--m)}.otb-map .n[data-c="g"]{border-color:color-mix(in srgb,var(--g) 55%,transparent)}.otb-map .n[data-c="a"]{border-color:color-mix(in srgb,var(--a) 55%,transparent)}.otb-map .n[data-c="r"]{border-color:color-mix(in srgb,var(--r) 55%,transparent)}.otb-map .n[data-c="b"]{border-color:color-mix(in srgb,var(--b) 55%,transparent)}.otb-map .ar{flex:0 0 auto;align-self:center;color:var(--v);font-weight:800}.otb-map .note{margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--l);font-size:12px;line-height:1.55;color:var(--m)}.otb-map code{font-family:var(--font-mono,ui-monospace,monospace)}@media(max-width:720px){.otb-map .track{display:grid;grid-template-columns:1fr}.otb-map .ar{transform:rotate(90deg);justify-self:center;margin:-5px 0}}
+</style>
 
-它是一条已经清洗过的用量事件，大致包含：
+<figure class="otb-map" role="group" aria-label="Open Token Board 从本机日志到产品页面的五段数据链路">
+  <p class="k">End-to-end pipeline</p>
+  <p class="t">从不稳定的本机日志，到可查询、可解释的用量事实</p>
+  <div class="track">
+    <div class="n"><b>本机日志</b><small>Codex · Claude Code<br>Gemini · opencode</small></div>
+    <span class="ar">→</span>
+    <div class="n" data-c="g"><b>token-board-agent</b><small>发现 · 解析 · 去重<br>脱敏 · checkpoint</small></div>
+    <span class="ar">→</span>
+    <div class="n" data-c="a"><b>API 边界</b><small>GitHub 身份 · 校验<br>二次清洗 · 幂等写</small></div>
+    <span class="ar">→</span>
+    <div class="n" data-c="b"><b>PostgreSQL</b><small>事件表 · 用户配置<br>时间窗口 · SQL 聚合</small></div>
+    <span class="ar">→</span>
+    <div class="n" data-c="r"><b>产品层</b><small>榜单 · 额度 · 主页<br>Wrapped · 飞书战报</small></div>
+  </div>
+  <p class="note">核心设计：让日志格式变化停在采集层，让身份与隐私收敛在 API，让统计口径集中在 core / storage，而不是散落到每个页面。</p>
+</figure>
 
-| 字段 | 含义 |
-| --- | --- |
-| `id` | 事件主键，用来去重和幂等导入 |
-| `userId` / `displayName` | 榜单用户身份 |
-| `source` / `tool` | 数据来自哪个工具，比如 Codex CLI、Claude Code、Cursor |
-| `model` | 这条事件对应的模型名 |
-| `project` | 项目名，默认只保留 basename |
-| `timestamp` | 这次用量发生的时间 |
-| `inputTokens` | 输入上下文 token |
-| `cachedInputTokens` | 输入上下文里缓存命中的部分 |
-| `outputTokens` | 模型输出 token |
-| `reasoningOutputTokens` | 推理 token，主要作为副指标展示 |
-| `sessionId` / `sessionTitle` | 会话标识和短标题，默认会对 session id 做 hash |
+## 2. 项目之前是什么，现在是什么
 
-这里还有一个口径要提前说清楚：榜单里的“总消耗”按 `inputTokens + outputTokens` 算。`cachedInputTokens` 是输入上下文里的缓存命中子集，费用估算会用到，但不会从总消耗里扣掉。项目也明确拒绝只拿 `totalTokens` 兜底，因为不同工具对 `total_tokens` 的定义可能不一致。
+第一版更接近“把自己的静态统计放到网页上”；当前版本已经是一套跨本机与服务端的用量基础设施。
 
-另一个词是 `rolling range`。排行榜支持 `1D`、`7D`、`30D`、`90D`，不是自然日、自然周、自然月，而是以当前时间为结束点向前滚动取窗口。比如 `7D` 就是“现在往前 7 天”。
+| 维度 | 早期版本 | 当前版本 |
+| --- | --- | --- |
+| 用户 | 单人展示 | GitHub 身份绑定的朋友/团队 |
+| 采集 | 少量手写解析 | `agent-session-core` + Gemini/opencode 专用解析 + Cursor best-effort |
+| 同步 | 上传新事件 | checkpoint、重试、健康检查、`resync`、事务化 `replace` |
+| 存储 | JSON / Node 内存聚合 | PostgreSQL 正式路径 + JSON 轻量兜底 |
+| 口径 | 总 token 排名 | 输入、缓存写、缓存读、输出四分类计价与明确窗口 |
+| 页面 | 单张榜单 | 榜单、个人主页、额度墙、Wrapped、分享卡、导出 |
+| 自动化 | 手动刷新 | LaunchAgent / Task Scheduler、飞书日报周报、CI/CD |
+| 质量 | 手工验证 | typecheck、API 回归、Playwright E2E、独立工具对账 |
 
-## 1. 总体架构：把不稳定的本机日志挡在 core 外面
+项目演进不是“功能列表越堆越多”，而是每一阶段都在修正上一阶段暴露的事实边界：
 
-这个仓库的边界分得很直接：
+1. **MVP：先证明分享需求**。把本机用量做成朋友能看的榜单；
+2. **独立服务：拆出 Web / API / core / agent**。让本机采集、服务端存储和静态页面不再互相绑死；
+3. **可靠性：修正解析、鉴权与隐私**。处理累计值、重复文件、会话标题、上传权限和敏感字段；
+4. **规模化：下推 PostgreSQL 聚合并加入快照缓存**。解决榜单超时与重复计算；
+5. **产品化：额度、荣誉、个人主页、Wrapped、飞书战报、多工具与导出**；
+6. **可信度：引入原子替换、反作弊校验、回归套件和跨工具对账**。
+
+这里有一个适合面试讲的判断：**先验证有没有人愿意看，再投入时间证明数字为什么可信。** 对数据产品来说，后半句最终比 UI 更重要。
+
+## 3. 当前架构：五条职责链
+
+仓库是一个 `pnpm workspace`，主要边界如下：
 
 | 模块 | 路径 | 职责 |
 | --- | --- | --- |
-| Web | `apps/web` | Next.js 静态站点、安装说明、榜单 UI |
-| API | `apps/token-board-api` | HTTP API、GitHub OAuth、上传鉴权、查询接口 |
-| Core | `packages/token-board-core` | 事件模型、采集解析、隐私清洗、排行榜聚合、存储接口 |
-| Deploy | `deploy/token-board` | PostgreSQL + API 的 Docker Compose 部署包 |
-| Agent | `tools/token-board-agent-npx` | 朋友通过 `npx` 安装的轻量同步工具 |
-| Pack | `scripts/pack-agent.mjs` | 把 agent 打成 `apps/web/public/token-board-agent.tgz` |
+| Web | `apps/web` | Next.js 静态导出、榜单与个人页面、额度墙、分享体验 |
+| API | `apps/token-board-api` | HTTP 路由、GitHub 登录、上传/查询、飞书任务 |
+| Core | `packages/token-board-core` | 事件模型、采集适配、隐私清洗、聚合、计价、存储接口 |
+| Agent | `tools/token-board-agent-npx` | npm 分发、后台安装、登录、采集、同步、MCP/statusline |
+| Deploy | `deploy/token-board` | API + PostgreSQL 的 Docker Compose 部署 |
 
-这套拆法背后的思路是：**本机日志格式随工具变化而变化，但排行榜核心只接受统一事件。**
+五条职责链分别是：
 
-所以，复杂度主要被分到两段：
+- **采集链**：本机文件 → source discovery → parser → `TokenUsageEvent`；
+- **同步链**：本地 checkpoint → batch upload → retry → 服务端幂等写入；
+- **身份链**：GitHub Device Flow / Web OAuth → agent token / session cookie → 用户身份覆盖；
+- **查询链**：range + metric → PostgreSQL 聚合或 JSON fallback → API response；
+- **产品链**：真实 API → 榜单、个人画像、额度、目标、荣誉、Wrapped 与飞书卡片。
 
-- 采集端负责尽可能兼容不同工具的本地文件。
-- 服务端负责二次清洗、鉴权、落库和聚合。
+这种拆法的价值在于：前端完全不需要理解 Codex JSONL 或 opencode SQLite，采集器也不需要知道排行榜卡片长什么样。两端只通过统一事件和 API 合同协作。
 
-前端不直接理解 Codex JSONL、Cursor SQLite 或 Claude history。它只消费 `/api/usage/stats`、`/api/usage/me` 这种已经成形的 JSON。
+## 4. 统一事件：先把统计语言定义清楚
 
-<figure class="fz088" data-reveal role="group" aria-label="open-token-board monorepo 模块边界示意图：web 与 api 都通过 workspace 依赖 core，agent、pack、deploy 也都汇入 core"><style>.fz088{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);margin:0;padding:clamp(16px,3vw,30px);background:var(--paper-soft,#faf6ec);color:var(--ink,#1a1815);font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);border:1px solid var(--hair,rgba(26,24,21,.18));border-radius:16px;box-sizing:border-box;overflow:hidden}.fz088 *{box-sizing:border-box}.fz088 .hd{margin-bottom:4px;font-size:clamp(19px,3.4vw,28px);font-weight:800;letter-spacing:.2px}.fz088 .sub{margin-bottom:18px;font-size:clamp(12px,1.9vw,15px);color:var(--muted,#6a6155);line-height:1.5}.fz088 .stage{position:relative;background:var(--paper-deep,#ece5d5);border:1px solid var(--hair,rgba(26,24,21,.18));border-radius:14px;padding:clamp(14px,2.4vw,24px)}.fz088 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,2vw,22px);align-items:stretch}.fz088 .node{position:relative;border-radius:13px;padding:13px 14px;border:1.5px solid var(--hair);background:#f7f1e4;display:flex;flex-direction:column;gap:5px;min-width:0;z-index:2}.fz088 .node b{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:clamp(13px,2.1vw,17px);font-weight:800;letter-spacing:.2px;word-break:break-all}.fz088 .node small{display:block;font-size:clamp(11px,1.7vw,13px);color:var(--ink-soft,#3c362c);line-height:1.45}.fz088 .web{background:var(--c-cyan-bg,#dcebed);border-color:var(--c-cyan-bd,#8fbcc4)}.fz088 .web b{color:var(--c-cyan,#3f6d79)}.fz088 .api{background:var(--c-amber-bg,#f4e8cc);border-color:var(--c-amber-bd,#d9b66a)}.fz088 .api b{color:var(--c-amber,#9a6516)}.fz088 .agent{background:var(--c-red-bg,#f1ddd6);border-color:var(--c-red-bd,#cf9b90)}.fz088 .agent b{color:var(--c-red,#8f2d20)}.fz088 .pack{background:var(--c-gray-bg,#ece4d2);border-color:var(--c-gray,#917f5c)}.fz088 .pack b{color:var(--c-gray,#917f5c)}.fz088 .deploy{background:var(--c-pur-bg,#e6e7f3);border-color:var(--c-pur-bd,#a9adcf)}.fz088 .deploy b{color:var(--c-pur,#54579a)}.fz088 .core{grid-row:span 2;background:var(--c-green-bg,#e7eedd);border:2px solid var(--c-green-lt,#7c9c54);justify-content:center;box-shadow:0 0 0 0 rgba(124,156,84,.45);animation:fz088pulse 8s ease-in-out infinite}.fz088 .core b{color:var(--c-green,#4f7233);font-size:clamp(14px,2.3vw,18px)}.fz088 .core .lead{font-size:clamp(10px,1.5vw,12px);color:var(--c-green,#4f7233);font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px}@keyframes fz088pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,156,84,0)}50%{box-shadow:0 0 0 7px rgba(124,156,84,.16)}}.fz088 .ar{position:relative;align-self:center;height:18px;display:flex;align-items:center;justify-content:center;z-index:1}.fz088 .ar.h{order:0}.fz088 .line{position:relative;height:3px;width:100%;border-radius:3px;background:var(--hair);overflow:hidden}.fz088 .line::after{content:"";position:absolute;top:0;height:100%;width:42%;border-radius:3px;background:linear-gradient(90deg,transparent,var(--ink-soft,#3c362c),transparent);animation:fz088flowR 6s linear infinite}.fz088 .ar.toL .line::after{animation:fz088flowL 6s linear infinite}.fz088 .tip{position:absolute;top:50%;transform:translateY(-50%);width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent}.fz088 .ar.toR .tip{right:-1px;border-left:9px solid var(--ink-soft,#3c362c)}.fz088 .ar.toL .tip{left:-1px;border-right:9px solid var(--ink-soft,#3c362c)}@keyframes fz088flowR{0%{left:-45%}100%{left:105%}}@keyframes fz088flowL{0%{right:-45%}100%{right:105%}}.fz088 .vwrap{display:flex;flex-direction:column;align-items:center;gap:6px}.fz088 .varrow{position:relative;width:3px;height:clamp(14px,2.4vw,26px);border-radius:3px;background:var(--hair);overflow:hidden}.fz088 .varrow::after{content:"";position:absolute;left:0;width:100%;height:48%;border-radius:3px;background:linear-gradient(180deg,transparent,var(--ink-soft,#3c362c),transparent);animation:fz088flowU 6.5s linear infinite}.fz088 .varrow .vtip{position:absolute;left:50%;top:-1px;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:9px solid var(--ink-soft,#3c362c)}@keyframes fz088flowU{0%{top:110%}100%{top:-50%}}.fz088 .toLbl{font-size:11px;color:var(--muted,#6a6155);font-family:var(--font-mono,ui-monospace,monospace);letter-spacing:.3px}.fz088 .botrow{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,2vw,22px);margin-top:clamp(10px,2vw,18px)}.fz088 .focus{margin-top:18px;background:var(--ink,#1a1815);color:var(--paper-soft,#faf6ec);border-radius:11px;padding:12px 16px;font-size:clamp(12px,1.9vw,14.5px);line-height:1.5;display:flex;gap:9px;align-items:baseline}.fz088 .focus .tag{flex:none;font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;font-weight:700;color:var(--c-green-lt,#7c9c54);letter-spacing:.5px}.fz088[data-reveal] .node{opacity:0;transform:translateY(10px);animation:fz088in .7s ease forwards}.fz088[data-reveal] .web{animation-delay:.05s}.fz088[data-reveal] .core{animation-delay:.18s}.fz088[data-reveal] .api{animation-delay:.32s}.fz088[data-reveal] .agent{animation-delay:.45s}.fz088[data-reveal] .pack{animation-delay:.55s}.fz088[data-reveal] .deploy{animation-delay:.65s}.fz088.in-view .node{opacity:1}@keyframes fz088in{to{opacity:1;transform:translateY(0)}}@media(max-width:560px){.fz088 .grid,.fz088 .botrow{grid-template-columns:1fr}.fz088 .core{grid-row:auto}.fz088 .ar.h{display:none}.fz088 .vwrap{margin:2px 0}}@media (prefers-reduced-motion:reduce){.fz088 *{animation:none!important}.fz088 .node{opacity:1!important;transform:none!important}.fz088 .line::after,.fz088 .varrow::after{display:none}.fz088 .core{box-shadow:0 0 0 4px rgba(124,156,84,.16)}}</style><div class="hd">Monorepo 模块边界</div><div class="sub">业务规则下沉到 core，web 和 api 都通过 workspace 包复用同一套模型。</div><div class="stage"><div class="grid"><div class="node web"><b>apps/web</b><small>Next.js 静态站点</small><small>榜单 UI / 安装指南</small></div><div class="ar h toR"><div class="line"></div><span class="tip"></span></div><div class="node core"><span class="lead">workspace 复用核心</span><b>packages/core</b><small>TokenUsageEvent</small><small>采集 / 清洗</small><small>聚合 / 费用估算</small><small>存储接口</small></div><div class="ar h toR"><div class="line"></div><span class="tip"></span></div><div class="node api"><b>apps/api</b><small>GitHub OAuth</small><small>上传 / 查询接口</small></div></div><div class="botrow"><div class="vwrap"><div class="varrow"><span class="vtip"></span></div><span class="toLbl">依赖 core</span><div class="node agent"><b>tools/agent-npx</b><small>单文件 agent</small><small>LaunchAgent / Task</small></div></div><div class="vwrap"><div class="varrow"><span class="vtip"></span></div><span class="toLbl">依赖 core</span><div class="node pack"><b>scripts/pack-agent</b><small>npm pack</small><small>输出到 public tgz</small></div></div><div class="vwrap"><div class="varrow"><span class="vtip"></span></div><span class="toLbl">依赖 core</span><div class="node deploy"><b>deploy/token-board</b><small>PostgreSQL</small><small>API Docker Compose</small></div></div></div></div><div class="focus"><span class="tag">设计重点</span><span>web 和 api 都依赖 core，避免把排行榜口径散落在 UI 或 HTTP handler 里。</span></div></figure>
-
-## 2. 本机 agent：从多种日志里抠出同一种事件
-
-朋友安装时执行的命令长这样：
-
-```bash
-npx --yes token-board-agent install # 安装并启动本机 token 同步 agent
-```
-
-安装命令做了三件事：
-
-1. 引导 GitHub Device Login。
-2. 保存后端签发的 agent session token 到 `~/.token-board-agent.json`。
-3. 注册后台同步任务：macOS 用 `LaunchAgent`，Windows 用 `Task Scheduler`。
-
-后台任务默认每 5 分钟跑一次。真正上传前，它会先扫描本机默认路径：
-
-| 工具 | 默认扫描位置 |
-| --- | --- |
-| Codex CLI | `~/.codex/sessions`、`~/.codex/archived_sessions`、`~/.codex/projects` |
-| Claude Code | `~/.claude/projects`、`~/.claude/history.jsonl` |
-| Cursor | 用户 `globalStorage` 和 logs |
-| Trae / Trae CN | 用户 `globalStorage`、logs、AI agent 数据目录、`.trae*` 目录 |
-
-也可以用 `TOKEN_BOARD_USAGE_PATHS` 补充自定义 JSON / JSONL / CSV 路径，或用 `TOKEN_BOARD_INCLUDE_DEFAULT_SOURCES=false` 关掉默认扫描源。
-
-采集逻辑不是“看到数字就加总”。它会先找可能含 token 的文件，再根据文件类型解析：
-
-| 文件类型 | 处理方式 |
-| --- | --- |
-| `.json` | 递归遍历 JSON，寻找 token 字段组合 |
-| `.jsonl` / `.log` | 按行 parse JSON，再递归抽取 |
-| `.csv` | 读表头，识别 `inputTokens`、`outputTokens` 等字段 |
-| `.vscdb` / `state.vscdb` | 用 `sqlite3 -readonly -json` 查询可能包含 usage 的 KV |
-| Codex `.jsonl` | 单独解析 `token_count` 事件，并处理累计值差分 |
-
-Codex 的情况最值得单独讲。Codex JSONL 里常见的是 `total_token_usage`，它表示到当前为止这条会话累计用了多少 token。如果每一行都直接拿累计值记一条事件，排行榜会爆炸式重复计数。
-
-所以 agent 会保留上一条累计值，把当前累计值减去上一条累计值，得到这次增量。
-
-下面是按发布版 agent 改写的裁剪片段：
-
-```js
-function readCodexUsage(row, previousTotalUsage) { // 读取一行 Codex JSONL 里的 token 用量
-  const payload = row.payload || {}; // 取出事件载荷，缺失时给空对象兜底
-  if (row.type !== "event_msg") return null; // 非事件消息不产生用量记录
-  if (payload.type !== "token_count") return null; // 只有 token_count 才代表一次用量更新
-  const info = payload.info || {}; // token 详情放在 payload.info 里
-  const total = info.total_token_usage; // Codex 常见字段是会话累计用量
-  const usage = total ? diffUsage(total, previousTotalUsage) : info.last_token_usage; // 有累计值就转成增量，没有累计值才读单次值
-  if (!usage) return null; // 没有可用 token 字段就跳过
-  return usage; // 返回后续可归一化的单次 token 用量
-} // Codex 单行用量读取结束
-```
-
-这个设计带来两个结果：
-
-- 榜单按“每次新增消耗”计数，而不是按“会话累计快照”计数。
-- agent 可以重复扫描最近 30 天文件，因为最终会用稳定事件 `id` 去重。
-
-## 3. 隐私边界：客户端少传，服务端再洗一遍
-
-这个项目适合公开排名，但不适合公开 prompt。它的隐私边界主要靠两层实现。
-
-第一层在 agent。本机采集时会跳过 `content`、`prompt`、`text`、`body`、`transcript` 这类明显可能包含正文的字段，只抽 token 计数、模型、工具、时间、项目 basename 和 session 信息。对于 Codex，会话短标题可能来自 `session_index.jsonl` 或用户首条消息的短摘要，但会被截断。
-
-第二层在 API。即使 agent 传了某些字段，`/api/usage/ingest` 也不会原样信任。后端会用当前认证身份覆盖 `userId`、`displayName`、`team`，再调用 `sanitizeIngestEvents` 重新生成稳定 `id`。
-
-<figure class="fz089" data-reveal role="group" aria-label="隐私边界示意图：Agent 端少传敏感字段，API 端按认证身份二次清洗"><style>.fz089{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--grn:#4f7233;--grn-bg:#e7eedd;--grn-lt:#7c9c54;--amb:#9a6516;--amb-bg:#f4e8cc;--amb-bd:#d9b66a;--cy:#3f6d79;--cy-bg:#dcebed;--cy-bd:#8fbcc4;font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);color:var(--ink);background:linear-gradient(180deg,var(--paper-soft),#f7f1e4);border:1px solid var(--hair);border-radius:16px;padding:22px clamp(16px,3vw,30px) 20px;margin:0;box-sizing:border-box;max-width:100%;overflow:hidden}.fz089 *{box-sizing:border-box}.fz089 .hd{margin-bottom:18px}.fz089 .ttl{font-size:clamp(18px,2.6vw,25px);font-weight:800;letter-spacing:.4px;color:var(--ink);line-height:1.3}.fz089 .sub{font-size:clamp(12px,1.6vw,14px);color:var(--muted);margin-top:6px;line-height:1.5}.fz089 .stage{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:clamp(8px,1.6vw,18px)}.fz089 .col{border-radius:18px;padding:16px 16px 14px;border:1.5px solid;position:relative;display:flex;flex-direction:column}.fz089 .col.agent{background:var(--grn-bg);border-color:var(--grn-lt)}.fz089 .col.api{background:var(--amb-bg);border-color:var(--amb-bd)}.fz089 .ch{font-size:clamp(15px,2vw,20px);font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}.fz089 .col.agent .ch{color:var(--grn)}.fz089 .col.api .ch{color:var(--amb)}.fz089 .dot{width:9px;height:9px;border-radius:50%;flex:none}.fz089 .col.agent .dot{background:var(--grn)}.fz089 .col.api .dot{background:var(--amb)}.fz089 .rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;flex:1}.fz089 .row{font-size:clamp(12px,1.55vw,15px);color:var(--ink-soft);line-height:1.4;padding-left:18px;position:relative;font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);opacity:0;transform:translateX(var(--fz089x,-6px));animation:fz089row 9s ease-in-out infinite}.fz089 .col.api .row{--fz089x:6px}.fz089 .row::before{content:"";position:absolute;left:2px;top:.5em;width:7px;height:7px;border-top:2px solid currentColor;border-right:2px solid currentColor;transform:rotate(45deg);opacity:.55}.fz089 .col.agent .row::before{color:var(--grn)}.fz089 .col.api .row::before{color:var(--amb)}.fz089 .row:nth-child(1){animation-delay:0s}.fz089 .row:nth-child(2){animation-delay:.25s}.fz089 .row:nth-child(3){animation-delay:.5s}.fz089 .row:nth-child(4){animation-delay:.75s}.fz089 .row:nth-child(5){animation-delay:1s}.fz089 .row:nth-child(6){animation-delay:1.25s}@keyframes fz089row{0%{opacity:0;transform:translateX(var(--fz089x,-6px))}14%,86%{opacity:1;transform:translateX(0)}100%{opacity:1;transform:translateX(0)}}.fz089 .tag{margin-top:13px;align-self:center;font-size:clamp(11px,1.4vw,13px);font-weight:700;color:#fff;padding:6px 14px;border-radius:11px;text-align:center;line-height:1.3}.fz089 .col.agent .tag{background:var(--grn)}.fz089 .col.api .tag{background:var(--amb)}.fz089 .mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:118px;padding:0 2px}.fz089 .bearer{background:var(--cy-bg);border:1.5px solid var(--cy-bd);border-radius:14px;padding:10px 12px;text-align:center;color:var(--cy);font-weight:800;font-size:clamp(12px,1.7vw,16px);line-height:1.3;font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);box-shadow:0 0 0 0 rgba(63,109,121,.25);animation:fz089pulse 7s ease-in-out infinite}.fz089 .bearer small{display:block;font-size:.78em;opacity:.85;margin-top:2px;font-weight:700}@keyframes fz089pulse{0%,100%{box-shadow:0 0 0 0 rgba(63,109,121,0)}50%{box-shadow:0 0 0 5px rgba(63,109,121,.12)}}.fz089 .flow{position:relative;width:100%;height:16px;border-radius:9px;background:linear-gradient(90deg,var(--grn-bg),var(--cy-bg),var(--amb-bg));overflow:hidden;border:1px solid var(--hair)}.fz089 .flow::after{content:"";position:absolute;top:0;bottom:0;left:-40%;width:38%;background:linear-gradient(90deg,transparent,rgba(63,109,121,.55),transparent);animation:fz089flow 7s linear infinite}@keyframes fz089flow{0%{left:-40%}100%{left:108%}}.fz089 .arw{color:var(--cy);font-size:14px;font-weight:800;line-height:1;letter-spacing:-2px}.fz089 .banner{margin-top:18px;background:var(--ink);color:var(--paper-soft);border-radius:13px;padding:13px 18px;font-size:clamp(12px,1.7vw,16px);font-weight:700;text-align:center;line-height:1.45;letter-spacing:.3px;position:relative;overflow:hidden}.fz089 .banner::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(124,156,84,.16),transparent);transform:translateX(-100%);animation:fz089sweep 9s ease-in-out infinite}@keyframes fz089sweep{0%,70%{transform:translateX(-100%)}100%{transform:translateX(100%)}}.fz089 .banner b{color:var(--grn-lt);font-weight:800}@media(max-width:560px){.fz089 .stage{grid-template-columns:1fr}.fz089 .mid{flex-direction:row;flex-wrap:wrap;min-width:0;padding:4px 0}.fz089 .flow{width:96px;height:14px}.fz089 .arw{transform:none}}@media (prefers-reduced-motion:reduce){.fz089 .row,.fz089 .bearer,.fz089 .flow::after,.fz089 .banner::before{animation:none!important}.fz089 .row{opacity:1;transform:none}.fz089 .flow::after{display:none}}</style><div class="hd"><div class="ttl">隐私边界：客户端少传，服务端再洗</div><div class="sub">公开的是统计，不是 prompt、绝对路径或原始 transcript。</div></div><div class="stage"><div class="col agent"><div class="ch"><span class="dot"></span>Agent 端</div><div class="rows"><div class="row">只抽 token 计数</div><div class="row">跳过 content / prompt / body</div><div class="row">项目默认取 basename</div><div class="row">session id 默认 hash</div><div class="row">短标题截断到安全长度</div><div class="row">本地状态记 uploadedIds</div></div><div class="tag">尽量不让敏感字段离开本机</div></div><div class="mid"><div class="bearer">Bearer<small>agent token</small></div><div class="flow"></div><div class="arw">▶▶▶</div></div><div class="col api"><div class="ch"><span class="dot"></span>API 端</div><div class="rows"><div class="row">验证 GitHub agent token</div><div class="row">用认证身份覆盖 userId</div><div class="row">限制事件时间范围</div><div class="row">根据环境变量隐藏字段</div><div class="row">重新生成稳定事件 id</div><div class="row">按 id 幂等写入存储层</div></div><div class="tag">不信任客户端原样上传字段</div></div></div><div class="banner">原则：排行榜需要<b>可信身份</b>，上传事件不能决定自己是谁。</div></figure>
-
-服务端可配置的隐私开关包括：
-
-| 配置 | 行为 |
-| --- | --- |
-| `TOKEN_BOARD_PROJECT_MODE=basename` | 默认只保留项目 basename |
-| `TOKEN_BOARD_PROJECT_MODE=hash` | 把项目名变成 `project:<hash>` |
-| `TOKEN_BOARD_PROJECT_MODE=none` | 不保存项目名 |
-| `TOKEN_BOARD_INCLUDE_MODEL=false` | 模型名统一写成 `hidden` |
-| `TOKEN_BOARD_INCLUDE_SOURCE=false` | 来源统一写成 `local-agent` |
-| `TOKEN_BOARD_HASH_SESSION_ID=false` | 允许不 hash session id，默认是 hash |
-
-裁剪后的清洗逻辑大概是这样：
+项目最核心的领域对象不是“用户”，而是 `TokenUsageEvent`：
 
 ```ts
-function sanitizeUploadedEvent(event, identity, options) { // 清洗一条上传事件
-  const normalized = normalizeTokenUsageEvent(event); // 先把各种字段名归一成 TokenUsageEvent
-  const project = sanitizeProjectName(normalized.project, options.projectMode); // 根据配置保留、隐藏或 hash 项目名
-  const sessionId = hashSessionId(normalized.sessionId); // 默认只保存 session id 的短 hash
-  const model = options.includeModel === false ? "hidden" : normalized.model; // 服务端可以统一隐藏模型名
-  const source = options.includeSource === false ? "local-agent" : normalized.source; // 服务端可以统一隐藏真实来源
-  return normalizeTokenUsageEvent({ ...normalized, userId: identity.userId, project, sessionId, model, source }); // 用认证身份覆盖用户字段后返回
-} // 上传事件清洗结束
+type TokenUsageEvent = {
+  id: string;
+  upstreamEventId?: string;
+  userId: string;
+  source: string;
+  model: string;
+  project?: string;
+  timestamp: string;
+  inputTokens: number;
+  cacheCreationInputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  reasoningOutputTokens: number;
+  sessionId?: string;
+  sessionTitle?: string;
+};
 ```
 
-这一步的重点不是“绝对安全”，而是建立一个清楚的产品边界：公开的是统计，不是对话内容。排行榜可以讨论“谁最近在高强度使用 agent”，但不应该让朋友看到你的完整 prompt、绝对路径或原始 transcript。
+`id` 是服务端主键；`upstreamEventId` 是采集器原生、尽量不受可变元数据影响的稳定键。两者分开后，项目可以在同一个用量事件上补齐标题等元数据，而不把它误算成新消费。
 
-## 4. 鉴权：网页登录和 agent 登录是两种 token
+### 4.1 “总消耗”为什么不是盲信 `totalTokens`
 
-项目里有三类签名 token：
+当前榜单统一使用：
 
-| token purpose | 用途 |
-| --- | --- |
-| `web` | 浏览器登录后放在 cookie 里，用于 `/api/auth/me` 和 `/api/usage/me` |
-| `agent` | Device Flow 登录后给本机 agent，用于 `/api/usage/ingest` 和 `/api/usage/replace` |
-| `oauth-state` | GitHub OAuth 回调时防 CSRF 和携带 returnTo |
+```ts
+consumption = inputTokens + outputTokens
+```
 
-签名方式很朴素：把 payload 做 base64url，再用 `HMAC-SHA256` 签名，格式是：
+并且缺少这两个字段时直接报错，不用来源里的 `totalTokens` 静默兜底。原因是各工具对 `total` 的定义可能不同：有的已包含缓存，有的是累计值，有的会把推理字段重复算进来。宁可暴露缺字段，也不要产出一个看起来合理、实际不可解释的数字。
+
+### 4.2 四分类计价与排行榜 token 是两件事
+
+`inputTokens` 表示完整输入上下文，其中包含缓存读和缓存写；所以排行榜总量不额外相加缓存字段。费用计算则拆成四类：
+
+```ts
+billableInput = inputTokens - cacheRead - cacheCreation
+
+cost = billableInput * inputPrice
+     + cacheRead * cacheReadPrice
+     + cacheCreation * cacheCreationPrice
+     + outputTokens * outputPrice
+```
+
+这个边界非常适合面试追问：**同一份数据为了“工作量对比”和“费用估算”，需要两套不同但不矛盾的投影。**
+
+## 5. 难点一：多源日志怎样归一，而不重复计算
+
+### 5.1 先统一发现，再保留来源专用解析
+
+Codex 与 Claude Code 通过 `agent-session-core` 发现和解析会话；Gemini CLI、opencode 和 Cursor 的本地形态不同，仍保留对应解析器。这里没有强行把所有来源塞进一个万能 JSON walker，而是把共性放在统一事件，把差异留在 source adapter。
+
+采集流程大致是：
 
 ```text
-base64url(payload).base64url(hmac) # token 由载荷和 HMAC 签名两段组成
+discover roots
+  → 按时间范围发现候选文件
+  → 按 dev + inode 去重物理文件
+  → 解析逻辑 session
+  → 映射统一 token 字段
+  → hash session id / 清理标题 / project basename
+  → 生成稳定事件键
 ```
 
-网页端走常规 GitHub OAuth：`/api/auth/github/start` 跳到 GitHub 授权页，callback 里换 access token，再取 GitHub profile，最后设置 `token_board_session` cookie。
+### 5.2 为什么要按 inode 去重
 
-agent 端走 GitHub Device Flow：命令行先请求 `/api/auth/device/start`，展示 `verificationUri` 和 `userCode`；用户在浏览器授权后，agent 轮询 `/api/auth/device/poll`。授权成功时，后端签一个长期 `agent` token 返回给本机。
+同一份 Codex 会话可能同时出现在 `~/.codex/sessions`、归档目录、项目索引或其他 runtime home 中；某些路径还是硬链接镜像。只按字符串路径去重，会把同一个物理文件解析多次。
 
-这个区分很重要：
+因此 agent 用 `(dev, inode)` 识别物理文件，先出现的根目录赢，既避免重复，也保持事件 id 在多次运行间稳定。
 
-- 浏览器 cookie 适合网页查看个人视图。
-- agent bearer token 适合后台任务静默上传。
-- 两者都从 GitHub 身份派生，但权限用途不同。
+### 5.3 累计值必须先转增量
 
-后端还保留了旧的 `uploadToken` 机制。如果请求里的 bearer token 不是 agent token，就会去 `TOKEN_BOARD_USERS_JSON`、`TOKEN_BOARD_UPLOAD_TOKEN` 或 users 文件里找旧 token。这个兼容层让早期部署不用一次性迁移。
+本地日志不保证每条记录都是“本次调用花了多少”。如果来源记录的是会话累计值：
 
-## 5. 存储：PostgreSQL 是正式路径，JSON 文件是轻量兜底
-
-存储层有统一接口：
-
-| 方法 | 作用 |
-| --- | --- |
-| `listEvents()` | 读取可用于聚合的事件 |
-| `countEvents()` | 统计总记录数 |
-| `insertEvents(events)` | 插入事件并返回 accepted / duplicates |
-| `deleteEventsForUser(userId)` | 清掉某个用户的记录，用于 replace |
-| `getUserConfig(userId)` | 读取 agent 上报的用户配置摘要 |
-| `upsertUserConfig(userId, config)` | 更新用户配置摘要 |
-
-如果设置了 `TOKEN_BOARD_DATABASE_URL`，API 启动时会创建 PostgreSQL store；否则回退到 `.token-board/usage-events.json`。
-
-PostgreSQL 表的主键是 `id`。插入时走 `ON CONFLICT (id)`，所以 agent 反复 `resync` 不会制造重复记录。比较细的是：如果冲突事件这次带了新的 `session_title`，数据库会补上标题，但不会把整条历史记录覆盖掉。
-
-裁剪后的插入逻辑像这样：
-
-```sql
-INSERT INTO usage_events (id, user_id, reported_at, input_tokens, output_tokens) -- 以事件 id 作为幂等主键写入
-VALUES ($1, $2, $3, $4, $5) -- 每条上传事件对应一行标准记录
-ON CONFLICT (id) DO UPDATE -- 重复上传时不新增第二条记录
-SET session_title = COALESCE(EXCLUDED.session_title, usage_events.session_title); -- 只补充更完整的会话标题
+```text
+第 1 条：1000
+第 2 条：1800
+第 3 条：2400
 ```
 
-JSON 文件 store 的策略也类似：读出已有事件，按 `id` 合并，排序后截到 `maxEvents`。文件写入会先写临时文件，再 rename 到正式文件，降低半写入状态的风险。
+直接求和会得到 `5200`，真实增量却是 `1000 + 800 + 600 = 2400`。解析层必须识别累计快照，用相邻差值构造事件；遇到重启、回退和字段缺失时还要定义清楚边界，而不是简单相减。
 
-这里还有一个 `replace` 入口。`token-board-agent replace` 会调用 `/api/usage/replace`：后端先删除当前认证用户的旧记录，再插入这次本机能采集到的记录。这个命令适合后端迁移或历史数据脏掉时用，但它只影响当前用户，不会清空全库。
+### 5.4 活跃日志为什么天然会漂移
 
-## 6. 排行榜：查询时按时间窗口重新聚合
+正在运行的会话文件还会继续追加。两个工具即使读取同一路径，只要扫描时刻不同，就可能得到不同结果。因此项目的对账工具明确要求：
 
-排行榜核心在 `buildTokenLeaderboard`。
+- 选择已经结束的 Asia/Shanghai 自然日；
+- 对 token-board、ccusage、Tokscale 使用同一个闭区间；
+- 差值只证明“定义、扫描根或快照时刻不同”，不能直接证明谁错。
 
-它做的不是数据库里的 `ORDER BY sum(tokens)`，而是先拿到事件列表，再在 core 里按窗口聚合。流程是：
+这个原则比“我的数字一定对”更专业：**先统一窗口，再定位差异属于发现、解析、归一还是展示。**
 
-1. 根据 `range` 计算当前窗口 `[start, end]`。
-2. 再计算前一段等长窗口，用来算 `deltaTokens`。
-3. 对事件做 normalize + dedupe。
-4. 过滤当前窗口事件。
-5. 按用户聚合 token、费用、会话数、消息数、活跃天数、top model、top tool。
-6. 按选择的 metric 排名：`tokens`、`cost`、`sessions` 或 `messages`。
-7. 生成全局 daily、models、tools 分布。
+## 6. 难点二：隐私、身份和幂等必须在不同层防守
 
-<figure class="fz090" data-reveal role="group" aria-label="排行榜聚合：查询时按滚动窗口计算，事件经过 normalize dedupe filter aggregate rank 生成排行榜 summary"><style>.fz090{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--soft2:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--g:#4f7233;--gb:#e7eedd;--gl:#7c9c54;--c:#3f6d79;--cb:#dcebed;--ce:#8fbcc4;--a:#9a6516;--ab:#f4e8cc;--ae:#d9b66a;--r:#8f2d20;--rb:#f1ddd6;--re:#cf9b90;--p:#54579a;--pb:#e6e7f3;--pe:#a9adcf;--gy:#917f5c;font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);background:linear-gradient(160deg,var(--paper-soft,#faf6ec),var(--soft2,#f7f1e4));color:var(--ink,#1a1815);border:1px solid var(--hair,rgba(26,24,21,.18));border-radius:18px;padding:clamp(16px,3.2vw,30px);margin:1.4em 0;max-width:100%;box-sizing:border-box;line-height:1.5}.fz090 *{box-sizing:border-box}.fz090 .hd{margin-bottom:1.1em}.fz090 .ttl{font-size:clamp(18px,2.9vw,27px);font-weight:800;letter-spacing:.01em;line-height:1.25}.fz090 .sub{font-size:clamp(12px,1.7vw,15px);color:var(--muted,#6a6155);margin-top:.45em}.fz090 .panel{border:1px solid var(--hair,rgba(26,24,21,.18));background:rgba(255,255,255,.42);border-radius:16px;padding:clamp(13px,2.4vw,20px);margin-bottom:1.15em}.fz090 .ptag{font-size:clamp(13px,1.9vw,18px);font-weight:800;color:var(--ink,#1a1815);margin-bottom:.85em}.fz090 .win{position:relative}.fz090 .axis{position:relative;height:5px;border-radius:5px;background:linear-gradient(90deg,var(--gy,#917f5c),var(--muted,#6a6155));margin:0 4px;overflow:hidden}.fz090 .axis::after{content:"";position:absolute;top:-3px;bottom:-3px;width:40px;border-radius:6px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);left:-40px;animation:fz090sweep 8s ease-in-out infinite}@keyframes fz090sweep{0%{left:-12%}55%{left:100%}100%{left:100%}}.fz090 .segs{display:flex;gap:10px;margin-top:14px}.fz090 .seg{flex:1;border-radius:12px;padding:9px 12px;font-size:clamp(12px,1.7vw,16px);font-weight:800;border:1px solid;position:relative;overflow:hidden}.fz090 .seg.prev{background:var(--rb,#f1ddd6);border-color:var(--re,#cf9b90);color:var(--r,#8f2d20)}.fz090 .seg.cur{background:var(--cb,#dcebed);border-color:var(--ce,#8fbcc4);color:var(--c,#3f6d79)}.fz090 .seg::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-120%);animation:fz090fill 8s ease-in-out infinite}.fz090 .seg.cur::before{animation-delay:1.2s}@keyframes fz090fill{0%,40%{transform:translateX(-120%)}70%,100%{transform:translateX(120%)}}.fz090 .ticks{display:flex;justify-content:space-between;margin-top:9px;font-size:clamp(10px,1.4vw,13px);color:var(--muted,#6a6155);font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace)}.fz090 .pipe{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin-bottom:1.15em}.fz090 .node{flex:1 1 140px;min-width:128px;border:1px solid;border-radius:14px;padding:11px 13px;position:relative;animation:fz090glow 8s ease-in-out infinite}.fz090 .node .nm{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:clamp(14px,2vw,19px);font-weight:800;letter-spacing:-.01em}.fz090 .node .ds{font-size:clamp(11px,1.5vw,14px);color:var(--ink-soft,#3c362c);margin-top:.3em}.fz090 .n1{background:var(--cb,#dcebed);border-color:var(--ce,#8fbcc4)}.fz090 .n1 .nm{color:var(--c,#3f6d79)}.fz090 .n2{background:var(--gb,#e7eedd);border-color:var(--gl,#7c9c54)}.fz090 .n2 .nm{color:var(--g,#4f7233)}.fz090 .n3{background:var(--ab,#f4e8cc);border-color:var(--ae,#d9b66a)}.fz090 .n3 .nm{color:var(--a,#9a6516)}.fz090 .n4{background:var(--pb,#e6e7f3);border-color:var(--pe,#a9adcf)}.fz090 .n4 .nm{color:var(--p,#54579a)}.fz090 .n5{background:var(--rb,#f1ddd6);border-color:var(--re,#cf9b90)}.fz090 .n5 .nm{color:var(--r,#8f2d20)}.fz090 .n1{animation-delay:0s}.fz090 .n2{animation-delay:1.2s}.fz090 .n3{animation-delay:2.4s}.fz090 .n4{animation-delay:3.6s}.fz090 .n5{animation-delay:4.8s}@keyframes fz090glow{0%,100%{box-shadow:0 0 0 0 rgba(26,24,21,0)}12%{box-shadow:0 3px 14px -4px rgba(26,24,21,.28)}30%{box-shadow:0 0 0 0 rgba(26,24,21,0)}}.fz090 .arr{flex:0 0 auto;align-self:center;display:flex;align-items:center;color:var(--muted,#6a6155)}.fz090 .arr i{display:block;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:9px solid currentColor;animation:fz090push 8s ease-in-out infinite}.fz090 .arr.a1 i{animation-delay:.6s}.fz090 .arr.a2 i{animation-delay:1.8s}.fz090 .arr.a3 i{animation-delay:3s}.fz090 .arr.a4 i{animation-delay:4.2s}@keyframes fz090push{0%,100%{transform:translateX(0);opacity:.5}50%{transform:translateX(4px);opacity:1}}.fz090 .out{background:var(--ink,#1a1815);color:var(--paper-soft,#faf6ec);border-radius:15px;padding:clamp(13px,2.3vw,18px) clamp(15px,2.6vw,22px);position:relative;overflow:hidden}.fz090 .out::after{content:"";position:absolute;top:0;bottom:0;width:60px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);left:-60px;animation:fz090sweep 8s ease-in-out infinite;animation-delay:5.5s}.fz090 .out .o1{font-size:clamp(13px,1.85vw,17px);font-weight:800;line-height:1.45}.fz090 .out .o1 b{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);color:var(--ce,#8fbcc4);font-weight:800}.fz090 .out .o2{font-size:clamp(11px,1.55vw,14px);color:var(--pe,#a9adcf);margin-top:.5em}.fz090 .out .o2 b{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);color:var(--ae,#d9b66a);font-weight:700}@media(max-width:560px){.fz090 .pipe{flex-direction:column}.fz090 .node{flex:1 1 auto;width:100%}.fz090 .arr{align-self:center;transform:rotate(90deg)}.fz090 .segs{flex-direction:column}}@media(prefers-reduced-motion:reduce){.fz090 .axis::after,.fz090 .seg::before,.fz090 .node,.fz090 .arr i,.fz090 .out::after{animation:none}.fz090 .axis::after,.fz090 .seg::before,.fz090 .out::after{display:none}.fz090 .arr i{opacity:1;transform:none}.fz090 .node{box-shadow:0 2px 10px -5px rgba(26,24,21,.2)}}</style><div class="hd"><div class="ttl">排行榜聚合：查询时按滚动窗口计算</div><div class="sub">同一批事件可以按不同 range 和 metric 生成不同视角。</div></div><div class="panel"><div class="ptag">时间窗口</div><div class="win"><div class="axis"></div><div class="segs"><div class="seg prev">前一窗口：算 delta</div><div class="seg cur">当前窗口：算排名</div></div><div class="ticks"><span>previousStart</span><span>start</span><span>end / now</span></div></div></div><div class="pipe"><div class="node n1"><div class="nm">normalize</div><div class="ds">字段口径统一</div></div><div class="arr a1"><i></i></div><div class="node n2"><div class="nm">dedupe</div><div class="ds">按 id 去重</div></div><div class="arr a2"><i></i></div><div class="node n3"><div class="nm">filter</div><div class="ds">按 range 过滤</div></div><div class="arr a3"><i></i></div><div class="node n4"><div class="nm">aggregate</div><div class="ds">按用户汇总</div></div><div class="arr a4"><i></i></div><div class="node n5"><div class="nm">rank</div><div class="ds">按 metric 排序</div></div></div><div class="out"><div class="o1">输出 summary：<b>users</b>、<b>daily</b>、<b>models</b>、<b>tools</b>、<b>totalTokens</b>、<b>totalCostUsd</b></div><div class="o2">metric 可切换 <b>tokens / cost / sessions / messages</b>，range 可切换 <b>1D / 7D / 30D / 90D</b>。</div></div></figure>
+### 6.1 客户端少传，服务端再洗一遍
 
-下面是按源码改写后的最小结构：
+agent 默认只保留项目 basename、短标题和 hash 后的 session id。API 收到事件后仍会：
+
+- 用已认证身份覆盖 `userId` / `displayName`，不信任客户端自报；
+- 再次截断字符串、校验数字和时间范围；
+- 根据 `projectMode` 选择 basename、hash 或完全隐藏；
+- 按配置隐藏 model、source、session title；
+- 拒绝负数、token 加总不自洽和异常质量计数。
+
+为什么两边都做？客户端清洗减少敏感数据离开机器的概率；服务端清洗保护共享数据库不被旧版或恶意客户端污染。两层目标不同，不能互相替代。
+
+### 6.2 Web OAuth 与 Device Flow 为什么分开
+
+浏览器登录需要 session cookie 和返回页；后台 agent 没有稳定浏览器回调地址，更适合 GitHub Device Flow：
+
+1. agent 请求 device code；
+2. 用户在 GitHub 页面输入短码；
+3. agent 轮询授权结果；
+4. API 根据 GitHub 用户生成长期 agent session token；
+5. 后续上传使用 Bearer token。
+
+这两条链最终汇入同一个 `TokenBoardIdentity`，但 token 的载体、有效期和使用场景不同。把它们硬合成一种登录方式，反而会让安全边界变模糊。
+
+### 6.3 幂等不等于“客户端记住上传过”
+
+客户端 checkpoint 只是一层优化：避免每次都上传全部事件。真正的一致性底座在服务端：PostgreSQL 的 `usage_events.id` 是主键，写入使用 `ON CONFLICT`；重复事件不会增加统计量，但允许补齐 session title、质量计数等元数据。
+
+因此网络超时后的安全策略是“可以重试”，不是“猜上一请求到底成功没有”。
+
+<figure class="otb-map" role="group" aria-label="Open Token Board 普通同步的三层去重结构">
+  <p class="k">Idempotent sync</p>
+  <p class="t">checkpoint 提速，稳定事件键识别，数据库主键兜底</p>
+  <div class="track">
+    <div class="n"><b>本地 checkpoint</b><small>active window 内已上传 id<br>减少无效网络请求</small></div>
+    <span class="ar">→</span>
+    <div class="n" data-c="g"><b>稳定事件键</b><small>同一上游消费<br>跨扫描保持身份</small></div>
+    <span class="ar">→</span>
+    <div class="n" data-c="b"><b>PRIMARY KEY</b><small><code>ON CONFLICT</code><br>重试不增加统计量</small></div>
+  </div>
+  <p class="note">只做第一层会在状态文件丢失时重复；只做第三层虽然正确，但每轮都全量上传会浪费扫描、网络和数据库资源。</p>
+</figure>
+
+## 7. 难点三：全量替换为什么要做成分阶段事务
+
+普通 `resync` 只是忽略本地 checkpoint，重新上传扫描窗口内的事件；它不会删除服务端历史。真正的“以本机为准整体覆盖”是 `replace`。
+
+最危险的直觉方案是：
+
+```text
+DELETE user history
+→ collect local files
+→ upload all events
+```
+
+只要解析中途失败、网络断开或进程退出，用户就会留下空历史或半份历史。
+
+当前协议分四相：
+
+1. **start**：客户端上报 `expectedEvents`、完整性标志和事件清单 digest；
+2. **append**：按批上传，服务端清洗后暂存在 `replaceId + userId` 对应的 stage；
+3. **commit**：校验事件数与 digest；
+4. **abort / expire**：主动放弃或 30 分钟超时清理，旧历史不受影响。
+
+客户端在发起 start 之前还会拒绝两种情况：
+
+- 采集结果为空；
+- 任一必要会话文件解析失败，扫描不完整。
+
+最终提交时，PostgreSQL 在同一事务里执行按用户删除和批量插入：
 
 ```ts
-function buildLeaderboard(entries, range, metric, now) { // 构建某个时间窗口的排行榜
-  const end = validDate(now); // 以当前时间作为滚动窗口结束点
-  const start = subtractRange(end, range); // 根据 1D/7D/30D/90D 算开始时间
-  const previousStart = subtractRange(start, range); // 再往前取一个等长窗口用于环比
-  const normalized = dedupe(entries.map(normalize)); // 先归一化并按事件 id 去重
-  const current = filterBetween(normalized, start, end); // 只保留当前窗口事件
-  const previous = filterBetween(normalized, previousStart, start); // 只保留前一窗口事件
-  const users = rankUsers(aggregateUsers(current, previous), metric); // 聚合用户后按指标排序
-  return { range, startAt: start, endAt: end, users }; // 返回前端可直接渲染的 summary
-} // 排行榜构建结束
+await client.query("BEGIN");
+await client.query("DELETE FROM usage_events WHERE user_id = $1", [userId]);
+await insertPostgresEvents(client, replacement);
+await client.query("COMMIT");
 ```
 
-费用估算也在这一层。`MODEL_PRICING` 按模型名正则匹配单价，区分 input、cached input 和 output。因为这是公开价格估算，所以前端也明确提示“费用为公开模型单价估算，不代表实际账单”。
+异常时 `ROLLBACK`。JSON fallback 则使用临时文件、`fsync`、原子 rename 和每日备份。
 
-个人视图复用了同一套聚合逻辑。`buildTokenAccountUsageProfile` 会先构建全局排行榜，找出当前用户 rank；再只过滤当前用户事件，计算项目分布、session 明细、活跃小时热力图和上一窗口排名变化。
+这里最值得讲的工程判断是：**网络上传的 staging 与数据库提交的 transaction 是两层不同的原子性。** 前者保证“完整数据到齐前不动旧历史”，后者保证“正式切换要么全部成功，要么全部失败”。
 
-## 7. 前端：只读真实 API，不用假榜单糊住问题
+## 8. 难点四：时间窗口与数据库聚合
 
-前端榜单入口是 `apps/web/app/board/page.tsx`，它把默认 API 地址传给 `TokenLeaderboardApp`：
+### 8.1 自然日和滚动窗口不能混着说
 
-```tsx
-<TokenLeaderboardApp apiBaseUrl={process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL || DEFAULT_API_URL} initialNow={INITIAL_NOW} /> // 页面把 API 地址和初始时间传给客户端榜单组件
-```
+项目同时支持两类窗口：
 
-客户端组件主要读三个接口：
+- `1D / 7D / 30D / 90D`：以当前时刻为终点向前滚动；
+- `today / week / month / lastweek / lastmonth`：按 Asia/Shanghai 自然边界切分；
+- `from / to`：显式日历区间。
 
-| 接口 | 前端用途 |
-| --- | --- |
-| `/api/usage/stats?range=...&metric=...` | 榜单总览、用户排名、模型/工具分布 |
-| `/api/auth/me` | 判断当前浏览器是否已 GitHub 登录 |
-| `/api/usage/me?range=...` | 登录后读取自己的个人分析面板 |
+“今天”和“过去 24 小时”在凌晨附近差别很大。如果 UI、API、飞书日报和对账脚本各自解释时间，榜单就会出现无法说明的差异。因此窗口创建、趋势桶和对比周期都集中在 core，并把 `startAt / endAt` 返回给前端显示。
 
-一个很好的取舍是：页面不再展示 demo 榜单。代码里会构建一个空 summary 让组件结构不崩，但只要真实 API 未配置或请求失败，UI 就进入 error state，并显示“不会回退到静态或本地数据”。
+### 8.2 为什么 Node 全量聚合会拖垮榜单
 
-这让排行榜更可信。朋友打开页面时看到的要么是真实后端数据，要么是明确的加载失败，而不是一份看起来很热闹的示例排名。
+早期查询路径会读取全部事件，再在 Node 中过滤、分组和排序。数据量小时简单直接；事件增长后，每个请求都承担：
 
-页面上的控制也都直接映射到 core：
+- 从数据库传输大量无关行；
+- 在 Node 创建对象、Set 和 Map；
+- 多个 range/metric 请求重复做相同工作；
+- API 进程内存与延迟随历史总量增长。
 
-| 控件 | 对应 core 参数 |
-| --- | --- |
-| `1D / 7D / 30D / 90D` | `TokenBoardRange` |
-| `总消耗 / 费用 / 会话 / 消息` | `TokenBoardMetric` |
-| 个人面板 | `buildTokenAccountUsageProfile` |
-| 缓存命中率 | `cachedInputTokens / inputTokens` |
-| 消耗 / 会话 | `inputTokens + outputTokens` 除以 session 数 |
+后来把常用窗口的统计下推到 PostgreSQL：用 `WHERE reported_at >= ...` 限定范围，按用户 `GROUP BY`，用 SQL `SUM` 聚合 token、费用、会话等指标，再利用 `reported_at`、`user_id + reported_at`、model、tool 索引。
 
-## 8. 发布链路：站点和 agent 共用一个 Pages 出口
+API 仍保留 JSON store 和特殊窗口的通用路径；快照缓存则减少热门 range/metric 的重复查询。这个演进体现了很好的取舍：**先保留简单实现验证语义，再在真实瓶颈出现时把计算移动到离数据更近的位置。**
 
-项目的发布也挺简洁：
+## 9. 从数据管道到产品：哪些功能共享同一事实底座
 
-1. `scripts/pack-agent.mjs` 进入 `tools/token-board-agent-npx` 执行 `npm pack`。
-2. 打包产物被重命名为 `apps/web/public/token-board-agent.tgz`。
-3. `pnpm build` 再构建 Next.js 静态站点。
-4. GitHub Pages 同时发布网页和 agent tarball。
+项目后来长出很多页面，但它们没有各算各的：
 
-<figure class="fz091" data-reveal role="group" aria-label="发布链路示意图：agent 打包进 public，Next.js 静态站点走 GitHub Pages，API 与 PostgreSQL 走 Docker Compose 后端"><style>.fz091{--paper-soft:#faf6ec;--paper-deep:#ece5d5;--paper-warm:#f7f1e4;--ink:#1a1815;--ink-soft:#3c362c;--muted:#6a6155;--hair:rgba(26,24,21,.18);--g:#4f7233;--gb:#e7eedd;--gl:#7c9c54;--c:#3f6d79;--cb:#dcebed;--ce:#8fbcc4;--a:#9a6516;--ab:#f4e8cc;--ae:#d9b66a;--r:#8f2d20;--rb:#f1ddd6;--re:#cf9b90;font-family:var(--font-serif-body,"Songti SC","Source Han Serif SC",Georgia,serif);background:var(--paper-soft,#faf6ec);color:var(--ink,#1a1815);border:1px solid var(--hair,rgba(26,24,21,.18));border-radius:14px;padding:clamp(16px,3.2vw,30px);margin:0;box-sizing:border-box;max-width:100%;overflow:hidden}.fz091 *{box-sizing:border-box}.fz091 .hd{margin-bottom:20px}.fz091 .ttl{font-size:clamp(17px,2.5vw,23px);font-weight:800;letter-spacing:.01em;line-height:1.3}.fz091 .sub{font-size:clamp(12px,1.6vw,14px);color:var(--muted,#6a6155);margin-top:6px;line-height:1.5}.fz091 .stage{border:1px solid var(--hair,rgba(26,24,21,.18));border-radius:16px;background:var(--paper-warm,#f7f1e4);padding:clamp(12px,2vw,18px);margin-bottom:8px}.fz091 .stage-t{font-size:clamp(13px,1.8vw,16px);font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}.fz091 .stage-t::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ink-soft,#3c362c);flex:0 0 auto}.fz091 .row1{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}.fz091 .node{flex:1 1 150px;min-width:0;border-radius:13px;padding:13px 14px;font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-size:clamp(12px,1.5vw,15px);font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.35;word-break:break-all}.fz091 .n-r{background:var(--rb,#f1ddd6);border:1px solid var(--re,#cf9b90);color:var(--r,#8f2d20)}.fz091 .n-a{background:var(--ab,#f4e8cc);border:1px solid var(--ae,#d9b66a);color:var(--a,#9a6516)}.fz091 .n-c{background:var(--cb,#dcebed);border:1px solid var(--ce,#8fbcc4);color:var(--c,#3f6d79)}.fz091 .harw{flex:0 0 46px;display:flex;align-items:center;justify-content:center;align-self:center}.fz091 .har{position:relative;width:34px;height:3px;border-radius:3px;background:var(--hair,rgba(26,24,21,.18));overflow:visible}.fz091 .har::before{content:"";position:absolute;left:-34px;top:0;height:100%;width:34px;border-radius:3px;background:linear-gradient(90deg,transparent,var(--c,#3f6d79));animation:fz091flow 7s ease-in-out infinite}.fz091 .har::after{content:"";position:absolute;right:-7px;top:50%;transform:translateY(-50%);border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid var(--c,#3f6d79)}.fz091 .har.d2::before{animation-delay:1.4s}.fz091 .splitw{display:flex;justify-content:center;position:relative;height:30px}.fz091 .split{position:relative;width:70%;max-width:560px;height:100%}.fz091 .split .stem{position:absolute;left:50%;top:0;width:2px;height:13px;transform:translateX(-50%);background:var(--hair,rgba(26,24,21,.18))}.fz091 .split .bar{position:absolute;left:24%;right:24%;top:13px;height:2px;background:var(--hair,rgba(26,24,21,.18))}.fz091 .split .leg{position:absolute;top:13px;width:2px;height:17px;background:var(--hair,rgba(26,24,21,.18));overflow:visible}.fz091 .split .leg.l{left:24%}.fz091 .split .leg.r{right:24%}.fz091 .split .leg::after{content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid var(--g,#4f7233)}.fz091 .split .leg.l::after{border-top-color:var(--c,#3f6d79)}.fz091 .split .leg::before{content:"";position:absolute;left:-1px;top:-2px;width:4px;height:6px;border-radius:3px;background:currentColor;animation:fz091drip 7s ease-in-out infinite}.fz091 .split .leg.l{color:var(--c,#3f6d79)}.fz091 .split .leg.r{color:var(--g,#4f7233)}.fz091 .split .leg.r::before{animation-delay:.7s}.fz091 .outs{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,2vw,18px)}.fz091 .out{border-radius:16px;padding:clamp(13px,2vw,18px);border:1px solid;animation:fz091pulse 9s ease-in-out infinite}.fz091 .o-c{background:var(--cb,#dcebed);border-color:var(--ce,#8fbcc4)}.fz091 .o-g{background:var(--gb,#e7eedd);border-color:var(--gl,#7c9c54);animation-delay:1.6s}.fz091 .out-t{font-size:clamp(14px,1.9vw,17px);font-weight:800;margin-bottom:10px}.fz091 .o-c .out-t{color:var(--c,#3f6d79)}.fz091 .o-g .out-t{color:var(--g,#4f7233)}.fz091 .li{font-size:clamp(12px,1.5vw,14px);color:var(--ink-soft,#3c362c);padding:4px 0;line-height:1.45;border-top:1px solid var(--hair,rgba(26,24,21,.18))}.fz091 .li:first-of-type{border-top:none}.fz091 .li b{font-family:var(--font-mono,ui-monospace,"SFMono-Regular",monospace);font-weight:600;color:var(--ink,#1a1815);word-break:break-all}.fz091 .foot{margin-top:18px;background:var(--ink,#1a1815);color:var(--paper-soft,#faf6ec);border-radius:12px;padding:13px 18px;font-size:clamp(12px,1.6vw,14.5px);line-height:1.5;text-align:center}@keyframes fz091flow{0%,12%{transform:translateX(0);opacity:0}18%{opacity:1}55%{transform:translateX(68px);opacity:1}70%,100%{transform:translateX(68px);opacity:0}}@keyframes fz091drip{0%,30%{transform:translateY(0);opacity:0}45%{opacity:1}75%{transform:translateY(15px);opacity:1}90%,100%{transform:translateY(15px);opacity:0}}@keyframes fz091pulse{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 4px 14px -6px rgba(26,24,21,.25)}}@media(max-width:560px){.fz091 .row1{flex-direction:column;align-items:stretch}.fz091 .harw{flex:0 0 auto;height:34px;transform:rotate(90deg)}.fz091 .outs{grid-template-columns:1fr}.fz091 .split{width:90%}}@media (prefers-reduced-motion:reduce){.fz091 .har::before,.fz091 .split .leg::before,.fz091 .out{animation:none}.fz091 .har::before{opacity:1;transform:translateX(34px)}.fz091 .split .leg::before{opacity:0}}</style><div class="hd"><div class="ttl">发布链路：网页和 agent 共用 Pages 出口</div><div class="sub">前端静态发布，后端独立部署，agent tarball 随站点一起分发。</div></div><div class="stage"><div class="stage-t">静态发布</div><div class="row1"><div class="node n-r">tools/agent-npx</div><div class="harw"><div class="har"></div></div><div class="node n-a">npm pack</div><div class="harw"><div class="har d2"></div></div><div class="node n-c">public/agent.tgz</div></div></div><div class="splitw"><div class="split"><div class="stem"></div><div class="bar"></div><div class="leg l"></div><div class="leg r"></div></div></div><div class="outs"><div class="out o-c"><div class="out-t">GitHub Pages</div><div class="li">Next.js 静态页面</div><div class="li"><b>/board</b> 榜单</div><div class="li"><b>/token-board-agent.tgz</b></div></div><div class="out o-g"><div class="out-t">Docker Compose 后端</div><div class="li"><b>token-board</b> API</div><div class="li">PostgreSQL 17</div><div class="li"><b>TOKEN_BOARD_DATABASE_URL</b></div></div></div><div class="foot">朋友只需要 npx 安装；网页和 agent 从同一个公开站点下载，API 独立保存真实数据。</div></figure>
+- **公共榜单**：按 token、费用、会话、消息、活跃人数、代码行等维度排序；
+- **个人主页**：365 天贡献图、模型/工具/项目分布、个人 PB 与荣誉；
+- **Wrapped**：按月或年聚合成五屏叙事；
+- **额度墙**：展示 Codex 和 Claude Code 的窗口、剩余比例、burn rate 与重置时间；
+- **飞书日报周报**：从同一窗口快照计算冠军、排名变化、PB、等级和目标；
+- **导出与 MCP**：把同一真实数据以 CSV、JSON 或工具调用形式提供出去。
 
-这就是为什么 README 里可以给出这种安装命令：
+额度数据需要单独说明：它不是根据 token 总量凭空反推。Codex 会在本地日志写 rate limit 快照；Claude Code 的精确订阅窗口主要来自 statusline JSON，因此安装流程会生成一个 capture shim，把状态离线保存后再由 agent 上传。
 
-```bash
-npx --yes --package https://ffffhx.github.io/open-token-board/token-board-agent.tgz?v=0.4.11 -- token-board-agent install # 从 Pages 下载 agent tarball 并执行安装
-```
+这也是面试里应该主动澄清的边界：**用量事件回答“花了多少”，额度快照回答“订阅窗口还剩多少”，两者相关但不是同一事实。**
 
-它绕开了“朋友要先 clone 仓库”的门槛。朋友只需要执行一条命令，后续采集和上传都由本机后台任务负责。
+## 10. 部署与后台运行：一套仓库，三种发布物
 
-后端部署走 `deploy/token-board/compose.yaml`。Compose 里有两个服务：
+项目最终交付的是三类东西：
 
-| 服务 | 作用 |
-| --- | --- |
-| `postgres` | PostgreSQL 17，持久化 token 事件 |
-| `token-board` | API 服务，读取 `.env`，连接 PostgreSQL |
+1. **静态 Web**：Next.js `output: export`，由 GitHub Pages 发布；
+2. **npm agent**：`token-board-agent`，发布时带 npm provenance；
+3. **API 服务**：Node + PostgreSQL，通过 Docker Compose 运行在独立主机。
 
-API 容器通过 `TOKEN_BOARD_DATABASE_URL` 连到 Postgres；如果不配数据库，开发环境仍然可以用 JSON 文件跑起来。
+agent 的后台任务不是“开着一个终端”：
 
-## 9. 这套实现最值得学的几个点
+- macOS 使用 LaunchAgent，在用户登录后按计划运行；
+- Windows 使用隐藏 Task Scheduler 任务；
+- 每轮先做健康检查，上传有超时、有限重试和退避；
+- `status` 会区分任务安装状态、最近同步时间、源文件发现和数据新鲜度。
 
-第一，排行榜的最小单位不是“用户总量”，而是“事件”。只要事件 `id` 稳定，采集端可以反复扫、本地可以 resync、服务端可以去重，后面的排名才稳。
+API 自动部署还保留上一镜像标签，重建后访问健康接口；失败时回滚到 `backup-previous`。这不是完整的蓝绿发布，但已经建立了“发布后必须验证，失败要有恢复路径”的工程闭环。
 
-第二，隐私边界要放在两边。agent 少传是一层，服务端按认证身份重写和清洗又是一层。只做前者会太依赖客户端版本，只做后者又会让不该离开本机的字段先离开本机。
+## 11. 我踩过的坑，以及方案怎样被纠正
 
-第三，采集和聚合不要混在一起。采集端面对的是各种工具奇形怪状的日志；聚合端只面对 `TokenUsageEvent`。这个边界让前端和 API 不需要随着每个工具的日志变化一起抖。
+### 11.1 把累计 token 当单次增量
 
-第四，真实数据产品不要用漂亮假数据兜底。Open Token Board 的前端宁愿显示“API 未配置”，也不展示 demo 排行榜。这对一个朋友间可对比的榜单很重要。
+**症状**：榜单数字明显偏大。
 
-第五，轻量发布路径会改变使用门槛。`npx agent + GitHub Device Flow + 后台任务` 这条链路，把“让朋友持续上报”从仓库协作问题变成了一条命令的问题。
+**根因**：来源日志记录会话累计快照，直接求和重复包含过去消费。
 
-当然，这版也还有一些工程上的边界：
+**修正**：在 parser 层转增量，并用固定窗口对账。
 
-- 目前验证层主要是 `typecheck` 和 agent help，没有看到完整单元测试覆盖解析器。
-- Cursor、Trae 这类本地存储格式可能变化，解析器需要持续跟进。
-- 费用估算依赖内置模型单价表，和真实账单天然会有差异。
-- 文档里部分环境变量示例和源码枚举可能会漂移，部署时最好以源码里的 `parseProjectMode` 这类函数为准。
+### 11.2 只按路径去重文件
 
-但整体看下来，这个项目的骨架是清楚的：**本机 agent 把噪声日志归一成事件，后端把事件变成可信数据，前端把可信数据变成可讨论的排行榜。**
+**症状**：多个 Codex home 或 runtime 镜像导致重复历史。
 
-这也是 Open Token Board 最有意思的地方。它不是一个复杂的大系统，但把“采集、隐私、鉴权、幂等、聚合、发布”这几个小系统都接上了。对于一个朋友局工具来说，这个尺度刚刚好。
+**根因**：同一物理文件通过不同路径被发现。
+
+**修正**：按 `(dev, inode)` 去重，逻辑 session 再去重一层。
+
+### 11.3 先删线上、再做全量上传
+
+**症状**：任何中途失败都可能留下空历史。
+
+**修正**：`start → append → commit`，空扫描和不完整扫描禁止提交，数据库正式替换再包事务。
+
+### 11.4 在 Node 中读取全表聚合
+
+**症状**：榜单接口随历史增长超时。
+
+**修正**：常用榜单聚合下推 PostgreSQL，加范围索引与快照缓存。
+
+### 11.5 把“数字不同”直接判成某个工具算错
+
+**症状**：多个统计工具互相对不上，却无法解释。
+
+**根因**：时间窗、扫描根、子代理计入规则或活跃文件快照不同。
+
+**修正**：独立 parity harness 固定 Asia/Shanghai 已结束窗口，只报告 delta，不越过证据下结论。
+
+### 11.6 为了好看用 demo 数据兜底
+
+**症状**：真实 API 故障时，用户仍看到一张漂亮但假的榜单。
+
+**修正**：前端明确显示 loading、empty、stale 和 error；数据产品宁可暴露不可用，也不能伪装正常。
+
+## 12. 测试策略：围绕不变式，而不是页面截图
+
+当前验证分四层：
+
+1. **类型与构建**：workspace typecheck、Web 静态构建、agent 打包、Docker image；
+2. **API 回归**：临时目录、随机端口、测试专用 token，覆盖 ingest、range、自然月、额度墙、导出与错误输入；
+3. **E2E**：构建静态站点后用本地 static server 服务 `apps/web/out`，Playwright 验证真实 API 联调；
+4. **外部对账**：同一自然日窗口对比 ccusage、Tokscale 与可选 Kaboo 导出。
+
+真正要守住的不变式包括：
+
+- 同一事件重复上传不增加总量；
+- 客户端不能替别人写数据；
+- 缓存读写不会既算进输入又额外叠加到排行榜总量；
+- `replace` 未完成或 digest 不一致时旧历史不变；
+- Postgres 与 JSON store 在相同事件集上产出相同领域结果；
+- “今天”和滚动 1D 使用各自明确的起止时间；
+- 静态页面 API 故障时显示真实错误，不回退假榜单。
+
+测试 harness 用临时数据目录和程序化签发的测试身份，不依赖开发者真实 token 日志。这样既保护隐私，也让回归可复现。
+
+## 13. 面试复盘：我会怎样回答
+
+### 13.1 我最满意的工程判断
+
+不是加了最多页面，而是把“可信”拆成了可执行的几层：采集器用稳定事件键，服务端覆盖身份并二次清洗，数据库用主键幂等，全量替换用 staging + transaction，对账工具固定窗口。每层都有明确失败语义。
+
+### 13.2 我踩得最深的坑
+
+数据口径问题最深。一个总数偏大，根因可能在文件发现、累计转增量、缓存分类、时间归属、重复 session 或前端二次相加中的任何一层。后来我不再从 UI 数字反推，而是固定一个已结束窗口，沿“源文件 → 统一事件 → 存储行 → 聚合结果”逐层对账。
+
+### 13.3 如果再做一遍，我会更早做什么
+
+1. 更早把稳定的 `upstreamEventId` 与可变展示元数据分开；
+2. 更早建立黄金 fixture，覆盖累计值、缓存四分类、子代理和重复物理文件；
+3. 更早让每个 API 返回明确的窗口起止时间和 freshness；
+4. 更早设计全量替换协议，而不是把 resync 和 replace 混成一个概念；
+5. 更早用查询计划和真实数据量决定哪些聚合下推数据库。
+
+### 13.4 下一步我会怎么做
+
+1. 把 replace stage 从单进程内存迁到可恢复存储，支持 API 重启后继续或安全回收；
+2. 为 source adapter 建版本化 fixture 与兼容性矩阵，降低上游日志变更风险；
+3. 给 PostgreSQL 聚合增加持续 benchmark 与 `EXPLAIN ANALYZE` 基线；
+4. 把数据 freshness、最后完整扫描和解析失败数做成统一可观测指标；
+5. 继续把隐私策略从环境变量提升为用户可审阅、可导出的同步清单。
+
+## 14. 一句话收束
+
+Open Token Board 表面是一张朋友间的 AI Token 排行榜，工程主线却是：**把不稳定、私密、口径各异的本机日志，转换成带身份、可幂等、可对账、可恢复的共享数据事实。**
+
+面试中可以用三组证据建立完整闭环：多源日志归一与 inode 去重展示数据工程能力；`start → append → commit` 与数据库事务展示故障设计；PostgreSQL 聚合、快照缓存和固定窗口对账展示性能与可信度治理。
+
+---
+
+## 15. 互动题：你真的理解这个项目了吗？
+
+建议先独立回答，再展开参考答案。选择题要说明排除其他选项的原因，简答题要同时覆盖事实、判断和边界。
+
+### 第一组：定位、架构与口径
+
+#### 题 1｜单选题
+
+**问题：下面哪一项最准确地概括 Open Token Board？**
+
+- A. 只展示本机 Codex 用量的静态页面
+- B. 采集、归一、可靠同步并聚合多种 AI 编码工具用量的可自托管平台
+- C. 用提示词估算 token 的浏览器插件
+- D. 代理转发大模型请求的 API Gateway
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：B。** 它包含本机 agent、身份与上传 API、存储/聚合、静态 Web 和后台报告。它读取已落盘日志，不代理模型请求。
+
+</details>
+
+#### 题 2｜单选题
+
+**问题：为什么 Web 不直接解析 Codex / Claude Code 日志？**
+
+- A. 浏览器不会运行 JavaScript
+- B. 日志属于本机文件且格式不稳定，应由采集层归一，Web 只消费领域 API
+- C. PostgreSQL 不能存 token
+- D. Next.js 不能发网络请求
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：B。** 这同时保护本地文件边界，也避免把来源格式变化扩散到页面组件。
+
+</details>
+
+#### 题 3｜多选题
+
+**问题：`TokenUsageEvent` 中哪些字段共同服务于幂等与元数据演进？**
+
+- A. `id`
+- B. `upstreamEventId`
+- C. `sessionTitle`
+- D. `coverPosition`
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：A、B、C。** `id` 是存储主键，`upstreamEventId` 是尽量稳定的上游键，标题可以在冲突更新中补齐而不新增消费。D 属于博客字段。
+
+</details>
+
+#### 题 4｜单选题
+
+**问题：排行榜的总消耗为什么不再用 `totalTokens` 兜底？**
+
+- A. `totalTokens` 一定是字符串
+- B. 各来源定义可能不同，静默兜底会制造不可解释的统计口径
+- C. 输出 token 不重要
+- D. 数据库不支持加法
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：B。** 当前统一用 `inputTokens + outputTokens`；字段缺失直接暴露错误，比产出错误但漂亮的总数更安全。
+
+</details>
+
+#### 题 5｜简答题
+
+**问题：请用 90 秒介绍项目，覆盖用户问题、核心链路、两个难点和结果。**
+
+<details>
+<summary><strong>参考答案</strong></summary>
+
+Open Token Board 解决朋友或团队无法统一查看 AI 编码工具用量的问题。本机 agent 读取 Codex、Claude Code、Gemini CLI 和 opencode 日志，先按物理文件与逻辑 session 去重，再归一成统一事件并脱敏；API 用 GitHub 身份覆盖客户端身份，做二次校验后以事件主键幂等写入 PostgreSQL；查询侧按滚动或上海自然日窗口聚合，页面展示榜单、个人画像、额度和 Wrapped。两个核心难点是多源累计/缓存口径归一，以及断网、重试和全量覆盖下的数据一致性。项目最终建立了后台安装、事务化 replace、SQL 聚合、API/E2E 回归和独立工具对账闭环。
+
+</details>
+
+### 第二组：采集、隐私与幂等
+
+#### 题 6｜单选题
+
+**问题：为什么只按文件路径去重不够？**
+
+- A. 路径太短
+- B. 同一个物理文件可能通过硬链接或多个扫描根出现
+- C. 路径不能包含中文
+- D. PostgreSQL 不认识路径
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：B。** agent 使用 `(dev, inode)` 去重物理文件，再用逻辑 session 身份去重，避免多 home 镜像重复计数。
+
+</details>
+
+#### 题 7｜计算题
+
+**问题：某来源依次写出累计 token `1000、1800、2400`，三条记录直接求和与正确增量各是多少？**
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+直接求和是 `5200`；正确增量是 `1000 + (1800-1000) + (2400-1800) = 2400`。这说明解析器必须识别累计快照语义。
+
+</details>
+
+#### 题 8｜多选题
+
+**问题：默认不应上传哪些内容？**
+
+- A. prompt / 回复正文
+- B. 完整项目路径
+- C. token 计数
+- D. 文件内容与密钥
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：A、B、D。** token 计数是产品核心数据；项目名默认只保留 basename，也可 hash 或隐藏。
+
+</details>
+
+#### 题 9｜单选题
+
+**问题：为什么 API 必须用认证身份覆盖客户端上传的 `userId`？**
+
+- A. 为了让 JSON 更短
+- B. 否则任意客户端都可以伪装成别的用户写榜单数据
+- C. GitHub 不允许用户名
+- D. 前端只能显示数字 ID
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：B。** 身份归属必须由服务端认证事实决定，客户端自报只能作为不可信输入。
+
+</details>
+
+#### 题 10｜多选题
+
+**问题：普通同步的三层去重分别是什么？**
+
+- A. 本地 uploaded-id checkpoint
+- B. 稳定事件键
+- C. 数据库主键与 `ON CONFLICT`
+- D. CSS class 去重
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：A、B、C。** 第一层提速，第二层建立跨扫描身份，第三层保证最终一致性。
+
+</details>
+
+### 第三组：全量替换、存储与性能
+
+#### 题 11｜排序题
+
+**问题：请给安全全量替换协议排序。**
+
+- A. commit 校验并正式替换
+- B. append 分批暂存事件
+- C. start 声明数量、完整性与 digest
+- D. 失败时 abort 或等待 stage 过期
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：C → B → A；任何未完成路径进入 D。** 旧历史在 commit 前保持不变。
+
+</details>
+
+#### 题 12｜多选题
+
+**问题：客户端在哪些情况下必须拒绝 replace？**
+
+- A. 全量扫描结果为空
+- B. 有必要会话文件解析失败
+- C. 事件很多，需要分批
+- D. 用户配置为空
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：A、B。** 分批是正常路径；用户配置不是历史替换完整性的必要条件。
+
+</details>
+
+#### 题 13｜简答题
+
+**问题：为什么已有网络 staging，PostgreSQL commit 仍要事务？**
+
+<details>
+<summary><strong>参考答案</strong></summary>
+
+staging 只保证完整候选集已经到达服务端；正式替换仍包含删除旧行和插入新行两个数据库动作。如果没有事务，插入失败会留下空历史。两层分别解决“跨请求完整性”和“数据库切换原子性”。
+
+</details>
+
+#### 题 14｜单选题
+
+**问题：把榜单聚合下推 PostgreSQL 的主要收益是什么？**
+
+- A. 页面颜色更统一
+- B. 减少无关行传输和 Node 对象聚合，让数据库利用范围过滤、索引与 GROUP BY
+- C. 不再需要任何缓存
+- D. JSON fallback 会自动消失
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：B。** 快照缓存和 fallback 仍有各自用途；SQL 下推解决的是主要查询热路径。
+
+</details>
+
+#### 题 15｜单选题
+
+**问题：`today` 与 `1D` 的区别是什么？**
+
+- A. 没有区别
+- B. `today` 是上海自然日，`1D` 是当前时刻向前滚动 24 小时
+- C. `today` 只用于飞书
+- D. `1D` 总是从 UTC 零点开始
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：B。** 面试时应主动说明时间边界，否则任何趋势与对账都可能产生歧义。
+
+</details>
+
+### 第四组：产品化、测试与系统设计
+
+#### 题 16｜多选题
+
+**问题：用量事件与订阅额度快照的区别有哪些？**
+
+- A. 用量事件表示已经发生的消费
+- B. 额度快照表示窗口剩余、重置与 burn rate
+- C. Claude Code 精确额度可通过 statusline capture 获得
+- D. 两者永远可以互相无损推导
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：A、B、C。** D 错误；订阅容量、动态限制和窗口状态不是仅靠 token 历史就能可靠反推的。
+
+</details>
+
+#### 题 17｜多选题
+
+**问题：哪些是不变式测试，而不只是 UI 快照？**
+
+- A. 同一事件重复上传不增加总量
+- B. replace digest 不一致时旧历史不变
+- C. 客户端不能替其他身份写数据
+- D. 所有榜单行必须永远是紫色
+
+<details>
+<summary><strong>答案与解析</strong></summary>
+
+**答案：A、B、C。** 这些约束直接决定数据可信度，视觉颜色不属于领域不变式。
+
+</details>
+
+#### 题 18｜系统设计题
+
+**问题：如果数据量增长到十亿事件，你会怎样演进？**
+
+<details>
+<summary><strong>参考答案</strong></summary>
+
+先用真实查询与 `EXPLAIN ANALYZE` 识别瓶颈，再考虑：按 `reported_at` 做时间分区；常用日/用户/模型维度做增量物化汇总；原始事件保留有限热数据并归档冷数据；把 ingest 与重聚合解耦到消息队列或作业系统；为事件 schema 和 source adapter 加版本；replace 改为生成新版本数据集后切换 active generation，而不是原表大事务删除；继续保留原始事件到汇总表的可追溯链。不能一开始就堆分布式组件，演进必须由数据量、延迟目标和恢复要求驱动。
+
+</details>
+
+#### 题 19｜故障分析题
+
+**问题：用户说“昨天 token 比 ccusage 高 20%”，你会怎样排查？**
+
+<details>
+<summary><strong>参考答案</strong></summary>
+
+先确认双方都使用已经结束的 Asia/Shanghai 同一天，再固定扫描根和版本；比较 Codex/Claude 分来源总量；检查同一物理文件是否多路径发现、子代理是否计入、累计值是否正确转增量、缓存读写是否重复相加、事件 id 是否稳定、数据库是否存在旧来源历史；最后从源文件、统一事件、存储行到 API 聚合逐层缩小差异。20% 差值本身不是某一方错误的证明。
+
+</details>
+
+#### 题 20｜开放题
+
+**问题：这个项目最能证明候选人的哪三种能力？请用代码证据回答。**
+
+<details>
+<summary><strong>参考答案</strong></summary>
+
+第一是数据工程与口径治理：多源 adapter、累计转增量、缓存四分类、inode 和逻辑 session 去重；第二是可靠性设计：checkpoint、有限重试、服务端主键幂等、分阶段 replace、PostgreSQL transaction 与 JSON 原子写；第三是完整产品交付：GitHub 身份、npm agent、后台任务、静态 Web、Docker API、飞书报告、CI/API/E2E 和对账工具。回答时应把每种能力绑定到具体失败模式和验证方式，而不是只罗列技术栈。
+
+</details>
+
+### 自测标准
+
+- **基础掌握**：能说清统一事件、总量口径、滚动窗口与自然日的区别；
+- **进阶掌握**：能解释 inode 去重、服务端身份覆盖、三层幂等与 SQL 聚合；
+- **面试可讲**：能用 90 秒完整介绍，并复盘累计值重复、全量替换和固定窗口对账；
+- **系统设计能力**：能讨论十亿事件、可恢复 replace 和 source schema 演进，同时给出不过度设计的阶段边界。
+
+---
+
+项目源码：<https://github.com/ffffhx/open-token-board>

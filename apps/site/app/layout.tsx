@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Libre_Caslon_Display, Newsreader, Spline_Sans_Mono } from "next/font/google";
 
+import { PwaRegister } from "@/components/pwa-register";
 import { RootChrome } from "@/components/root-chrome";
 import { SITE } from "@/lib/content/config";
 import { withBasePath } from "@/lib/utils/site-path";
@@ -77,6 +78,7 @@ export default function RootLayout({
       <body>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <RootChrome>{children}</RootChrome>
+        <PwaRegister />
       </body>
     </html>
   );

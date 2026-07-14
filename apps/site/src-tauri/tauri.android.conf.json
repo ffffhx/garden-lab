@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Garden Lab",
+  "identifier": "com.gardenlab.blog",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Garden Lab",
+        "url": "/"
+      }
+    ]
+  }
+}

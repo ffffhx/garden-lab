@@ -1,6 +1,7 @@
 import React from "react";
 
 import { ArticleAiChat } from "@/components/article-ai-chat";
+import { ArticleQuizEnhancer } from "@/components/article-quiz-enhancer";
 import { ArticleSelectionTooltip } from "@/components/article-selection-tooltip";
 import { BenchHeatmapTooltip } from "@/components/bench-heatmap-tooltip";
 import { BenchReveal } from "@/components/bench-reveal";
@@ -45,6 +46,7 @@ export function ArticleBody({
           id={articleContentId}
         />
       </ArticleSelectionTooltip>
+      <ArticleQuizEnhancer articleContentId={articleContentId} />
       <BenchHeatmapTooltip articleContentId={articleContentId} />
       <BenchReveal articleContentId={articleContentId} />
       <RequestGatesLab articleContentId={articleContentId} />

@@ -67,7 +67,13 @@ function normalizeCoverPosition(input: unknown): CoverPosition {
 }
 
 function normalizeContentImageSize(input: unknown): ContentImageSize {
-  return input === "phone-screenshot" ? "phone-screenshot" : "default";
+  if (input === "phone-screenshot") {
+    return "phone-screenshot";
+  }
+  if (input === "half") {
+    return "half";
+  }
+  return "default";
 }
 
 function deriveExcerpt(explicitExcerpt: unknown, content: string) {

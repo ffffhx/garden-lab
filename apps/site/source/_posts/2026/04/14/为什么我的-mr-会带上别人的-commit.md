@@ -11,6 +11,7 @@ tags:
 excerpt: "一次本地 rebase 之后又顺手执行了 `git pull -r`，结果 MR 里混进了别人的 commit。本文复盘这个问题为什么发生，以及如何用 `cherry-pick` 和 `git push --force-with-lease` 把分支救回来。"
 cover: "cover-v1.png"
 coverPosition: "below-title"
+contentImageSize: "half"
 ---
 
 当我准备提 MR 的时候，看到几千行改动，第一反应是哪里不对。点开提交记录后更离谱：除了我自己的 commit，里面还混进了其他人的提交，而且有些相似的 commit 甚至重复出现了 3 次。

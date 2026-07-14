@@ -14,7 +14,7 @@ export type Heading = {
 };
 
 export type CoverPosition = "above-title" | "below-title";
-export type ContentImageSize = "default" | "phone-screenshot";
+export type ContentImageSize = "default" | "phone-screenshot" | "half";
 
 export type PostSummary = {
   slug: string;

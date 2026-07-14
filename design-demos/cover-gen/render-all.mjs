@@ -21,7 +21,9 @@ const only = process.argv[2] ? process.argv[2].split(",").map(Number) : null;
 const ab = (cmd) => execSync(`agent-browser --cdp 9223 ${cmd}`, { stdio: ["ignore", "pipe", "pipe"] }).toString();
 const sleep = (ms) => execSync(`sleep ${ms / 1000}`);
 
-ab(`set viewport 1600 900 2`);
+// Keep ProfilePilot's fixed control bar below the 1600×900 poster so selector
+// screenshots contain only the cover artwork.
+ab(`set viewport 1600 1100 2`);
 
 let done = 0;
 for (let i = 0; i < covers.length; i++) {

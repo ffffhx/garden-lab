@@ -332,6 +332,13 @@ window.COVERS = (function () {
       sub: "本机优先：从 Local State 发现 Profile、用 ps/lsof 还原运行态、给隔离 Profile 固定 CDP 端口交给 Agent，再把登录态在 Profile 间「暂存 + 原子替换 + 可回滚」地搬运。",
       kw: ["Local State", "ps / lsof", "固定 CDP", "原子替换 + 回滚", "Electron"],
     },
+    {
+      slug: "resume-interview-handbook", dir: "2026/07/14/我的-2027-届前端校招项目自我介绍与面试追问手册",
+      scene: "interview", cat: "校招", en: "FRONTEND INTERVIEW PLAYBOOK", accent: "red",
+      titleSize: 78, title: `把一页简历<br>讲成<span class="hr">项目故事</span>`,
+      sub: "从 90 秒开场白到项目追问：背景、行动、结果、复盘和数字口径，整理成一套能按面试节奏展开的口述手册。",
+      kw: ["90 秒开场", "30 秒项目版", "常见追问", "数字口径", "表达边界"],
+    },
   ];
 
   return [...N, ...T];

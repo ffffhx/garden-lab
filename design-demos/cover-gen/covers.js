@@ -165,6 +165,10 @@ window.COVERS = (function () {
       ["开源维护", "AI 硬件", "肖像同意", "安全治理", "网络边界"],
       "AI 的维护成本回到日常工程：代码、素材、安全和网络都要可解释。",
       "AI coding PR · Apple/OpenAI · Muse Image · OpenAI Safety · DNS/VPN"),
+    news("2026/07/14/2026-07-14-x-上-ai-与前端热点速览", "2026-07-14",
+      ["Siri AI", "5GW 算力", "AI 硬件", "模型政策", "开源 Agent"],
+      "AI 的落地摩擦：系统入口、算力、硬件、模型政策和开源 agent 同时进入产品边界。",
+      "Apple beta · Meta DC · OpenAI device · Distillation · Nous"),
   ];
 
   const T = [

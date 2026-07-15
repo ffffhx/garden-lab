@@ -173,6 +173,10 @@ window.COVERS = (function () {
       ["Siri AI", "5GW 算力", "AI 硬件", "模型政策", "开源 Agent"],
       "AI 的落地摩擦：系统入口、算力、硬件、模型政策和开源 agent 同时进入产品边界。",
       "Apple beta · Meta DC · OpenAI device · Distillation · Nous"),
+    news("2026/07/15/2026-07-15-x-上-ai-与前端热点速览", "2026-07-15",
+      ["模型审查", "Agent 安全", "数据中心", "模型价值", "算力价格"],
+      "AI 的执行边界变硬：发布、攻击、基建、行为和成本都要可治理。",
+      "Hassabis · Context bombs · NY data centers · Claude values · Kalshi"),
   ];
 
   const T = [

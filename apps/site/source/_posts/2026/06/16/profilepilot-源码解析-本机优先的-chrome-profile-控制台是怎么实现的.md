@@ -223,6 +223,93 @@ coverPosition: "below-title"
   </div>
 </figure>
 
+```mermaid
+flowchart TD
+    A["Codex App / Claude Code 创建任务"]
+    A --> B["生成 thread ID / session ID"]
+    B --> C["提供 CODEX_THREAD_ID<br/>或 CLAUDE_CODE_SESSION_ID"]
+    C --> D["Shell 执行 ~/.zshenv"]
+    D --> E["生成 AGENT_BROWSER_SESSION<br/>cx-<thread-id> 或 cc-<session-id>"]
+
+    E --> F["Agent 执行 agent-browser 命令"]
+    F --> G["ProfilePilot agent-browser wrapper"]
+    G --> H["读取 AGENT_BROWSER_SESSION"]
+    G --> I["解析 --cdp 逻辑端口"]
+    H --> J["请求 ProfilePilot Gateway"]
+    I --> J
+
+    J --> K{"Gateway 是否运行？"}
+    K -->|是| L["复用 Gateway"]
+    K -->|否| M["wrapper 自动启动 Gateway"]
+    M --> L
+
+    L --> N{"目标 Profile 是否运行？"}
+    N -->|是| O["复用 Chrome Profile"]
+    N -->|否| P["Gateway 启动 Chrome Profile"]
+    P --> Q["Chrome 使用<br/>--remote-debugging-pipe"]
+    O --> R["Gateway 持有 Chrome Pipe"]
+    Q --> R
+
+    R --> S["wrapper 请求 acquire"]
+    S --> T["Gateway 校验 Profile / Session 租约"]
+    T --> U["返回一次性 Ticket<br/>和 WebSocket 地址"]
+
+    U --> V{"是否已有 agent-browser daemon？"}
+    V -->|否| W["启动真实 agent-browser daemon"]
+    V -->|是| X["复用已有 daemon"]
+    W --> Y["daemon 通过 WebSocket 连接 Gateway"]
+    X --> Y
+
+    Y --> Z["真实 agent-browser 执行<br/>open / click / snapshot 等命令"]
+    Z --> AA["CDP 消息发送到 Gateway"]
+    AA --> AB["Gateway 校验控制权"]
+    AB --> AC["Gateway 通过 Chrome Pipe 转发"]
+    AC --> AD["Chrome 执行操作并返回结果"]
+    AD --> AE["结果返回 Agent"]
+
+    AE --> AF{"任务状态变化"}
+
+    AF -->|Agent 完成| AG["profilepilot complete"]
+    AG --> AH["Gateway 撤销 Agent 连接"]
+    AH --> AI["wrapper / daemon 收到完成信号"]
+    AI --> AJ["关闭 daemon<br/>释放 Session 和 Profile 租约"]
+    AJ --> AK["任务结束"]
+
+    AF -->|用户提前结束| AL["用户点击结束任务"]
+    AL --> AM["Gateway stopSession"]
+    AM --> AN["撤销 Agent WebSocket 连接"]
+    AN --> AO["当前或下一条命令返回<br/>AGENT_TASK_STOPPED<br/>退出码 75"]
+    AO --> AP["Agent 停止浏览器操作"]
+    AP --> AQ["关闭 daemon<br/>释放 Session 和 Profile 租约"]
+    AQ --> AK
+
+    AF -->|用户点击接管| AR["用户点击接管"]
+    AR --> AS["ProfilePilot 写入 hard-stop 请求"]
+    AS --> AT["Gateway 撤销 Agent WebSocket"]
+    AT --> AU["当前或下一条命令返回<br/>AGENT_USER_IN_CONTROL<br/>退出码 75"]
+    AU --> AV["Agent 停止发送浏览器命令"]
+    AV --> AW["保留 Session 和 Profile 租约"]
+    AW --> AX["Agent 执行 wait-control"]
+    AX --> AY["等待用户操作完成"]
+
+    AF -->|Agent 主动请求用户操作| AZ["Agent 执行 handoff<br/>--reason 用户操作说明"]
+    AZ --> BA["wrapper 写入控制通知"]
+    BA --> BB["Gateway takeover"]
+    BB --> BC["撤销 Agent WebSocket"]
+    BC --> BD["handoff 返回成功<br/>ownership=user"]
+    BD --> AW
+
+    AY --> BE{"用户后续操作"}
+    BE -->|用户交还 Agent| BF["收到 AGENT_CONTROL_RETURNED"]
+    BF --> BG["执行 resume"]
+    BG --> BH["重新 snapshot"]
+    BH --> BI["Agent 继续任务"]
+    BI --> Z
+
+    BE -->|用户结束任务| BJ["收到 AGENT_TASK_STOPPED"]
+    BJ --> AP
+```
+
 ### 4.1 Electron 的权限边界
 
 主窗口仍然采用受控桥接：

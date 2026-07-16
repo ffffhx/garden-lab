@@ -225,7 +225,9 @@ export function getDailyNewsPosts() {
 }
 
 export function getAllPostSlugs() {
-  return getPostRecords().map((post) => post.slug);
+  return getPostRecords()
+    .filter((post) => !post.hidden)
+    .map((post) => post.slug);
 }
 
 export function getPostBySlug(slug: string) {

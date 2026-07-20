@@ -177,6 +177,10 @@ window.COVERS = (function () {
       ["模型审查", "Agent 安全", "数据中心", "模型价值", "算力价格"],
       "AI 的执行边界变硬：发布、攻击、基建、行为和成本都要可治理。",
       "Hassabis · Context bombs · NY data centers · Claude values · Kalshi"),
+    news("2026/07/20/2026-07-20-x-上-ai-与前端热点速览", "2026-07-20",
+      ["开放模型", "算力容量", "Agent 安全", "公共 AI", "基建阻力"],
+      "AI 的可用性账本继续摊开：模型开放、容量、攻防、公共基础设施和算力阻力同时变成产品问题。",
+      "Qwen3.8 · Kimi K3 · Hugging Face · Current AI · Data centers"),
   ];
 
   const T = [

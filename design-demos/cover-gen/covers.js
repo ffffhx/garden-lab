@@ -181,6 +181,10 @@ window.COVERS = (function () {
       ["开放模型", "算力容量", "Agent 安全", "公共 AI", "基建阻力"],
       "AI 的可用性账本继续摊开：模型开放、容量、攻防、公共基础设施和算力阻力同时变成产品问题。",
       "Qwen3.8 · Kimi K3 · Hugging Face · Current AI · Data centers"),
+    news("2026/07/21/2026-07-21-x-上-ai-与前端热点速览", "2026-07-21",
+      ["开放 Web", "Agent 沙箱", "移动重写", "应用分发", "数据版权"],
+      "AI 把信任交接推到台前：流量、沙箱、分发、授权和训练数据都要可审计。",
+      "Google AI Search · Sandbox escapes · X Android · App Store · Anthropic"),
   ];
 
   const T = [

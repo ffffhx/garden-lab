@@ -42,7 +42,7 @@
     "mdast-util-to-string": "^4.0.0",
     "next": "^15.3.0",
     "phaser": "^4.2.0",
-    "react": "^19.2.7",
+    "react": "^19.2.8",
     "react-dom": "^19.2.7",
     "reading-time": "^1.5.0",
     "rehype-slug": "^6.0.0",

@@ -185,6 +185,10 @@ window.COVERS = (function () {
       ["开放 Web", "Agent 沙箱", "移动重写", "应用分发", "数据版权"],
       "AI 把信任交接推到台前：流量、沙箱、分发、授权和训练数据都要可审计。",
       "Google AI Search · Sandbox escapes · X Android · App Store · Anthropic"),
+    news("2026/07/24/2026-07-24-x-上-ai-与前端热点速览", "2026-07-24",
+      ["健康数据", "AI 经济", "平台监管", "安全信噪比", "算力供应"],
+      "AI 进入产品账本：敏感数据、真实任务、平台规则、安全队列和算力融资都要可审计。",
+      "OpenAI Health · Google ATLAS · DMA fine · GitHub bounty · AMD/Anthropic"),
   ];
 
   const T = [

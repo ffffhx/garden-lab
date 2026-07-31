@@ -189,6 +189,10 @@ window.COVERS = (function () {
       ["健康数据", "AI 经济", "平台监管", "安全信噪比", "算力供应"],
       "AI 进入产品账本：敏感数据、真实任务、平台规则、安全队列和算力融资都要可审计。",
       "OpenAI Health · Google ATLAS · DMA fine · GitHub bounty · AMD/Anthropic"),
+    news("2026/07/31/2026-07-31-x-上-ai-与前端热点速览", "2026-07-31",
+      ["Agent 安全", "成本路由", "开权重模型", "机器人", "工具更新"],
+      "AI 进入硬约束：网络、凭据、成本、模型分发和物理行动都要可审计。",
+      "Anthropic evals · GPT-5.6 pricing · Inkling-Small · Gemini Robotics"),
   ];
 
   const T = [

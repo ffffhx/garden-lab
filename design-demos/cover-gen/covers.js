@@ -193,6 +193,10 @@ window.COVERS = (function () {
       ["Agent 安全", "成本路由", "开权重模型", "机器人", "工具更新"],
       "AI 进入硬约束：网络、凭据、成本、模型分发和物理行动都要可审计。",
       "Anthropic evals · GPT-5.6 pricing · Inkling-Small · Gemini Robotics"),
+    news("2026/08/01/2026-08-01-x-上-ai-与前端热点速览", "2026-08-01",
+      ["模型迁移", "成本路由", "Copilot", "Claude Code", "Node 观测"],
+      "模型选择进入工程配置：生命周期、成本、速度和可观测性都要可解释。",
+      "Codex retire · GPT-5.6 cost · Copilot routing · ARMS Node.js"),
   ];
 
   const T = [

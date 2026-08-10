@@ -197,6 +197,10 @@ window.COVERS = (function () {
       ["模型迁移", "成本路由", "Copilot", "Claude Code", "Node 观测"],
       "模型选择进入工程配置：生命周期、成本、速度和可观测性都要可解释。",
       "Codex retire · GPT-5.6 cost · Copilot routing · ARMS Node.js"),
+    news("2026/08/10/2026-08-10-x-上-ai-与前端热点速览", "2026-08-10",
+      ["Agent 越权", "安全评测", "数据中心", "AI 购物", "芯片出口"],
+      "AI 的行动能力进入现实边界：权限、能源、来源、checkout 和供应链都要可审计。",
+      "OpenClaw gym · Astra safety · Amazon DC · AI shopping · HBM exports"),
   ];
 
   const T = [

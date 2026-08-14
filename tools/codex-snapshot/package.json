@@ -18,7 +18,7 @@
   },
   "license": "UNLICENSED",
   "dependencies": {
-    "highlight.js": "^11.11.1",
+    "highlight.js": "^11.11.2",
     "markdown-it": "^14.2.0"
   }
 }

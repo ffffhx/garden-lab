@@ -157,6 +157,34 @@
   .interview .mic{position:absolute;right:86px;bottom:46px;width:190px;height:190px;border:6px solid var(--ink);border-radius:50%;background:var(--red);z-index:10;display:flex;align-items:center;justify-content:center;transform:rotate(8deg);box-shadow:10px 10px 0 var(--acid)}.interview .mic span{font-family:var(--black);font-size:26px;line-height:1;text-align:center;color:#fff}
   .interview .foot{position:absolute;left:68px;bottom:48px;font-family:var(--mono);font-weight:900;font-size:17px;z-index:10;color:var(--paper)}
 
+  /* intern defense: factory time-card + stacked work tickets */
+  .timecard{inset:0;background:#e7dfc8;color:var(--ink);overflow:hidden}
+  .timecard .spine{position:absolute;left:0;top:0;bottom:0;width:108px;background:var(--teal);box-shadow:10px 0 0 var(--ink)}
+  .timecard .spine .holes{position:absolute;left:32px;top:70px;display:flex;flex-direction:column;gap:78px}
+  .timecard .hole{width:44px;height:44px;border-radius:50%;background:#e7dfc8;border:6px solid var(--ink);box-shadow:inset 0 0 0 7px var(--acid)}
+  .timecard .spine .vert{position:absolute;left:18px;bottom:70px;font-family:var(--black);font-size:22px;letter-spacing:.28em;color:#fff;writing-mode:vertical-rl;transform:rotate(180deg)}
+  .timecard .id{position:absolute;left:148px;top:58px;width:680px;z-index:8}
+  .timecard .id .cap{margin-bottom:18px}
+  .timecard h1{font-size:78px;line-height:1.02;max-width:720px}
+  .timecard h1 .ht{background:var(--acid);color:var(--ink);padding:0 .08em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+  .timecard .meta{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+  .timecard .meta span{font-family:var(--mono);font-weight:800;font-size:15px;border:3px solid var(--ink);padding:6px 12px;background:var(--paper)}
+  .timecard .meta span.on{background:var(--ink);color:var(--paper)}
+  .timecard .brief{margin-top:26px;max-width:640px;font-family:var(--han);font-weight:700;font-size:21px;line-height:1.5;border-left:8px solid var(--red);padding-left:18px}
+  .timecard .tix{position:absolute;right:48px;top:86px;width:620px;height:720px;z-index:7}
+  .timecard .ticket{position:absolute;width:470px;height:210px;background:var(--paper);border:5px solid var(--ink);box-shadow:12px 12px 0 rgba(0,0,0,.32);padding:18px 22px}
+  .timecard .ticket .row{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid var(--ink);padding-bottom:8px}
+  .timecard .ticket .no{font-family:var(--mono);font-weight:900;font-size:14px;letter-spacing:.08em}
+  .timecard .ticket .chip{font-family:var(--black);font-size:15px;color:#fff;padding:4px 10px}
+  .timecard .ticket .ttl{margin-top:16px;font-family:var(--han);font-weight:900;font-size:34px;line-height:1.1}
+  .timecard .ticket .sub{margin-top:10px;font-family:var(--mono);font-weight:700;font-size:15px;color:#4a4538}
+  .timecard .ticket.t1{left:20px;top:8px;transform:rotate(-7deg);background:#f7f1de}
+  .timecard .ticket.t2{left:90px;top:228px;transform:rotate(4deg);background:var(--acid)}
+  .timecard .ticket.t3{left:28px;top:456px;transform:rotate(-3deg);background:#d9e4f7}
+  .timecard .stamp{position:absolute;right:36px;bottom:36px;width:210px;height:210px;border-radius:50%;border:10px solid var(--red);background:rgba(232,65,42,.12);z-index:11;transform:rotate(-18deg);display:flex;align-items:center;justify-content:center;box-shadow:8px 8px 0 var(--ink)}
+  .timecard .stamp span{font-family:var(--black);font-size:28px;line-height:.95;text-align:center;color:var(--red)}
+  .timecard .foot{position:absolute;left:148px;bottom:42px;font-family:var(--mono);font-weight:900;font-size:16px;z-index:10}
+
   /* D9 route map */
   .route{inset:0;background:#161310;color:var(--paper);padding:64px 70px;
     background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1.4px);background-size:30px 30px}
@@ -405,6 +433,23 @@ const DESIGN = {
       <div class="rn red" style="left:1000px;top:118px"><div class="lb">规则出口</div><div class="sm">住宅 IP</div></div>
       <div class="rn red" style="left:1000px;top:248px"><div class="lb">UK / VPS</div><div class="sm">SOCKS / HTTP</div></div>
     </div><div class="foot">▸ 出口 IP · 系统代理 · 本机端口 · 规则命中 分清楚</div></div>`,
+
+  "internship-defense": () => `<div class="fb timecard">
+    <div class="spine"><div class="holes"><span class="hole"></span><span class="hole"></span><span class="hole"></span><span class="hole"></span><span class="hole"></span></div><div class="vert">COZE · FRONTEND</div></div>
+    <div class="id">
+      <div class="cap"><span class="cat" style="background:${ACCENT.teal}">${d.cat}</span><span class="en">${d.en}</span></div>
+      <h1>${d.title}</h1>
+      <div class="meta"><span class="on">2025.12 → NOW</span><span>权益 3.0</span><span>商业化域</span><span>账号切换</span><span>ProfilePilot</span></div>
+      <p class="brief">${d.sub}</p>
+    </div>
+    <div class="tix">
+      <div class="ticket t1"><div class="row"><span class="no">TICKET 01</span><span class="chip" style="background:${ACCENT.red}">BUSINESS</span></div><div class="ttl">权益拦截 2.0 → 3.0</div><div class="sub">25 个权益项 · 三端复用 · 套餐推导</div></div>
+      <div class="ticket t2"><div class="row"><span class="no">TICKET 02</span><span class="chip" style="background:${ACCENT.blue}">DOMAIN</span></div><div class="ttl">商业化域重构</div><div class="sub">518 文件 · 88 API · 单向依赖</div></div>
+      <div class="ticket t3"><div class="row"><span class="no">TICKET 03</span><span class="chip" style="background:${ACCENT.violet}">TOOLING</span></div><div class="ttl">账号切换 + 浏览器控制面</div><div class="sub">2min → 10s · 并行 3 Agent</div></div>
+    </div>
+    <div class="stamp"><span>INTERN<br>DEFENSE<br>2026</span></div>
+    <div class="foot">▸ 业务收口 · 领域重构 · 给 Agent 补工具</div>
+  </div>`,
 };
 
 if (d.scene === "feed") renderFeed();

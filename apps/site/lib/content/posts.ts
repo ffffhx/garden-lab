@@ -226,7 +226,7 @@ export function getDailyNewsPosts() {
 
 export function getAllPostSlugs() {
   return getPostRecords()
-    .filter((post) => !post.hidden)
+    .filter((post) => !post.hidden || process.env.NODE_ENV === "development")
     .map((post) => post.slug);
 }
 

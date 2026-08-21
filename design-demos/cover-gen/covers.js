@@ -366,6 +366,13 @@ window.COVERS = (function () {
       sub: "从 90 秒开场白到项目追问：背景、行动、结果、复盘和数字口径，整理成一套能按面试节奏展开的口述手册。",
       kw: ["90 秒开场", "30 秒项目版", "常见追问", "数字口径", "表达边界"],
     },
+    {
+      slug: "internship-defense", dir: "2026/08/21/实习答辩-冯鸿鑫",
+      scene: "flow", cat: "实习答辩", en: "INTERNSHIP DEFENSE · COZE", accent: "teal",
+      titleSize: 78, title: `把一段实习<br>写成<span class="ht">可答辩的系统</span>`,
+      sub: "扣子前端商业化：把分散的权益拦截收成统一能力，把历史包拆成可维护的领域结构，再给人和 Agent 补上账号切换与浏览器控制面。",
+      kw: ["权益 3.0", "套餐升降配", "商业化域", "账号切换", "ProfilePilot"],
+    },
   ];
 
   return [...N, ...T];

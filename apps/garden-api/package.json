@@ -13,7 +13,7 @@
     "sanitize-html": "^2.14.0"
   },
   "devDependencies": {
-    "@types/node": "^22.13.4",
+    "@types/node": "^26.2.0",
     "@types/sanitize-html": "^2.13.0",
     "tsx": "^4.22.4",
     "typescript": "^5.8.2",

@@ -208,7 +208,9 @@ function isOwnerViewer(viewer: PrivateFeatureViewer, ownerLogins: string[]) {
 }
 
 function getPrivateFeatureApiBaseUrl() {
-  return normalizeApiBaseUrl(process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL);
+  const gardenUrl = process.env.NEXT_PUBLIC_GARDEN_API_URL?.trim();
+  const tokenBoardUrl = process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL?.trim();
+  return normalizeApiBaseUrl(gardenUrl || tokenBoardUrl);
 }
 
 function isLocalPrivateFeaturePreview() {

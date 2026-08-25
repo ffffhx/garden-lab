@@ -1,0 +1,28 @@
+services:
+  garden-api:
+    build:
+      context: ../..
+      dockerfile: deploy/garden-api/Dockerfile
+    container_name: garden-lab-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      - NODE_ENV=production
+      - GARDEN_API_HOST=0.0.0.0
+      - GARDEN_API_PORT=8787
+      - GARDEN_API_PUBLIC_URL=${GARDEN_API_PUBLIC_URL:-https://124-221-36-36.anyip.dev:8443/garden-api}
+      - GARDEN_ALLOWED_ORIGINS=${GARDEN_ALLOWED_ORIGINS:-https://ffffhx.github.io,http://localhost:3000}
+      - GARDEN_AUTH_SECRET=${GARDEN_AUTH_SECRET}
+      - GARDEN_ALLOWED_GITHUB_LOGINS=${GARDEN_ALLOWED_GITHUB_LOGINS:-ffffhx}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - KIMI_API_KEY=${KIMI_API_KEY:-}
+      - KIMI_BASE_URL=${KIMI_BASE_URL:-https://api.moonshot.cn/v1}
+      - GARDEN_DATA_DIR=/data
+    volumes:
+      - garden-api-data:/data
+
+volumes:
+  garden-api-data:
+    driver: local

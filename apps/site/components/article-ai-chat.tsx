@@ -89,13 +89,15 @@ function getArticleChatEndpoint() {
     return `${endpoint}/chat-article`;
   }
 
+  const gardenApi = process.env.NEXT_PUBLIC_GARDEN_API_URL?.trim();
   const tokenBoardApi = process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL?.trim();
+  const fallbackBase = gardenApi || tokenBoardApi;
 
-  if (!tokenBoardApi) {
+  if (!fallbackBase) {
     return "";
   }
 
-  return `${stripTrailingSlash(tokenBoardApi)}/api/chat-article`;
+  return `${stripTrailingSlash(fallbackBase)}/api/chat-article`;
 }
 
 function normalizeText(value: string) {

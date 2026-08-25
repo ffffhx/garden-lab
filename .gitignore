@@ -38,6 +38,8 @@ _multiconfig.yml
 .playwright-cli/
 .vercel
 .token-board/
+apps/garden-api/data/
+deploy/garden-api/.env
 
 # hyperframes 视频 skill 全家桶：安装器生成物，不入库（本地保留）
 **/skills/embedded-captions

@@ -1,5 +1,5 @@
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { extname, join } from "node:path";
 
 import { getPostBySlug } from "../lib/content/posts";
 
@@ -24,6 +24,37 @@ const ASSET_ORIGIN = "https://ffffhx.github.io/garden-lab";
 const siteRoot = process.cwd();
 const outDir = join(siteRoot, "out");
 const cssDir = join(outDir, "_next", "static", "css");
+
+function inlineLocalImages(text: string) {
+  const mimeMap: Record<string, string> = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+  };
+
+  return text.replace(/(src=["'])\/(post-assets|images)\/([^"'\s>]+)(["'])/g, (match, prefix, folder, relPath, suffix) => {
+    const candidatePaths = [
+      join(siteRoot, "public", folder, decodeURIComponent(relPath)),
+      join(siteRoot, "out", folder, decodeURIComponent(relPath)),
+    ];
+    for (const filePath of candidatePaths) {
+      try {
+        if (existsSync(filePath)) {
+          const ext = extname(filePath).toLowerCase();
+          const mime = mimeMap[ext] || "application/octet-stream";
+          const data = readFileSync(filePath).toString("base64");
+          return `${prefix}data:${mime};base64,${data}${suffix}`;
+        }
+      } catch {
+        // skip
+      }
+    }
+    return match;
+  });
+}
 
 function absolutizeRootRelative(text: string) {
   // 把根相对的 /_next/、/post-assets/、/images/ 改写为线上公开绝对 URL。
@@ -121,10 +152,21 @@ ${coverBlock}
 const destDir = join(siteRoot, "tmp", "private-blog");
 mkdirSync(destDir, { recursive: true });
 const destFile = join(destDir, `${slug}.html`);
-// 整页组装完成后统一改写根相对资源 URL,确保封面 src、正文图片、内联 CSS
-// 里的字体路径都被覆盖(逐片改写会漏掉尚未加引号的裸路径)。
-writeFileSync(destFile, absolutizeRootRelative(page));
+// 整页组装完成后内联本地图片为 base64,并改写其余根相对资源 URL
+const inlinedPage = inlineLocalImages(page);
+const finalContent = absolutizeRootRelative(inlinedPage);
+writeFileSync(destFile, finalContent);
+
+// 同时写入 apps/garden-api 的 data/private-blog 目录
+const apiDataDir = join(siteRoot, "..", "garden-api", "data", "private-blog");
+try {
+  mkdirSync(apiDataDir, { recursive: true });
+  writeFileSync(join(apiDataDir, `${slug}.html`), finalContent);
+  console.log(`Synced to ${join(apiDataDir, `${slug}.html`)}`);
+} catch {
+  // ignore if garden-api not present
+}
 
 console.log(
-  `Wrote ${destFile} (${(page.length / 1024).toFixed(1)}KB, css inlined, assets → ${ASSET_ORIGIN})`
+  `Wrote ${destFile} (${(inlinedPage.length / 1024).toFixed(1)}KB, css & images inlined, assets → ${ASSET_ORIGIN})`
 );

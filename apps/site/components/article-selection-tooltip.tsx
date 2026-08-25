@@ -69,13 +69,15 @@ function getSelectionExplainEndpoint() {
     return `${endpoint}/explain-selection`;
   }
 
+  const gardenApi = process.env.NEXT_PUBLIC_GARDEN_API_URL?.trim();
   const tokenBoardApi = process.env.NEXT_PUBLIC_TOKEN_BOARD_API_URL?.trim();
+  const fallbackBase = gardenApi || tokenBoardApi;
 
-  if (!tokenBoardApi) {
+  if (!fallbackBase) {
     return "";
   }
 
-  return `${tokenBoardApi.replace(/\/+$/, "")}/api/explain-selection`;
+  return `${fallbackBase.replace(/\/+$/, "")}/api/explain-selection`;
 }
 
 function normalizeSelectedText(text: string) {

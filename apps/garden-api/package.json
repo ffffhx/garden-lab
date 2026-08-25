@@ -1,0 +1,22 @@
+{
+  "name": "@garden-lab/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "tsx src/server.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "sanitize-html": "^2.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/sanitize-html": "^2.13.0",
+    "tsx": "^4.22.4",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  }
+}

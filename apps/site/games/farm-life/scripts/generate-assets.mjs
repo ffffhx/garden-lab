@@ -1,12 +1,13 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import sharp from "sharp";
 
 const TILE = 32;
 const COLS = 42;
 const ROWS = 28;
-const root = new URL("..", import.meta.url).pathname;
+const root = fileURLToPath(new URL("..", import.meta.url));
 const publicDir = join(root, "public");
 const spriteDir = join(publicDir, "assets", "sprites");
 const mapDir = join(publicDir, "assets", "maps");

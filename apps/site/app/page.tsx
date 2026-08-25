@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
+import { LatestArticlesList } from "@/components/latest-articles-list";
 import { PostCard } from "@/components/post-card";
 import { PrivateBadge, PrivateFeatureGate } from "@/components/private-feature-access";
 import { getAllCategories } from "@/lib/content/categories";
@@ -179,19 +180,10 @@ export default function HomePage() {
       {/* —— 最新文章 —— */}
       <section className="space-y-7">
         <SectionHead kicker="Latest Writing" title="最新文章" />
-        {featuredPosts.length > 0 ? (
-          <div className="grid min-w-0 gap-x-6 gap-y-8 lg:grid-cols-2">
-            {featuredPosts.map((post) => (
-              <PostCard
-                key={post.slug}
-                post={post}
-                priority={post.slug === priorityCoverSlug}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyState title="还没有文章" description="内容会在这里出现。" />
-        )}
+        <LatestArticlesList
+          initialPosts={featuredPosts}
+          priorityCoverSlug={priorityCoverSlug}
+        />
       </section>
     </main>
   );

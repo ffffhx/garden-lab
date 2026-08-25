@@ -13,7 +13,11 @@ import {
   verifyOAuthState,
 } from "./auth.js";
 import { CONFIG } from "./config.js";
-import { handlePrivateBlog } from "./private-blog.js";
+import {
+  handleGetPrivatePostJson,
+  handleListPrivatePosts,
+  handlePrivateBlog,
+} from "./private-blog.js";
 import { handleArticleChat, handleExplainSelection } from "./selection-explainer.js";
 import {
   handleCreateSnapshot,
@@ -200,11 +204,25 @@ async function routeRequest(req: IncomingMessage, res: ServerResponse): Promise<
     return;
   }
 
-  // 6. Private Blog: /api/blog/:slug
+  // 6. Private Blog: /api/blog/:slug (HTML)
   const blogMatch = pathname.match(/^\/api\/blog\/([a-z0-9-]+)$/);
   if (method === "GET" && blogMatch) {
     const slug = blogMatch[1];
     await handlePrivateBlog(req, res, slug, publicBaseUrl);
+    return;
+  }
+
+  // 6.1 Private Posts: List (JSON)
+  if (method === "GET" && pathname === "/api/private-posts") {
+    await handleListPrivatePosts(req, res);
+    return;
+  }
+
+  // 6.2 Private Posts: Get by slug (JSON)
+  const privatePostMatch = pathname.match(/^\/api\/private-posts\/([a-z0-9-]+)$/);
+  if (method === "GET" && privatePostMatch) {
+    const slug = privatePostMatch[1];
+    await handleGetPrivatePostJson(req, res, slug);
     return;
   }
 

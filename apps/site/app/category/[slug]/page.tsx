@@ -86,7 +86,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           </div>
         </div>
       </div>
-      <CategorySearchList posts={category.posts} label={category.label} />
+      <CategorySearchList
+        posts={category.posts}
+        label={category.label}
+        categoryKey={category.key}
+      />
     </main>
   );
 }

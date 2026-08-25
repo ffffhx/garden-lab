@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 
 import { PostMeta } from "@/components/post-meta";
+import { PrivateBadge } from "@/components/private-feature-access";
 import type { PostCardSummary } from "@/lib/content/types";
 
 type RisoColor = "terra" | "teal" | "pink" | "yellow";
@@ -19,6 +20,8 @@ export function PostCard({
   priority = false,
   accent = "teal",
 }: PostCardProps) {
+  const href = post.hidden ? `/private-post?slug=${post.slug}` : `/post/${post.slug}`;
+
   return (
     <article
       className={[
@@ -36,13 +39,16 @@ export function PostCard({
         ].join(" ")}
       >
         <div className="flex min-w-0 flex-col gap-4">
-          <PostMeta
-            categories={post.categories}
-            dateText={post.dateText}
-            readingTimeText={post.readingTimeText}
-            showTags={false}
-            tags={post.tags}
-          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <PostMeta
+              categories={post.categories}
+              dateText={post.dateText}
+              readingTimeText={post.readingTimeText}
+              showTags={false}
+              tags={post.tags}
+            />
+            {post.hidden ? <PrivateBadge withText /> : null}
+          </div>
           <div className={post.cover ? "space-y-4" : "space-y-3"}>
             <h2
               className={[
@@ -50,7 +56,7 @@ export function PostCard({
                 featured ? "text-3xl sm:text-[2.6rem]" : "text-2xl",
               ].join(" ")}
             >
-              <Link href={`/post/${post.slug}`} className="transition-colors hover:text-red">
+              <Link href={href} className="transition-colors hover:text-red">
                 {post.title}
               </Link>
             </h2>
@@ -60,7 +66,7 @@ export function PostCard({
           </div>
           <div className="mt-auto">
             <Link
-              href={`/post/${post.slug}`}
+              href={href}
               className="font-mono-ui inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-ink transition-all group-hover:gap-3 group-hover:text-red"
             >
               继续阅读
@@ -70,7 +76,7 @@ export function PostCard({
         </div>
         {post.cover ? (
           <Link
-            href={`/post/${post.slug}`}
+            href={href}
             className="block overflow-hidden rounded-2xl border-[1.5px] border-ink/70 bg-paper-deep"
           >
             <img

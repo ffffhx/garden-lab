@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import {
+import React, {
   createContext,
   type ReactNode,
   useContext,
@@ -9,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import Link from "next/link";
 
 import { cn } from "@/lib/utils/cn";
 
@@ -95,7 +95,64 @@ export function useIsPrivateFeatureAllowed() {
   return usePrivateFeatureAccess().status === "allowed";
 }
 
-export function PrivateFeaturePageFallback() {
+export function usePrivatePosts() {
+  const access = usePrivateFeatureAccess();
+  const [privatePosts, setPrivatePosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (access.status !== "allowed" || !access.apiBaseUrl) {
+      setPrivatePosts([]);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+
+    fetch(`${access.apiBaseUrl}/api/private-posts`, {
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then((res) => (res.ok ? res.json() : { posts: [] }))
+      .then((data) => {
+        if (active && Array.isArray(data.posts)) {
+          setPrivatePosts(data.posts);
+        }
+      })
+      .catch(() => {
+        if (active) setPrivatePosts([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [access.status, access.apiBaseUrl]);
+
+  return {
+    privatePosts,
+    loading,
+    isAllowed: access.status === "allowed",
+    apiBaseUrl: access.apiBaseUrl,
+  };
+}
+
+export function PrivateFeaturePageFallback({
+  returnTo,
+}: {
+  returnTo?: string;
+} = {}) {
+  const access = usePrivateFeatureAccess();
+  const currentUrl =
+    typeof window !== "undefined" ? window.location.href : returnTo || "/";
+  const loginUrl = access.apiBaseUrl
+    ? `${access.apiBaseUrl}/api/auth/github/start?returnTo=${encodeURIComponent(
+        returnTo || currentUrl
+      )}`
+    : "#";
+
   return (
     <main className="flex min-h-[50vh] items-center justify-center">
       <section className="w-full max-w-xl rounded-[1.25rem] border border-slate-900/10 bg-white/88 p-7 text-center shadow-[0_24px_80px_-55px_rgba(15,23,42,0.5)]">
@@ -104,20 +161,25 @@ export function PrivateFeaturePageFallback() {
           这个入口暂时只对作者账号开放
         </h1>
         <p className="mt-4 text-base leading-8 text-slate-700">
-          功能还在打磨中，完善后再公开给朋友们使用。
+          包含个人总结与私密文档，仅作者本人登录后可查看。
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
+          {access.apiBaseUrl ? (
+            <a
+              href={loginUrl}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800"
+            >
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+              </svg>
+              使用 GitHub 作者账号登录
+            </a>
+          ) : null}
           <Link
             href="/"
-            className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-800"
-          >
-            返回首页
-          </Link>
-          <Link
-            href="/token-leaderboard"
             className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
           >
-            Token 榜
+            返回首页
           </Link>
         </div>
       </section>
@@ -125,7 +187,7 @@ export function PrivateFeaturePageFallback() {
   );
 }
 
-function usePrivateFeatureAccess() {
+export function usePrivateFeatureAccess() {
   const context = useContext(PrivateFeatureAccessContext);
   const fallbackAccess = usePrivateFeatureAccessState(context === null);
 

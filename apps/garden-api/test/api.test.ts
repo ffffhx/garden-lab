@@ -82,6 +82,50 @@ describe("Garden Lab API", () => {
     expect(html).toContain("仅作者本人可见");
   });
 
+  it("GET /api/private-posts lists private posts for authorized owner", async () => {
+    const ownerToken = createWebSessionToken({
+      userId: "github:12345",
+      displayName: "冯鸿鑫",
+      githubLogin: "ffffhx",
+    });
+
+    const res = await fetch(`${baseUrl}/api/private-posts`, {
+      headers: {
+        Cookie: `${CONFIG.SESSION_COOKIE_NAME}=${ownerToken}`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body.posts)).toBe(true);
+    expect(body.posts.some((p: any) => p.slug === "internship-defense")).toBe(true);
+  });
+
+  it("GET /api/private-posts/:slug returns full post JSON for authorized owner", async () => {
+    const ownerToken = createWebSessionToken({
+      userId: "github:12345",
+      displayName: "冯鸿鑫",
+      githubLogin: "ffffhx",
+    });
+
+    const res = await fetch(`${baseUrl}/api/private-posts/internship-defense`, {
+      headers: {
+        Cookie: `${CONFIG.SESSION_COOKIE_NAME}=${ownerToken}`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.slug).toBe("internship-defense");
+    expect(body.title).toContain("实习答辩");
+    expect(body.contentHtml).toBeDefined();
+  });
+
+  it("GET /api/private-posts returns 403 for unauthorized users", async () => {
+    const res = await fetch(`${baseUrl}/api/private-posts`);
+    expect(res.status).toBe(403);
+  });
+
   it("POST & GET /api/snapshots works", async () => {
     const createRes = await fetch(`${baseUrl}/api/snapshots`, {
       method: "POST",

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 
+import { HeaderAuthorBadge } from "@/components/header-author-badge";
 import { PrivateBadge, PrivateFeatureGate } from "@/components/private-feature-access";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CATEGORY_DEFINITIONS, SITE } from "@/lib/content/config";
@@ -179,6 +180,7 @@ export function SiteHeader({ currentPathname, wide = false }: SiteHeaderProps) {
               </nav>
             </div>
           </div>
+          <HeaderAuthorBadge />
           <ThemeToggle />
           <details className="relative xl:hidden">
           <summary className="inline-flex min-h-11 cursor-pointer list-none items-center justify-center rounded-full border border-ink bg-paper-soft/85 px-4 text-sm font-semibold text-ink transition hover:bg-ink/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red/20 [&::-webkit-details-marker]:hidden">

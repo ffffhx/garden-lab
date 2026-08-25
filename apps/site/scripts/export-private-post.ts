@@ -2,23 +2,17 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { extname, join } from "node:path";
 
 import { getPostBySlug } from "../lib/content/posts";
+import type { Post } from "../lib/content/types";
 
-// 把一篇(通常是 hidden 的)文章导出成单文件、自包含的 HTML,交给腾讯云
-// token-board 后端做「登录后仅作者可见」的鉴权直出。
+// 把(通常是 hidden 的)私密文章导出成单文件、自包含的 HTML 及 JSON 数据,
+// 供 garden-api 后端做「登录后仅作者可见」的鉴权直出和前端动态展示。
 //
-// 为什么要这个脚本:博客是 Next.js 静态导出到 GitHub Pages,纯静态无服务端,
-// 无法做「仅自己可见」。hidden: true 只是把文章移出公开构建(URL 变 404)。
-// 真正的私有阅读放到已有的 token-board 后端(GitHub 登录 + owner 白名单)。
-// 这里负责产出那份带样式的 HTML。
-//
-// 用法: pnpm export:private [slug]        (默认 resume-interview-handbook)
-// 前置:  先 `pnpm run build`,脚本依赖 out/_next/static/css 里已编译的 CSS。
+// 用法: pnpm export:private [slug | "all"]  (默认导出全部私密文章)
+// 前置: 先 `pnpm run build`,脚本依赖 out/_next/static/css 里已编译的 CSS。
 
-const slug = process.argv[2] || "resume-interview-handbook";
+const argSlug = process.argv[2] || "all";
 
 // 线上公开资源源:图片(post-assets)、字体(_next/static/media)都从这里加载。
-// 本地 out 是无 basePath 构建,路径形如 /post-assets/... 与 /_next/...,
-// 统一改写到这个绝对前缀,指向 GitHub Pages 上实际部署的公开资源。
 const ASSET_ORIGIN = "https://ffffhx.github.io/garden-lab";
 
 const siteRoot = process.cwd();
@@ -57,8 +51,6 @@ function inlineLocalImages(text: string) {
 }
 
 function absolutizeRootRelative(text: string) {
-  // 把根相对的 /_next/、/post-assets/、/images/ 改写为线上公开绝对 URL。
-  // 只匹配出现在 url( 或引号后的根相对路径,避免误伤正文里的普通斜杠。
   return text
     .replace(/(url\(['"]?)\/(_next|post-assets|images)\//g, `$1${ASSET_ORIGIN}/$2/`)
     .replace(/(["'])\/(_next|post-assets|images)\//g, `$1${ASSET_ORIGIN}/$2/`);
@@ -77,11 +69,11 @@ function readInlinedCss() {
     .join("\n");
 }
 
-// 复用 next/font 生成的字体变量类名(如 __variable_xxx),它们定义在内联的
-// CSS 里。类名 hash 每次构建可能变,所以从任一已构建的 post 页面动态提取,
-// 而不是硬编码。
 function readHtmlClassName() {
   const postsOut = join(outDir, "post");
+  if (!existsSync(postsOut)) {
+    return "";
+  }
   const dirs = readdirSync(postsOut, { withFileTypes: true }).filter((d) =>
     d.isDirectory()
   );
@@ -100,28 +92,43 @@ function readHtmlClassName() {
   return "";
 }
 
-const post = getPostBySlug(slug);
-if (!post) {
-  throw new Error(`Post not found for slug: ${slug}`);
-}
+const KNOWN_PRIVATE_SLUGS = ["internship-defense", "resume-interview-handbook"];
+
+const slugsToExport =
+  argSlug === "all"
+    ? KNOWN_PRIVATE_SLUGS
+    : [argSlug];
 
 const css = readInlinedCss();
 const htmlClass = readHtmlClassName();
-
-// 防闪烁主题初始化脚本,与 app/layout.tsx 的 themeInitScript 保持一致。
 const themeInitScript = `(function(){try{var s=localStorage.getItem('theme');var d=s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;var e=document.documentElement;e.classList.toggle('dark',d);e.style.colorScheme=d?'dark':'light';}catch(e){}})();`;
 
-const contentHtml = post.contentHtml;
-const coverUrl = post.cover;
+const destDir = join(siteRoot, "tmp", "private-blog");
+mkdirSync(destDir, { recursive: true });
+const apiDataDir = join(siteRoot, "..", "garden-api", "data", "private-blog");
+try {
+  mkdirSync(apiDataDir, { recursive: true });
+} catch {}
 
-const coverBlock = coverUrl
-  ? `<div class="overflow-hidden rounded-2xl border-[1.5px] border-ink/70 bg-paper-deep"><img src="${coverUrl}" alt="${post.title} 封面" class="block h-auto w-full" /></div>`
-  : "";
+for (const slug of slugsToExport) {
+  const post = getPostBySlug(slug);
+  if (!post) {
+    console.warn(`Post not found for slug: ${slug}`);
+    continue;
+  }
 
-// 页面骨架对齐 app/post/[slug]/page.tsx 与 components/article-body.tsx:
-// 仅保留静态排版所需的最小结构(容器 + 标题 + 封面 + .article-content),
-// 去掉 AI 聊天、quiz、TOC 等客户端增强。
-const page = `<!DOCTYPE html>
+  exportSinglePost(post, slug);
+}
+
+function exportSinglePost(post: Post, slug: string) {
+  const contentHtml = post.contentHtml;
+  const coverUrl = post.cover;
+
+  const coverBlock = coverUrl
+    ? `<div class="overflow-hidden rounded-2xl border-[1.5px] border-ink/70 bg-paper-deep"><img src="${coverUrl}" alt="${post.title} 封面" class="block h-auto w-full" /></div>`
+    : "";
+
+  const page = `<!DOCTYPE html>
 <html lang="zh-CN" class="${htmlClass}">
 <head>
 <meta charset="utf-8" />
@@ -149,24 +156,42 @@ ${coverBlock}
 </body>
 </html>`;
 
-const destDir = join(siteRoot, "tmp", "private-blog");
-mkdirSync(destDir, { recursive: true });
-const destFile = join(destDir, `${slug}.html`);
-// 整页组装完成后内联本地图片为 base64,并改写其余根相对资源 URL
-const inlinedPage = inlineLocalImages(page);
-const finalContent = absolutizeRootRelative(inlinedPage);
-writeFileSync(destFile, finalContent);
+  const destFile = join(destDir, `${slug}.html`);
+  const inlinedPage = inlineLocalImages(page);
+  const finalHtml = absolutizeRootRelative(inlinedPage);
+  writeFileSync(destFile, finalHtml);
 
-// 同时写入 apps/garden-api 的 data/private-blog 目录
-const apiDataDir = join(siteRoot, "..", "garden-api", "data", "private-blog");
-try {
-  mkdirSync(apiDataDir, { recursive: true });
-  writeFileSync(join(apiDataDir, `${slug}.html`), finalContent);
-  console.log(`Synced to ${join(apiDataDir, `${slug}.html`)}`);
-} catch {
-  // ignore if garden-api not present
+  // 生成 JSON 格式（供前端 Next.js 页面动态渲染）
+  const inlinedContentHtml = absolutizeRootRelative(inlineLocalImages(contentHtml));
+  const postJson = {
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    categories: post.categories,
+    tags: post.tags,
+    dateText: post.dateText,
+    readingTimeText: post.readingTimeText,
+    assetBasePath: post.assetBasePath,
+    cover: post.cover,
+    coverPosition: post.coverPosition,
+    hidden: true,
+    contentHtml: inlinedContentHtml,
+    contentImageSize: post.contentImageSize,
+    headings: post.headings,
+  };
+  const destJsonFile = join(destDir, `${slug}.json`);
+  writeFileSync(destJsonFile, JSON.stringify(postJson, null, 2));
+
+  // 同时同步写入 apps/garden-api
+  try {
+    writeFileSync(join(apiDataDir, `${slug}.html`), finalHtml);
+    writeFileSync(join(apiDataDir, `${slug}.json`), JSON.stringify(postJson, null, 2));
+    console.log(`Synced to ${join(apiDataDir, `${slug}.html`)} and .json`);
+  } catch (err: any) {
+    console.warn(`Failed to sync to garden-api: ${err.message}`);
+  }
+
+  console.log(
+    `Wrote ${slug} (${(finalHtml.length / 1024).toFixed(1)}KB HTML, ${(JSON.stringify(postJson).length / 1024).toFixed(1)}KB JSON)`
+  );
 }
-
-console.log(
-  `Wrote ${destFile} (${(inlinedPage.length / 1024).toFixed(1)}KB, css & images inlined, assets → ${ASSET_ORIGIN})`
-);

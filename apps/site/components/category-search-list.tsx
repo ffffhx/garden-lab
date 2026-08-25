@@ -1,25 +1,48 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/empty-state";
 import { PostCard } from "@/components/post-card";
+import { usePrivatePosts } from "@/components/private-feature-access";
 import { filterPostsByTitle } from "@/lib/content/search";
-import type { PostCardSummary } from "@/lib/content/types";
+import type { CategoryKey, PostCardSummary } from "@/lib/content/types";
 
 const ACCENT_CYCLE = ["teal", "pink", "terra", "yellow"] as const;
 
 type CategorySearchListProps = {
   posts: PostCardSummary[];
   label: string;
+  categoryKey?: CategoryKey;
 };
 
-export function CategorySearchList({ posts, label }: CategorySearchListProps) {
+export function CategorySearchList({
+  posts: initialPosts,
+  label,
+  categoryKey,
+}: CategorySearchListProps) {
   const [query, setQuery] = useState("");
+  const { privatePosts, isAllowed } = usePrivatePosts();
+
+  const allPosts = useMemo(() => {
+    if (!isAllowed || !privatePosts.length) {
+      return initialPosts;
+    }
+
+    const matchingPrivate = categoryKey
+      ? privatePosts.filter((p) => p.categories?.includes(categoryKey))
+      : privatePosts;
+
+    const existingSlugs = new Set(initialPosts.map((p) => p.slug));
+    const newPrivate = matchingPrivate.filter((p) => !existingSlugs.has(p.slug));
+
+    return [...newPrivate, ...initialPosts];
+  }, [categoryKey, initialPosts, isAllowed, privatePosts]);
+
   const trimmed = query.trim();
   const results = useMemo(
-    () => (trimmed ? filterPostsByTitle(posts, query) : posts),
-    [posts, query, trimmed]
+    () => (trimmed ? filterPostsByTitle(allPosts, query) : allPosts),
+    [allPosts, query, trimmed]
   );
 
   return (
@@ -36,7 +59,7 @@ export function CategorySearchList({ posts, label }: CategorySearchListProps) {
           />
         </label>
         <p className="font-mono-ui shrink-0 text-xs uppercase tracking-[0.1em] text-muted">
-          {trimmed ? `匹配 ${results.length} 篇` : `共 ${posts.length} 篇`}
+          {trimmed ? `匹配 ${results.length} 篇` : `共 ${allPosts.length} 篇`}
         </p>
       </div>
 

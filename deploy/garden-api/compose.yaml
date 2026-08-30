@@ -6,7 +6,7 @@ services:
     container_name: garden-lab-api
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8787:8787"
+      - "${HOST_PORT:-8788}:8787"
     environment:
       - NODE_ENV=production
       - GARDEN_API_HOST=0.0.0.0

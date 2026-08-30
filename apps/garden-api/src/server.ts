@@ -120,7 +120,13 @@ async function routeRequest(req: IncomingMessage, res: ServerResponse): Promise<
   const host = req.headers.host || `localhost:${CONFIG.PORT}`;
 
   const parsedUrl = new URL(req.url || "/", `http://${host}`);
-  const pathname = parsedUrl.pathname;
+  let pathname = parsedUrl.pathname;
+
+  // Support reverse proxy forwarding both with or without /garden-api prefix
+  if (pathname.startsWith("/garden-api")) {
+    pathname = pathname.slice("/garden-api".length) || "/";
+  }
+
   const method = req.method || "GET";
 
   // 1. Health check

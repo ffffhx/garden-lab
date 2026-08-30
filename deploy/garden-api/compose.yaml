@@ -6,7 +6,7 @@ services:
     container_name: garden-lab-api
     restart: unless-stopped
     ports:
-      - "${HOST_PORT:-8788}:8787"
+      - "${HOST_PORT:-8794}:8787"
     environment:
       - NODE_ENV=production
       - GARDEN_API_HOST=0.0.0.0
@@ -21,8 +21,4 @@ services:
       - KIMI_BASE_URL=${KIMI_BASE_URL:-https://api.moonshot.cn/v1}
       - GARDEN_DATA_DIR=/data
     volumes:
-      - garden-api-data:/data
-
-volumes:
-  garden-api-data:
-    driver: local
+      - ../../apps/garden-api/data:/data

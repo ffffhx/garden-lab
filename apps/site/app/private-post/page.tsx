@@ -9,6 +9,7 @@ import { BuildStamp } from "@/components/build-stamp";
 import { PostMeta } from "@/components/post-meta";
 import { PostToc } from "@/components/post-toc";
 import {
+  getAuthHeaders,
   PrivateBadge,
   PrivateFeaturePageFallback,
   usePrivateFeatureAccess,
@@ -71,6 +72,7 @@ function PrivatePostContent() {
     fetch(`${access.apiBaseUrl}/api/private-posts/${encodeURIComponent(slug)}`, {
       credentials: "include",
       cache: "no-store",
+      headers: getAuthHeaders(),
     })
       .then(async (res) => {
         if (!res.ok) {

@@ -118,10 +118,51 @@ export function parseCookies(header: string | undefined): Record<string, string>
 }
 
 export function readIdentityFromRequest(req: IncomingMessage): Identity | null {
+  // 1. Check Authorization header: Bearer <token>
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const bearerToken = authHeader.slice("Bearer ".length).trim();
+    const identity = verifyWebSessionToken(bearerToken);
+    if (identity) return identity;
+  }
+
+  // 2. Check query parameter if present in req.url
+  if (req.url && req.url.includes("?")) {
+    try {
+      const url = new URL(req.url, "http://localhost");
+      const queryToken = url.searchParams.get("garden_token") || url.searchParams.get("token");
+      if (queryToken) {
+        const identity = verifyWebSessionToken(queryToken);
+        if (identity) return identity;
+      }
+    } catch {
+      // ignore url parse error
+    }
+  }
+
+  // 3. Check session cookie
   const cookies = parseCookies(req.headers.cookie);
   const sessionToken = cookies[CONFIG.SESSION_COOKIE_NAME];
-  if (!sessionToken) return null;
-  return verifyWebSessionToken(sessionToken);
+  if (sessionToken) {
+    const identity = verifyWebSessionToken(sessionToken);
+    if (identity) return identity;
+  }
+
+  return null;
+}
+
+export function appendTokenToUrl(returnTo: string, token: string): string {
+  if (!token) return returnTo;
+  try {
+    const url = new URL(returnTo, "http://localhost");
+    url.searchParams.set("garden_token", token);
+    return returnTo.startsWith("http://") || returnTo.startsWith("https://")
+      ? url.toString()
+      : `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    const sep = returnTo.includes("?") ? "&" : "?";
+    return `${returnTo}${sep}garden_token=${encodeURIComponent(token)}`;
+  }
 }
 
 export function isGithubLoginAllowed(login: string | undefined): boolean {

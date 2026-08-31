@@ -11,7 +11,8 @@ COPY apps/garden-api/package.json ./apps/garden-api/
 
 RUN pnpm --filter @garden-lab/api install --frozen-lockfile=false
 
-COPY apps/garden-api ./apps/garden-api
+COPY apps/garden-api/src ./apps/garden-api/src
+COPY apps/garden-api/tsconfig.json ./apps/garden-api/tsconfig.json
 
 # --- Runtime Stage ---
 FROM node:22-alpine AS runner

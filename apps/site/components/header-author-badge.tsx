@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { usePrivateFeatureAccess } from "@/components/private-feature-access";
+import { clearStoredGardenToken, usePrivateFeatureAccess } from "@/components/private-feature-access";
 
 export function HeaderAuthorBadge() {
   const access = usePrivateFeatureAccess();
@@ -43,6 +43,9 @@ export function HeaderAuthorBadge() {
       </span>
       <a
         href={logoutUrl}
+        onClick={() => {
+          clearStoredGardenToken();
+        }}
         title="注销作者登录"
         className="font-mono-ui text-[0.68rem] text-muted hover:text-red transition"
       >

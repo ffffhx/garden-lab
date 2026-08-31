@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
 import {
+  appendTokenToUrl,
   clearSessionCookie,
   createOAuthState,
   createWebSessionToken,
@@ -196,7 +197,8 @@ async function routeRequest(req: IncomingMessage, res: ServerResponse): Promise<
       setSessionCookie(res, sessionToken, CONFIG.SESSION_TTL_SECONDS, isSecure);
 
       const returnTo = sanitizeReturnTo(state.returnTo, host);
-      redirect(res, returnTo);
+      const redirectUrl = appendTokenToUrl(returnTo, sessionToken);
+      redirect(res, redirectUrl);
     } catch (err: any) {
       sendJson(res, 500, { error: "Failed to authenticate with GitHub", message: err.message });
     }
@@ -218,7 +220,8 @@ async function routeRequest(req: IncomingMessage, res: ServerResponse): Promise<
 
     const targetReturn = parsedUrl.searchParams.get("returnTo") || verified.returnTo || "/";
     const returnTo = sanitizeReturnTo(targetReturn, host);
-    redirect(res, returnTo);
+    const redirectUrl = appendTokenToUrl(returnTo, sessionToken);
+    redirect(res, redirectUrl);
     return;
   }
 

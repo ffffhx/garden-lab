@@ -37,6 +37,43 @@ type PrivateFeatureGateProps = {
 };
 
 const DEFAULT_OWNER_GITHUB_LOGINS = ["ffffhx"];
+const GARDEN_TOKEN_STORAGE_KEY = "garden_session_token";
+
+export function getStoredGardenToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(GARDEN_TOKEN_STORAGE_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredGardenToken(token: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(GARDEN_TOKEN_STORAGE_KEY, token);
+  } catch {
+    // ignore
+  }
+}
+
+export function clearStoredGardenToken(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(GARDEN_TOKEN_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
+  const token = getStoredGardenToken();
+  if (!token) return extraHeaders;
+  return {
+    ...extraHeaders,
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 const PrivateFeatureAccessContext = createContext<PrivateFeatureAccess | null>(null);
 
@@ -112,6 +149,7 @@ export function usePrivatePosts() {
     fetch(`${access.apiBaseUrl}/api/private-posts`, {
       credentials: "include",
       cache: "no-store",
+      headers: getAuthHeaders(),
     })
       .then((res) => (res.ok ? res.json() : { posts: [] }))
       .then((data) => {
@@ -209,6 +247,23 @@ function usePrivateFeatureAccessState(enabled: boolean): PrivateFeatureAccess {
       return;
     }
 
+    // 1. Capture token from URL if redirected from login
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tokenInUrl = params.get("garden_token");
+        if (tokenInUrl) {
+          setStoredGardenToken(tokenInUrl);
+          params.delete("garden_token");
+          const newSearch = params.toString() ? `?${params.toString()}` : "";
+          const newUrl = `${window.location.pathname}${newSearch}${window.location.hash}`;
+          window.history.replaceState(null, "", newUrl);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     if (allowLocalPreview) {
       setAccess({
         apiBaseUrl,
@@ -229,7 +284,11 @@ function usePrivateFeatureAccessState(enabled: boolean): PrivateFeatureAccess {
 
     let active = true;
 
-    fetch(`${apiBaseUrl}/api/auth/me`, { cache: "no-store", credentials: "include" })
+    fetch(`${apiBaseUrl}/api/auth/me`, {
+      cache: "no-store",
+      credentials: "include",
+      headers: getAuthHeaders(),
+    })
       .then((response) => (response.ok ? response.json() : { authenticated: false }))
       .then((viewer: PrivateFeatureViewer) => {
         if (!active) {

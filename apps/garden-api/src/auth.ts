@@ -11,7 +11,7 @@ export type Identity = {
 };
 
 type SessionPayload = {
-  purpose: "web" | "oauth-state";
+  purpose: "web" | "oauth-state" | "magic-login";
   exp: number;
   iat: number;
   identity?: Identity;
@@ -157,15 +157,51 @@ export function sanitizeReturnTo(returnTo: string | null | undefined, requestHos
   return "/";
 }
 
-export function setSessionCookie(res: ServerResponse, token: string, maxAge = CONFIG.SESSION_TTL_SECONDS, isSecure = false): void {
-  const secureFlag = isSecure ? "; Secure" : "";
-  const cookieVal = `${CONFIG.SESSION_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax${secureFlag}`;
+export function createMagicLoginToken(
+  identity: Identity,
+  returnTo = "/",
+  ttlSeconds = 30 * 24 * 60 * 60
+): string {
+  const now = Math.floor(Date.now() / 1000);
+  return signPayload(
+    {
+      purpose: "magic-login",
+      iat: now,
+      exp: now + ttlSeconds,
+      identity,
+      returnTo,
+      nonce: randomBytes(16).toString("hex"),
+    },
+    CONFIG.AUTH_SECRET
+  );
+}
+
+export function verifyMagicLoginToken(token: string): { identity: Identity; returnTo?: string } | null {
+  const payload = verifySignedToken(token, CONFIG.AUTH_SECRET);
+  if (!payload || payload.purpose !== "magic-login" || !payload.identity) {
+    return null;
+  }
+  return { identity: payload.identity, returnTo: payload.returnTo };
+}
+
+export function setSessionCookie(
+  res: ServerResponse,
+  token: string,
+  maxAge = CONFIG.SESSION_TTL_SECONDS,
+  isSecure = false
+): void {
+  const secureFlag = isSecure ? "; Secure; Partitioned" : "";
+  const sameSite = isSecure ? "None" : "Lax";
+  const cookieVal = `${CONFIG.SESSION_COOKIE_NAME}=${encodeURIComponent(
+    token
+  )}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=${sameSite}${secureFlag}`;
   res.setHeader("Set-Cookie", cookieVal);
 }
 
 export function clearSessionCookie(res: ServerResponse, isSecure = false): void {
-  const secureFlag = isSecure ? "; Secure" : "";
-  const cookieVal = `${CONFIG.SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${secureFlag}`;
+  const secureFlag = isSecure ? "; Secure; Partitioned" : "";
+  const sameSite = isSecure ? "None" : "Lax";
+  const cookieVal = `${CONFIG.SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=${sameSite}${secureFlag}`;
   res.setHeader("Set-Cookie", cookieVal);
 }
 

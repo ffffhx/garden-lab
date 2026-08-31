@@ -10,6 +10,7 @@ import {
   readIdentityFromRequest,
   sanitizeReturnTo,
   setSessionCookie,
+  verifyMagicLoginToken,
   verifyOAuthState,
 } from "./auth.js";
 import { CONFIG } from "./config.js";
@@ -199,6 +200,25 @@ async function routeRequest(req: IncomingMessage, res: ServerResponse): Promise<
     } catch (err: any) {
       sendJson(res, 500, { error: "Failed to authenticate with GitHub", message: err.message });
     }
+    return;
+  }
+
+  // 4.1 Auth: Magic Login (Direct signed token login for author)
+  if (method === "GET" && pathname === "/api/auth/magic") {
+    const token = parsedUrl.searchParams.get("token") || "";
+    const verified = verifyMagicLoginToken(token);
+
+    if (!verified) {
+      sendJson(res, 400, { error: "Invalid or expired magic login token" });
+      return;
+    }
+
+    const sessionToken = createWebSessionToken(verified.identity);
+    setSessionCookie(res, sessionToken, CONFIG.SESSION_TTL_SECONDS, isSecure);
+
+    const targetReturn = parsedUrl.searchParams.get("returnTo") || verified.returnTo || "/";
+    const returnTo = sanitizeReturnTo(targetReturn, host);
+    redirect(res, returnTo);
     return;
   }
 

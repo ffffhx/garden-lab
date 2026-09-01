@@ -33,6 +33,7 @@ function inlineLocalImages(text: string) {
     const candidatePaths = [
       join(siteRoot, "public", folder, decodeURIComponent(relPath)),
       join(siteRoot, "out", folder, decodeURIComponent(relPath)),
+      join(siteRoot, "source", folder === "post-assets" ? "_posts" : "images", decodeURIComponent(relPath)),
     ];
     for (const filePath of candidatePaths) {
       try {
@@ -48,6 +49,40 @@ function inlineLocalImages(text: string) {
     }
     return match;
   });
+}
+
+function inlineSingleAsset(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const mimeMap: Record<string, string> = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+  };
+  const match = url.match(/^\/(post-assets|images)\/([^"'\s>]+)$/);
+  if (!match) return url;
+  const [, folder, relPath] = match;
+  const decodedRelPath = decodeURIComponent(relPath);
+  const candidatePaths = [
+    join(siteRoot, "public", folder, decodedRelPath),
+    join(siteRoot, "out", folder, decodedRelPath),
+    join(siteRoot, "source", folder === "post-assets" ? "_posts" : "images", decodedRelPath),
+  ];
+  for (const filePath of candidatePaths) {
+    try {
+      if (existsSync(filePath)) {
+        const ext = extname(filePath).toLowerCase();
+        const mime = mimeMap[ext] || "application/octet-stream";
+        const data = readFileSync(filePath).toString("base64");
+        return `data:${mime};base64,${data}`;
+      }
+    } catch {
+      // skip
+    }
+  }
+  return url;
 }
 
 function absolutizeRootRelative(text: string) {
@@ -172,7 +207,7 @@ ${coverBlock}
     dateText: post.dateText,
     readingTimeText: post.readingTimeText,
     assetBasePath: post.assetBasePath,
-    cover: post.cover,
+    cover: inlineSingleAsset(post.cover),
     coverPosition: post.coverPosition,
     hidden: true,
     contentHtml: inlinedContentHtml,

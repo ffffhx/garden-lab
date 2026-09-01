@@ -1,6 +1,7 @@
 import React from "react";
 
 import { ArticleAiChat } from "@/components/article-ai-chat";
+import { ArticleImageLightbox } from "@/components/article-image-lightbox";
 import { ArticleQuizEnhancer } from "@/components/article-quiz-enhancer";
 import { ArticleSelectionTooltip } from "@/components/article-selection-tooltip";
 import { BenchHeatmapTooltip } from "@/components/bench-heatmap-tooltip";
@@ -50,6 +51,7 @@ export function ArticleBody({
       <BenchHeatmapTooltip articleContentId={articleContentId} />
       <BenchReveal articleContentId={articleContentId} />
       <RequestGatesLab articleContentId={articleContentId} />
+      <ArticleImageLightbox articleContentId={articleContentId} />
       {enableAiChat ? (
         <PrivateFeatureGate>
           <ArticleAiChat

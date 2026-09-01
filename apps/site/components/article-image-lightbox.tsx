@@ -49,34 +49,49 @@ export function ArticleImageLightbox({ articleContentId }: { articleContentId: s
     setState((prev) => ({ ...prev, isOpen: false }));
   }, []);
 
-  // 绑定正文内所有图片：支持点击和双击放大
+  // 绑定正文内所有图片：使用事件委托，确保动态水合、Markdown 加载等场景下 100% 触发
   useEffect(() => {
-    const container = document.getElementById(articleContentId);
-    if (!container) return;
+    const handleTrigger = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target || target.tagName !== "IMG") return;
 
-    const controller = new AbortController();
-    const images = Array.from(container.querySelectorAll<HTMLImageElement>("img"));
+      const container = document.getElementById(articleContentId);
+      if (!container || !container.contains(target)) return;
 
-    for (const img of images) {
-      // 避免重复包装或处理内联图标
-      if (img.classList.contains("no-lightbox")) continue;
+      const img = target as HTMLImageElement;
+      if (img.classList.contains("no-lightbox")) return;
 
-      img.style.cursor = "zoom-in";
-      img.title = img.title || "点击或双击放大查看";
+      // 如果图片是在链接内，阻止跳转
+      e.preventDefault();
+      e.stopPropagation();
 
-      const handleTrigger = (e: MouseEvent) => {
-        // 如果是点击链接内部的图片，阻止默认跳转以放大查看
-        e.preventDefault();
-        e.stopPropagation();
-        openLightbox(img.currentSrc || img.src, img.alt || "");
-      };
+      openLightbox(img.currentSrc || img.src, img.alt || "");
+    };
 
-      img.addEventListener("click", handleTrigger, { signal: controller.signal });
-      img.addEventListener("dblclick", handleTrigger, { signal: controller.signal });
-    }
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target || target.tagName !== "IMG") return;
+
+      const container = document.getElementById(articleContentId);
+      if (!container || !container.contains(target)) return;
+
+      const img = target as HTMLImageElement;
+      if (!img.classList.contains("no-lightbox")) {
+        img.style.cursor = "zoom-in";
+        if (!img.title) {
+          img.title = "点击或双击放大查看";
+        }
+      }
+    };
+
+    document.addEventListener("click", handleTrigger, { capture: true });
+    document.addEventListener("dblclick", handleTrigger, { capture: true });
+    document.addEventListener("mouseover", handleMouseOver, { passive: true });
 
     return () => {
-      controller.abort();
+      document.removeEventListener("click", handleTrigger, { capture: true });
+      document.removeEventListener("dblclick", handleTrigger, { capture: true });
+      document.removeEventListener("mouseover", handleMouseOver);
     };
   }, [articleContentId, openLightbox]);
 

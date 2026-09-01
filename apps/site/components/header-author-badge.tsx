@@ -2,11 +2,19 @@
 
 import React from "react";
 
-import { clearStoredGardenToken, usePrivateFeatureAccess } from "@/components/private-feature-access";
+import {
+  clearStoredGardenToken,
+  useBrowserReturnTo,
+  usePrivateFeatureAccess,
+} from "@/components/private-feature-access";
 
 export function HeaderAuthorBadge() {
   const access = usePrivateFeatureAccess();
-  const currentUrl = typeof window !== "undefined" ? window.location.href : "/";
+  const currentUrl = useBrowserReturnTo();
+
+  if (!currentUrl || access.status === "loading") {
+    return null;
+  }
 
   if (access.status !== "allowed") {
     const loginUrl = access.apiBaseUrl

@@ -183,13 +183,12 @@ export function PrivateFeaturePageFallback({
   returnTo?: string;
 } = {}) {
   const access = usePrivateFeatureAccess();
-  const currentUrl =
-    typeof window !== "undefined" ? window.location.href : returnTo || "/";
-  const loginUrl = access.apiBaseUrl
+  const currentUrl = useBrowserReturnTo(returnTo);
+  const loginUrl = access.apiBaseUrl && currentUrl
     ? `${access.apiBaseUrl}/api/auth/github/start?returnTo=${encodeURIComponent(
-        returnTo || currentUrl
+        currentUrl
       )}`
-    : "#";
+    : "";
 
   return (
     <main className="flex min-h-[50vh] items-center justify-center">
@@ -202,7 +201,7 @@ export function PrivateFeaturePageFallback({
           包含个人总结与私密文档，仅作者本人登录后可查看。
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          {access.apiBaseUrl ? (
+          {loginUrl ? (
             <a
               href={loginUrl}
               className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800"
@@ -230,6 +229,23 @@ export function usePrivateFeatureAccess() {
   const fallbackAccess = usePrivateFeatureAccessState(context === null);
 
   return context ?? fallbackAccess;
+}
+
+export function useBrowserReturnTo(explicitReturnTo?: string) {
+  const [returnTo, setReturnTo] = useState(explicitReturnTo || "");
+
+  useEffect(() => {
+    if (explicitReturnTo) {
+      setReturnTo(explicitReturnTo);
+      return;
+    }
+
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete("garden_token");
+    setReturnTo(currentUrl.toString());
+  }, [explicitReturnTo]);
+
+  return returnTo;
 }
 
 function usePrivateFeatureAccessState(enabled: boolean): PrivateFeatureAccess {

@@ -27,6 +27,24 @@ describe("SiteHeader", () => {
     expect(markup).not.toContain(">桌宠</a>");
   });
 
+  it("does not render an OAuth link with a root-only return target before hydration", () => {
+    const previousApiUrl = process.env.NEXT_PUBLIC_GARDEN_API_URL;
+    process.env.NEXT_PUBLIC_GARDEN_API_URL = "https://api.example.com/garden-api";
+
+    try {
+      const markup = renderToStaticMarkup(createElement(SiteHeader));
+
+      expect(markup).not.toContain("/api/auth/github/start");
+      expect(markup).not.toContain("returnTo=%2F");
+    } finally {
+      if (previousApiUrl === undefined) {
+        delete process.env.NEXT_PUBLIC_GARDEN_API_URL;
+      } else {
+        process.env.NEXT_PUBLIC_GARDEN_API_URL = previousApiUrl;
+      }
+    }
+  });
+
   it("links daily news to the module instead of the category article list", () => {
     const markup = renderToStaticMarkup(createElement(SiteHeader));
 

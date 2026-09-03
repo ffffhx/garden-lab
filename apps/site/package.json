@@ -20,6 +20,7 @@
     "sync:tokens": "node scripts/sync-token-usage.mjs",
     "sync:pet": "tsx scripts/sync-blog-pet.ts",
     "gen:agent-index": "tsx scripts/gen-agent-post-index.ts",
+    "gen:seq-svgs": "node scripts/gen-all-seq-svgs.mjs",
     "export:private": "tsx scripts/export-private-post.ts",
     "start": "next start",
     "tauri": "tauri",

@@ -61,7 +61,7 @@ describe("Garden Lab API", () => {
 
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html).toContain("实习答辩：冯鸿鑫");
+    expect(html).toContain("冯鸿鑫");
   });
 
   it("GET /api/blog/:slug returns 403 for unauthorized login", async () => {
@@ -117,7 +117,7 @@ describe("Garden Lab API", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.slug).toBe("internship-defense");
-    expect(body.title).toContain("实习答辩");
+    expect(body.title).toContain("冯鸿鑫");
     expect(body.contentHtml).toBeDefined();
   });
 

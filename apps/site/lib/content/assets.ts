@@ -28,7 +28,16 @@ function encodeLocalUrlPath(assetUrl: string) {
 
 export function normalizeAssetUrl(assetBasePath: string, assetName: string) {
   const cleanedBase = assetBasePath.replace(/\/+$/, "");
-  const cleanedName = assetName.trim().replace(/^\.?\//, "");
+  let cleanedName = assetName.trim().replace(/^\.?\//, "");
+  const rawLastBaseSegment = cleanedBase.split("/").pop() ?? "";
+  const decodedLastBaseSegment = decodeURIComponent(rawLastBaseSegment);
+
+  if (decodedLastBaseSegment && cleanedName.startsWith(`${decodedLastBaseSegment}/`)) {
+    cleanedName = cleanedName.slice(decodedLastBaseSegment.length + 1);
+  } else if (rawLastBaseSegment && cleanedName.startsWith(`${rawLastBaseSegment}/`)) {
+    cleanedName = cleanedName.slice(rawLastBaseSegment.length + 1);
+  }
+
   return encodeLocalUrlPath(`${cleanedBase}/${cleanedName}`);
 }
 

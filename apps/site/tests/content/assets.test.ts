@@ -42,6 +42,23 @@ describe("resolvePostAssetUrl", () => {
       "/post-assets/%E4%B8%AD%E6%96%87%E7%9B%AE%E5%BD%95/%E5%B0%81%E9%9D%A2%20%E5%9B%BE.png"
     );
   });
+
+  it("handles companion folder relative asset paths without duplication", () => {
+    expect(
+      resolvePostAssetUrl("/post-assets/2026/08/21/demo", "./demo/figure-01.png")
+    ).toBe("/post-assets/2026/08/21/demo/figure-01.png");
+    expect(
+      resolvePostAssetUrl(
+        "/post-assets/2026/08/21/实习答辩-冯鸿鑫",
+        "./实习答辩-冯鸿鑫/figure-03-paywall.png"
+      )
+    ).toBe(
+      "/post-assets/2026/08/21/%E5%AE%9E%E4%7F.../figure-03-paywall.png".replace(
+        "%7F...",
+        encodeURIComponent("习答辩-冯鸿鑫").slice(3)
+      )
+    );
+  });
 });
 
 describe("resolveOptimizedAssetUrl", () => {

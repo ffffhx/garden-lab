@@ -1,3 +1,6 @@
+import { promises as fs } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { Server } from "node:http";
 
@@ -7,9 +10,30 @@ import { CONFIG } from "../src/config.js";
 
 let server: Server;
 let baseUrl: string;
+let testDataDir: string;
 
 beforeAll(async () => {
   CONFIG.PORT = 8999;
+  testDataDir = await fs.mkdtemp(path.join(os.tmpdir(), "garden-api-test-"));
+  CONFIG.DATA_DIR = testDataDir;
+
+  await fs.mkdir(CONFIG.PRIVATE_BLOG_DIR, { recursive: true });
+  await fs.writeFile(
+    path.join(CONFIG.PRIVATE_BLOG_DIR, "internship-defense.json"),
+    JSON.stringify({
+      slug: "internship-defense",
+      title: "面试准备：冯鸿鑫",
+      dateText: "2026-08-21",
+      contentHtml: "<!DOCTYPE html><html><body><h1>面试准备：冯鸿鑫</h1></body></html>",
+    }),
+    "utf8"
+  );
+  await fs.writeFile(
+    path.join(CONFIG.PRIVATE_BLOG_DIR, "internship-defense.html"),
+    "<!DOCTYPE html><html><body><h1>面试准备：冯鸿鑫</h1></body></html>",
+    "utf8"
+  );
+
   server = startServer();
   baseUrl = `http://127.0.0.1:8999`;
   await new Promise((resolve) => setTimeout(resolve, 300));
@@ -19,6 +43,9 @@ afterAll(async () => {
   await new Promise<void>((resolve, reject) => {
     server.close((err) => (err ? reject(err) : resolve()));
   });
+  if (testDataDir) {
+    await fs.rm(testDataDir, { recursive: true, force: true }).catch(() => {});
+  }
 });
 
 describe("Garden Lab API", () => {

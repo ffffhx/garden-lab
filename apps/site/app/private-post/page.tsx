@@ -16,6 +16,7 @@ import {
 } from "@/components/private-feature-access";
 import { TOC_MIN_HEADINGS } from "@/lib/content/config";
 import type { CategoryKey, ContentImageSize, Heading } from "@/lib/content/types";
+import { withBasePath } from "@/lib/utils/site-path";
 
 type PrivatePostData = {
   slug: string;
@@ -55,7 +56,22 @@ function PrivatePostContent() {
     }
 
     if (access.status !== "allowed") {
-      setLoading(false);
+      if (slug) {
+        const publicUrl = withBasePath(`/post/${encodeURIComponent(slug)}/`);
+        fetch(publicUrl, { method: "HEAD" })
+          .then((res) => {
+            if (res.ok) {
+              window.location.replace(publicUrl);
+            } else {
+              setLoading(false);
+            }
+          })
+          .catch(() => {
+            setLoading(false);
+          });
+      } else {
+        setLoading(false);
+      }
       return;
     }
 
@@ -126,7 +142,21 @@ function PrivatePostContent() {
   }
 
   if (access.status !== "allowed") {
-    return <PrivateFeaturePageFallback />;
+    return (
+      <div className="space-y-6">
+        {slug ? (
+          <div className="mx-auto max-w-xl text-center">
+            <Link
+              href={`/post/${encodeURIComponent(slug)}/`}
+              className="inline-flex items-center gap-2 rounded-full border border-ink/40 bg-paper-soft px-4 py-2 text-xs font-semibold text-ink shadow-sm transition hover:border-red hover:text-red hover:bg-paper-deep"
+            >
+              👉 该文章为公开文章，点击前往公开版页面
+            </Link>
+          </div>
+        ) : null}
+        <PrivateFeaturePageFallback />
+      </div>
+    );
   }
 
   if (error || !post) {

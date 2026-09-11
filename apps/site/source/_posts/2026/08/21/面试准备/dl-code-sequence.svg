@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1540" height="1827" viewBox="0 0 1540 1827" role="img" aria-labelledby="title desc">
+<title id="title">dl-code：从一次用户输入到模型与工具循环结束</title>
+<desc id="desc">时序从上向下，六个参与方为终端界面、AgentSession、CodingAgent 与 LangChain、模型服务、本地工具及会话存储。模型提出工具调用，本地程序执行，工具结果重新进入下一次模型请求。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#334155"/></marker></defs>
+<style>text{font-family:'Microsoft YaHei','PingFang SC',sans-serif;fill:#172338} .label{font-size:18px;text-anchor:middle} .small{font-size:15px;fill:#53637b;text-anchor:middle} .line{fill:none;stroke:#334155;stroke-width:1.8;marker-end:url(#arrow)} .return{stroke-dasharray:6 4} .life{stroke:#bac5d3;stroke-dasharray:5 7}</style>
+<rect width="1540" height="1827" rx="18" fill="#f8fafc"/>
+<text x="42" y="48" font-size="28" font-weight="700">dl-code · 一次编程请求怎样执行</text>
+<text x="42" y="80" font-size="18" fill="#53637b">示例：修复登录按钮点击没反应的问题。向下阅读时间，横向箭头表示调用或返回。</text>
+<rect x="35" y="529" width="1470" height="693" rx="10" fill="#eef5ff" stroke="#9bbbe8"/>
+<text x="52" y="555" font-size="16" font-weight="700">loop · 只要模型继续要求工具，就重复这一段；每次请求前都重新整理上下文</text>
+<line class="life" x1="120" y1="176" x2="120" y2="1732"/>
+<rect x="7" y="112" width="226" height="64" rx="8" fill="#ffffff" stroke="#b8c7da"/>
+<text class="label" x="120" y="138" font-weight="700">终端界面</text><text class="small" x="120" y="161">OpenTUI</text>
+<line class="life" x1="370" y1="176" x2="370" y2="1732"/>
+<rect x="257" y="112" width="226" height="64" rx="8" fill="#dceaff" stroke="#b8c7da"/>
+<text class="label" x="370" y="138" font-weight="700">会话管理</text><text class="small" x="370" y="161">AgentSession</text>
+<line class="life" x1="650" y1="176" x2="650" y2="1732"/>
+<rect x="537" y="112" width="226" height="64" rx="8" fill="#ffffff" stroke="#b8c7da"/>
+<text class="label" x="650" y="138" font-weight="700">模型与工具循环</text><text class="small" x="650" y="161">CodingAgent + LangChain</text>
+<line class="life" x1="930" y1="176" x2="930" y2="1732"/>
+<rect x="817" y="112" width="226" height="64" rx="8" fill="#ffffff" stroke="#b8c7da"/>
+<text class="label" x="930" y="138" font-weight="700">模型服务</text><text class="small" x="930" y="161">LLM API</text>
+<line class="life" x1="1170" y1="176" x2="1170" y2="1732"/>
+<rect x="1057" y="112" width="226" height="64" rx="8" fill="#ffffff" stroke="#b8c7da"/>
+<text class="label" x="1170" y="138" font-weight="700">本地工具</text><text class="small" x="1170" y="161">搜索 / 编辑 / 命令</text>
+<line class="life" x1="1420" y1="176" x2="1420" y2="1732"/>
+<rect x="1307" y="112" width="226" height="64" rx="8" fill="#ffffff" stroke="#b8c7da"/>
+<text class="label" x="1420" y="138" font-weight="700">会话存储</text><text class="small" x="1420" y="161">Journal + JSON</text>
+<path class="line " d="M120 260H370"/>
+<text class="label" x="245" y="233">1. 按 Enter，提交修复需求</text><text class="small" x="245" y="251">run({ text }) 并开始读取事件</text>
+<rect x="238" y="300" width="264" height="57" rx="7" fill="#fff8e8" stroke="#dbc78b"/>
+<text class="label" x="370" y="323">2. 检查没有其他活动运行</text><text class="small" x="370" y="346">创建 runId、取消信号；追加用户消息</text>
+<path class="line " d="M370 432H1420"/>
+<text class="label" x="895" y="405">3. 保存用户消息和 running 状态</text>
+<path class="line " d="M370 518H650"/>
+<text class="label" x="510" y="491">4. 调用 execute</text><text class="small" x="510" y="509">传入历史、取消信号和更新回调</text>
+<rect x="518" y="558" width="264" height="57" rx="7" fill="#fff8e8" stroke="#dbc78b"/>
+<text class="label" x="650" y="581">5. 准备本次模型输入</text><text class="small" x="650" y="604">注入规则和 Skills；超预算则压缩</text>
+<path class="line " d="M650 690H930"/>
+<text class="label" x="790" y="663">6. 发送消息与工具定义</text>
+<path class="line return" d="M930 776H650"/>
+<text class="label" x="790" y="749">7. 返回工具名与参数</text><text class="small" x="790" y="767">例如：搜索登录按钮代码</text>
+<path class="line " d="M650 862H1170"/>
+<text class="label" x="910" y="835">8. LangChain 调用工具函数</text>
+<path class="line return" d="M1170 948H650"/>
+<text class="label" x="910" y="921">9. 返回搜索、编辑或检查结果</text>
+<path class="line return" d="M650 1034H370"/>
+<text class="label" x="510" y="1007">10. 更新完整历史</text><text class="small" x="510" y="1025">加入模型消息与工具结果</text>
+<path class="line " d="M370 1120H1420"/>
+<text class="label" x="895" y="1093">11. 保存更新后的会话</text>
+<path class="line return" d="M370 1206H120"/>
+<text class="label" x="245" y="1179">12. 推送事件，界面显示工具结果</text>
+<path class="line " d="M650 1292H930"/>
+<text class="label" x="790" y="1265">13. 整理最新上下文，再请求模型</text>
+<path class="line return" d="M930 1378H650"/>
+<text class="label" x="790" y="1351">14. 返回回答，不再调用工具</text>
+<path class="line return" d="M650 1464H370"/>
+<text class="label" x="510" y="1437">15. execute 迭代结束</text>
+<path class="line " d="M370 1550H1420"/>
+<text class="label" x="895" y="1523">16. 记录 completed 和结束时间，保存</text>
+<path class="line return" d="M370 1636H120"/>
+<text class="label" x="245" y="1609">17. 发出 run_finished，结束忙碌状态</text>
+<text x="42" y="1769" font-size="17">执行期间：模型文本增量经 AgentSession 推送到 UI；完整消息才写入历史。</text>
+<text x="42" y="1800" font-size="17">completed 表示本轮循环正常结束；修复是否有效，要看实际检查结果。异常和取消分别记为 failed / cancelled。</text></svg>

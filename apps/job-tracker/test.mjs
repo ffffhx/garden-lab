@@ -38,12 +38,12 @@ for(const shared of [true,false])test(`CRUD, persistent data and permissions (sh
     assert.equal((await req(`applications/${id}`,'DELETE',{},bob)).status,404);
     assert.equal((await req(`applications/${id}/events`,'GET',null,bob)).status,shared?200:404);
     assert.equal((await (await req('applications','GET',null,bob)).json()).items.length,shared?1:0);
-    assert.equal((await req(`applications/${id}`,'PUT',{...item,status:'面试中',version:1},alice)).status,200);
+    assert.equal((await req(`applications/${id}`,'PUT',{...item,status:shared?'一面已结束':'评估未通过',version:1},alice)).status,200);
     assert.equal((await req(`applications/${id}`,'PUT',{...item,status:'Offer',version:1},alice)).status,409);
     assert.equal((await req('applications','POST',{...item,url:'javascript:alert(1)'},alice)).status,400);
     assert.equal((await req('applications','POST',{...item,applied_on:'2026-02-31'},alice)).status,400);
     const events=await (await req(`applications/${id}/events`,'GET',null,alice)).json();assert.equal(events.events.length,2);
-    const reopened=createApp({dataDir:dir});assert.equal(reopened.db.prepare('SELECT status FROM applications WHERE id=?').get(id).status,'面试中');reopened.db.close();
+    const reopened=createApp({dataDir:dir});assert.equal(reopened.db.prepare('SELECT status FROM applications WHERE id=?').get(id).status,shared?'一面已结束':'评估未通过');reopened.db.close();
     assert.equal((await req(`applications/${id}`,'DELETE',{},alice)).status,200);
     assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM events').get().n,0);
     await req('logout','POST',{},alice);assert.equal((await req('applications','GET',null,alice)).status,401);

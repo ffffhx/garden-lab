@@ -3,28 +3,30 @@ let user,shared,statuses=[],items=[],users=[],owner='mine',editing=null;
 async function api(route,method='GET',data){const r=await fetch(`./api/${route}`,{method,headers:method==='GET'?{}:{'Content-Type':'application/json'},...(data?{body:JSON.stringify(data)}:{})});const result=await r.json();if(!r.ok){if(r.status===401&&route!=='login'){ $('#workspace').hidden=true;$('#login').hidden=false; }throw Error(result.error||'请求失败，请重试');}return result;}
 function toast(text){$('#toast').textContent=text;$('#toast').hidden=false;setTimeout(()=>$('#toast').hidden=true,3500);}
 function date(value){return value?value.slice(0,10).replaceAll('-','.'):'未记录';}
+function companyGroup(name){const value=name.trim();return /^(阿里[·云]|阿里国际$|阿里控股$|阿里巴巴$)/.test(value)?'阿里巴巴':value;}
+function statusMatches(actual,filter){return filter==='@interview'?/^(面试中|[一二终]面)/.test(actual):filter==='@assessment'?/评估|笔试|测评/.test(actual):actual===filter;}
 function subset(){return items.filter(i=>owner==='all'||i.owner_id===(owner==='mine'?user.id:Number(owner)));}
 function filtered(){let list=subset();const q=$('#search').value.toLowerCase().trim(),s=$('#status-filter').value;
-  list=list.filter(i=>(!s||i.status===s)&&(!q||[i.company,i.role,i.email,i.city,i.job_code,i.notes].join(' ').toLowerCase().includes(q)));
+  list=list.filter(i=>(!s||statusMatches(i.status,s))&&(!q||[companyGroup(i.company),i.company,i.role,i.email,i.city,i.job_code,i.notes].join(' ').toLowerCase().includes(q)));
   const sort=$('#sort').value;return list.sort((a,b)=>sort==='date'?b.applied_on.localeCompare(a.applied_on):sort==='next'?(a.next_on||'9999').localeCompare(b.next_on||'9999'):b.updated_at.localeCompare(a.updated_at));}
 function render(){const list=filtered(),all=subset(),groups=new Map();
-  for(const item of list){const key=item.company.trim();if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item);}
+  for(const item of list){const key=companyGroup(item.company);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item);}
   const opened=new Set([...document.querySelectorAll('.company-group[open]')].map(e=>e.dataset.company));
   const searching=!!($('#search').value.trim()||$('#status-filter').value);
-  $('#total').textContent=new Set(all.map(i=>i.company.trim())).size;$('#count').textContent=`${groups.size} 家公司 · ${list.length} 个岗位`;
-  $('#progress-stops').innerHTML=[['已投递',['已投递']],['测评中',['笔试 / 测评']],['面试中',['面试中']],['已获 Offer',['Offer']]].map(([label,ss])=>`<button class="stop" data-filter="${esc(ss[0])}"><strong>${all.filter(i=>ss.includes(i.status)).length}</strong><span><i></i>${label}</span></button>`).join('');
+  $('#total').textContent=new Set(all.map(i=>companyGroup(i.company))).size;$('#count').textContent=`${groups.size} 家公司 · ${list.length} 个岗位`;
+  $('#progress-stops').innerHTML=[['已投递',['已投递']],['评估 / 笔试',['@assessment']],['面试进度',['@interview']],['已获 Offer',['Offer']]].map(([label,ss])=>`<button class="stop" data-filter="${esc(ss[0])}"><strong>${all.filter(i=>ss.some(s=>statusMatches(i.status,s))).length}</strong><span><i></i>${label}</span></button>`).join('');
   $('#owners').innerHTML=[['mine','我的投递'],...(shared?[['all','全部记录'],...users.filter(u=>u.id!==user.id).map(u=>[u.id,u.name])]:[])].map(([id,name])=>`<button class="${String(owner)===String(id)?'active':''}" data-owner="${id}">${esc(name)}</button>`).join('');
   $('#empty').hidden=list.length>0;$('#records').hidden=!list.length;
   $('#records').innerHTML=[...groups].map(([company,jobs])=>{
     const counts=new Map();for(const j of jobs)counts.set(j.status,(counts.get(j.status)||0)+1);
     const people=[...new Set(jobs.map(j=>j.owner_name))];
-    return `<details class="company-group" data-company="${esc(company)}" ${opened.has(company)||searching?'open':''}><summary><div class="logo">${esc(company.slice(0,2))}</div><div class="group-title"><strong>${esc(company)}</strong><small>${jobs.length} 个岗位 · ${esc(people.join('、'))}</small></div><div class="group-statuses">${[...counts].map(([status,count])=>`<span class="badge" data-status="${esc(status)}">${esc(status)} ${count}</span>`).join('')}</div><span class="group-arrow" aria-hidden="true">⌄</span></summary><div class="group-jobs">${jobs.map(i=>`<div class="job-row"><div><button class="job-title" data-id="${i.id}">${esc(i.role)}</button><small>${esc(i.city||'城市待确认')}${i.job_code?' · '+esc(i.job_code):''} · ${esc(i.owner_name)}</small></div><div class="job-email"><small>投递邮箱</small>${esc(i.email||'待确认')}</div><div><span class="badge" data-status="${esc(i.status)}">${esc(i.status)}</span></div><div class="job-date"><small>投递日期</small>${date(i.applied_on)}${i.next_on?`<small>跟进 ${date(i.next_on)}</small>`:''}</div></div>`).join('')}</div></details>`;
+    return `<details class="company-group" data-company="${esc(company)}" ${opened.has(company)||searching?'open':''}><summary><div class="logo">${esc(company.slice(0,2))}</div><div class="group-title"><strong>${esc(company)}</strong><small>${jobs.length} 个岗位 · ${esc(people.join('、'))}</small></div><div class="group-statuses">${[...counts].map(([status,count])=>`<span class="badge" data-status="${esc(status)}">${esc(status)} ${count}</span>`).join('')}</div><span class="group-arrow" aria-hidden="true">⌄</span></summary><div class="group-jobs">${jobs.map(i=>`<div class="job-row"><div><button class="job-title" data-id="${i.id}">${esc(i.role)}</button><small>${i.company!==company?esc(i.company)+' · ':''}${esc(i.city||'城市待确认')}${i.job_code?' · '+esc(i.job_code):''} · ${esc(i.owner_name)}</small></div><div class="job-email"><small>投递邮箱</small>${esc(i.email||'待确认')}</div><div class="job-progress">${i.owner_id===user.id?`<label>修改进度<select data-status-id="${i.id}" aria-label="${esc(i.company+' '+i.role+' 进度')}">${statuses.map(s=>`<option ${s===i.status?'selected':''}>${esc(s)}</option>`).join('')}</select></label><button class="job-edit" data-id="${i.id}">编辑详情</button>`:`<span class="badge" data-status="${esc(i.status)}">${esc(i.status)}</span>`}</div><div class="job-date"><small>投递日期</small>${date(i.applied_on)}${i.next_on?`<small>跟进 ${date(i.next_on)}</small>`:''}</div></div>`).join('')}</div></details>`;
   }).join('');
 }
 async function refresh(){const result=await api('applications');items=result.items;users=result.users;render();}
 async function init(){try{const me=await api('me');({user,shared,statuses}=me);$('#login').hidden=!!user;$('#workspace').hidden=!user;if(!user)return;
   $('#user-name').textContent=user.name;$('#avatar').textContent=user.name.slice(0,1);$('#today').textContent=new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
-  $('#status-filter').innerHTML='<option value="">全部进度</option>'+statuses.map(s=>`<option>${esc(s)}</option>`).join('');
+  $('#status-filter').innerHTML='<option value="">全部进度</option><option value="@assessment">评估 / 笔试（全部）</option><option value="@interview">面试（全部）</option>'+statuses.map(s=>`<option>${esc(s)}</option>`).join('');
   $('[name=status]').innerHTML=statuses.map(s=>`<option>${esc(s)}</option>`).join('');await refresh();
 }catch(e){$('#login').hidden=false;$('#login-error').textContent=e.message;}}
 $('#logout').onclick=async()=>{try{await api('logout','POST',{});items=[];owner='mine';$('#records').replaceChildren();await init();}catch(e){toast(e.message);}};
@@ -52,3 +54,12 @@ githubLogin.addEventListener('click',()=>{
   $('#login-error').textContent='即将跳转至 GitHub；如果网络较慢，请稍候。';
 });
 window.addEventListener('pageshow',()=>{githubLogin.textContent='使用 GitHub 登录 →';});
+
+$('#records').onchange=async e=>{
+  const select=e.target.closest('[data-status-id]');if(!select)return;
+  const item=items.find(i=>i.id===Number(select.dataset.statusId));if(!item)return;
+  const previous=item.status;select.disabled=true;
+  try{await api(`applications/${item.id}`,'PUT',{...item,status:select.value});await refresh();toast('进度已保存，已记录变更时间');}
+  catch(error){select.value=previous;toast(error.message);}
+  finally{select.disabled=false;}
+};

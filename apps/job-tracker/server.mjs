@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-export const statuses = ['待核实','待投递','已投递','简历筛选','笔试 / 测评','面试中','Offer','已拒绝','已结束'];
+export const statuses = ['待核实','待投递','已投递','简历筛选','笔试 / 测评','评估中','评估通过','评估未通过','笔试未通过','面试中','一面待进行','一面已结束','一面未通过','二面待进行','二面已结束','二面未通过','终面待进行','终面已结束','终面未通过','Offer','已拒绝','已结束'];
 const hash = value => createHash('sha256').update(value).digest('hex');
 export function createApp({dataDir = process.env.DATA_DIR || path.join(root,'data'), shared = process.env.SHARING !== 'private', secure = process.env.COOKIE_SECURE === 'true', authOptions = {}} = {}) {
   mkdirSync(dataDir, {recursive:true});

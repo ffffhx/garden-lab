@@ -7,11 +7,19 @@ function subset(){return items.filter(i=>owner==='all'||i.owner_id===(owner==='m
 function filtered(){let list=subset();const q=$('#search').value.toLowerCase().trim(),s=$('#status-filter').value;
   list=list.filter(i=>(!s||i.status===s)&&(!q||[i.company,i.role,i.email,i.city,i.job_code,i.notes].join(' ').toLowerCase().includes(q)));
   const sort=$('#sort').value;return list.sort((a,b)=>sort==='date'?b.applied_on.localeCompare(a.applied_on):sort==='next'?(a.next_on||'9999').localeCompare(b.next_on||'9999'):b.updated_at.localeCompare(a.updated_at));}
-function render(){const list=filtered(),all=subset();$('#total').textContent=all.length;$('#count').textContent=`${list.length} 条记录`;
+function render(){const list=filtered(),all=subset(),groups=new Map();
+  for(const item of list){const key=item.company.trim();if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item);}
+  const opened=new Set([...document.querySelectorAll('.company-group[open]')].map(e=>e.dataset.company));
+  const searching=!!($('#search').value.trim()||$('#status-filter').value);
+  $('#total').textContent=new Set(all.map(i=>i.company.trim())).size;$('#count').textContent=`${groups.size} 家公司 · ${list.length} 个岗位`;
   $('#progress-stops').innerHTML=[['已投递',['已投递']],['测评中',['笔试 / 测评']],['面试中',['面试中']],['已获 Offer',['Offer']]].map(([label,ss])=>`<button class="stop" data-filter="${esc(ss[0])}"><strong>${all.filter(i=>ss.includes(i.status)).length}</strong><span><i></i>${label}</span></button>`).join('');
   $('#owners').innerHTML=[['mine','我的投递'],...(shared?[['all','全部记录'],...users.filter(u=>u.id!==user.id).map(u=>[u.id,u.name])]:[])].map(([id,name])=>`<button class="${String(owner)===String(id)?'active':''}" data-owner="${id}">${esc(name)}</button>`).join('');
   $('#empty').hidden=list.length>0;$('#records').hidden=!list.length;
-  $('#records').innerHTML=`<table><thead><tr><th>公司 / 投递人</th><th>申请岗位</th><th class="email-col">投递邮箱</th><th>当前进度</th><th>投递日期</th></tr></thead><tbody>${list.map(i=>`<tr><td><div class="company-cell"><div class="logo">${esc(i.company.slice(0,2))}</div><div><button class="company-button" data-id="${i.id}">${esc(i.company)}</button><small>${esc(i.owner_name)}</small></div></div></td><td class="role-name">${esc(i.role)}<small>${esc(i.city||'城市待确认')}${i.job_code?' · '+esc(i.job_code):''}</small></td><td class="email-col email">${esc(i.email||'待确认')}</td><td class="status-col"><span class="badge" data-status="${esc(i.status)}">${esc(i.status)}</span></td><td class="date-col"><span class="date">${date(i.applied_on)}</span>${i.next_on?`<small>跟进 ${date(i.next_on)}</small>`:''}</td></tr>`).join('')}</tbody></table>`;
+  $('#records').innerHTML=[...groups].map(([company,jobs])=>{
+    const counts=new Map();for(const j of jobs)counts.set(j.status,(counts.get(j.status)||0)+1);
+    const people=[...new Set(jobs.map(j=>j.owner_name))];
+    return `<details class="company-group" data-company="${esc(company)}" ${opened.has(company)||searching?'open':''}><summary><div class="logo">${esc(company.slice(0,2))}</div><div class="group-title"><strong>${esc(company)}</strong><small>${jobs.length} 个岗位 · ${esc(people.join('、'))}</small></div><div class="group-statuses">${[...counts].map(([status,count])=>`<span class="badge" data-status="${esc(status)}">${esc(status)} ${count}</span>`).join('')}</div><span class="group-arrow" aria-hidden="true">⌄</span></summary><div class="group-jobs">${jobs.map(i=>`<div class="job-row"><div><button class="job-title" data-id="${i.id}">${esc(i.role)}</button><small>${esc(i.city||'城市待确认')}${i.job_code?' · '+esc(i.job_code):''} · ${esc(i.owner_name)}</small></div><div class="job-email"><small>投递邮箱</small>${esc(i.email||'待确认')}</div><div><span class="badge" data-status="${esc(i.status)}">${esc(i.status)}</span></div><div class="job-date"><small>投递日期</small>${date(i.applied_on)}${i.next_on?`<small>跟进 ${date(i.next_on)}</small>`:''}</div></div>`).join('')}</div></details>`;
+  }).join('');
 }
 async function refresh(){const result=await api('applications');items=result.items;users=result.users;render();}
 async function init(){try{const me=await api('me');({user,shared,statuses}=me);$('#login').hidden=!!user;$('#workspace').hidden=!user;if(!user)return;

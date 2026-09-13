@@ -28,7 +28,7 @@ describe("PostToc", () => {
     const markup = renderToStaticMarkup(createElement(PostToc, { headings }));
 
     expect(markup).toContain(
-      'href="#summary" class="block rounded-lg px-3 py-2 text-sm leading-6'
+      'href="#summary" aria-current="location" class="block rounded-lg px-3 py-2 text-sm leading-6'
     );
     expect(markup).toContain("bg-red/14");
     expect(markup).toContain("text-ink");

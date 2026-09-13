@@ -81,6 +81,21 @@ export function PostToc({ headings }: PostTocProps) {
           <a
             key={heading.id}
             href={`#${heading.id}`}
+            onClick={(event) => {
+              if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              const target = document.getElementById(heading.id);
+              if (!target) return;
+
+              event.preventDefault();
+              // Long native smooth scrolls expose intermediate sections and can
+              // be interrupted. A TOC selection should land on its target now.
+              target.scrollIntoView({ behavior: "instant", block: "start" });
+              if (decodeURIComponent(window.location.hash.slice(1)) !== heading.id) {
+                window.history.pushState(null, "", `#${encodeURIComponent(heading.id)}`);
+              }
+              setActiveId(heading.id);
+            }}
+            aria-current={activeId === heading.id ? "location" : undefined}
             className={cn(
               "block rounded-lg px-3 py-2 text-sm leading-6 text-ink-soft transition hover:bg-ink/12 hover:text-ink",
               heading.depth === 3 && "ml-3",

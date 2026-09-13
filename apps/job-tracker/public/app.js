@@ -3,6 +3,33 @@ let user,shared,statuses=[],items=[],users=[],owner='mine',editing=null;
 async function api(route,method='GET',data){const r=await fetch(`./api/${route}`,{method,headers:method==='GET'?{}:{'Content-Type':'application/json'},...(data?{body:JSON.stringify(data)}:{})});const result=await r.json();if(!r.ok){if(r.status===401&&route!=='login'){ $('#workspace').hidden=true;$('#login').hidden=false; }throw Error(result.error||'请求失败，请重试');}return result;}
 function toast(text){$('#toast').textContent=text;$('#toast').hidden=false;setTimeout(()=>$('#toast').hidden=true,3500);}
 function date(value){return value?value.slice(0,10).replaceAll('-','.'):'未记录';}
+const COMPANY_CAREERS={
+  '阿里巴巴':'https://campus-talent.alibaba.com/',
+  '腾讯':'https://join.qq.com/',
+  '京东':'https://campus.jd.com/',
+  '蚂蚁集团':'https://talent.antgroup.com/campus/home',
+  '美团':'https://zhaopin.meituan.com/',
+  '小红书':'https://job.xiaohongshu.com/campus/',
+  '新凯来':'https://career.sicarrier.com/',
+  '哔哩哔哩':'https://jobs.bilibili.com/campus/positions',
+  '携程':'https://careers.trip.com/',
+  '滴滴':'https://talent.didiglobal.com/',
+  '百度':'https://talent.baidu.com/jobs/list',
+  '度小满':'https://duxiaoman.jobs.feishu.cn/',
+  '拼多多':'https://careers.pddglobalhr.com/campus/',
+  '汇丰科技':'https://www.about.hsbc.com.cn/zh-cn/careers/technology',
+  '英伟达':'https://www.nvidia.com/en-us/about-nvidia/careers/',
+  '微软':'https://careers.microsoft.com/',
+  '亚马逊':'https://www.amazon.jobs/',
+  '华为':'https://career.huawei.com/',
+  '联想':'https://talent.lenovo.com.cn/home',
+  '得物':'https://poizon.jobs.feishu.cn/',
+  '贝壳找房':'https://campuske.zhiye.com/',
+  '懂车帝':'https://dcar.jobs.feishu.cn/',
+  '快手':'https://campus.kuaishou.cn/',
+  'Shopee':'https://app.mokahr.com/campus_apply/shopee/2962'
+};
+function safeLink(url){try{const u=new URL(url);return ['https:','http:'].includes(u.protocol)?u.href:'';}catch{return '';}}
 function companyGroup(name){const value=name.trim();return /^(阿里[·云]|阿里国际$|阿里控股$|阿里巴巴$)/.test(value)?'阿里巴巴':value;}
 function statusMatches(actual,filter){return filter==='@interview'?/^(面试中|[一二终]面)/.test(actual):filter==='@assessment'?/评估|笔试|测评/.test(actual):actual===filter;}
 function subset(){return items.filter(i=>owner==='all'||i.owner_id===(owner==='mine'?user.id:Number(owner)));}
@@ -20,7 +47,9 @@ function render(){const list=filtered(),all=subset(),groups=new Map();
   $('#records').innerHTML=[...groups].map(([company,jobs])=>{
     const counts=new Map();for(const j of jobs)counts.set(j.status,(counts.get(j.status)||0)+1);
     const people=[...new Set(jobs.map(j=>j.owner_name))];
-    return `<details class="company-group" data-company="${esc(company)}" ${opened.has(company)||searching?'open':''}><summary><div class="logo">${esc(company.slice(0,2))}</div><div class="group-title"><strong>${esc(company)}</strong><small>${jobs.length} 个岗位 · ${esc(people.join('、'))}</small></div><div class="group-statuses">${[...counts].map(([status,count])=>`<span class="badge" data-status="${esc(status)}">${esc(status)} ${count}</span>`).join('')}</div><span class="group-arrow" aria-hidden="true">⌄</span></summary><div class="group-jobs">${jobs.map(i=>`<div class="job-row"><div><button class="job-title" data-id="${i.id}">${esc(i.role)}</button><small>${i.company!==company?esc(i.company)+' · ':''}${esc(i.city||'城市待确认')}${i.job_code?' · '+esc(i.job_code):''} · ${esc(i.owner_name)}</small></div><div class="job-email"><small>投递邮箱</small>${esc(i.email||'待确认')}</div><div class="job-progress">${i.owner_id===user.id?`<label>修改进度<select data-status-id="${i.id}" aria-label="${esc(i.company+' '+i.role+' 进度')}">${statuses.map(s=>`<option ${s===i.status?'selected':''}>${esc(s)}</option>`).join('')}</select></label><button class="job-edit" data-id="${i.id}">编辑详情</button>`:`<span class="badge" data-status="${esc(i.status)}">${esc(i.status)}</span>`}</div><div class="job-date"><small>投递日期</small>${date(i.applied_on)}${i.next_on?`<small>跟进 ${date(i.next_on)}</small>`:''}</div></div>`).join('')}</div></details>`;
+    const careers=COMPANY_CAREERS[company]||safeLink(jobs.find(j=>safeLink(j.url))?.url);
+
+    return `<details class="company-group" data-company="${esc(company)}" ${opened.has(company)||searching?'open':''}><summary><div class="logo">${esc(company.slice(0,2))}</div><div class="group-title"><strong>${esc(company)}</strong><small>${jobs.length} 个岗位 · ${esc(people.join('、'))}</small></div>${careers?`<a class="company-careers" href="${esc(careers)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(company)}招聘官网（新标签页）">招聘官网 ↗</a>`:''}<div class="group-statuses">${[...counts].map(([status,count])=>`<span class="badge" data-status="${esc(status)}">${esc(status)} ${count}</span>`).join('')}</div><span class="group-arrow" aria-hidden="true">⌄</span></summary><div class="group-jobs">${jobs.map(i=>`<div class="job-row"><div><button class="job-title" data-id="${i.id}">${esc(i.role)}</button><small>${i.company!==company?esc(i.company)+' · ':''}${esc(i.city||'城市待确认')}${i.job_code?' · '+esc(i.job_code):''} · ${esc(i.owner_name)}</small>${safeLink(i.url)?`<a class="job-link" href="${esc(safeLink(i.url))}" target="_blank" rel="noopener noreferrer">查看投递链接 ↗</a>`:''}</div><div class="job-email"><small>投递邮箱</small>${esc(i.email||'待确认')}</div><div class="job-progress">${i.owner_id===user.id?`<label>修改进度<select data-status-id="${i.id}" aria-label="${esc(i.company+' '+i.role+' 进度')}">${statuses.map(s=>`<option ${s===i.status?'selected':''}>${esc(s)}</option>`).join('')}</select></label><button class="job-edit" data-id="${i.id}">编辑详情</button>`:`<span class="badge" data-status="${esc(i.status)}">${esc(i.status)}</span>`}</div><div class="job-date"><small>投递日期</small>${date(i.applied_on)}${i.next_on?`<small>跟进 ${date(i.next_on)}</small>`:''}</div></div>`).join('')}</div></details>`;
   }).join('');
 }
 async function refresh(){const result=await api('applications');items=result.items;users=result.users;render();}
@@ -39,7 +68,7 @@ async function openEditor(id){editing=id?items.find(i=>i.id===id):null;const for
   $('#editor-title').textContent=editing?`${editing.company} · ${readOnly?'查看记录':'投递详情'}`:'新增投递';$('#save').hidden=!!readOnly;$('#delete').hidden=!editing||readOnly;$('#history-wrap').hidden=!editing;$('#history').replaceChildren();$('#editor').showModal();
   if(editing){const current=editing.id;try{const r=await api(`applications/${current}/events`);if(editing?.id===current)$('#history').innerHTML=r.events.map(e=>`<li>${esc(e.note)}<time>${new Date(e.created_at).toLocaleString('zh-CN')}</time></li>`).join('');}catch(e){$('#form-error').textContent=e.message;}}
 }
-$('#add').onclick=$('#empty-add').onclick=()=>openEditor();$('#records').onclick=e=>{const b=e.target.closest('[data-id]');if(b)openEditor(Number(b.dataset.id));};
+$('#add').onclick=$('#empty-add').onclick=()=>openEditor();$('#records').onclick=e=>{if(e.target.closest('a')){e.stopPropagation();return;}const b=e.target.closest('[data-id]');if(b)openEditor(Number(b.dataset.id));};
 for(const b of document.querySelectorAll('.close'))b.onclick=()=>$('#editor').close();
 $('#record-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||$('#save');b.disabled=true;try{const data=Object.fromEntries(new FormData(e.target));if(editing)data.version=editing.version;await api(`applications${editing?'/'+editing.id:''}`,editing?'PUT':'POST',data);$('#editor').close();await refresh();toast('记录已保存');}catch(e){$('#form-error').textContent=e.message;}finally{b.disabled=false;}};
 $('#delete').onclick=async()=>{if(!editing||!confirm(`确定删除“${editing.company}”这条投递及其历史记录？`))return;try{await api(`applications/${editing.id}`,'DELETE',{});$('#editor').close();await refresh();toast('记录已删除');}catch(e){$('#form-error').textContent=e.message;}};

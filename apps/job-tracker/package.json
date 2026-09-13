@@ -1,0 +1,7 @@
+{
+  "name": "@garden-lab/job-tracker",
+  "private": true,
+  "type": "module",
+  "scripts": {"start":"node server.mjs", "dev":"node --watch server.mjs", "test":"node --test test.mjs"},
+  "engines": {"node":">=22.14"}
+}

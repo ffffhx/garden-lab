@@ -1,0 +1,19 @@
+services:
+  job-tracker:
+    build: .
+    container_name: job-tracker
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8796:8796"
+    environment:
+      COOKIE_SECURE: "true"
+      SHARING: "shared"
+    volumes:
+      - tracker-data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  tracker-data:

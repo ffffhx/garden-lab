@@ -1,0 +1,6 @@
+data
+*.sqlite*
+seed-private.json
+credentials.txt
+.env
+test.mjs

@@ -27,6 +27,11 @@ const NAV_LINKS: NavItem[] = [
     href: "/daily-news",
     label: CATEGORY_DEFINITIONS.dailyNews.label,
   },
+  {
+    href: "https://124-221-36-36.anyip.dev:8443/applications/",
+    label: "投递簿",
+    external: true,
+  },
 ];
 
 type SiteHeaderProps = {

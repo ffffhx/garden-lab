@@ -19,7 +19,6 @@ async function init(){try{const me=await api('me');({user,shared,statuses}=me);$
   $('#status-filter').innerHTML='<option value="">全部进度</option>'+statuses.map(s=>`<option>${esc(s)}</option>`).join('');
   $('[name=status]').innerHTML=statuses.map(s=>`<option>${esc(s)}</option>`).join('');await refresh();
 }catch(e){$('#login').hidden=false;$('#login-error').textContent=e.message;}}
-$('#login-form').onsubmit=async e=>{e.preventDefault();const button=e.submitter||e.target.querySelector('button[type=submit],button.primary');button.disabled=true;$('#login-error').textContent='';try{await api('login','POST',Object.fromEntries(new FormData(e.target)));e.target.reset();await init();}catch(e){$('#login-error').textContent=e.message;}finally{button.disabled=false;}};
 $('#logout').onclick=async()=>{try{await api('logout','POST',{});items=[];owner='mine';$('#records').replaceChildren();await init();}catch(e){toast(e.message);}};
 for(const id of ['search','status-filter','sort'])$('#'+id).addEventListener(id==='search'?'input':'change',render);
 $('#owners').onclick=e=>{const b=e.target.closest('[data-owner]');if(b){owner=b.dataset.owner;render();}};
@@ -35,6 +34,6 @@ for(const b of document.querySelectorAll('.close'))b.onclick=()=>$('#editor').cl
 $('#record-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||$('#save');b.disabled=true;try{const data=Object.fromEntries(new FormData(e.target));if(editing)data.version=editing.version;await api(`applications${editing?'/'+editing.id:''}`,editing?'PUT':'POST',data);$('#editor').close();await refresh();toast('记录已保存');}catch(e){$('#form-error').textContent=e.message;}finally{b.disabled=false;}};
 $('#delete').onclick=async()=>{if(!editing||!confirm(`确定删除“${editing.company}”这条投递及其历史记录？`))return;try{await api(`applications/${editing.id}`,'DELETE',{});$('#editor').close();await refresh();toast('记录已删除');}catch(e){$('#form-error').textContent=e.message;}};
 $('#export').onclick=()=>{const keys=['company','role','email','city','status','applied_on','job_code','next_on','notes','owner_name'];const cell=v=>'"'+String(v??'').replace(/^[=+@-]/,"'$&").replaceAll('"','""')+'"';const csv=[['公司','岗位','邮箱','城市','进度','投递日期','职位编号','下次跟进','备注','投递人'],...filtered().map(i=>keys.map(k=>i[k]))].map(r=>r.map(cell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='投递记录.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-$('#password-button').onclick=()=>{$('#password-error').textContent='';$('#password-form').reset();$('#password-dialog').showModal();};$('#password-close').onclick=()=>$('#password-dialog').close();
-$('#password-form').onsubmit=async e=>{e.preventDefault();e.submitter.disabled=true;try{await api('password','POST',Object.fromEntries(new FormData(e.target)));$('#password-dialog').close();toast('密码已修改');}catch(e){$('#password-error').textContent=e.message;}finally{e.submitter.disabled=false;}};
+const loginError=new URLSearchParams(location.search).get('login_error');
+if(loginError){$('#login-error').textContent=({not_allowed:'这个 GitHub 账号尚未获准访问，请联系网站所有者。',state:'登录已过期，请重新点击 GitHub 登录。',identity:'无法验证 GitHub 身份，请重试。',unavailable:'登录服务暂时不可用，请稍后重试。'})[loginError]||'登录失败，请重试。';history.replaceState(null,'',location.pathname);}
 init();

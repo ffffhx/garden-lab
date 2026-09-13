@@ -1,6 +1,7 @@
+import {githubAuth} from './github-auth.mjs';
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
-import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -8,14 +9,7 @@ import path from 'node:path';
 const root = path.dirname(fileURLToPath(import.meta.url));
 export const statuses = ['待核实','待投递','已投递','简历筛选','笔试 / 测评','面试中','Offer','已拒绝','已结束'];
 const hash = value => createHash('sha256').update(value).digest('hex');
-function passwordHash(password, salt = randomBytes(16).toString('hex')) {
-  return `${salt}:${scryptSync(password, salt, 64).toString('hex')}`;
-}
-function verify(password, encoded) {
-  const [salt, digest] = encoded.split(':');
-  return timingSafeEqual(Buffer.from(digest, 'hex'), scryptSync(password, salt, 64));
-}
-export function createApp({dataDir = process.env.DATA_DIR || path.join(root,'data'), shared = process.env.SHARING !== 'private', secure = process.env.COOKIE_SECURE === 'true'} = {}) {
+export function createApp({dataDir = process.env.DATA_DIR || path.join(root,'data'), shared = process.env.SHARING !== 'private', secure = process.env.COOKIE_SECURE === 'true', authOptions = {}} = {}) {
   mkdirSync(dataDir, {recursive:true});
   const db = new DatabaseSync(path.join(dataDir,'tracker.sqlite'));
   db.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
@@ -23,11 +17,11 @@ export function createApp({dataDir = process.env.DATA_DIR || path.join(root,'dat
     CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),expires INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS applications(id INTEGER PRIMARY KEY,owner_id INTEGER NOT NULL REFERENCES users(id),company TEXT NOT NULL,role TEXT NOT NULL,email TEXT NOT NULL DEFAULT '',city TEXT NOT NULL DEFAULT '',status TEXT NOT NULL,applied_on TEXT NOT NULL DEFAULT '',job_code TEXT NOT NULL DEFAULT '',url TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',next_on TEXT NOT NULL DEFAULT '',updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
     CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY,application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,status TEXT NOT NULL,note TEXT NOT NULL,created_at TEXT NOT NULL);`);
-  function addUser(username,name,password) {
-    if (!/^[a-zA-Z0-9_-]{3,40}$/.test(username) || password.length < 12 || !name.trim()) throw Error('用户名需3–40位字母、数字或下划线，密码至少12位');
-    return db.prepare('INSERT INTO users(username,name,password) VALUES(?,?,?)').run(username,name,passwordHash(password)).lastInsertRowid;
+  function addUser(username,name) {
+    if (!/^[a-zA-Z0-9_-]{3,40}$/.test(username) || !name.trim()) throw Error('Invalid username or name');
+    return db.prepare('INSERT INTO users(username,name,password) VALUES(?,?,?)').run(username,name,'').lastInsertRowid;
   }
-  const attempts = new Map();
+  const handleGithub = githubAuth(db,{secure,...authOptions});
   const json = (res,code,data) => {res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
   function validate(input) {
     const out={};
@@ -69,6 +63,7 @@ export function createApp({dataDir = process.env.DATA_DIR || path.join(root,'dat
     res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
     try {
       const url=new URL(req.url,'http://localhost'), route=url.pathname.replace(/^\/applications(?=\/|$)/,'')||'/';
+      if(await handleGithub(req,res,url,route))return;
       if(route==='/health')return json(res,200,{ok:true});
       if(!route.startsWith('/api/')) {
         const files={'/':'index.html','/app.js':'app.js','/style.css':'style.css'};
@@ -83,26 +78,10 @@ export function createApp({dataDir = process.env.DATA_DIR || path.join(root,'dat
       const token=(req.headers.cookie||'').match(/(?:^|;\s*)tracker_session=([a-f0-9]+)/)?.[1];
       const user=token?db.prepare('SELECT u.id,u.username,u.name FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token=? AND s.expires>?').get(hash(token),Date.now()):null;
       const cookie=(value,age)=>`tracker_session=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${age}${secure?'; Secure':''}`;
-      if(route==='/api/login'&&req.method==='POST') {
-        const data=await body(req), key=req.socket.remoteAddress;
-        const now=Date.now();for(const [k,v]of attempts)if(now-v.since>900000)attempts.delete(k);
-        const a=attempts.get(key)||{count:0,since:now};
-        if(a.count>=15)return json(res,429,{error:'尝试次数较多，请15分钟后再试'});
-        a.count++;attempts.set(key,a);
-        const account=db.prepare('SELECT * FROM users WHERE username=?').get(String(data.username||'').slice(0,40));
-        if(typeof data.password!=='string'||!account||!verify(data.password,account.password))return json(res,401,{error:'用户名或密码不正确'});
-        attempts.delete(key);db.prepare('DELETE FROM sessions WHERE expires<?').run(now);
-        const sid=randomBytes(32).toString('hex');db.prepare('INSERT INTO sessions VALUES(?,?,?)').run(hash(sid),account.id,now+30*86400000);
-        res.setHeader('Set-Cookie',cookie(sid,30*86400));return json(res,200,{ok:true});
-      }
+      if(route==='/api/login'||route==='/api/password')return json(res,410,{error:'请使用 GitHub 登录'});
       if(route==='/api/me'&&req.method==='GET')return json(res,200,{user,shared,statuses});
       if(!user)return json(res,401,{error:'请先登录'});
       if(route==='/api/logout'&&req.method==='POST'){db.prepare('DELETE FROM sessions WHERE token=?').run(hash(token));res.setHeader('Set-Cookie',cookie('',0));return json(res,200,{ok:true});}
-      if(route==='/api/password'&&req.method==='POST'){
-        const data=await body(req),old=db.prepare('SELECT password FROM users WHERE id=?').get(user.id);
-        if(typeof data.current!=='string'||typeof data.password!=='string'||data.password.length<12||data.password.length>200||!verify(data.current,old.password))return json(res,400,{error:'当前密码不正确，或新密码不足12位'});
-        db.prepare('UPDATE users SET password=? WHERE id=?').run(passwordHash(data.password),user.id);db.prepare('DELETE FROM sessions WHERE user_id=? AND token<>?').run(user.id,hash(token));return json(res,200,{ok:true});
-      }
       if(route==='/api/applications'&&req.method==='GET') {
         const rows=db.prepare(`SELECT a.*,u.name AS owner_name FROM applications a JOIN users u ON u.id=a.owner_id ${shared?'':'WHERE a.owner_id=?'} ORDER BY a.updated_at DESC,a.id DESC`).all(...(shared?[]:[user.id]));
         return json(res,200,{items:rows,users:db.prepare(`SELECT id,name FROM users ${shared?'':'WHERE id=?'}`).all(...(shared?[]:[user.id]))});
@@ -129,6 +108,16 @@ export function createApp({dataDir = process.env.DATA_DIR || path.join(root,'dat
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   const app=createApp();
   if(process.argv[2]==='add-user') {app.addUser(process.argv[3],process.argv[4],process.env.NEW_PASSWORD||'');console.log('用户已创建');app.db.close();}
+  else if(process.argv[2]==='bind-github') {
+    const username=process.argv[3],login=process.argv[4];
+    if(!/^[a-zA-Z0-9-]{1,39}$/.test(login||''))throw Error('Invalid GitHub username');
+    const response=await fetch('https://api.github.com/users/'+login,{headers:{'User-Agent':'GardenLab-Tracker'},signal:AbortSignal.timeout(10000)});
+    if(!response.ok)throw Error('GitHub account lookup failed');
+    const identity=await response.json(),user=app.db.prepare('SELECT id FROM users WHERE username=?').get(username);
+    if(!user||!Number.isSafeInteger(identity.id)||identity.type!=='User')throw Error('Invalid account');
+    app.db.prepare('INSERT INTO github_accounts VALUES(?,?,?)').run(user.id,'github:'+identity.id,identity.login);
+    console.log('GitHub account linked:',username,identity.login);app.db.close();
+  }
   else if(process.argv[2]==='import') {
     const user=app.db.prepare('SELECT id FROM users WHERE username=?').get(process.argv[3]);if(!user)throw Error('用户不存在');
     for(const item of JSON.parse(readFileSync(process.argv[4],'utf8'))){if(!app.db.prepare('SELECT id FROM applications WHERE owner_id=? AND company=? AND role=?').get(user.id,item.company,item.role))app.save(user.id,item);}

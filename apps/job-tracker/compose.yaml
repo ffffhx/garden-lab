@@ -8,6 +8,7 @@ services:
     environment:
       COOKIE_SECURE: "true"
       SHARING: "shared"
+      PUBLIC_URL: "https://124-221-36-36.anyip.dev:8443/applications/"
     volumes:
       - tracker-data:/data
     logging:

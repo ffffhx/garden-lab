@@ -6,7 +6,7 @@
 
 `node server.mjs`，默认 http://127.0.0.1:8796 。生产必须通过 HTTPS 反向代理。
 
-先以环境变量 `NEW_PASSWORD` 提供至少12位密码，再运行 `node server.mjs add-user <用户名> <显示名称>`。无公开注册入口；可创建两人各自账号，登录后修改密码。
+仅支持 GitHub 登录，无公开注册。先用 `node server.mjs add-user <内部用户名> <显示名称>` 创建本地用户，再用 `node server.mjs bind-github <内部用户名> <GitHub用户名>` 关联账号。绑定时查询 GitHub 固定用户 ID，不按可变用户名自动认领旧记录。旧版密码登录和密码修改接口已关闭，升级时旧会话失效；原数据库记录和所有者 ID 保留。
 
 默认双方可查看记录、仅本人可修改；`SHARING=private` 可关闭互相查看。进度手动维护，不会自动向招聘网站查询。
 
@@ -22,7 +22,9 @@
 
 HTTPS反向代理可挂载 `/applications/`：上游 `http://127.0.0.1:8796`，保留或去掉此前缀均支持；需保持原始Host头。访问入口必须以 `/` 结尾。COOKIE_SECURE生产应为true。本地HTTP默认false。
 
-使用 `docker compose exec -e NEW_PASSWORD=... job-tracker node server.mjs add-user ...` 初始化账号，密码通过安全终端环境传入。数据导入文件用完删除，勿放入public/。
+生产使用 `docker compose exec job-tracker node server.mjs bind-github friend <朋友GitHub用户名>` 关联原朋友账号。`PUBLIC_URL` 必须是带尾斜杠的固定站点地址；`GARDEN_AUTH_URL` 为已有 Garden API 的公开根地址，`GARDEN_VERIFY_URL` 为其身份验证接口。复用现有 GitHub OAuth App，无需复制 client secret；回调校验一次性状态和浏览器 Cookie，并向服务端验证身份后签发本站 HttpOnly 会话。生产不设置任何模拟身份验证器。
+
+本地预览可使用默认配置；真实本地 GitHub 回跳需要认证服务允许本地 PUBLIC_URL。自动化测试使用注入的身份验证替身测试完整回调与授权边界。数据导入文件用完删除，勿放入 public/。
 
 ## 备份
 

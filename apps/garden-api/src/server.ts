@@ -162,6 +162,14 @@ async function routeRequest(req: IncomingMessage, res: ServerResponse): Promise<
       const redirectUrl = appendTokenToUrl(returnTo, sessionToken);
       redirect(res, redirectUrl);
     } catch (err: any) {
+      const returnTo = sanitizeReturnTo(state.returnTo, host);
+      const retryTarget = new URL(returnTo, `${publicBaseUrl}/`);
+      if (retryTarget.host === host && retryTarget.pathname === "/applications/api/auth/callback") {
+        retryTarget.pathname = "/applications/";
+        retryTarget.search = "?login_error=unavailable";
+        redirect(res, retryTarget.toString());
+        return;
+      }
       sendJson(res, 500, { error: "Failed to authenticate with GitHub", message: err.message });
     }
     return;

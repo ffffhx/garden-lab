@@ -2,6 +2,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 import { CONFIG } from "./config.js";
+import { githubRequest } from "./github-request.js";
 
 export type Identity = {
   userId: string;
@@ -249,7 +250,7 @@ export function clearSessionCookie(res: ServerResponse, isSecure = false): void 
 }
 
 export async function exchangeGithubCode(code: string): Promise<string> {
-  const response = await fetch("https://github.com/login/oauth/access_token", {
+  const response = await githubRequest("https://github.com/login/oauth/access_token", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -276,7 +277,7 @@ export async function exchangeGithubCode(code: string): Promise<string> {
 }
 
 export async function fetchGithubUser(accessToken: string): Promise<Identity> {
-  const response = await fetch("https://api.github.com/user", {
+  const response = await githubRequest("https://api.github.com/user", {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: "application/vnd.github+json",

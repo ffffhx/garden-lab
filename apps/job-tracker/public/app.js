@@ -37,3 +37,10 @@ $('#export').onclick=()=>{const keys=['company','role','email','city','status','
 const loginError=new URLSearchParams(location.search).get('login_error');
 if(loginError){$('#login-error').textContent=({not_allowed:'这个 GitHub 账号尚未获准访问，请联系网站所有者。',state:'登录已过期，请重新点击 GitHub 登录。',identity:'无法验证 GitHub 身份，请重试。',unavailable:'登录服务暂时不可用，请稍后重试。'})[loginError]||'登录失败，请重试。';history.replaceState(null,'',location.pathname);}
 init();
+
+const githubLogin=document.querySelector('.login-form a.primary');
+githubLogin.addEventListener('click',()=>{
+  githubLogin.textContent='正在连接 GitHub…';
+  $('#login-error').textContent='即将跳转至 GitHub；如果网络较慢，请稍候。';
+});
+window.addEventListener('pageshow',()=>{githubLogin.textContent='使用 GitHub 登录 →';});

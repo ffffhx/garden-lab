@@ -66,9 +66,9 @@ export function createApp({dataDir = process.env.DATA_DIR || path.join(root,'dat
       if(await handleGithub(req,res,url,route))return;
       if(route==='/health')return json(res,200,{ok:true});
       if(!route.startsWith('/api/')) {
-        const files={'/':'index.html','/app.js':'app.js','/style.css':'style.css'};
+        const files={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/favicon.svg':'favicon.svg'};
         if(req.method!=='GET'||!files[route])return json(res,404,{error:'页面不存在'});
-        res.setHeader('Content-Type',route.endsWith('.js')?'text/javascript; charset=utf-8':route.endsWith('.css')?'text/css; charset=utf-8':'text/html; charset=utf-8');
+        res.setHeader('Content-Type',route.endsWith('.svg')?'image/svg+xml':route.endsWith('.js')?'text/javascript; charset=utf-8':route.endsWith('.css')?'text/css; charset=utf-8':'text/html; charset=utf-8');
         res.setHeader('Cache-Control','no-cache');return res.end(readFileSync(path.join(root,'public',files[route])));
       }
       if(!['GET','HEAD'].includes(req.method)) {

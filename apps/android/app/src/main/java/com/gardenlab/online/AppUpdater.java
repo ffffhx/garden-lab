@@ -121,9 +121,12 @@ final class AppUpdater {
         dialog = progress;
         progress.show();
         task = worker.submit(() -> {
-            File partial = new File(directory, "download.part");
+            File partial = null;
             try {
                 if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("无法创建下载目录");
+                // A destroyed Activity may still be unwinding a blocked network read. Its
+                // cleanup must never delete a new Activity's in-progress download.
+                partial = File.createTempFile("download-", ".part", directory);
                 UpdateDownload.apk(info, partial, percent -> {
                     if (cancelled.get()) throw new CancellationException();
                     ui(() -> progress.setProgress(percent));
@@ -138,7 +141,7 @@ final class AppUpdater {
                     if (!cancelled.get()) installVerified(info);
                 });
             } catch (Exception error) {
-                partial.delete();
+                if (partial != null) partial.delete();
                 ui(() -> {
                     busy = false;
                     progress.dismiss();
@@ -158,6 +161,7 @@ final class AppUpdater {
                 prefs.edit().putString("ready", info.toJson()).apply();
                 ui(() -> { busy = false; installVerified(info); });
             } catch (Exception error) {
+                if (Thread.currentThread().isInterrupted()) return;
                 apk(info).delete();
                 prefs.edit().remove("ready").apply();
                 ui(() -> { busy = false; message("无法安装更新", friendly(error) + "\n请重新检查更新并下载。"); });
@@ -234,7 +238,7 @@ final class AppUpdater {
         // Never touches WebView storage or the user's article/login data.
         prefs.edit().remove("ready").remove("install_permission_pending").apply();
         File[] files = directory.listFiles();
-        if (files != null) for (File file : files) if (file.getName().matches("garden-lab-[0-9]+\\.apk|download\\.part")) file.delete();
+        if (files != null) for (File file : files) if (file.getName().matches("garden-lab-[0-9]+\\.apk|download(?:-.*)?\\.part")) file.delete();
     }
 
     private String friendly(Exception error) {

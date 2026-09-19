@@ -1,9 +1,9 @@
 {
-  "versionCode": 3,
-  "versionName": "0.3.1",
+  "versionCode": 4,
+  "versionName": "0.3.2",
   "minSdk": 26,
-  "apkUrl": "https://github.com/ffffhx/garden-lab/releases/download/android-v0.3.1/Garden-Lab-0.3.1.apk",
-  "sizeBytes": 1763029,
-  "sha256": "5aa57fdeb664e843a70bc21d1a53e74ed8bc8a01f9f2106c69679337542e3bd1",
-  "releaseNotes": "新增 App 更新提示与“检查更新”入口。\n\n点击即可下载新版本，完成校验后进入系统安装界面。首次使用需允许 Garden Lab 安装更新，后续可直接覆盖安装并保留应用数据。"
+  "apkUrl": "https://github.com/ffffhx/garden-lab/releases/download/android-v0.3.2/Garden-Lab-0.3.2.apk",
+  "sizeBytes": 1763009,
+  "sha256": "f5e35dc9e6fdc7aa1f7396b358e1b9aa473ded288a69fad5691f18661835e03a",
+  "releaseNotes": "新增 App 更新提示与“检查更新”入口。\n\n点击即可下载新版本，完成校验后进入系统安装界面。首次使用需允许 Garden Lab 安装更新，后续可直接覆盖安装并保留应用数据。\n\n改进下载中断后的重试处理，避免页面重建时临时文件互相影响。"
 }

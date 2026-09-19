@@ -4,7 +4,7 @@ An online reader for `https://ffffhx.github.io/garden-lab/`. It uses Android's
 system WebView and does not bundle article HTML, JavaScript or images from the
 site. Publishing the site updates what the app loads without rebuilding the APK.
 
-- Package: `com.gardenlab.online`, version `0.3.1` (code `3`).
+- Package: `com.gardenlab.online`, version `0.3.2` (code `4`).
 - Android 8+; the system Android WebView must be enabled.
 - A fresh launch loads the online page. Returning after at least 60 seconds
   reloads the current Garden page and attempts to restore the scroll position.
@@ -96,5 +96,5 @@ replace the existing package and preserve its data.
    version tag; publish a higher version instead.
 
 The first end-to-end test uses the locally installed 0.3.0 bootstrap (code 2) to
-download and install the published 0.3.1 release (code 3). The original 0.2.0 did
+download and install the published 0.3.2 release (code 4). The original 0.2.0 did
 not contain an updater and requires one initial USB/manual installation.

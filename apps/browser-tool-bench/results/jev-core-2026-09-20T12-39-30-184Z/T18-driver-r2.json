@@ -1,0 +1,232 @@
+{
+  "taskId": "T18",
+  "name": "文件上传",
+  "mode": "driver",
+  "round": 2,
+  "grade": "pass",
+  "page": true,
+  "answer": true,
+  "status": "completed",
+  "elapsedMs": 53525,
+  "validationMs": 429,
+  "usage": {
+    "inputTokens": 28910,
+    "outputTokens": 825,
+    "costUsd": 0.054326999999999986,
+    "elapsedMs": 52172,
+    "actions": 2
+  },
+  "fallback": true,
+  "result": {
+    "summary": "已在 http://localhost:4399/input-lab 上传 upload-token.txt，页面本地解析结果：文件名 upload-token.txt，字节数 36 bytes，token=UPLOAD-448（与附件内容 token=UPLOAD-448 一致）。",
+    "evidence": [
+      "文件 upload-token.txt，36 bytes，token=UPLOAD-448"
+    ],
+    "remaining": []
+  },
+  "answerText": "已在 http://localhost:4399/input-lab 上传 upload-token.txt，页面本地解析结果：文件名 upload-token.txt，字节数 36 bytes，token=UPLOAD-448（与附件内容 token=UPLOAD-448 一致）。\n我先读取附件内容，同时打开页面。\n页面已打开。现在上传附件文件。\n上传完成 ✅\n\n页面解析结果：\n- **文件名**：upload-token.txt\n- **字节数**：36 bytes\n- **token**：UPLOAD-448\n\n页面原文显示：“文件 upload-token.txt，36 bytes，token=UPLOAD-448”，与附件内容一致。",
+  "validation": {
+    "url": "http://localhost:4399/input-lab",
+    "feed": [],
+    "products": [],
+    "events": [],
+    "checks": [],
+    "upload": "文件 upload-token.txt，36 bytes，token=UPLOAD-448",
+    "file": {
+      "name": "upload-token.txt",
+      "size": 36
+    }
+  },
+  "requests": [
+    {
+      "at": 1789909504560,
+      "method": "GET",
+      "url": "/"
+    },
+    {
+      "at": 1789909504566,
+      "method": "GET",
+      "url": "/assets/app.css"
+    },
+    {
+      "at": 1789909515764,
+      "method": "GET",
+      "url": "/input-lab"
+    },
+    {
+      "at": 1789909515772,
+      "method": "GET",
+      "url": "/assets/app.css"
+    }
+  ],
+  "decisions": [],
+  "observations": [
+    {
+      "at": "2026-09-20T13:05:26.469Z",
+      "method": "observe",
+      "url": "http://localhost:4399/input-lab",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n- main\n  - heading \"上传凭证\" [level=1, ref=e2]\n  - paragraph\n    - StaticText \"选择或拖入 fixture 文件，页面会在本地解析 token。\"\n  - button \"选择文件\" [ref=e3]: 未选择任何文件\n  - StaticText \"也可以把文件拖到这里\"\n  - paragraph\n    - StaticText \"等待文件…\"",
+      "elapsedMs": 1348
+    },
+    {
+      "at": "2026-09-20T13:05:36.553Z",
+      "method": "observe",
+      "url": "http://localhost:4399/input-lab",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n- main\n  - heading \"上传凭证\" [level=1, ref=e2]\n  - paragraph\n    - StaticText \"选择或拖入 fixture 文件，页面会在本地解析 token。\"\n  - button \"选择文件\" [ref=e3]: 未选择任何文件\n  - StaticText \"也可以把文件拖到这里\"\n  - paragraph\n    - StaticText \"等待文件…\"",
+      "elapsedMs": 1338
+    },
+    {
+      "at": "2026-09-20T13:05:44.100Z",
+      "method": "observe",
+      "url": "http://localhost:4399/input-lab",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n- main\n  - heading \"上传凭证\" [level=1, ref=e2]\n  - paragraph\n    - StaticText \"选择或拖入 fixture 文件，页面会在本地解析 token。\"\n  - button \"选择文件\" [ref=e3]: upload-token.txt\n  - StaticText \"也可以把文件拖到这里\"\n  - paragraph\n    - StaticText \"文件 upload-token.txt，36 bytes，token=UPLOAD-448\"",
+      "elapsedMs": 1350
+    }
+  ],
+  "toolCalls": [
+    {
+      "name": "authorize_read",
+      "args": {
+        "path": "C:\\Users\\aa182\\Documents\\Codex\\2026-08-22\\new-chat-2\\repositories\\garden-lab\\apps\\browser-tool-bench\\fixtures\\upload-token.txt"
+      },
+      "ms": 1
+    },
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "open",
+        "value": "http://localhost:4399/input-lab",
+        "effect": "read",
+        "summary": "打开本地靶场 input-lab 页面"
+      },
+      "ms": 1177,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "screenshot": false
+      },
+      "ms": 1348
+    },
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "upload",
+        "version": "94dce692-c4b7-46c4-a2ca-35ce70f6a827",
+        "ref": "e3",
+        "attachmentId": "ea032967-dde5-4e29-86dd-51703494cc12",
+        "effect": "submit",
+        "summary": "将 upload-token.txt 上传到文件选择控件"
+      },
+      "ms": 1830,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "screenshot": false
+      },
+      "ms": 1351
+    },
+    {
+      "name": "finish",
+      "args": {
+        "status": "completed",
+        "summary": "已在 http://localhost:4399/input-lab 上传 upload-token.txt，页面本地解析结果：文件名 upload-token.txt，字节数 36 bytes，token=UPLOAD-448（与附件内容 token=UPLOAD-448 一致）。",
+        "evidence": [
+          "文件 upload-token.txt，36 bytes，token=UPLOAD-448"
+        ],
+        "remaining": []
+      },
+      "ms": 1,
+      "isError": false
+    }
+  ],
+  "receipts": [
+    {
+      "id": "cff4b2f6-7dc7-4dcb-8639-af6cba488167",
+      "at": "2026-09-20T13:05:14.712Z",
+      "action": {
+        "kind": "open",
+        "value": "http://localhost:4399/input-lab",
+        "effect": "read",
+        "summary": "打开本地靶场 input-lab 页面"
+      },
+      "status": "executed",
+      "result": "{\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":11894519466428908000},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"},\"targetId\":\"6744690697550C74A73707E2FDFF85C2\",\"title\":\"文件输入 · Bench 靶场\",\"url\":\"http://localhost:4399/input-lab\"}"
+    },
+    {
+      "id": "8d890679-b6dd-4820-8e0c-faa29f7f734f",
+      "at": "2026-09-20T13:05:36.553Z",
+      "action": {
+        "kind": "upload",
+        "version": "94dce692-c4b7-46c4-a2ca-35ce70f6a827",
+        "ref": "e3",
+        "attachmentId": "ea032967-dde5-4e29-86dd-51703494cc12",
+        "effect": "submit",
+        "summary": "将 upload-token.txt 上传到文件选择控件"
+      },
+      "status": "executed",
+      "observationVersion": "94dce692-c4b7-46c4-a2ca-35ce70f6a827",
+      "result": "{\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":11894519466428908000},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"},\"selector\":\"@e3\",\"uploaded\":1}"
+    }
+  ],
+  "events": [
+    {
+      "id": "aaf03bd6-d0b7-4c9f-ab72-77b50644e000",
+      "at": "2026-09-20T13:05:03.599Z",
+      "kind": "user",
+      "text": "打开 http://localhost:4399/input-lab ，把仓库里的 apps/browser-tool-bench/fixtures/upload-token.txt 上传到页面。上传后告诉我页面解析出的文件名、字节数和 token。"
+    },
+    {
+      "id": "aef6b080-fcb9-4f73-b048-40a6ea41963a",
+      "at": "2026-09-20T13:05:05.950Z",
+      "kind": "system",
+      "text": "正在准备浏览器和 Agent。"
+    },
+    {
+      "id": "5faadb44-1175-4a66-8c2c-f524b5982e7b",
+      "at": "2026-09-20T13:05:05.951Z",
+      "kind": "system",
+      "text": "任务需要核查已有记录、读取附件或管理批量项目，交由完整 Agent 处理。"
+    },
+    {
+      "id": "b482a1c5-8d34-4f80-9810-b0ab129c9b30",
+      "at": "2026-09-20T13:05:11.917Z",
+      "kind": "assistant",
+      "text": "我先读取附件内容，同时打开页面。"
+    },
+    {
+      "id": "e50d702f-45da-4bcf-8624-b1c3e3d06289",
+      "at": "2026-09-20T13:05:14.712Z",
+      "kind": "action",
+      "text": "打开本地靶场 input-lab 页面"
+    },
+    {
+      "id": "8a6a0254-8639-42d4-a60f-49d1e8570854",
+      "at": "2026-09-20T13:05:32.512Z",
+      "kind": "assistant",
+      "text": "页面已打开。现在上传附件文件。"
+    },
+    {
+      "id": "5595543c-deab-4d2e-9699-aebea71a356b",
+      "at": "2026-09-20T13:05:36.553Z",
+      "kind": "system",
+      "text": "按任务授权执行 submit（1/5）。"
+    },
+    {
+      "id": "3c2a72ed-2bd1-4dc0-8f68-c4b0718f6fe4",
+      "at": "2026-09-20T13:05:36.553Z",
+      "kind": "action",
+      "text": "将 upload-token.txt 上传到文件选择控件"
+    },
+    {
+      "id": "169ddd0e-6929-44cd-8e5a-a3828a9fa16e",
+      "at": "2026-09-20T13:05:58.006Z",
+      "kind": "assistant",
+      "text": "上传完成 ✅\n\n页面解析结果：\n- **文件名**：upload-token.txt\n- **字节数**：36 bytes\n- **token**：UPLOAD-448\n\n页面原文显示：“文件 upload-token.txt，36 bytes，token=UPLOAD-448”，与附件内容一致。"
+    }
+  ],
+  "file": "T18-driver-r2.json"
+}

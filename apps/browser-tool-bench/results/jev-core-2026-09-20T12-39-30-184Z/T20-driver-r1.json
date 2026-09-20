@@ -1,0 +1,444 @@
+{
+  "taskId": "T20",
+  "name": "10 次检查统计",
+  "mode": "driver",
+  "round": 1,
+  "grade": "pass",
+  "page": true,
+  "answer": true,
+  "status": "completed",
+  "elapsedMs": 73997,
+  "validationMs": 3,
+  "usage": {
+    "inputTokens": 28431,
+    "outputTokens": 1275,
+    "costUsd": 0.06759799999999999,
+    "elapsedMs": 72588,
+    "actions": 2,
+    "jev": {
+      "calls": 5,
+      "inputTokens": 6655,
+      "elapsedMs": 2537
+    },
+    "jevActions": 1
+  },
+  "fallback": true,
+  "result": {
+    "summary": "在 http://localhost:4399/flake 页面点击\"运行 10 次\"后，页面显示：通过 7/10，失败 3/10，失败轮次为第 3、6、9 轮，稳定性代码 FLAKE-307。失败率 30% 且规律性失败，判定该检查不稳定（flaky）。",
+    "evidence": [
+      "通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307",
+      "运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。",
+      "FAIL"
+    ],
+    "remaining": []
+  },
+  "answerText": "在 http://localhost:4399/flake 页面点击\"运行 10 次\"后，页面显示：通过 7/10，失败 3/10，失败轮次为第 3、6、9 轮，稳定性代码 FLAKE-307。失败率 30% 且规律性失败，判定该检查不稳定（flaky）。\n检查结果已在页面上完整显示，10 轮结果已全部生成，无需重复运行。\n\n**统计结果：**\n- 通过次数：7/10（第 1、2、4、5、7、8、10 轮 PASS）\n- 失败次数：3/10\n- 失败轮次：第 3、6、9 轮\n- 稳定性代码：FLAKE-307\n- 判断：**不稳定**。失败率高达 30%，且失败呈规律性出现（每 3 轮失败一次），属于典型的 flaky 检查，不能视为稳定通过。\n任务已完成。\n\n**检查结果汇总：**\n- **通过次数**：7/10（第 1、2、4、5、7、8、10 轮）\n- **失败次数**：3/10\n- **失败轮次**：第 3、6、9 轮\n- **稳定性代码**：FLAKE-307\n- **稳定性判断**：**不稳定**。失败率 30%，且失败呈固定规律（每 3 轮失败一次），属于典型的 flaky 检查，不能当作稳定通过的回归检查。",
+  "validation": {
+    "url": "http://localhost:4399/flake",
+    "feed": [],
+    "products": [],
+    "events": [],
+    "checks": [
+      [
+        "1",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "2",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "3",
+        "FAIL",
+        "FLAKE-307"
+      ],
+      [
+        "4",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "5",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "6",
+        "FAIL",
+        "FLAKE-307"
+      ],
+      [
+        "7",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "8",
+        "PASS",
+        "FLAKE-307"
+      ],
+      [
+        "9",
+        "FAIL",
+        "FLAKE-307"
+      ],
+      [
+        "10",
+        "PASS",
+        "FLAKE-307"
+      ]
+    ],
+    "file": null
+  },
+  "requests": [
+    {
+      "at": 1789908587381,
+      "method": "GET",
+      "url": "/"
+    },
+    {
+      "at": 1789908587389,
+      "method": "GET",
+      "url": "/assets/app.css"
+    },
+    {
+      "at": 1789908589753,
+      "method": "GET",
+      "url": "/flake"
+    },
+    {
+      "at": 1789908589758,
+      "method": "GET",
+      "url": "/assets/app.css"
+    },
+    {
+      "at": 1789908593421,
+      "method": "GET",
+      "url": "/api/flake-check?run=1"
+    },
+    {
+      "at": 1789908593512,
+      "method": "GET",
+      "url": "/api/flake-check?run=2"
+    },
+    {
+      "at": 1789908593605,
+      "method": "GET",
+      "url": "/api/flake-check?run=3"
+    },
+    {
+      "at": 1789908593699,
+      "method": "GET",
+      "url": "/api/flake-check?run=4"
+    },
+    {
+      "at": 1789908593791,
+      "method": "GET",
+      "url": "/api/flake-check?run=5"
+    },
+    {
+      "at": 1789908593884,
+      "method": "GET",
+      "url": "/api/flake-check?run=6"
+    },
+    {
+      "at": 1789908593978,
+      "method": "GET",
+      "url": "/api/flake-check?run=7"
+    },
+    {
+      "at": 1789908594072,
+      "method": "GET",
+      "url": "/api/flake-check?run=8"
+    },
+    {
+      "at": 1789908594164,
+      "method": "GET",
+      "url": "/api/flake-check?run=9"
+    },
+    {
+      "at": 1789908594256,
+      "method": "GET",
+      "url": "/api/flake-check?run=10"
+    }
+  ],
+  "decisions": [
+    {
+      "operation": "CLICK",
+      "target": "e2",
+      "probability": 1,
+      "confidence": 1,
+      "inputTokens": 1210,
+      "elapsedMs": 1006
+    },
+    {
+      "operation": "WAIT",
+      "probability": 0.98,
+      "confidence": 0.97,
+      "inputTokens": 1274,
+      "elapsedMs": 352
+    },
+    {
+      "operation": "WAIT",
+      "probability": 0.97,
+      "confidence": 0.96,
+      "inputTokens": 1365,
+      "elapsedMs": 338
+    },
+    {
+      "operation": "WAIT",
+      "probability": 0.84,
+      "confidence": 0.81,
+      "inputTokens": 1403,
+      "elapsedMs": 452
+    },
+    {
+      "operation": "WAIT",
+      "probability": 0.8,
+      "confidence": 0.76,
+      "inputTokens": 1403,
+      "elapsedMs": 389
+    }
+  ],
+  "observations": [
+    {
+      "at": "2026-09-20T12:49:50.303Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/flake",
+      "snapshot": "Bench 靶场\n不稳定回归\n\n运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\n\n运行 10 次\n\n尚未运行\n\n轮次\t结果\t代码\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"运行 10 次\" [ref=e2] ",
+      "elapsedMs": 427
+    },
+    {
+      "at": "2026-09-20T12:49:51.314Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/flake",
+      "snapshot": "Bench 靶场\n不稳定回归\n\n运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\n\n运行 10 次\n\n尚未运行\n\n轮次\t结果\t代码\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"运行 10 次\" [ref=e2] ",
+      "elapsedMs": 2
+    },
+    {
+      "at": "2026-09-20T12:49:53.514Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/flake",
+      "snapshot": "Bench 靶场\n不稳定回归\n\n运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\n\n运行 10 次\n\n尚未运行\n\n轮次\t结果\t代码\n1\tPASS\tFLAKE-307\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"运行 10 次\" [ref=e2] ",
+      "elapsedMs": 4
+    },
+    {
+      "at": "2026-09-20T12:49:54.277Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/flake",
+      "snapshot": "Bench 靶场\n不稳定回归\n\n运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\n\n运行 10 次\n\n尚未运行\n\n轮次\t结果\t代码\n1\tPASS\tFLAKE-307\n2\tPASS\tFLAKE-307\n3\tFAIL\tFLAKE-307\n4\tPASS\tFLAKE-307\n5\tPASS\tFLAKE-307\n6\tFAIL\tFLAKE-307\n7\tPASS\tFLAKE-307\n8\tPASS\tFLAKE-307\n9\tFAIL\tFLAKE-307\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"运行 10 次\" [ref=e2] ",
+      "elapsedMs": 7
+    },
+    {
+      "at": "2026-09-20T12:49:55.031Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/flake",
+      "snapshot": "Bench 靶场\n不稳定回归\n\n运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\n\n运行 10 次\n\n通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307\n\n轮次\t结果\t代码\n1\tPASS\tFLAKE-307\n2\tPASS\tFLAKE-307\n3\tFAIL\tFLAKE-307\n4\tPASS\tFLAKE-307\n5\tPASS\tFLAKE-307\n6\tFAIL\tFLAKE-307\n7\tPASS\tFLAKE-307\n8\tPASS\tFLAKE-307\n9\tFAIL\tFLAKE-307\n10\tPASS\tFLAKE-307\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"运行 10 次\" [ref=e2] ",
+      "elapsedMs": 3
+    },
+    {
+      "at": "2026-09-20T12:49:55.898Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/flake",
+      "snapshot": "Bench 靶场\n不稳定回归\n\n运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\n\n运行 10 次\n\n通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307\n\n轮次\t结果\t代码\n1\tPASS\tFLAKE-307\n2\tPASS\tFLAKE-307\n3\tFAIL\tFLAKE-307\n4\tPASS\tFLAKE-307\n5\tPASS\tFLAKE-307\n6\tFAIL\tFLAKE-307\n7\tPASS\tFLAKE-307\n8\tPASS\tFLAKE-307\n9\tFAIL\tFLAKE-307\n10\tPASS\tFLAKE-307\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"运行 10 次\" [ref=e2] ",
+      "elapsedMs": 4
+    },
+    {
+      "at": "2026-09-20T12:50:12.247Z",
+      "method": "observe",
+      "url": "http://localhost:4399/flake",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n- main\n  - heading \"不稳定回归\" [level=1, ref=e2]\n  - paragraph\n    - StaticText \"运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。\"\n  - button \"运行 10 次\" [ref=e3]\n  - paragraph\n    - StaticText \"通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307\"\n  - table\n    - rowgroup\n      - row\n        - columnheader \"轮次\" [ref=e4]\n        - columnheader \"结果\" [ref=e5]\n        - columnheader \"代码\" [ref=e6]\n    - rowgroup\n      - row\n        - cell \"1\" [ref=e7]\n        - cell \"PASS\" [ref=e8]\n        - cell \"FLAKE-307\" [ref=e9]\n      - row\n        - cell \"2\" [ref=e10]\n        - cell \"PASS\" [ref=e11]\n        - cell \"FLAKE-307\" [ref=e12]\n      - row\n        - cell \"3\" [ref=e13]\n        - cell \"FAIL\" [ref=e14]\n        - cell \"FLAKE-307\" [ref=e15]\n      - row\n        - cell \"4\" [ref=e16]\n        - cell \"PASS\" [ref=e17]\n        - cell \"FLAKE-307\" [ref=e18]\n      - row\n        - cell \"5\" [ref=e19]\n        - cell \"PASS\" [ref=e20]\n        - cell \"FLAKE-307\" [ref=e21]\n      - row\n        - cell \"6\" [ref=e22]\n        - cell \"FAIL\" [ref=e23]\n        - cell \"FLAKE-307\" [ref=e24]\n      - row\n        - cell \"7\" [ref=e25]\n        - cell \"PASS\" [ref=e26]\n        - cell \"FLAKE-307\" [ref=e27]\n      - row\n        - cell \"8\" [ref=e28]\n        - cell \"PASS\" [ref=e29]\n        - cell \"FLAKE-307\" [ref=e30]\n      - row\n        - cell \"9\" [ref=e31]\n        - cell \"FAIL\" [ref=e32]\n        - cell \"FLAKE-307\" [ref=e33]\n      - row\n        - cell \"10\" [ref=e34]\n        - cell \"PASS\" [ref=e35]\n        - cell \"FLAKE-307\" [ref=e36]",
+      "elapsedMs": 1520
+    }
+  ],
+  "toolCalls": [
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "open",
+        "value": "http://localhost:4399/flake",
+        "effect": "read",
+        "summary": "打开任务指定页面"
+      },
+      "ms": 1123,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 428
+    },
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "click",
+        "version": "290aeedf-9646-43ce-99bd-89d330e0ce66",
+        "effect": "read",
+        "summary": "点击：运行 10 次",
+        "ref": "e2"
+      },
+      "ms": 2110,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 5
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 8
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 4
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 5
+    },
+    {
+      "name": "observe",
+      "args": {
+        "screenshot": false
+      },
+      "ms": 1520
+    },
+    {
+      "name": "finish",
+      "args": {
+        "status": "completed",
+        "summary": "已运行\"运行 10 次\"检查并读取结果：通过 7/10，失败 3/10，失败轮次为第 3、6、9 轮，稳定性代码 FLAKE-307。失败率 30%，该检查不稳定（flaky）。",
+        "evidence": [
+          "通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307",
+          "运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。",
+          "轮次 3 FAIL FLAKE-307",
+          "轮次 6 FAIL FLAKE-307",
+          "轮次 9 FAIL FLAKE-307"
+        ],
+        "remaining": []
+      },
+      "ms": 0,
+      "isError": true
+    },
+    {
+      "name": "reconcile",
+      "args": {
+        "receiptId": "61d9c930-0cdc-44bc-9d24-fcc8f5e0b7fa",
+        "outcome": "completed",
+        "evidence": "页面已显示完整结果：\"通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307\"，表格 1-10 轮全部列出 PASS/FAIL，确认点击已生效。"
+      },
+      "ms": 1,
+      "error": "核查需要有效操作记录和当前记录页中的原文依据。"
+    },
+    {
+      "name": "finish",
+      "args": {
+        "status": "completed",
+        "summary": "在 http://localhost:4399/flake 页面点击\"运行 10 次\"后，页面显示：通过 7/10，失败 3/10，失败轮次为第 3、6、9 轮，稳定性代码 FLAKE-307。失败率 30% 且规律性失败，判定该检查不稳定（flaky）。",
+        "evidence": [
+          "通过 7/10，失败轮次 3,6,9，稳定性代码 FLAKE-307",
+          "运行 10 次同一检查。第 3、6、9 次会稳定失败，用来测试 Agent 是否会统计 flake rate。",
+          "FAIL"
+        ],
+        "remaining": []
+      },
+      "ms": 2,
+      "isError": false
+    }
+  ],
+  "receipts": [
+    {
+      "id": "e772874e-8866-4c36-9b43-c381b54eaa0c",
+      "at": "2026-09-20T12:49:48.753Z",
+      "action": {
+        "kind": "open",
+        "value": "http://localhost:4399/flake",
+        "effect": "read",
+        "summary": "打开任务指定页面"
+      },
+      "status": "executed",
+      "result": "{\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":1609398818747170600},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"},\"targetId\":\"6744690697550C74A73707E2FDFF85C2\",\"title\":\"回归稳定性 · Bench 靶场\",\"url\":\"http://localhost:4399/flake\"}"
+    },
+    {
+      "id": "61d9c930-0cdc-44bc-9d24-fcc8f5e0b7fa",
+      "at": "2026-09-20T12:49:51.314Z",
+      "action": {
+        "kind": "click",
+        "version": "290aeedf-9646-43ce-99bd-89d330e0ce66",
+        "ref": "e2",
+        "effect": "read",
+        "summary": "点击：运行 10 次"
+      },
+      "status": "executed",
+      "observationVersion": "290aeedf-9646-43ce-99bd-89d330e0ce66",
+      "result": "操作已执行；需要重新观察确认结果。"
+    }
+  ],
+  "events": [
+    {
+      "id": "96576ca0-b8d4-47c7-b3a0-33e677ca78fc",
+      "at": "2026-09-20T12:49:46.402Z",
+      "kind": "user",
+      "text": "打开 http://localhost:4399/flake ，运行页面上的\"运行 10 次\"检查。请统计通过次数、失败次数、失败轮次和稳定性代码，并判断这个检查是否稳定。"
+    },
+    {
+      "id": "845ac736-0598-42d7-b186-8cadaa2eb3f4",
+      "at": "2026-09-20T12:49:48.752Z",
+      "kind": "system",
+      "text": "正在准备浏览器和 Agent。"
+    },
+    {
+      "id": "7c8146a4-5d53-43bf-bfca-33bd6bf12c63",
+      "at": "2026-09-20T12:49:48.752Z",
+      "kind": "system",
+      "text": "Jev 正在选择页面动作；填写内容和完成核查按需调用主模型。"
+    },
+    {
+      "id": "dc1ff029-431f-44be-8bf7-ed97bad4f3e9",
+      "at": "2026-09-20T12:49:48.753Z",
+      "kind": "action",
+      "text": "打开任务指定页面"
+    },
+    {
+      "id": "250c867d-c1f4-4f9e-8d7c-c5cff4748de8",
+      "at": "2026-09-20T12:49:51.314Z",
+      "kind": "action",
+      "text": "点击：运行 10 次"
+    },
+    {
+      "id": "41f2f362-f159-46e4-9ff7-599645fd7165",
+      "at": "2026-09-20T12:49:56.289Z",
+      "kind": "system",
+      "text": "页面等待过久，交由主模型检查。"
+    },
+    {
+      "id": "16cb7cfd-fa63-4616-b3c3-afda22f90b65",
+      "at": "2026-09-20T12:50:22.335Z",
+      "kind": "assistant",
+      "text": "检查结果已在页面上完整显示，10 轮结果已全部生成，无需重复运行。\n\n**统计结果：**\n- 通过次数：7/10（第 1、2、4、5、7、8、10 轮 PASS）\n- 失败次数：3/10\n- 失败轮次：第 3、6、9 轮\n- 稳定性代码：FLAKE-307\n- 判断：**不稳定**。失败率高达 30%，且失败呈规律性出现（每 3 轮失败一次），属于典型的 flaky 检查，不能视为稳定通过。"
+    },
+    {
+      "id": "fd1eb45e-91a1-458d-aa5a-8e4e673a6363",
+      "at": "2026-09-20T12:51:01.202Z",
+      "kind": "assistant",
+      "text": "任务已完成。\n\n**检查结果汇总：**\n- **通过次数**：7/10（第 1、2、4、5、7、8、10 轮）\n- **失败次数**：3/10\n- **失败轮次**：第 3、6、9 轮\n- **稳定性代码**：FLAKE-307\n- **稳定性判断**：**不稳定**。失败率 30%，且失败呈固定规律（每 3 轮失败一次），属于典型的 flaky 检查，不能当作稳定通过的回归检查。"
+    }
+  ],
+  "file": "T20-driver-r1.json"
+}

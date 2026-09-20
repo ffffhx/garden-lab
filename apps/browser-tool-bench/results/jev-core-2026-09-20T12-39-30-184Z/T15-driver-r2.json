@@ -1,0 +1,294 @@
+{
+  "taskId": "T15",
+  "name": "SSE 实时流",
+  "mode": "driver",
+  "round": 2,
+  "grade": "pass",
+  "page": true,
+  "answer": true,
+  "status": "completed",
+  "elapsedMs": 13730,
+  "validationMs": 6,
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "costUsd": 0,
+    "elapsedMs": 12444,
+    "actions": 2,
+    "jev": {
+      "calls": 4,
+      "inputTokens": 5039,
+      "elapsedMs": 2390
+    },
+    "jevActions": 1,
+    "helper": {
+      "calls": 1,
+      "inputTokens": 690,
+      "outputTokens": 103,
+      "elapsedMs": 4396
+    }
+  },
+  "fallback": false,
+  "result": {
+    "summary": "已打开页面并点击\"开始接收\"，实时事件流接收完成：共收到 5 条事件，最后一条事件 id 为 evt-005，关键告警 code 为 STREAM-721。",
+    "evidence": [
+      "接收完成：5 条事件，关键告警 STREAM-721",
+      "evt-005 · alert · STREAM-721",
+      "evt-001 · connected · SSE 通道已建立"
+    ],
+    "remaining": []
+  },
+  "answerText": "已打开页面并点击\"开始接收\"，实时事件流接收完成：共收到 5 条事件，最后一条事件 id 为 evt-005，关键告警 code 为 STREAM-721。",
+  "validation": {
+    "url": "http://localhost:4399/realtime",
+    "feed": [],
+    "products": [],
+    "events": [
+      "evt-001 · connected · SSE 通道已建立",
+      "evt-002 · metric · checkout_latency_ms",
+      "evt-003 · metric · cart_items",
+      "evt-004 · notice · 库存同步完成",
+      "evt-005 · alert · STREAM-721"
+    ],
+    "checks": [],
+    "file": null
+  },
+  "requests": [
+    {
+      "at": 1789909103216,
+      "method": "GET",
+      "url": "/"
+    },
+    {
+      "at": 1789909103224,
+      "method": "GET",
+      "url": "/assets/app.css"
+    },
+    {
+      "at": 1789909105652,
+      "method": "GET",
+      "url": "/realtime"
+    },
+    {
+      "at": 1789909105660,
+      "method": "GET",
+      "url": "/assets/app.css"
+    },
+    {
+      "at": 1789909110868,
+      "method": "GET",
+      "url": "/api/realtime-events"
+    }
+  ],
+  "decisions": [
+    {
+      "operation": "CLICK",
+      "target": "e2",
+      "probability": 0.99,
+      "confidence": 0.99,
+      "inputTokens": 1191,
+      "elapsedMs": 1438
+    },
+    {
+      "operation": "WAIT",
+      "probability": 0.98,
+      "confidence": 0.98,
+      "inputTokens": 1241,
+      "elapsedMs": 325
+    },
+    {
+      "operation": "WAIT",
+      "probability": 0.98,
+      "confidence": 0.97,
+      "inputTokens": 1280,
+      "elapsedMs": 308
+    },
+    {
+      "probability": 0.58,
+      "confidence": 0.51,
+      "note": "Jev 对下一步不够确定，交由主模型继续。",
+      "inputTokens": 1327,
+      "elapsedMs": 319
+    }
+  ],
+  "observations": [
+    {
+      "at": "2026-09-20T12:58:26.237Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/realtime",
+      "snapshot": "Bench 靶场\n实时事件流\n\n点击开始后，页面会通过 EventSource 接收 5 条事件。\n\n开始接收\n\n尚未开始\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"开始接收\" [ref=e2] ",
+      "elapsedMs": 451
+    },
+    {
+      "at": "2026-09-20T12:58:27.680Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/realtime",
+      "snapshot": "Bench 靶场\n实时事件流\n\n点击开始后，页面会通过 EventSource 接收 5 条事件。\n\n开始接收\n\n尚未开始\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"开始接收\" [ref=e2] ",
+      "elapsedMs": 3
+    },
+    {
+      "at": "2026-09-20T12:58:30.902Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/realtime",
+      "snapshot": "Bench 靶场\n实时事件流\n\n点击开始后，页面会通过 EventSource 接收 5 条事件。\n\n开始接收\n\n正在接收…\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"开始接收\" [ref=e2] ",
+      "elapsedMs": 4
+    },
+    {
+      "at": "2026-09-20T12:58:31.643Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/realtime",
+      "snapshot": "Bench 靶场\n实时事件流\n\n点击开始后，页面会通过 EventSource 接收 5 条事件。\n\n开始接收\n\n正在接收…\n\nevt-001 · connected · SSE 通道已建立\nevt-002 · metric · checkout_latency_ms\nevt-003 · metric · cart_items\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"开始接收\" [ref=e2] ",
+      "elapsedMs": 3
+    },
+    {
+      "at": "2026-09-20T12:58:32.372Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/realtime",
+      "snapshot": "Bench 靶场\n实时事件流\n\n点击开始后，页面会通过 EventSource 接收 5 条事件。\n\n开始接收\n\n接收完成：5 条事件，关键告警 STREAM-721\n\nevt-001 · connected · SSE 通道已建立\nevt-002 · metric · checkout_latency_ms\nevt-003 · metric · cart_items\nevt-004 · notice · 库存同步完成\nevt-005 · alert · STREAM-721\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"开始接收\" [ref=e2] ",
+      "elapsedMs": 5
+    },
+    {
+      "at": "2026-09-20T12:58:32.698Z",
+      "method": "observeFast",
+      "url": "http://localhost:4399/realtime",
+      "snapshot": "Bench 靶场\n实时事件流\n\n点击开始后，页面会通过 EventSource 接收 5 条事件。\n\n开始接收\n\n接收完成：5 条事件，关键告警 STREAM-721\n\nevt-001 · connected · SSE 通道已建立\nevt-002 · metric · checkout_latency_ms\nevt-003 · metric · cart_items\nevt-004 · notice · 库存同步完成\nevt-005 · alert · STREAM-721\n\nControls:\n- link \"Bench 靶场\" [ref=e1] \n- button \"开始接收\" [ref=e2] ",
+      "elapsedMs": 5
+    }
+  ],
+  "toolCalls": [
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "open",
+        "value": "http://localhost:4399/realtime",
+        "effect": "read",
+        "summary": "打开任务指定页面"
+      },
+      "ms": 1130,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 452
+    },
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "click",
+        "version": "437a2da1-0398-46d7-a1a3-2c2214aaec7c",
+        "effect": "read",
+        "summary": "点击：开始接收",
+        "ref": "e2"
+      },
+      "ms": 3129,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 5
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 3
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 6
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 6
+    },
+    {
+      "name": "finish",
+      "args": {
+        "status": "completed",
+        "summary": "已打开页面并点击\"开始接收\"，实时事件流接收完成：共收到 5 条事件，最后一条事件 id 为 evt-005，关键告警 code 为 STREAM-721。",
+        "evidence": [
+          "接收完成：5 条事件，关键告警 STREAM-721",
+          "evt-005 · alert · STREAM-721",
+          "evt-001 · connected · SSE 通道已建立"
+        ],
+        "remaining": []
+      },
+      "ms": 1,
+      "isError": false
+    }
+  ],
+  "receipts": [
+    {
+      "id": "8a76e9da-97f9-40b4-b40b-a77de01951c5",
+      "at": "2026-09-20T12:58:24.656Z",
+      "action": {
+        "kind": "open",
+        "value": "http://localhost:4399/realtime",
+        "effect": "read",
+        "summary": "打开任务指定页面"
+      },
+      "status": "executed",
+      "result": "{\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":16723353998413732000},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"},\"targetId\":\"6744690697550C74A73707E2FDFF85C2\",\"title\":\"SSE 实时流 · Bench 靶场\",\"url\":\"http://localhost:4399/realtime\"}"
+    },
+    {
+      "id": "78d13be7-a7f4-468e-8d25-5d34d8fc671e",
+      "at": "2026-09-20T12:58:27.680Z",
+      "action": {
+        "kind": "click",
+        "version": "437a2da1-0398-46d7-a1a3-2c2214aaec7c",
+        "ref": "e2",
+        "effect": "read",
+        "summary": "点击：开始接收"
+      },
+      "status": "executed",
+      "observationVersion": "437a2da1-0398-46d7-a1a3-2c2214aaec7c",
+      "result": "操作已执行；需要重新观察确认结果。"
+    }
+  ],
+  "events": [
+    {
+      "id": "25277103-d40a-4107-9190-b0be90338421",
+      "at": "2026-09-20T12:58:22.207Z",
+      "kind": "user",
+      "text": "打开 http://localhost:4399/realtime ，点击\"开始接收\"，等实时事件流接收完成。请告诉我一共收到多少条事件，最后一条事件的 id 是什么，关键告警 code 是什么。"
+    },
+    {
+      "id": "dc0c64ce-5f1d-470e-9275-9c912f71cdd6",
+      "at": "2026-09-20T12:58:24.653Z",
+      "kind": "system",
+      "text": "正在准备浏览器和 Agent。"
+    },
+    {
+      "id": "2e41232e-1a82-44eb-ba4e-c15dfd79c306",
+      "at": "2026-09-20T12:58:24.655Z",
+      "kind": "system",
+      "text": "Jev 正在选择页面动作；填写内容和完成核查按需调用主模型。"
+    },
+    {
+      "id": "16b0de1a-ca94-4b4d-8451-e92a7cbaa4d3",
+      "at": "2026-09-20T12:58:24.656Z",
+      "kind": "action",
+      "text": "打开任务指定页面"
+    },
+    {
+      "id": "9307755e-4249-4264-ad65-7d207edd30a6",
+      "at": "2026-09-20T12:58:27.680Z",
+      "kind": "action",
+      "text": "点击：开始接收"
+    }
+  ],
+  "file": "T15-driver-r2.json"
+}

@@ -1,0 +1,16 @@
+{
+  "desktopBeforePid": 65728,
+  "desktopAfterPid": 52988,
+  "gatewayPid": 26328,
+  "gatewayProtocol": 14,
+  "chromePids": {
+    "9223": 29772,
+    "9224": 27588,
+    "9226": 17568,
+    "9227": 59488
+  },
+  "oldTestSessionReleased": "pp-task-c63f08b9-6d82-42da-b5bf-df641a4d881c",
+  "benchmarkProfile": "isolated:80857b67-d3d2-4238-ba86-549dad6b6343",
+  "desktopRestartedAtApprox": "2026-09-20T12:39:00Z",
+  "verification": "Gateway and all Chrome PIDs preserved; management CLI confirms new desktop process."
+}

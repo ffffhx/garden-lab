@@ -1,0 +1,431 @@
+{
+  "taskId": "T08",
+  "name": "登录与 Shadow DOM",
+  "mode": "advisory",
+  "round": 2,
+  "grade": "pass",
+  "page": true,
+  "answer": true,
+  "status": "completed",
+  "elapsedMs": 122485,
+  "validationMs": 447,
+  "usage": {
+    "inputTokens": 69380,
+    "outputTokens": 1491,
+    "costUsd": 0.11012700000000002,
+    "elapsedMs": 121063,
+    "actions": 5,
+    "jev": {
+      "calls": 4,
+      "inputTokens": 5436,
+      "elapsedMs": 4153
+    }
+  },
+  "fallback": true,
+  "result": {
+    "summary": "已用 agent@bench.dev 登录本地靶场控制台，在\"每日福利\"卡片点击\"领取今日奖励\"，页面显示兑换码：SHADOW-99。",
+    "evidence": [
+      "欢迎回来，Agent 测试员（工号 BENCH-7341）",
+      "每天可以领取一次奖励。",
+      "兑换码：SHADOW-99"
+    ],
+    "remaining": []
+  },
+  "answerText": "已用 agent@bench.dev 登录本地靶场控制台，在\"每日福利\"卡片点击\"领取今日奖励\"，页面显示兑换码：SHADOW-99。\n我先打开登录页面观察。\n页面是登录表单，我填写账号密码并提交登录。\n账号密码已填写，点击登录提交。\n登录成功，已进入控制台。先核对页面账号，再点击\"领取今日奖励\"。\n领取成功，页面显示了兑换码。\n任务完成 ✅\n\n- 已登录 http://localhost:4399/login（账号 agent@bench.dev），进入控制台，页面显示\"欢迎回来，Agent 测试员（工号 BENCH-7341）\"。\n- 在\"每日福利\"卡片点击\"领取今日奖励\"后，页面显示领到的兑换码：**SHADOW-99**。",
+  "validation": {
+    "url": "http://localhost:4399/dashboard",
+    "feed": [],
+    "products": [],
+    "events": [],
+    "checks": [],
+    "shadow": "\n            \n              .box { border: 1px dashed #cfd3da; border-radius: 8px; padding: 14px; font-size: 14px; }\n              button { padding: 7px 16px; border: none; border-radius: 6px; background: #00a86b; color: #fff; cursor: pointer; }\n              .code { margin-top: 10px; font-weight: 700; color: #00a86b; }\n            \n            \n              每天可以领取一次奖励。\n              领取今日奖励\n              兑换码：SHADOW-99\n            ",
+    "file": null
+  },
+  "requests": [
+    {
+      "at": 1789909263603,
+      "method": "GET",
+      "url": "/"
+    },
+    {
+      "at": 1789909263608,
+      "method": "GET",
+      "url": "/assets/app.css"
+    },
+    {
+      "at": 1789909273129,
+      "method": "GET",
+      "url": "/login"
+    },
+    {
+      "at": 1789909273135,
+      "method": "GET",
+      "url": "/assets/app.css"
+    },
+    {
+      "at": 1789909330357,
+      "method": "POST",
+      "url": "/api/login"
+    },
+    {
+      "at": 1789909330624,
+      "method": "GET",
+      "url": "/dashboard"
+    },
+    {
+      "at": 1789909330631,
+      "method": "GET",
+      "url": "/assets/app.css"
+    },
+    {
+      "at": 1789909330636,
+      "method": "GET",
+      "url": "/api/me"
+    }
+  ],
+  "decisions": [],
+  "observations": [
+    {
+      "at": "2026-09-20T13:01:25.153Z",
+      "method": "observe",
+      "url": "http://localhost:4399/login",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n- main\n  - heading \"登录\" [level=1, ref=e2]\n  - paragraph\n    - StaticText \"测试账号：agent@bench.dev / bench-2026\"\n  - form\n    - LabelText\n      - StaticText \"邮箱\"\n    - textbox \"邮箱\" [ref=e3]\n    - LabelText\n      - StaticText \"密码\"\n    - textbox \"密码\" [ref=e4]\n    - button \"登录\" [ref=e5]\n  - paragraph\n    - link \"忘记密码\" [ref=e6]",
+      "elapsedMs": 1327
+    },
+    {
+      "at": "2026-09-20T13:01:35.229Z",
+      "method": "observe",
+      "url": "http://localhost:4399/login",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n- main\n  - heading \"登录\" [level=1, ref=e2]\n  - paragraph\n    - StaticText \"测试账号：agent@bench.dev / bench-2026\"\n  - form\n    - LabelText\n      - StaticText \"邮箱\"\n    - textbox \"邮箱\" [ref=e3]\n    - LabelText\n      - StaticText \"密码\"\n    - textbox \"密码\" [ref=e4]\n    - button \"登录\" [ref=e5]\n  - paragraph\n    - link \"忘记密码\" [ref=e6]",
+      "elapsedMs": 1409
+    },
+    {
+      "at": "2026-09-20T13:01:36.989Z",
+      "method": "observe",
+      "url": "http://localhost:4399/login",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n- main\n  - heading \"登录\" [level=1, ref=e2]\n  - paragraph\n    - StaticText \"测试账号：agent@bench.dev / bench-2026\"\n  - form\n    - LabelText\n      - StaticText \"邮箱\"\n    - textbox \"邮箱\" [ref=e3]: agent@bench.dev\n      - StaticText \"agent@bench.dev\"\n    - LabelText\n      - StaticText \"密码\"\n    - textbox \"密码\" [ref=e4]\n    - button \"登录\" [ref=e5]\n  - paragraph\n    - link \"忘记密码\" [ref=e6]",
+      "elapsedMs": 1313
+    },
+    {
+      "at": "2026-09-20T13:01:54.045Z",
+      "method": "observe",
+      "url": "http://localhost:4399/login",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n- main\n  - heading \"登录\" [level=1, ref=e2]\n  - paragraph\n    - StaticText \"测试账号：agent@bench.dev / bench-2026\"\n  - form\n    - LabelText\n      - StaticText \"邮箱\"\n    - textbox \"邮箱\" [ref=e3]: agent@bench.dev\n      - StaticText \"agent@bench.dev\"\n    - LabelText\n      - StaticText \"密码\"\n    - textbox \"密码\" [ref=e4]: ••••••••••\n      - StaticText \"••••••••••\"\n    - button \"登录\" [ref=e5]\n  - paragraph\n    - link \"忘记密码\" [ref=e6]",
+      "elapsedMs": 1371
+    },
+    {
+      "at": "2026-09-20T13:02:04.075Z",
+      "method": "observe",
+      "url": "http://localhost:4399/login",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n- main\n  - heading \"登录\" [level=1, ref=e2]\n  - paragraph\n    - StaticText \"测试账号：agent@bench.dev / bench-2026\"\n  - form\n    - LabelText\n      - StaticText \"邮箱\"\n    - textbox \"邮箱\" [ref=e3]: agent@bench.dev\n      - StaticText \"agent@bench.dev\"\n    - LabelText\n      - StaticText \"密码\"\n    - textbox \"密码\" [ref=e4]: ••••••••••\n      - StaticText \"••••••••••\"\n    - button \"登录\" [ref=e5]\n  - paragraph\n    - link \"忘记密码\" [ref=e6]",
+      "elapsedMs": 1309
+    },
+    {
+      "at": "2026-09-20T13:02:16.613Z",
+      "method": "observe",
+      "url": "http://localhost:4399/dashboard",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n  - link \"成员\" [ref=e2]\n  - link \"商品目录\" [ref=e3]\n  - link \"动态\" [ref=e4]\n- main\n  - heading \"欢迎回来，Agent 测试员（工号 BENCH-7341）\" [level=1, ref=e5]\n  - paragraph\n    - StaticText \"这里是你的工作台。\"\n  - heading \"快速下单\" [level=2, ref=e6]\n  - paragraph\n    - StaticText \"为常用物料 SKU-8821 创建补货订单。\"\n  - button \"提交订单\" [ref=e7]\n  - heading \"每日福利\" [level=2, ref=e8]\n  - paragraph\n    - StaticText \"每天可以领取一次奖励。\"\n  - button \"领取今日奖励\" [ref=e9]",
+      "elapsedMs": 1361
+    },
+    {
+      "at": "2026-09-20T13:02:38.587Z",
+      "method": "observe",
+      "url": "http://localhost:4399/dashboard",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n  - link \"成员\" [ref=e2]\n  - link \"商品目录\" [ref=e3]\n  - link \"动态\" [ref=e4]\n- main\n  - heading \"欢迎回来，Agent 测试员（工号 BENCH-7341）\" [level=1, ref=e5]\n  - paragraph\n    - StaticText \"这里是你的工作台。\"\n  - heading \"快速下单\" [level=2, ref=e6]\n  - paragraph\n    - StaticText \"为常用物料 SKU-8821 创建补货订单。\"\n  - button \"提交订单\" [ref=e7]\n  - heading \"每日福利\" [level=2, ref=e8]\n  - paragraph\n    - StaticText \"每天可以领取一次奖励。\"\n  - button \"领取今日奖励\" [ref=e9]",
+      "elapsedMs": 1328
+    },
+    {
+      "at": "2026-09-20T13:02:51.485Z",
+      "method": "observe",
+      "url": "http://localhost:4399/dashboard",
+      "snapshot": "- banner\n  - link \"Bench 靶场\" [ref=e1]\n  - link \"成员\" [ref=e2]\n  - link \"商品目录\" [ref=e3]\n  - link \"动态\" [ref=e4]\n- main\n  - heading \"欢迎回来，Agent 测试员（工号 BENCH-7341）\" [level=1, ref=e5]\n  - paragraph\n    - StaticText \"这里是你的工作台。\"\n  - heading \"快速下单\" [level=2, ref=e6]\n  - paragraph\n    - StaticText \"为常用物料 SKU-8821 创建补货订单。\"\n  - button \"提交订单\" [ref=e7]\n  - heading \"每日福利\" [level=2, ref=e8]\n  - paragraph\n    - StaticText \"每天可以领取一次奖励。\"\n  - button \"领取今日奖励\" [ref=e9]\n  - paragraph\n    - StaticText \"兑换码：SHADOW-99\"",
+      "elapsedMs": 1313
+    }
+  ],
+  "toolCalls": [
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "open",
+        "value": "http://localhost:4399/login",
+        "effect": "read",
+        "summary": "打开本地靶场登录页 http://localhost:4399/login"
+      },
+      "ms": 1116,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "screenshot": false
+      },
+      "ms": 2628
+    },
+    {
+      "name": "fill_fields",
+      "args": {
+        "version": "b7a3cdd6-1fde-494a-bd2f-6357adc56d25",
+        "fields": [
+          {
+            "ref": "e3",
+            "value": "agent@bench.dev",
+            "kind": "fill"
+          },
+          {
+            "ref": "e4",
+            "value": "bench-2026",
+            "kind": "fill"
+          }
+        ]
+      },
+      "ms": 3615,
+      "isError": false
+    },
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "click",
+        "version": "b7a3cdd6-1fde-494a-bd2f-6357adc56d25",
+        "ref": "e5",
+        "effect": "submit",
+        "summary": "提交登录表单（账号 agent@bench.dev）"
+      },
+      "ms": 0,
+      "isError": true
+    },
+    {
+      "name": "observe",
+      "args": {
+        "screenshot": false
+      },
+      "ms": 2310
+    },
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "click",
+        "version": "fcb843d1-ca0c-48b8-811b-7f366aad96a9",
+        "ref": "e5",
+        "effect": "submit",
+        "summary": "提交登录表单（账号 agent@bench.dev）"
+      },
+      "ms": 7729,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "screenshot": false
+      },
+      "ms": 2426
+    },
+    {
+      "name": "verify_account",
+      "args": {
+        "account": "Agent 测试员（工号 BENCH-7341）",
+        "evidence": "欢迎回来，Agent 测试员（工号 BENCH-7341）"
+      },
+      "ms": 1,
+      "isError": false
+    },
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "click",
+        "version": "63962856-3e0c-44ca-86a3-6f4c5bf0de2f",
+        "ref": "e9",
+        "effect": "submit",
+        "summary": "在\"每日福利\"卡片点击\"领取今日奖励\"按钮领取奖励"
+      },
+      "ms": 7747,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "screenshot": false
+      },
+      "ms": 2167
+    },
+    {
+      "name": "finish",
+      "args": {
+        "status": "completed",
+        "summary": "已用 agent@bench.dev 登录本地靶场控制台，在\"每日福利\"卡片点击\"领取今日奖励\"，页面显示兑换码：SHADOW-99。",
+        "evidence": [
+          "欢迎回来，Agent 测试员（工号 BENCH-7341）",
+          "每天可以领取一次奖励。",
+          "兑换码：SHADOW-99"
+        ],
+        "remaining": []
+      },
+      "ms": 1,
+      "isError": false
+    }
+  ],
+  "receipts": [
+    {
+      "id": "537d8719-e504-4bfe-b31b-a551bc406632",
+      "at": "2026-09-20T13:01:12.143Z",
+      "action": {
+        "kind": "open",
+        "value": "http://localhost:4399/login",
+        "effect": "read",
+        "summary": "打开本地靶场登录页 http://localhost:4399/login"
+      },
+      "status": "executed",
+      "result": "{\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":10214207151000791000},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"},\"targetId\":\"6744690697550C74A73707E2FDFF85C2\",\"title\":\"登录 · Bench 靶场\",\"url\":\"http://localhost:4399/login\"}"
+    },
+    {
+      "id": "3a1d3210-4ba3-4044-be9d-c1bb1e80ffa8",
+      "at": "2026-09-20T13:01:35.229Z",
+      "action": {
+        "ref": "e3",
+        "value": "agent@bench.dev",
+        "kind": "fill",
+        "version": "4a3936e2-f6c3-4efb-956f-55db15cbafd7",
+        "effect": "edit",
+        "summary": "填写字段 e3"
+      },
+      "status": "executed",
+      "observationVersion": "4a3936e2-f6c3-4efb-956f-55db15cbafd7",
+      "result": "{\"filled\":\"@e3\",\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":10214207151000791000},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"}}"
+    },
+    {
+      "id": "9be3cb3c-75be-40e1-8ee3-152149220872",
+      "at": "2026-09-20T13:01:36.989Z",
+      "action": {
+        "ref": "e4",
+        "value": "bench-2026",
+        "kind": "fill",
+        "version": "f3116427-cb42-4af0-bdfe-f78428476dd7",
+        "effect": "edit",
+        "summary": "填写字段 e4"
+      },
+      "status": "executed",
+      "observationVersion": "f3116427-cb42-4af0-bdfe-f78428476dd7",
+      "result": "{\"filled\":\"@e4\",\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":10214207151000791000},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"}}"
+    },
+    {
+      "id": "ff3f7f66-f456-4df2-bacf-768d9bfd26f6",
+      "at": "2026-09-20T13:02:04.076Z",
+      "action": {
+        "kind": "click",
+        "version": "fcb843d1-ca0c-48b8-811b-7f366aad96a9",
+        "ref": "e5",
+        "effect": "submit",
+        "summary": "提交登录表单（账号 agent@bench.dev）"
+      },
+      "status": "executed",
+      "observationVersion": "fcb843d1-ca0c-48b8-811b-7f366aad96a9",
+      "result": "{\"clicked\":\"@e5\",\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":10214207151000791000},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"}}"
+    },
+    {
+      "id": "f08f9b43-6767-4b7b-b3dc-4470e0b10b50",
+      "at": "2026-09-20T13:02:38.587Z",
+      "action": {
+        "kind": "click",
+        "version": "63962856-3e0c-44ca-86a3-6f4c5bf0de2f",
+        "ref": "e9",
+        "effect": "submit",
+        "summary": "在\"每日福利\"卡片点击\"领取今日奖励\"按钮领取奖励"
+      },
+      "status": "executed",
+      "observationVersion": "63962856-3e0c-44ca-86a3-6f4c5bf0de2f",
+      "result": "{\"clicked\":\"@e9\",\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":10214207151000791000},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"}}"
+    }
+  ],
+  "events": [
+    {
+      "id": "1f21d9ca-06fe-4fef-bed5-e24613832836",
+      "at": "2026-09-20T13:01:02.553Z",
+      "kind": "user",
+      "text": "登录 http://localhost:4399/login （账号 agent@bench.dev / bench-2026）后，在控制台页面的\"每日福利\"卡片里点击\"领取今日奖励\"按钮，告诉我领到的兑换码是什么。"
+    },
+    {
+      "id": "40feb087-ceca-4918-8677-42d983478958",
+      "at": "2026-09-20T13:01:05.036Z",
+      "kind": "system",
+      "text": "正在准备浏览器和 Agent。"
+    },
+    {
+      "id": "d68df254-e518-4a33-a429-5bec4737781f",
+      "at": "2026-09-20T13:01:11.215Z",
+      "kind": "assistant",
+      "text": "我先打开登录页面观察。"
+    },
+    {
+      "id": "a5362398-8b81-41be-ac05-d6ee26b40cfa",
+      "at": "2026-09-20T13:01:12.143Z",
+      "kind": "action",
+      "text": "打开本地靶场登录页 http://localhost:4399/login"
+    },
+    {
+      "id": "ed22b1fe-7436-41a0-af18-2a4be77571bf",
+      "at": "2026-09-20T13:01:31.937Z",
+      "kind": "assistant",
+      "text": "页面是登录表单，我填写账号密码并提交登录。"
+    },
+    {
+      "id": "7ffb3866-05b6-4591-aff1-bd5d2a565549",
+      "at": "2026-09-20T13:01:35.229Z",
+      "kind": "action",
+      "text": "填写字段 e3"
+    },
+    {
+      "id": "1c32b606-b824-4115-81f5-3e439411eec2",
+      "at": "2026-09-20T13:01:36.989Z",
+      "kind": "action",
+      "text": "填写字段 e4"
+    },
+    {
+      "id": "29467bfa-86f6-4edf-8394-6c45d1f85b24",
+      "at": "2026-09-20T13:02:01.230Z",
+      "kind": "assistant",
+      "text": "账号密码已填写，点击登录提交。"
+    },
+    {
+      "id": "5dc5e9dc-177a-4e1f-b2b8-898639950222",
+      "at": "2026-09-20T13:02:04.076Z",
+      "kind": "system",
+      "text": "按任务授权执行 submit（1/5）。"
+    },
+    {
+      "id": "5e25e29a-020f-416f-b00f-a65718bb75cb",
+      "at": "2026-09-20T13:02:04.076Z",
+      "kind": "action",
+      "text": "提交登录表单（账号 agent@bench.dev）"
+    },
+    {
+      "id": "72473119-65d0-4f6a-afe9-c3306e296b2a",
+      "at": "2026-09-20T13:02:27.631Z",
+      "kind": "assistant",
+      "text": "登录成功，已进入控制台。先核对页面账号，再点击\"领取今日奖励\"。"
+    },
+    {
+      "id": "d373b346-e665-42ad-80d0-2ab04ec89625",
+      "at": "2026-09-20T13:02:38.587Z",
+      "kind": "system",
+      "text": "按任务授权执行 submit（2/5）。"
+    },
+    {
+      "id": "af5e1a80-9456-4edf-97d7-51ddabd17b67",
+      "at": "2026-09-20T13:02:38.587Z",
+      "kind": "action",
+      "text": "在\"每日福利\"卡片点击\"领取今日奖励\"按钮领取奖励"
+    },
+    {
+      "id": "4e7d3d33-ae8f-4dd0-b4a6-ce0ba316b97a",
+      "at": "2026-09-20T13:02:57.199Z",
+      "kind": "assistant",
+      "text": "领取成功，页面显示了兑换码。"
+    },
+    {
+      "id": "ec57c837-57c4-4ce7-aba8-26b2e84bf49b",
+      "at": "2026-09-20T13:03:05.972Z",
+      "kind": "assistant",
+      "text": "任务完成 ✅\n\n- 已登录 http://localhost:4399/login（账号 agent@bench.dev），进入控制台，页面显示\"欢迎回来，Agent 测试员（工号 BENCH-7341）\"。\n- 在\"每日福利\"卡片点击\"领取今日奖励\"后，页面显示领到的兑换码：**SHADOW-99**。"
+    }
+  ],
+  "file": "T08-advisory-r2.json"
+}

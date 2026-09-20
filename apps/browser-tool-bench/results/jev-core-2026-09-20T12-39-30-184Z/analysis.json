@@ -1,0 +1,886 @@
+{
+  "totals": {
+    "driver": {
+      "runs": 18,
+      "passed": 17,
+      "fallback": 15,
+      "jevActions": 12,
+      "jevCalls": 53,
+      "helperCalls": 9,
+      "sdkEstimatedUsd": 1.17195875,
+      "infrastructureFailures": 0,
+      "unverifiedCompletions": 0,
+      "objectivePassed": 17,
+      "correctButIncomplete": 0,
+      "runtimeFailures": 1,
+      "incompleteTelemetry": 1
+    },
+    "advisory": {
+      "runs": 18,
+      "passed": 18,
+      "fallback": 18,
+      "jevActions": 0,
+      "jevCalls": 41,
+      "helperCalls": 0,
+      "sdkEstimatedUsd": 1.626697,
+      "infrastructureFailures": 0,
+      "unverifiedCompletions": 0,
+      "objectivePassed": 18,
+      "correctButIncomplete": 0,
+      "runtimeFailures": 0,
+      "incompleteTelemetry": 0
+    }
+  },
+  "rows": [
+    {
+      "id": "T05",
+      "name": "动态列表",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 55749,
+        "fallback": 3
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 75186
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 45667,
+          "advisoryMs": 66852,
+          "reductionPct": 31.68940345838569
+        },
+        {
+          "round": 2,
+          "driverMs": 57481,
+          "advisoryMs": 86177,
+          "reductionPct": 33.29890806131567
+        },
+        {
+          "round": 3,
+          "driverMs": 55749,
+          "advisoryMs": 75186,
+          "reductionPct": 25.851887319447776
+        }
+      ],
+      "pairMedianReductionPct": 31.68940345838569
+    },
+    {
+      "id": "T06",
+      "name": "分页商品 JSON",
+      "driver": {
+        "count": 3,
+        "passed": 2,
+        "medianMs": 175527,
+        "fallback": 3
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 158868
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 222601,
+          "advisoryMs": 120049,
+          "reductionPct": -85.42511807678532
+        },
+        {
+          "round": 2,
+          "driverMs": 128453,
+          "advisoryMs": 182502,
+          "reductionPct": 29.61556585681253
+        }
+      ],
+      "pairMedianReductionPct": -27.904776109986397
+    },
+    {
+      "id": "T15",
+      "name": "SSE 实时流",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 13971,
+        "fallback": 0
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 44819
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 13971,
+          "advisoryMs": 42410,
+          "reductionPct": 67.05729780712096
+        },
+        {
+          "round": 2,
+          "driverMs": 13730,
+          "advisoryMs": 44819,
+          "reductionPct": 69.365670809255
+        },
+        {
+          "round": 3,
+          "driverMs": 17865,
+          "advisoryMs": 56414,
+          "reductionPct": 68.33232885453965
+        }
+      ],
+      "pairMedianReductionPct": 68.33232885453965
+    },
+    {
+      "id": "T20",
+      "name": "10 次检查统计",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 73997,
+        "fallback": 3
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 85293
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 73997,
+          "advisoryMs": 85293,
+          "reductionPct": 13.243759745817362
+        },
+        {
+          "round": 2,
+          "driverMs": 52390,
+          "advisoryMs": 86494,
+          "reductionPct": 39.42932457742734
+        },
+        {
+          "round": 3,
+          "driverMs": 80407,
+          "advisoryMs": 81460,
+          "reductionPct": 1.2926589737294325
+        }
+      ],
+      "pairMedianReductionPct": 13.243759745817362
+    },
+    {
+      "id": "T08",
+      "name": "登录与 Shadow DOM",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 108291,
+        "fallback": 3
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 130299
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 108291,
+          "advisoryMs": 130299,
+          "reductionPct": 16.89038288858702
+        },
+        {
+          "round": 2,
+          "driverMs": 113148,
+          "advisoryMs": 122485,
+          "reductionPct": 7.622974241743885
+        },
+        {
+          "round": 3,
+          "driverMs": 106120,
+          "advisoryMs": 134491,
+          "reductionPct": 21.095091864883152
+        }
+      ],
+      "pairMedianReductionPct": 16.89038288858702
+    },
+    {
+      "id": "T18",
+      "name": "文件上传",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 57750,
+        "fallback": 3
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "medianMs": 80128
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 61614,
+          "advisoryMs": 80128,
+          "reductionPct": 23.10553115015974
+        },
+        {
+          "round": 2,
+          "driverMs": 53525,
+          "advisoryMs": 58594,
+          "reductionPct": 8.651056422159265
+        },
+        {
+          "round": 3,
+          "driverMs": 57750,
+          "advisoryMs": 87658,
+          "reductionPct": 34.11896233087681
+        }
+      ],
+      "pairMedianReductionPct": 23.10553115015974
+    }
+  ],
+  "objectiveRows": [
+    {
+      "id": "T05",
+      "name": "动态列表",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 55749,
+        "minMs": 45667,
+        "maxMs": 57481,
+        "strictRange": {
+          "medianMs": 55749,
+          "minMs": 45667,
+          "maxMs": 57481
+        }
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 75186,
+        "minMs": 66852,
+        "maxMs": 86177,
+        "strictRange": {
+          "medianMs": 75186,
+          "minMs": 66852,
+          "maxMs": 86177
+        }
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 45667,
+          "advisoryMs": 66852,
+          "reductionPct": 31.68940345838569
+        },
+        {
+          "round": 2,
+          "driverMs": 57481,
+          "advisoryMs": 86177,
+          "reductionPct": 33.29890806131567
+        },
+        {
+          "round": 3,
+          "driverMs": 55749,
+          "advisoryMs": 75186,
+          "reductionPct": 25.851887319447776
+        }
+      ],
+      "pairMedianReductionPct": 31.68940345838569
+    },
+    {
+      "id": "T06",
+      "name": "分页商品 JSON",
+      "driver": {
+        "count": 3,
+        "passed": 2,
+        "strictPassed": 2,
+        "fallback": 3,
+        "medianMs": 175527,
+        "minMs": 128453,
+        "maxMs": 222601,
+        "strictRange": {
+          "medianMs": 175527,
+          "minMs": 128453,
+          "maxMs": 222601
+        }
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 158868,
+        "minMs": 120049,
+        "maxMs": 182502,
+        "strictRange": {
+          "medianMs": 158868,
+          "minMs": 120049,
+          "maxMs": 182502
+        }
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 222601,
+          "advisoryMs": 120049,
+          "reductionPct": -85.42511807678532
+        },
+        {
+          "round": 2,
+          "driverMs": 128453,
+          "advisoryMs": 182502,
+          "reductionPct": 29.61556585681253
+        }
+      ],
+      "pairMedianReductionPct": -27.904776109986397
+    },
+    {
+      "id": "T15",
+      "name": "SSE 实时流",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 0,
+        "medianMs": 13971,
+        "minMs": 13730,
+        "maxMs": 17865,
+        "strictRange": {
+          "medianMs": 13971,
+          "minMs": 13730,
+          "maxMs": 17865
+        }
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 44819,
+        "minMs": 42410,
+        "maxMs": 56414,
+        "strictRange": {
+          "medianMs": 44819,
+          "minMs": 42410,
+          "maxMs": 56414
+        }
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 13971,
+          "advisoryMs": 42410,
+          "reductionPct": 67.05729780712096
+        },
+        {
+          "round": 2,
+          "driverMs": 13730,
+          "advisoryMs": 44819,
+          "reductionPct": 69.365670809255
+        },
+        {
+          "round": 3,
+          "driverMs": 17865,
+          "advisoryMs": 56414,
+          "reductionPct": 68.33232885453965
+        }
+      ],
+      "pairMedianReductionPct": 68.33232885453965
+    },
+    {
+      "id": "T20",
+      "name": "10 次检查统计",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 73997,
+        "minMs": 52390,
+        "maxMs": 80407,
+        "strictRange": {
+          "medianMs": 73997,
+          "minMs": 52390,
+          "maxMs": 80407
+        }
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 85293,
+        "minMs": 81460,
+        "maxMs": 86494,
+        "strictRange": {
+          "medianMs": 85293,
+          "minMs": 81460,
+          "maxMs": 86494
+        }
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 73997,
+          "advisoryMs": 85293,
+          "reductionPct": 13.243759745817362
+        },
+        {
+          "round": 2,
+          "driverMs": 52390,
+          "advisoryMs": 86494,
+          "reductionPct": 39.42932457742734
+        },
+        {
+          "round": 3,
+          "driverMs": 80407,
+          "advisoryMs": 81460,
+          "reductionPct": 1.2926589737294325
+        }
+      ],
+      "pairMedianReductionPct": 13.243759745817362
+    },
+    {
+      "id": "T08",
+      "name": "登录与 Shadow DOM",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 108291,
+        "minMs": 106120,
+        "maxMs": 113148,
+        "strictRange": {
+          "medianMs": 108291,
+          "minMs": 106120,
+          "maxMs": 113148
+        }
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 130299,
+        "minMs": 122485,
+        "maxMs": 134491,
+        "strictRange": {
+          "medianMs": 130299,
+          "minMs": 122485,
+          "maxMs": 134491
+        }
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 108291,
+          "advisoryMs": 130299,
+          "reductionPct": 16.89038288858702
+        },
+        {
+          "round": 2,
+          "driverMs": 113148,
+          "advisoryMs": 122485,
+          "reductionPct": 7.622974241743885
+        },
+        {
+          "round": 3,
+          "driverMs": 106120,
+          "advisoryMs": 134491,
+          "reductionPct": 21.095091864883152
+        }
+      ],
+      "pairMedianReductionPct": 16.89038288858702
+    },
+    {
+      "id": "T18",
+      "name": "文件上传",
+      "driver": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 57750,
+        "minMs": 53525,
+        "maxMs": 61614,
+        "strictRange": {
+          "medianMs": 57750,
+          "minMs": 53525,
+          "maxMs": 61614
+        }
+      },
+      "advisory": {
+        "count": 3,
+        "passed": 3,
+        "strictPassed": 3,
+        "fallback": 3,
+        "medianMs": 80128,
+        "minMs": 58594,
+        "maxMs": 87658,
+        "strictRange": {
+          "medianMs": 80128,
+          "minMs": 58594,
+          "maxMs": 87658
+        }
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 61614,
+          "advisoryMs": 80128,
+          "reductionPct": 23.10553115015974
+        },
+        {
+          "round": 2,
+          "driverMs": 53525,
+          "advisoryMs": 58594,
+          "reductionPct": 8.651056422159265
+        },
+        {
+          "round": 3,
+          "driverMs": 57750,
+          "advisoryMs": 87658,
+          "reductionPct": 34.11896233087681
+        }
+      ],
+      "pairMedianReductionPct": 23.10553115015974
+    }
+  ],
+  "cells": [
+    {
+      "id": "T05",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 45667
+    },
+    {
+      "id": "T05",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 66852
+    },
+    {
+      "id": "T06",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 120049
+    },
+    {
+      "id": "T06",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 222601
+    },
+    {
+      "id": "T15",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 13971
+    },
+    {
+      "id": "T15",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 42410
+    },
+    {
+      "id": "T20",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 85293
+    },
+    {
+      "id": "T20",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 73997
+    },
+    {
+      "id": "T08",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 108291
+    },
+    {
+      "id": "T08",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 130299
+    },
+    {
+      "id": "T18",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 80128
+    },
+    {
+      "id": "T18",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 61614
+    },
+    {
+      "id": "T15",
+      "mode": "advisory",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 44819
+    },
+    {
+      "id": "T15",
+      "mode": "driver",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 13730
+    },
+    {
+      "id": "T20",
+      "mode": "driver",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 52390
+    },
+    {
+      "id": "T20",
+      "mode": "advisory",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 86494
+    },
+    {
+      "id": "T08",
+      "mode": "advisory",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 122485
+    },
+    {
+      "id": "T08",
+      "mode": "driver",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 113148
+    },
+    {
+      "id": "T18",
+      "mode": "driver",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 53525
+    },
+    {
+      "id": "T18",
+      "mode": "advisory",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 58594
+    },
+    {
+      "id": "T05",
+      "mode": "advisory",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 86177
+    },
+    {
+      "id": "T05",
+      "mode": "driver",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 57481
+    },
+    {
+      "id": "T06",
+      "mode": "driver",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 128453
+    },
+    {
+      "id": "T06",
+      "mode": "advisory",
+      "round": 2,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 182502
+    },
+    {
+      "id": "T08",
+      "mode": "driver",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 106120
+    },
+    {
+      "id": "T08",
+      "mode": "advisory",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 134491
+    },
+    {
+      "id": "T18",
+      "mode": "advisory",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 87658
+    },
+    {
+      "id": "T18",
+      "mode": "driver",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 57750
+    },
+    {
+      "id": "T05",
+      "mode": "driver",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 55749
+    },
+    {
+      "id": "T05",
+      "mode": "advisory",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 75186
+    },
+    {
+      "id": "T06",
+      "mode": "advisory",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 158868
+    },
+    {
+      "id": "T06",
+      "mode": "driver",
+      "round": 3,
+      "objectivePassed": false,
+      "grade": "fail",
+      "diagnosis": "运行时异常；输出格式不符；记录恢复",
+      "elapsedMs": 240000
+    },
+    {
+      "id": "T15",
+      "mode": "driver",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 17865
+    },
+    {
+      "id": "T15",
+      "mode": "advisory",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 56414
+    },
+    {
+      "id": "T20",
+      "mode": "advisory",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 81460
+    },
+    {
+      "id": "T20",
+      "mode": "driver",
+      "round": 3,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 80407
+    }
+  ]
+}

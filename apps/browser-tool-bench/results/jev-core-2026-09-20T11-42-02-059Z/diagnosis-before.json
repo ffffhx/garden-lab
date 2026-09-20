@@ -1,0 +1,1667 @@
+{
+  "withOverlay": true,
+  "cycleOverlay": true,
+  "baselineOverlay": true,
+  "trials": [
+    {
+      "i": 0,
+      "sessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "ok": false,
+      "error": "{\"success\":false,\"data\":null,\"error\":\"CDP error (Runtime.evaluate): CDP Session 不属于当前 Agent 连接\"}\n"
+    }
+  ],
+  "trace": [
+    {
+      "at": 1789907142964,
+      "kind": "agent-command",
+      "id": 1,
+      "method": "Target.setDiscoverTargets",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907142965,
+      "kind": "chrome-command",
+      "id": 1,
+      "method": "Target.setDiscoverTargets"
+    },
+    {
+      "at": 1789907142987,
+      "kind": "chrome-message",
+      "method": "Target.targetCreated",
+      "targetId": "54FCF4D1610EFC803FE982CA6EC0E99B",
+      "targetType": "browser_ui"
+    },
+    {
+      "at": 1789907142991,
+      "kind": "chrome-message",
+      "method": "Target.targetCreated",
+      "targetId": "681361FC9E56E06C8E2EFF2D488C119D",
+      "targetType": "background_page"
+    },
+    {
+      "at": 1789907142993,
+      "kind": "chrome-message",
+      "method": "Target.targetCreated",
+      "targetId": "D7DB50D5218A59B9B5678433C8DCE2CB",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907142993,
+      "kind": "chrome-message",
+      "method": "Target.targetCreated",
+      "targetId": "F5473711102B4B06BD7B820BF3311B0A",
+      "targetType": "browser_ui"
+    },
+    {
+      "at": 1789907142995,
+      "kind": "agent-command",
+      "id": 2,
+      "method": "Target.getTargets",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907142995,
+      "kind": "chrome-command",
+      "id": 2,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907143000,
+      "kind": "chrome-message",
+      "method": "Target.targetCreated",
+      "targetId": "BBF7F29ECE95CAF8A376FE0B37D872EC",
+      "targetType": "service_worker"
+    },
+    {
+      "at": 1789907143003,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "54FCF4D1610EFC803FE982CA6EC0E99B",
+      "targetType": "browser_ui"
+    },
+    {
+      "at": 1789907143012,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "D7DB50D5218A59B9B5678433C8DCE2CB",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907143017,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "F5473711102B4B06BD7B820BF3311B0A",
+      "targetType": "browser_ui"
+    },
+    {
+      "at": 1789907143021,
+      "kind": "agent-command",
+      "id": 3,
+      "method": "Target.createTarget",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143022,
+      "kind": "chrome-command",
+      "id": 3,
+      "method": "Target.createTarget"
+    },
+    {
+      "at": 1789907143036,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "681361FC9E56E06C8E2EFF2D488C119D",
+      "targetType": "background_page"
+    },
+    {
+      "at": 1789907143052,
+      "kind": "chrome-message",
+      "method": "Target.targetCreated",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907143059,
+      "kind": "agent-command",
+      "id": 4,
+      "method": "Target.attachToTarget",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143059,
+      "kind": "chrome-command",
+      "id": 4,
+      "method": "Target.attachToTarget",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010"
+    },
+    {
+      "at": 1789907143064,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907143064,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907143065,
+      "kind": "chrome-message",
+      "method": "Target.attachedToTarget",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907143065,
+      "kind": "bindCdpSession",
+      "cdp": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "target": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66"
+    },
+    {
+      "at": 1789907143065,
+      "kind": "chrome-message",
+      "id": 4,
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143065,
+      "kind": "bindCdpSession",
+      "cdp": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "target": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66"
+    },
+    {
+      "at": 1789907143065,
+      "kind": "agent-command",
+      "id": 5,
+      "method": "Page.enable",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+        "agentSessionId": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143066,
+      "kind": "chrome-command",
+      "id": 5,
+      "method": "Page.enable",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143072,
+      "kind": "agent-command",
+      "id": 6,
+      "method": "Runtime.enable",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+        "agentSessionId": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143072,
+      "kind": "chrome-command",
+      "id": 6,
+      "method": "Runtime.enable",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143075,
+      "kind": "agent-command",
+      "id": 7,
+      "method": "Network.enable",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+        "agentSessionId": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143075,
+      "kind": "chrome-command",
+      "id": 7,
+      "method": "Network.enable",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143077,
+      "kind": "agent-command",
+      "id": 8,
+      "method": "Target.setAutoAttach",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+        "agentSessionId": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143078,
+      "kind": "chrome-command",
+      "id": 8,
+      "method": "Target.setAutoAttach",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "autoAttach": true
+    },
+    {
+      "at": 1789907143084,
+      "kind": "agent-command",
+      "id": 9,
+      "method": "Runtime.runIfWaitingForDebugger",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+        "agentSessionId": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143084,
+      "kind": "chrome-command",
+      "id": 9,
+      "method": "Runtime.runIfWaitingForDebugger",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143333,
+      "kind": "chrome-command",
+      "id": 10,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907143595,
+      "kind": "agent-command",
+      "id": 10,
+      "method": "Browser.getVersion",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143595,
+      "kind": "chrome-command",
+      "id": 11,
+      "method": "Browser.getVersion"
+    },
+    {
+      "at": 1789907143595,
+      "kind": "agent-command",
+      "id": 11,
+      "method": "Page.navigate",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+        "agentSessionId": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143595,
+      "kind": "chrome-command",
+      "id": 12,
+      "method": "Page.navigate",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143604,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907143605,
+      "kind": "agent-command",
+      "id": 12,
+      "method": "Runtime.evaluate",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+        "agentSessionId": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143605,
+      "kind": "chrome-command",
+      "id": 13,
+      "method": "Runtime.evaluate",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143607,
+      "kind": "agent-command",
+      "id": 13,
+      "method": "Runtime.evaluate",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "agent": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995",
+      "connection": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+        "agentSessionId": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907143607,
+      "kind": "chrome-command",
+      "id": 14,
+      "method": "Runtime.evaluate",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143631,
+      "kind": "chrome-command",
+      "id": 15,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907143812,
+      "kind": "chrome-command",
+      "id": 16,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907143816,
+      "kind": "chrome-command",
+      "id": 17,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907143819,
+      "kind": "unbindCdpSession",
+      "cdp": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "945c2afd-0ab8-471d-af3a-d7bc6bcbbf66",
+        "agentSessionId": "pp-fixture-ea45a756-52b7-4645-8e02-958656f4c995"
+      }
+    },
+    {
+      "at": 1789907143819,
+      "kind": "chrome-command",
+      "id": 18,
+      "method": "Target.setAutoAttach",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "autoAttach": false
+    },
+    {
+      "at": 1789907143881,
+      "kind": "chrome-command",
+      "id": 19,
+      "method": "Target.detachFromTarget",
+      "detached": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143882,
+      "kind": "chrome-message",
+      "method": "Target.detachedFromTarget",
+      "sessionId": "2F3C4C9D718903B2FDBF47F428D6A661",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010"
+    },
+    {
+      "at": 1789907143882,
+      "kind": "unbindCdpSession",
+      "cdp": "2F3C4C9D718903B2FDBF47F428D6A661"
+    },
+    {
+      "at": 1789907143882,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907144293,
+      "kind": "chrome-message",
+      "method": "Target.targetCreated",
+      "targetId": "BDCBE1DF31EB5ECFCE0E3431127E19B7",
+      "targetType": "iframe"
+    },
+    {
+      "at": 1789907144296,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "BDCBE1DF31EB5ECFCE0E3431127E19B7",
+      "targetType": "iframe"
+    },
+    {
+      "at": 1789907145108,
+      "kind": "fixture",
+      "profileId": "isolated:c42bc88c-8cc6-4242-971e-58084a9d84ff",
+      "port": 9225
+    },
+    {
+      "at": 1789907145111,
+      "kind": "trial-start",
+      "i": 0,
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+    },
+    {
+      "at": 1789907145135,
+      "kind": "agent-command",
+      "id": 1,
+      "method": "Target.setDiscoverTargets",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145135,
+      "kind": "chrome-command",
+      "id": 20,
+      "method": "Target.setDiscoverTargets"
+    },
+    {
+      "at": 1789907145137,
+      "kind": "chrome-command",
+      "id": 21,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907145139,
+      "kind": "agent-command",
+      "id": 2,
+      "method": "Target.attachToTarget",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145139,
+      "kind": "chrome-command",
+      "id": 22,
+      "method": "Target.attachToTarget",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010"
+    },
+    {
+      "at": 1789907145139,
+      "kind": "agent-command",
+      "id": 3,
+      "method": "Target.attachToTarget",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145139,
+      "kind": "chrome-command",
+      "id": 23,
+      "method": "Target.attachToTarget",
+      "targetId": "D7DB50D5218A59B9B5678433C8DCE2CB"
+    },
+    {
+      "at": 1789907145139,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907145139,
+      "kind": "chrome-message",
+      "method": "Target.attachedToTarget",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907145140,
+      "kind": "chrome-message",
+      "id": 22,
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145142,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "D7DB50D5218A59B9B5678433C8DCE2CB",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907145142,
+      "kind": "chrome-message",
+      "method": "Target.attachedToTarget",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "targetId": "D7DB50D5218A59B9B5678433C8DCE2CB",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907145142,
+      "kind": "chrome-message",
+      "id": 23,
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145142,
+      "kind": "agent-command",
+      "id": 4,
+      "method": "Runtime.enable",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145142,
+      "kind": "chrome-command",
+      "id": 24,
+      "method": "Runtime.enable",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145142,
+      "kind": "chrome-command",
+      "id": 25,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907145142,
+      "kind": "agent-command",
+      "id": 5,
+      "method": "Runtime.enable",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145142,
+      "kind": "chrome-command",
+      "id": 26,
+      "method": "Runtime.enable",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145146,
+      "kind": "agent-command",
+      "id": 6,
+      "method": "Page.enable",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145146,
+      "kind": "chrome-command",
+      "id": 27,
+      "method": "Page.enable",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145147,
+      "kind": "chrome-command",
+      "id": 28,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907145147,
+      "kind": "agent-command",
+      "id": 7,
+      "method": "Page.enable",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145147,
+      "kind": "chrome-command",
+      "id": 29,
+      "method": "Page.enable",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145148,
+      "kind": "agent-command",
+      "id": 8,
+      "method": "Runtime.evaluate",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145148,
+      "kind": "chrome-command",
+      "id": 30,
+      "method": "Runtime.evaluate",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145148,
+      "kind": "agent-command",
+      "id": 9,
+      "method": "Runtime.evaluate",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145148,
+      "kind": "chrome-command",
+      "id": 31,
+      "method": "Runtime.evaluate",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145149,
+      "kind": "agent-command",
+      "id": 10,
+      "method": "Runtime.addBinding",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145149,
+      "kind": "chrome-command",
+      "id": 32,
+      "method": "Runtime.addBinding",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145155,
+      "kind": "agent-command",
+      "id": 11,
+      "method": "Page.addScriptToEvaluateOnNewDocument",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145158,
+      "kind": "chrome-command",
+      "id": 33,
+      "method": "Page.addScriptToEvaluateOnNewDocument",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145159,
+      "kind": "agent-command",
+      "id": 12,
+      "method": "Runtime.addBinding",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145159,
+      "kind": "chrome-command",
+      "id": 34,
+      "method": "Runtime.addBinding",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145171,
+      "kind": "agent-command",
+      "id": 13,
+      "method": "Page.addScriptToEvaluateOnNewDocument",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145173,
+      "kind": "chrome-command",
+      "id": 35,
+      "method": "Page.addScriptToEvaluateOnNewDocument",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145175,
+      "kind": "agent-command",
+      "id": 14,
+      "method": "Page.getFrameTree",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145175,
+      "kind": "chrome-command",
+      "id": 36,
+      "method": "Page.getFrameTree",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145177,
+      "kind": "agent-command",
+      "id": 15,
+      "method": "Page.createIsolatedWorld",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145177,
+      "kind": "chrome-command",
+      "id": 37,
+      "method": "Page.createIsolatedWorld",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145177,
+      "kind": "agent-command",
+      "id": 16,
+      "method": "Page.getFrameTree",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145177,
+      "kind": "chrome-command",
+      "id": 38,
+      "method": "Page.getFrameTree",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145178,
+      "kind": "agent-command",
+      "id": 17,
+      "method": "Page.createIsolatedWorld",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145178,
+      "kind": "chrome-command",
+      "id": 39,
+      "method": "Page.createIsolatedWorld",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145184,
+      "kind": "agent-command",
+      "id": 18,
+      "method": "Runtime.evaluate",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145185,
+      "kind": "chrome-command",
+      "id": 40,
+      "method": "Runtime.evaluate",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145191,
+      "kind": "agent-command",
+      "id": 19,
+      "method": "Runtime.evaluate",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145193,
+      "kind": "chrome-command",
+      "id": 41,
+      "method": "Runtime.evaluate",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145204,
+      "kind": "agent-command",
+      "id": 20,
+      "method": "Runtime.evaluate",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145204,
+      "kind": "chrome-command",
+      "id": 42,
+      "method": "Runtime.evaluate",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907145204,
+      "kind": "agent-command",
+      "id": 21,
+      "method": "Runtime.evaluate",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145204,
+      "kind": "chrome-command",
+      "id": 43,
+      "method": "Runtime.evaluate",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907145599,
+      "kind": "agent-command",
+      "id": 1,
+      "method": "Target.setDiscoverTargets",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145599,
+      "kind": "chrome-command",
+      "id": 44,
+      "method": "Target.setDiscoverTargets"
+    },
+    {
+      "at": 1789907145600,
+      "kind": "agent-command",
+      "id": 2,
+      "method": "Target.getTargets",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145600,
+      "kind": "chrome-command",
+      "id": 45,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907145600,
+      "kind": "agent-command",
+      "id": 3,
+      "method": "Target.attachToTarget",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145600,
+      "kind": "chrome-command",
+      "id": 46,
+      "method": "Target.attachToTarget",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010"
+    },
+    {
+      "at": 1789907145601,
+      "kind": "chrome-message",
+      "method": "Target.attachedToTarget",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907145601,
+      "kind": "bindCdpSession",
+      "cdp": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "target": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62"
+    },
+    {
+      "at": 1789907145601,
+      "kind": "chrome-message",
+      "id": 46,
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145601,
+      "kind": "bindCdpSession",
+      "cdp": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "target": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62"
+    },
+    {
+      "at": 1789907145601,
+      "kind": "agent-command",
+      "id": 4,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145601,
+      "kind": "chrome-command",
+      "id": 47,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145601,
+      "kind": "agent-command",
+      "id": 22,
+      "method": "Runtime.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145601,
+      "kind": "chrome-command",
+      "id": 48,
+      "method": "Runtime.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145602,
+      "kind": "agent-command",
+      "id": 5,
+      "method": "Page.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145602,
+      "kind": "chrome-command",
+      "id": 49,
+      "method": "Page.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145602,
+      "kind": "agent-command",
+      "id": 23,
+      "method": "Page.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145602,
+      "kind": "chrome-command",
+      "id": 50,
+      "method": "Page.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145602,
+      "kind": "agent-command",
+      "id": 6,
+      "method": "Runtime.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145602,
+      "kind": "chrome-command",
+      "id": 51,
+      "method": "Runtime.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145602,
+      "kind": "agent-command",
+      "id": 24,
+      "method": "Runtime.addBinding",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145602,
+      "kind": "chrome-command",
+      "id": 52,
+      "method": "Runtime.addBinding",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145603,
+      "kind": "agent-command",
+      "id": 7,
+      "method": "Network.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145603,
+      "kind": "chrome-command",
+      "id": 53,
+      "method": "Network.enable",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145605,
+      "kind": "agent-command",
+      "id": 25,
+      "method": "Page.addScriptToEvaluateOnNewDocument",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145605,
+      "kind": "chrome-command",
+      "id": 54,
+      "method": "Page.addScriptToEvaluateOnNewDocument",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145606,
+      "kind": "agent-command",
+      "id": 8,
+      "method": "Target.setAutoAttach",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145606,
+      "kind": "chrome-command",
+      "id": 55,
+      "method": "Target.setAutoAttach",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "autoAttach": true
+    },
+    {
+      "at": 1789907145609,
+      "kind": "agent-command",
+      "id": 26,
+      "method": "Page.getFrameTree",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145609,
+      "kind": "chrome-command",
+      "id": 56,
+      "method": "Page.getFrameTree",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145609,
+      "kind": "agent-command",
+      "id": 9,
+      "method": "Runtime.runIfWaitingForDebugger",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145609,
+      "kind": "chrome-command",
+      "id": 57,
+      "method": "Runtime.runIfWaitingForDebugger",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145610,
+      "kind": "agent-command",
+      "id": 27,
+      "method": "Page.createIsolatedWorld",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145610,
+      "kind": "chrome-command",
+      "id": 58,
+      "method": "Page.createIsolatedWorld",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145612,
+      "kind": "agent-command",
+      "id": 28,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145612,
+      "kind": "chrome-command",
+      "id": 59,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145616,
+      "kind": "agent-command",
+      "id": 29,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907145616,
+      "kind": "chrome-command",
+      "id": 60,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907145838,
+      "kind": "chrome-command",
+      "id": 61,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907146098,
+      "kind": "agent-command",
+      "id": 10,
+      "method": "Browser.getVersion",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146098,
+      "kind": "chrome-command",
+      "id": 62,
+      "method": "Browser.getVersion"
+    },
+    {
+      "at": 1789907146098,
+      "kind": "agent-command",
+      "id": 11,
+      "method": "Page.navigate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146098,
+      "kind": "chrome-command",
+      "id": 63,
+      "method": "Page.navigate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907146117,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907146119,
+      "kind": "chrome-command",
+      "id": 64,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907146155,
+      "kind": "agent-command",
+      "id": 12,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146155,
+      "kind": "chrome-command",
+      "id": 65,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907146156,
+      "kind": "agent-command",
+      "id": 13,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146156,
+      "kind": "chrome-command",
+      "id": 66,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907146179,
+      "kind": "chrome-command",
+      "id": 67,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907146275,
+      "kind": "overlay-cleanup-start",
+      "i": 0
+    },
+    {
+      "at": 1789907146276,
+      "kind": "agent-command",
+      "id": 30,
+      "method": "Page.removeScriptToEvaluateOnNewDocument",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146276,
+      "kind": "chrome-command",
+      "id": 68,
+      "method": "Page.removeScriptToEvaluateOnNewDocument",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907146276,
+      "kind": "agent-command",
+      "id": 31,
+      "method": "Page.removeScriptToEvaluateOnNewDocument",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146276,
+      "kind": "chrome-command",
+      "id": 69,
+      "method": "Page.removeScriptToEvaluateOnNewDocument",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907146277,
+      "kind": "agent-command",
+      "id": 32,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146277,
+      "kind": "chrome-command",
+      "id": 70,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907146277,
+      "kind": "agent-command",
+      "id": 33,
+      "method": "Runtime.evaluate",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146277,
+      "kind": "chrome-command",
+      "id": 71,
+      "method": "Runtime.evaluate",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907146278,
+      "kind": "agent-command",
+      "id": 34,
+      "method": "Runtime.removeBinding",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146278,
+      "kind": "chrome-command",
+      "id": 72,
+      "method": "Runtime.removeBinding",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907146278,
+      "kind": "agent-command",
+      "id": 35,
+      "method": "Runtime.removeBinding",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146278,
+      "kind": "chrome-command",
+      "id": 73,
+      "method": "Runtime.removeBinding",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907146278,
+      "kind": "agent-command",
+      "id": 36,
+      "method": "Target.detachFromTarget",
+      "detached": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "detachedBinding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      },
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146278,
+      "kind": "chrome-command",
+      "id": 74,
+      "method": "Target.detachFromTarget",
+      "detached": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907146278,
+      "kind": "chrome-message",
+      "method": "Target.detachedFromTarget",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010"
+    },
+    {
+      "at": 1789907146278,
+      "kind": "unbindCdpSession",
+      "cdp": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "binding": {
+        "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+        "connectionId": "8dcca067-78f1-4969-919d-85cb53959c62",
+        "agentSessionId": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547"
+      }
+    },
+    {
+      "at": 1789907146278,
+      "kind": "unbindCdpSession",
+      "cdp": "796F1A12077C7BC7BF2F3820C8D5D3E4"
+    },
+    {
+      "at": 1789907146279,
+      "kind": "agent-command",
+      "id": 37,
+      "method": "Target.detachFromTarget",
+      "detached": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "agent": "internal:19192",
+      "connection": "fd3195a6-25b2-4a0f-9cc9-b357e7109ce1",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146279,
+      "kind": "chrome-command",
+      "id": 75,
+      "method": "Target.detachFromTarget",
+      "detached": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907146279,
+      "kind": "chrome-message",
+      "method": "Target.detachedFromTarget",
+      "sessionId": "6DE59C8CA4FE84B712A69B5D28E8D254",
+      "targetId": "D7DB50D5218A59B9B5678433C8DCE2CB"
+    },
+    {
+      "at": 1789907146279,
+      "kind": "unbindCdpSession",
+      "cdp": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907146279,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "D7DB50D5218A59B9B5678433C8DCE2CB",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907146279,
+      "kind": "unbindCdpSession",
+      "cdp": "6DE59C8CA4FE84B712A69B5D28E8D254"
+    },
+    {
+      "at": 1789907146279,
+      "kind": "overlay-cleanup-end",
+      "i": 0
+    },
+    {
+      "at": 1789907146288,
+      "kind": "unbindCdpSession",
+      "cdp": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907146288,
+      "kind": "chrome-command",
+      "id": 76,
+      "method": "Target.detachFromTarget",
+      "detached": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907146289,
+      "kind": "chrome-message",
+      "method": "Target.detachedFromTarget",
+      "sessionId": "76C10DEFA95ECF47452B6DCFA5B911CB",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010"
+    },
+    {
+      "at": 1789907146289,
+      "kind": "unbindCdpSession",
+      "cdp": "76C10DEFA95ECF47452B6DCFA5B911CB"
+    },
+    {
+      "at": 1789907146289,
+      "kind": "chrome-message",
+      "method": "Target.targetInfoChanged",
+      "targetId": "C8E0928CA93F26CDE4F2DCFF9AD6C010",
+      "targetType": "page"
+    },
+    {
+      "at": 1789907146344,
+      "kind": "chrome-command",
+      "id": 77,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907146350,
+      "kind": "chrome-command",
+      "id": 78,
+      "method": "Target.getTargets"
+    },
+    {
+      "at": 1789907146617,
+      "kind": "agent-command",
+      "id": 14,
+      "method": "Browser.getVersion",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "reconnecting": false
+    },
+    {
+      "at": 1789907146617,
+      "kind": "chrome-command",
+      "id": 79,
+      "method": "Browser.getVersion"
+    },
+    {
+      "at": 1789907146617,
+      "kind": "agent-command",
+      "id": 15,
+      "method": "Runtime.evaluate",
+      "sessionId": "796F1A12077C7BC7BF2F3820C8D5D3E4",
+      "agent": "pp-diagnose-150e6661-dc6d-428f-b4ce-dddc99dc5547",
+      "connection": "8dcca067-78f1-4969-919d-85cb53959c62",
+      "reconnecting": false
+    }
+  ]
+}

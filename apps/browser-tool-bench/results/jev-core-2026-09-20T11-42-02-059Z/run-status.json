@@ -1,0 +1,14 @@
+{
+  "status": "连接错误后停止，等待重启授权",
+  "reason": "第 8 次 T20-driver-r1 在首次观察时被 Gateway 拒绝 CDP 会话归属，未调用 Jev。已保留记录并停止全部浏览器操作；计划 36 次尚未完成，当前只有 3 对有效原题结果，不能视为三轮结论。",
+  "gateway": {
+    "pid": 26328,
+    "protocolVersion": 14,
+    "expectedProtocolVersion": 15,
+    "startedLocal": "2026-09-15 23:39:12 +08:00",
+    "managedActivePorts": [9223, 9224, 9226, 9227]
+  },
+  "cause": "尚未证实。已确认 Gateway 版本落后，需先统一运行环境；仅改变准备会话没有消除错误。日志最后显示 user_takeover 是测试脚本调用 service.control(pause) 后的事件，不是已确认的人工点击。",
+  "runtimeChanged": false,
+  "automaticResumeAttempted": false
+}

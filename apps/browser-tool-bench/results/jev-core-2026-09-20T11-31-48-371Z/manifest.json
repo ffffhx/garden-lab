@@ -1,0 +1,85 @@
+{
+  "runId": "jev-core-2026-09-20T11-31-48-371Z",
+  "startedAt": "2026-09-20T11:31:48.956Z",
+  "profileId": "isolated:80857b67-d3d2-4238-ba86-549dad6b6343",
+  "port": 9227,
+  "model": "kimi-k3",
+  "provider": "api.moonshot.cn",
+  "jevProvider": "typesafe",
+  "node": "v22.14.0",
+  "platform": "win32",
+  "rounds": 3,
+  "tasks": [
+    {
+      "id": "T05",
+      "name": "动态列表",
+      "card": "apps\\browser-tool-bench\\tasks\\T05-动态渲染与等待.md",
+      "sha256": "7d6153c06eae02325c555b09497831a48235c7b7fc5208ec757db37a6f519289",
+      "prompt": "打开 http://localhost:4399/livefeed ，把所有动态都加载完（包括点\"加载更多\"之后的），然后告诉我：页面上最终一共有多少条动态？最后一条动态里的口令是什么？"
+    },
+    {
+      "id": "T06",
+      "name": "分页商品 JSON",
+      "card": "apps\\browser-tool-bench\\tasks\\T06-结构化提取.md",
+      "sha256": "75ae267a372cac85a8592b9409d9387907addc31505da670799c041a43d7204e",
+      "prompt": "打开 http://localhost:4399/catalog ，把全部商品（注意有第二页）整理成 JSON 数组，每项包含 name、price（数字）、stock（数字），按 price 从高到低排序。最后告诉我最贵的商品是什么、多少钱。"
+    },
+    {
+      "id": "T15",
+      "name": "SSE 实时流",
+      "card": "apps\\browser-tool-bench\\tasks\\T15-SSE实时流等待.md",
+      "sha256": "df8763b744a54e363ea031a4878b43542558180cd924352456a6207fc8ea3703",
+      "prompt": "打开 http://localhost:4399/realtime ，点击\"开始接收\"，等实时事件流接收完成。请告诉我一共收到多少条事件，最后一条事件的 id 是什么，关键告警 code 是什么。"
+    },
+    {
+      "id": "T20",
+      "name": "10 次检查统计",
+      "card": "apps\\browser-tool-bench\\tasks\\T20-回归稳定性Flake率.md",
+      "sha256": "35d08b3462ce8ce9d35b23704953a409a7612579fccf69e749571ed0d8c3428c",
+      "prompt": "打开 http://localhost:4399/flake ，运行页面上的\"运行 10 次\"检查。请统计通过次数、失败次数、失败轮次和稳定性代码，并判断这个检查是否稳定。"
+    },
+    {
+      "id": "T08",
+      "name": "登录与 Shadow DOM",
+      "card": "apps\\browser-tool-bench\\tasks\\T08-ShadowDOM操作.md",
+      "sha256": "aadc16c139a3b1b018d106321d1c16061424502565f66c2b0b4e3da6d6686b1f",
+      "prompt": "登录 http://localhost:4399/login （账号 agent@bench.dev / bench-2026）后，在控制台页面的\"每日福利\"卡片里点击\"领取今日奖励\"按钮，告诉我领到的兑换码是什么。"
+    },
+    {
+      "id": "T18",
+      "name": "文件上传",
+      "card": "apps\\browser-tool-bench\\tasks\\T18-文件上传输入.md",
+      "sha256": "d9fbaf699ab1e38d7063617dc48c44716d4af93593489618150a3ac7e0dc066a",
+      "prompt": "打开 http://localhost:4399/input-lab ，把仓库里的 apps/browser-tool-bench/fixtures/upload-token.txt 上传到页面。上传后告诉我页面解析出的文件名、字节数和 token。"
+    }
+  ],
+  "codeHashes": {
+    "service": "42270a3b58513d33e10f87221f34601df6a7111a3321ba08a1f162751a0a253f",
+    "browser": "3b0488f57d991ef8c401c87bf7a0cdffbe07ee1417c268369780324785305d0e",
+    "fast-browser": "cbfb0512a8ab5e7d67166f694d1719fdbb8041216b8b3df0d30606617ccaee7c",
+    "jev-driver": "f873013c921bf47369bf69ffb8e9977f32a0448e124ddb6b8a82edb065bfffd5",
+    "jev-actions": "25f74309b66f1a75cd96ee30fd9e1a9aa6c24b8751748070aa4e9dc65052b4eb",
+    "task-helper": "27dbcc20a85577c2bd4c33adecbd64f55a52c916d036ea62df5c5dfa8442a176",
+    "worker": "d7e7d1b7c97defe422471ddb508ff59e8e29b8dd583a65efcf8d4c2a98fa4093",
+    "jev": "ca02d4821de0f09330467faa64f9cda3166261d1fa912121287c86c73ae2093a"
+  },
+  "serverSha256": "ce72a82e693c66b331c697086ce1e513e44f0b38264c75f16f14a1708ac38d63",
+  "modes": [
+    "driver",
+    "advisory"
+  ],
+  "limits": {
+    "minutes": 4,
+    "actions": 35,
+    "budgetUsd": 0.6
+  },
+  "rules": [
+    "Original task prompts verbatim; no answers supplied to model.",
+    "Each cell uses a fresh task store and SDK session; synthetic fixture sessions reset.",
+    "Same real Chrome Profile, warm browser; serial execution with alternating mode and rotating task order.",
+    "Measure task start through agent drain and release; independent validation afterwards excluded.",
+    "Keep blocked, partial, timeout and failure cells; no human rescue or success-only reruns.",
+    "Compare complete product modes, including snapshot transport, helper prompting/thinking and fallback; not isolated model latency.",
+    "Do not compare numerically with historical six-tool article runs."
+  ]
+}

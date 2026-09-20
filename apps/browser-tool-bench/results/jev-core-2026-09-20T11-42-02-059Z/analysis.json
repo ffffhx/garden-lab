@@ -1,0 +1,449 @@
+{
+  "totals": {
+    "driver": {
+      "runs": 4,
+      "passed": 3,
+      "fallback": 2,
+      "jevActions": 2,
+      "jevCalls": 11,
+      "helperCalls": 1,
+      "sdkEstimatedUsd": 0.160933,
+      "infrastructureFailures": 1,
+      "unverifiedCompletions": 0,
+      "objectivePassed": 3,
+      "correctButIncomplete": 0
+    },
+    "advisory": {
+      "runs": 4,
+      "passed": 3,
+      "fallback": 4,
+      "jevActions": 0,
+      "jevCalls": 9,
+      "helperCalls": 0,
+      "sdkEstimatedUsd": 0.35528,
+      "infrastructureFailures": 0,
+      "unverifiedCompletions": 0,
+      "objectivePassed": 4,
+      "correctButIncomplete": 1
+    }
+  },
+  "rows": [
+    {
+      "id": "T05",
+      "name": "动态列表",
+      "driver": {
+        "count": 1,
+        "passed": 1,
+        "medianMs": 62518,
+        "fallback": 1
+      },
+      "advisory": {
+        "count": 1,
+        "passed": 1,
+        "medianMs": 130382
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 62518,
+          "advisoryMs": 130382,
+          "reductionPct": 52.050129619119204
+        }
+      ],
+      "pairMedianReductionPct": 52.050129619119204
+    },
+    {
+      "id": "T06",
+      "name": "分页商品 JSON",
+      "driver": {
+        "count": 1,
+        "passed": 1,
+        "medianMs": 105251,
+        "fallback": 1
+      },
+      "advisory": {
+        "count": 1,
+        "passed": 0,
+        "medianMs": null
+      },
+      "paired": [],
+      "pairMedianReductionPct": null
+    },
+    {
+      "id": "T15",
+      "name": "SSE 实时流",
+      "driver": {
+        "count": 1,
+        "passed": 1,
+        "medianMs": 10056,
+        "fallback": 0
+      },
+      "advisory": {
+        "count": 1,
+        "passed": 1,
+        "medianMs": 66279
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 10056,
+          "advisoryMs": 66279,
+          "reductionPct": 84.82777350291948
+        }
+      ],
+      "pairMedianReductionPct": 84.82777350291948
+    },
+    {
+      "id": "T20",
+      "name": "10 次检查统计",
+      "driver": {
+        "count": 1,
+        "passed": 0,
+        "medianMs": null,
+        "fallback": 0
+      },
+      "advisory": {
+        "count": 1,
+        "passed": 1,
+        "medianMs": 88014
+      },
+      "paired": [],
+      "pairMedianReductionPct": null
+    },
+    {
+      "id": "T08",
+      "name": "登录与 Shadow DOM",
+      "driver": {
+        "count": 0,
+        "passed": 0,
+        "medianMs": null,
+        "fallback": 0
+      },
+      "advisory": {
+        "count": 0,
+        "passed": 0,
+        "medianMs": null
+      },
+      "paired": [],
+      "pairMedianReductionPct": null
+    },
+    {
+      "id": "T18",
+      "name": "文件上传",
+      "driver": {
+        "count": 0,
+        "passed": 0,
+        "medianMs": null,
+        "fallback": 0
+      },
+      "advisory": {
+        "count": 0,
+        "passed": 0,
+        "medianMs": null
+      },
+      "paired": [],
+      "pairMedianReductionPct": null
+    }
+  ],
+  "objectiveRows": [
+    {
+      "id": "T05",
+      "name": "动态列表",
+      "driver": {
+        "count": 1,
+        "passed": 1,
+        "strictPassed": 1,
+        "fallback": 1,
+        "medianMs": 62518,
+        "minMs": 62518,
+        "maxMs": 62518,
+        "strictRange": {
+          "medianMs": 62518,
+          "minMs": 62518,
+          "maxMs": 62518
+        }
+      },
+      "advisory": {
+        "count": 1,
+        "passed": 1,
+        "strictPassed": 1,
+        "fallback": 1,
+        "medianMs": 130382,
+        "minMs": 130382,
+        "maxMs": 130382,
+        "strictRange": {
+          "medianMs": 130382,
+          "minMs": 130382,
+          "maxMs": 130382
+        }
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 62518,
+          "advisoryMs": 130382,
+          "reductionPct": 52.050129619119204
+        }
+      ],
+      "pairMedianReductionPct": 52.050129619119204
+    },
+    {
+      "id": "T06",
+      "name": "分页商品 JSON",
+      "driver": {
+        "count": 1,
+        "passed": 1,
+        "strictPassed": 1,
+        "fallback": 1,
+        "medianMs": 105251,
+        "minMs": 105251,
+        "maxMs": 105251,
+        "strictRange": {
+          "medianMs": 105251,
+          "minMs": 105251,
+          "maxMs": 105251
+        }
+      },
+      "advisory": {
+        "count": 1,
+        "passed": 1,
+        "strictPassed": 0,
+        "fallback": 1,
+        "medianMs": 135020,
+        "minMs": 135020,
+        "maxMs": 135020,
+        "strictRange": {
+          "medianMs": null,
+          "minMs": null,
+          "maxMs": null
+        }
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 105251,
+          "advisoryMs": 135020,
+          "reductionPct": 22.0478447637387
+        }
+      ],
+      "pairMedianReductionPct": 22.0478447637387
+    },
+    {
+      "id": "T15",
+      "name": "SSE 实时流",
+      "driver": {
+        "count": 1,
+        "passed": 1,
+        "strictPassed": 1,
+        "fallback": 0,
+        "medianMs": 10056,
+        "minMs": 10056,
+        "maxMs": 10056,
+        "strictRange": {
+          "medianMs": 10056,
+          "minMs": 10056,
+          "maxMs": 10056
+        }
+      },
+      "advisory": {
+        "count": 1,
+        "passed": 1,
+        "strictPassed": 1,
+        "fallback": 1,
+        "medianMs": 66279,
+        "minMs": 66279,
+        "maxMs": 66279,
+        "strictRange": {
+          "medianMs": 66279,
+          "minMs": 66279,
+          "maxMs": 66279
+        }
+      },
+      "paired": [
+        {
+          "round": 1,
+          "driverMs": 10056,
+          "advisoryMs": 66279,
+          "reductionPct": 84.82777350291948
+        }
+      ],
+      "pairMedianReductionPct": 84.82777350291948
+    },
+    {
+      "id": "T20",
+      "name": "10 次检查统计",
+      "driver": {
+        "count": 1,
+        "passed": 0,
+        "strictPassed": 0,
+        "fallback": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "strictRange": {
+          "medianMs": null,
+          "minMs": null,
+          "maxMs": null
+        }
+      },
+      "advisory": {
+        "count": 1,
+        "passed": 1,
+        "strictPassed": 1,
+        "fallback": 1,
+        "medianMs": 88014,
+        "minMs": 88014,
+        "maxMs": 88014,
+        "strictRange": {
+          "medianMs": 88014,
+          "minMs": 88014,
+          "maxMs": 88014
+        }
+      },
+      "paired": [],
+      "pairMedianReductionPct": null
+    },
+    {
+      "id": "T08",
+      "name": "登录与 Shadow DOM",
+      "driver": {
+        "count": 0,
+        "passed": 0,
+        "strictPassed": 0,
+        "fallback": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "strictRange": {
+          "medianMs": null,
+          "minMs": null,
+          "maxMs": null
+        }
+      },
+      "advisory": {
+        "count": 0,
+        "passed": 0,
+        "strictPassed": 0,
+        "fallback": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "strictRange": {
+          "medianMs": null,
+          "minMs": null,
+          "maxMs": null
+        }
+      },
+      "paired": [],
+      "pairMedianReductionPct": null
+    },
+    {
+      "id": "T18",
+      "name": "文件上传",
+      "driver": {
+        "count": 0,
+        "passed": 0,
+        "strictPassed": 0,
+        "fallback": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "strictRange": {
+          "medianMs": null,
+          "minMs": null,
+          "maxMs": null
+        }
+      },
+      "advisory": {
+        "count": 0,
+        "passed": 0,
+        "strictPassed": 0,
+        "fallback": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "strictRange": {
+          "medianMs": null,
+          "minMs": null,
+          "maxMs": null
+        }
+      },
+      "paired": [],
+      "pairMedianReductionPct": null
+    }
+  ],
+  "cells": [
+    {
+      "id": "T05",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 62518
+    },
+    {
+      "id": "T05",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 130382
+    },
+    {
+      "id": "T06",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "partial",
+      "diagnosis": "未完成",
+      "elapsedMs": 135020
+    },
+    {
+      "id": "T06",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 105251
+    },
+    {
+      "id": "T15",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 10056
+    },
+    {
+      "id": "T15",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 66279
+    },
+    {
+      "id": "T20",
+      "mode": "advisory",
+      "round": 1,
+      "objectivePassed": true,
+      "grade": "pass",
+      "diagnosis": "通过",
+      "elapsedMs": 88014
+    },
+    {
+      "id": "T20",
+      "mode": "driver",
+      "round": 1,
+      "objectivePassed": false,
+      "grade": "fail",
+      "diagnosis": "连接/会话异常",
+      "elapsedMs": 3766
+    }
+  ]
+}

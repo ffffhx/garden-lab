@@ -1,0 +1,551 @@
+{
+  "manifest": {
+    "runId": "jev-core-2026-09-20T11-31-48-371Z",
+    "startedAt": "2026-09-20T11:31:48.956Z",
+    "profileId": "isolated:80857b67-d3d2-4238-ba86-549dad6b6343",
+    "port": 9227,
+    "model": "kimi-k3",
+    "provider": "api.moonshot.cn",
+    "jevProvider": "typesafe",
+    "node": "v22.14.0",
+    "platform": "win32",
+    "rounds": 3,
+    "tasks": [
+      {
+        "id": "T05",
+        "name": "动态列表",
+        "card": "apps\\browser-tool-bench\\tasks\\T05-动态渲染与等待.md",
+        "sha256": "7d6153c06eae02325c555b09497831a48235c7b7fc5208ec757db37a6f519289",
+        "prompt": "打开 http://localhost:4399/livefeed ，把所有动态都加载完（包括点\"加载更多\"之后的），然后告诉我：页面上最终一共有多少条动态？最后一条动态里的口令是什么？"
+      },
+      {
+        "id": "T06",
+        "name": "分页商品 JSON",
+        "card": "apps\\browser-tool-bench\\tasks\\T06-结构化提取.md",
+        "sha256": "75ae267a372cac85a8592b9409d9387907addc31505da670799c041a43d7204e",
+        "prompt": "打开 http://localhost:4399/catalog ，把全部商品（注意有第二页）整理成 JSON 数组，每项包含 name、price（数字）、stock（数字），按 price 从高到低排序。最后告诉我最贵的商品是什么、多少钱。"
+      },
+      {
+        "id": "T15",
+        "name": "SSE 实时流",
+        "card": "apps\\browser-tool-bench\\tasks\\T15-SSE实时流等待.md",
+        "sha256": "df8763b744a54e363ea031a4878b43542558180cd924352456a6207fc8ea3703",
+        "prompt": "打开 http://localhost:4399/realtime ，点击\"开始接收\"，等实时事件流接收完成。请告诉我一共收到多少条事件，最后一条事件的 id 是什么，关键告警 code 是什么。"
+      },
+      {
+        "id": "T20",
+        "name": "10 次检查统计",
+        "card": "apps\\browser-tool-bench\\tasks\\T20-回归稳定性Flake率.md",
+        "sha256": "35d08b3462ce8ce9d35b23704953a409a7612579fccf69e749571ed0d8c3428c",
+        "prompt": "打开 http://localhost:4399/flake ，运行页面上的\"运行 10 次\"检查。请统计通过次数、失败次数、失败轮次和稳定性代码，并判断这个检查是否稳定。"
+      },
+      {
+        "id": "T08",
+        "name": "登录与 Shadow DOM",
+        "card": "apps\\browser-tool-bench\\tasks\\T08-ShadowDOM操作.md",
+        "sha256": "aadc16c139a3b1b018d106321d1c16061424502565f66c2b0b4e3da6d6686b1f",
+        "prompt": "登录 http://localhost:4399/login （账号 agent@bench.dev / bench-2026）后，在控制台页面的\"每日福利\"卡片里点击\"领取今日奖励\"按钮，告诉我领到的兑换码是什么。"
+      },
+      {
+        "id": "T18",
+        "name": "文件上传",
+        "card": "apps\\browser-tool-bench\\tasks\\T18-文件上传输入.md",
+        "sha256": "d9fbaf699ab1e38d7063617dc48c44716d4af93593489618150a3ac7e0dc066a",
+        "prompt": "打开 http://localhost:4399/input-lab ，把仓库里的 apps/browser-tool-bench/fixtures/upload-token.txt 上传到页面。上传后告诉我页面解析出的文件名、字节数和 token。"
+      }
+    ],
+    "codeHashes": {
+      "service": "42270a3b58513d33e10f87221f34601df6a7111a3321ba08a1f162751a0a253f",
+      "browser": "3b0488f57d991ef8c401c87bf7a0cdffbe07ee1417c268369780324785305d0e",
+      "fast-browser": "cbfb0512a8ab5e7d67166f694d1719fdbb8041216b8b3df0d30606617ccaee7c",
+      "jev-driver": "f873013c921bf47369bf69ffb8e9977f32a0448e124ddb6b8a82edb065bfffd5",
+      "jev-actions": "25f74309b66f1a75cd96ee30fd9e1a9aa6c24b8751748070aa4e9dc65052b4eb",
+      "task-helper": "27dbcc20a85577c2bd4c33adecbd64f55a52c916d036ea62df5c5dfa8442a176",
+      "worker": "d7e7d1b7c97defe422471ddb508ff59e8e29b8dd583a65efcf8d4c2a98fa4093",
+      "jev": "ca02d4821de0f09330467faa64f9cda3166261d1fa912121287c86c73ae2093a"
+    },
+    "serverSha256": "ce72a82e693c66b331c697086ce1e513e44f0b38264c75f16f14a1708ac38d63",
+    "modes": [
+      "driver",
+      "advisory"
+    ],
+    "limits": {
+      "minutes": 4,
+      "actions": 35,
+      "budgetUsd": 0.6
+    },
+    "rules": [
+      "Original task prompts verbatim; no answers supplied to model.",
+      "Each cell uses a fresh task store and SDK session; synthetic fixture sessions reset.",
+      "Same real Chrome Profile, warm browser; serial execution with alternating mode and rotating task order.",
+      "Measure task start through agent drain and release; independent validation afterwards excluded.",
+      "Keep blocked, partial, timeout and failure cells; no human rescue or success-only reruns.",
+      "Compare complete product modes, including snapshot transport, helper prompting/thinking and fallback; not isolated model latency.",
+      "Do not compare numerically with historical six-tool article runs."
+    ]
+  },
+  "completed": 6,
+  "planned": 36,
+  "summary": [
+    {
+      "id": "T05",
+      "name": "动态列表",
+      "driver": {
+        "runs": 1,
+        "passed": 1,
+        "medianMs": 60995,
+        "minMs": 60995,
+        "maxMs": 60995,
+        "allDurations": [
+          {
+            "round": 1,
+            "ms": 60995,
+            "grade": "pass",
+            "fallback": true,
+            "status": "completed"
+          }
+        ]
+      },
+      "advisory": {
+        "runs": 1,
+        "passed": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "allDurations": [
+          {
+            "round": 1,
+            "ms": 92961,
+            "grade": "fail",
+            "fallback": true,
+            "status": "waiting_user"
+          }
+        ]
+      }
+    },
+    {
+      "id": "T06",
+      "name": "分页商品 JSON",
+      "driver": {
+        "runs": 1,
+        "passed": 1,
+        "medianMs": 135166,
+        "minMs": 135166,
+        "maxMs": 135166,
+        "allDurations": [
+          {
+            "round": 1,
+            "ms": 135166,
+            "grade": "pass",
+            "fallback": true,
+            "status": "completed"
+          }
+        ]
+      },
+      "advisory": {
+        "runs": 1,
+        "passed": 1,
+        "medianMs": 172858,
+        "minMs": 172858,
+        "maxMs": 172858,
+        "allDurations": [
+          {
+            "round": 1,
+            "ms": 172858,
+            "grade": "pass",
+            "fallback": true,
+            "status": "completed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "T15",
+      "name": "SSE 实时流",
+      "driver": {
+        "runs": 1,
+        "passed": 1,
+        "medianMs": 9403,
+        "minMs": 9403,
+        "maxMs": 9403,
+        "allDurations": [
+          {
+            "round": 1,
+            "ms": 9403,
+            "grade": "pass",
+            "fallback": false,
+            "status": "completed"
+          }
+        ]
+      },
+      "advisory": {
+        "runs": 1,
+        "passed": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "allDurations": [
+          {
+            "round": 1,
+            "ms": 86038,
+            "grade": "fail",
+            "fallback": true,
+            "status": "waiting_user"
+          }
+        ]
+      }
+    },
+    {
+      "id": "T20",
+      "name": "10 次检查统计",
+      "driver": {
+        "runs": 0,
+        "passed": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "allDurations": []
+      },
+      "advisory": {
+        "runs": 0,
+        "passed": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "allDurations": []
+      }
+    },
+    {
+      "id": "T08",
+      "name": "登录与 Shadow DOM",
+      "driver": {
+        "runs": 0,
+        "passed": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "allDurations": []
+      },
+      "advisory": {
+        "runs": 0,
+        "passed": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "allDurations": []
+      }
+    },
+    {
+      "id": "T18",
+      "name": "文件上传",
+      "driver": {
+        "runs": 0,
+        "passed": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "allDurations": []
+      },
+      "advisory": {
+        "runs": 0,
+        "passed": 0,
+        "medianMs": null,
+        "minMs": null,
+        "maxMs": null,
+        "allDurations": []
+      }
+    }
+  ],
+  "results": [
+    {
+      "taskId": "T05",
+      "name": "动态列表",
+      "mode": "driver",
+      "round": 1,
+      "grade": "pass",
+      "page": true,
+      "answer": true,
+      "status": "completed",
+      "elapsedMs": 60995,
+      "validationMs": 3,
+      "usage": {
+        "inputTokens": 25637,
+        "outputTokens": 620,
+        "costUsd": 0.061381,
+        "elapsedMs": 59612,
+        "actions": 2,
+        "jev": {
+          "calls": 3,
+          "inputTokens": 3541,
+          "elapsedMs": 1751
+        }
+      },
+      "fallback": true,
+      "result": {
+        "summary": "已加载完全部动态：点击\"加载更多\"后从 8 条增至 12 条，页面显示\"没有更多了\"。最终共 12 条动态；最后一条动态为\"系统公告：今日口令 LIVE-512\"，口令是 LIVE-512。",
+        "evidence": [
+          "已加载 12 条（没有更多了）",
+          "系统公告：今日口令 LIVE-512"
+        ],
+        "remaining": []
+      },
+      "validation": {
+        "url": "http://localhost:4399/livefeed",
+        "feed": [
+          "小林 发布了新文档《季度复盘》",
+          "构建流水线 #4821 通过",
+          "阿芳 评论了你的合并请求",
+          "监控告警已恢复：api-gateway 延迟",
+          "新成员 莫莫 加入了团队",
+          "周报机器人推送了上周摘要",
+          "设计稿《新版首页》更新到 v7",
+          "数据库备份任务完成",
+          "老张 关闭了工单 #233",
+          "灰度发布已扩量到 50%",
+          "客服值班表已更新",
+          "系统公告：今日口令 LIVE-512"
+        ],
+        "products": [],
+        "events": [],
+        "checks": [],
+        "file": null
+      },
+      "file": "T05-driver-r1.json"
+    },
+    {
+      "taskId": "T05",
+      "name": "动态列表",
+      "mode": "advisory",
+      "round": 1,
+      "grade": "fail",
+      "page": false,
+      "answer": false,
+      "status": "waiting_user",
+      "elapsedMs": 92961,
+      "validationMs": 0,
+      "usage": {
+        "inputTokens": 50288,
+        "outputTokens": 1253,
+        "costUsd": 0.081229,
+        "elapsedMs": 92945,
+        "actions": 3
+      },
+      "fallback": true,
+      "pending": {
+        "id": "be68f228-71ca-4545-ac23-e6c0efdabaab",
+        "kind": "handoff",
+        "title": "浏览器 CDP 连接失效（错误：CDP Session 不属于当前 Agent 连接），无法导航或观察页面。请重启浏览器/Agent 会话后交还，我会继续完成 livefeed 任务。",
+        "details": "",
+        "createdAt": "2026-09-20T11:34:23.671Z"
+      },
+      "file": "T05-advisory-r1.json"
+    },
+    {
+      "taskId": "T06",
+      "name": "分页商品 JSON",
+      "mode": "advisory",
+      "round": 1,
+      "grade": "pass",
+      "page": true,
+      "answer": true,
+      "status": "completed",
+      "elapsedMs": 172858,
+      "validationMs": 570,
+      "usage": {
+        "inputTokens": 95454,
+        "outputTokens": 3610,
+        "costUsd": 0.19529599999999997,
+        "elapsedMs": 171333,
+        "actions": 2,
+        "jev": {
+          "calls": 2,
+          "inputTokens": 3417,
+          "elapsedMs": 1772
+        }
+      },
+      "fallback": true,
+      "result": {
+        "summary": "已完成：读取 catalog 两页共 12 件商品，导出按 price 降序的 JSON 文件 catalog-products.json。最贵商品为「雷霆工作站」，¥15,999.00。完整数组：雷霆工作站15999/2、全画幅扫描仪3699/3、4K专业显示器2499/7、人体工学椅1899/0、会议级摄像头1599/11、桌面监听音箱1299/5、降噪耳机Pro899/41、便携SSD 1TB749/16、USB-C扩展坞549/64、电竞鼠标459/0、静音机械键盘399/23、智能护眼台灯329/88。",
+        "evidence": [
+          "雷霆工作站",
+          "库存 2 件",
+          "¥ 15,999.00",
+          "智能护眼台灯",
+          "库存 88 件",
+          "¥ 329.00",
+          "会议级摄像头",
+          "库存 11 件",
+          "¥ 1,599.00"
+        ],
+        "remaining": []
+      },
+      "validation": {
+        "url": "http://localhost:4399/catalog",
+        "feed": [],
+        "products": [
+          "静音机械键盘\n库存 23 件\n¥ 399.00",
+          "4K 专业显示器\n库存 7 件\n¥ 2,499.00",
+          "人体工学椅缺货\n库存 0 件\n¥ 1,899.00",
+          "降噪耳机 Pro\n库存 41 件\n¥ 899.00",
+          "便携 SSD 1TB\n库存 16 件\n¥ 749.00",
+          "桌面监听音箱\n库存 5 件\n¥ 1,299.00",
+          "智能护眼台灯\n库存 88 件\n¥ 329.00",
+          "电竞鼠标缺货\n库存 0 件\n¥ 459.00",
+          "雷霆工作站\n库存 2 件\n¥ 15,999.00",
+          "全画幅扫描仪\n库存 3 件\n¥ 3,699.00",
+          "USB-C 扩展坞\n库存 64 件\n¥ 549.00",
+          "会议级摄像头\n库存 11 件\n¥ 1,599.00"
+        ],
+        "events": [],
+        "checks": [],
+        "file": null
+      },
+      "file": "T06-advisory-r1.json"
+    },
+    {
+      "taskId": "T06",
+      "name": "分页商品 JSON",
+      "mode": "driver",
+      "round": 1,
+      "grade": "pass",
+      "page": true,
+      "answer": true,
+      "status": "completed",
+      "elapsedMs": 135166,
+      "validationMs": 3,
+      "usage": {
+        "inputTokens": 71100,
+        "outputTokens": 2994,
+        "costUsd": 0.151182,
+        "elapsedMs": 133680,
+        "actions": 2,
+        "jev": {
+          "calls": 4,
+          "inputTokens": 5913,
+          "elapsedMs": 1892
+        },
+        "jevActions": 1
+      },
+      "fallback": true,
+      "result": {
+        "summary": "已读取 http://localhost:4399/catalog 全部 12 件商品（两页均已加载，页面注明共 12 件），整理为按 price 降序的 JSON 数组（name/price/stock，price 与 stock 为数字），并导出 catalog_products.json。最贵商品：雷霆工作站，15999 元。",
+        "evidence": [
+          "商品目录",
+          "雷霆工作站",
+          "¥ 15,999.00",
+          "全画幅扫描仪",
+          "¥ 3,699.00",
+          "智能护眼台灯",
+          "¥ 329.00"
+        ],
+        "remaining": []
+      },
+      "validation": {
+        "url": "http://localhost:4399/catalog",
+        "feed": [],
+        "products": [
+          "静音机械键盘\n库存 23 件\n¥ 399.00",
+          "4K 专业显示器\n库存 7 件\n¥ 2,499.00",
+          "人体工学椅缺货\n库存 0 件\n¥ 1,899.00",
+          "降噪耳机 Pro\n库存 41 件\n¥ 899.00",
+          "便携 SSD 1TB\n库存 16 件\n¥ 749.00",
+          "桌面监听音箱\n库存 5 件\n¥ 1,299.00",
+          "智能护眼台灯\n库存 88 件\n¥ 329.00",
+          "电竞鼠标缺货\n库存 0 件\n¥ 459.00",
+          "雷霆工作站\n库存 2 件\n¥ 15,999.00",
+          "全画幅扫描仪\n库存 3 件\n¥ 3,699.00",
+          "USB-C 扩展坞\n库存 64 件\n¥ 549.00",
+          "会议级摄像头\n库存 11 件\n¥ 1,599.00"
+        ],
+        "events": [],
+        "checks": [],
+        "file": null
+      },
+      "file": "T06-driver-r1.json"
+    },
+    {
+      "taskId": "T15",
+      "name": "SSE 实时流",
+      "mode": "driver",
+      "round": 1,
+      "grade": "pass",
+      "page": true,
+      "answer": true,
+      "status": "completed",
+      "elapsedMs": 9403,
+      "validationMs": 4,
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "costUsd": 0,
+        "elapsedMs": 7953,
+        "actions": 2,
+        "jev": {
+          "calls": 4,
+          "inputTokens": 5039,
+          "elapsedMs": 1888
+        },
+        "jevActions": 1,
+        "helper": {
+          "calls": 1,
+          "inputTokens": 689,
+          "outputTokens": 103,
+          "elapsedMs": 4112
+        }
+      },
+      "fallback": false,
+      "result": {
+        "summary": "已打开页面并点击\"开始接收\"，实时事件流接收完成：共收到 5 条事件，最后一条事件 id 为 evt-005，关键告警 code 为 STREAM-721。",
+        "evidence": [
+          "接收完成：5 条事件，关键告警 STREAM-721",
+          "evt-005 · alert · STREAM-721",
+          "evt-001 · connected · SSE 通道已建立"
+        ],
+        "remaining": []
+      },
+      "validation": {
+        "url": "http://localhost:4399/realtime",
+        "feed": [],
+        "products": [],
+        "events": [
+          "evt-001 · connected · SSE 通道已建立",
+          "evt-002 · metric · checkout_latency_ms",
+          "evt-003 · metric · cart_items",
+          "evt-004 · notice · 库存同步完成",
+          "evt-005 · alert · STREAM-721"
+        ],
+        "checks": [],
+        "file": null
+      },
+      "file": "T15-driver-r1.json"
+    },
+    {
+      "taskId": "T15",
+      "name": "SSE 实时流",
+      "mode": "advisory",
+      "round": 1,
+      "grade": "fail",
+      "page": false,
+      "answer": false,
+      "status": "waiting_user",
+      "elapsedMs": 86038,
+      "validationMs": 0,
+      "usage": {
+        "inputTokens": 45527,
+        "outputTokens": 1103,
+        "costUsd": 0.073258,
+        "elapsedMs": 86030,
+        "actions": 2
+      },
+      "fallback": true,
+      "pending": {
+        "id": "f01c518c-705b-4d1d-bd94-b27aaaaef7ad",
+        "kind": "handoff",
+        "title": "浏览器已由用户接管",
+        "details": "交还后会重新观察页面。",
+        "createdAt": "2026-09-20T11:41:15.911Z"
+      },
+      "file": "T15-advisory-r1.json"
+    }
+  ]
+}

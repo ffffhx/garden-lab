@@ -1,0 +1,113 @@
+{
+  "taskId": "T20",
+  "name": "10 次检查统计",
+  "mode": "driver",
+  "round": 1,
+  "grade": "fail",
+  "page": false,
+  "answer": false,
+  "status": "paused",
+  "elapsedMs": 3766,
+  "validationMs": 0,
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "costUsd": 0,
+    "elapsedMs": 3668,
+    "actions": 1
+  },
+  "fallback": false,
+  "answerText": "",
+  "requests": [
+    {
+      "at": 1789905144426,
+      "method": "GET",
+      "url": "/"
+    },
+    {
+      "at": 1789905144433,
+      "method": "GET",
+      "url": "/assets/app.css"
+    },
+    {
+      "at": 1789905147240,
+      "method": "GET",
+      "url": "/flake"
+    },
+    {
+      "at": 1789905147248,
+      "method": "GET",
+      "url": "/assets/app.css"
+    }
+  ],
+  "decisions": [],
+  "observations": [],
+  "toolCalls": [
+    {
+      "name": "browser_action",
+      "args": {
+        "kind": "open",
+        "value": "http://localhost:4399/flake",
+        "effect": "read",
+        "summary": "打开任务指定页面"
+      },
+      "ms": 1306,
+      "isError": false
+    },
+    {
+      "name": "observe",
+      "args": {
+        "fast": true
+      },
+      "ms": 515,
+      "error": "{\"success\":false,\"data\":null,\"error\":\"CDP error (Runtime.evaluate): CDP Session 不属于当前 Agent 连接\"}\n"
+    }
+  ],
+  "receipts": [
+    {
+      "id": "de0e09dd-3fd3-4b6f-9022-bf6bd374a533",
+      "at": "2026-09-20T11:52:26.094Z",
+      "action": {
+        "kind": "open",
+        "value": "http://localhost:4399/flake",
+        "effect": "read",
+        "summary": "打开任务指定页面"
+      },
+      "status": "executed",
+      "result": "{\"lifecycle\":{\"effectiveLaunch\":{\"browserLaunched\":true,\"engine\":\"chrome\",\"launchHash\":11949482130391700000},\"launched\":false,\"relaunchedBrowser\":false,\"restartedBackground\":false,\"restoreStatus\":\"not_configured\",\"reused\":true,\"saveStatus\":\"not_attempted\"},\"targetId\":\"6744690697550C74A73707E2FDFF85C2\",\"title\":\"\",\"url\":\"http://localhost:4399/flake\"}"
+    }
+  ],
+  "events": [
+    {
+      "id": "832747fc-6f19-4f7a-a654-54de025566f2",
+      "at": "2026-09-20T11:52:23.188Z",
+      "kind": "user",
+      "text": "打开 http://localhost:4399/flake ，运行页面上的\"运行 10 次\"检查。请统计通过次数、失败次数、失败轮次和稳定性代码，并判断这个检查是否稳定。"
+    },
+    {
+      "id": "413632fd-873a-4de6-a28a-2762c529766a",
+      "at": "2026-09-20T11:52:26.092Z",
+      "kind": "system",
+      "text": "正在准备浏览器和 Agent。"
+    },
+    {
+      "id": "5c8ba860-a225-4a3a-be98-ea178190d997",
+      "at": "2026-09-20T11:52:26.093Z",
+      "kind": "system",
+      "text": "Jev 正在选择页面动作；填写内容和完成核查按需调用主模型。"
+    },
+    {
+      "id": "1b598aaf-b86f-4e1d-a98a-87e946272494",
+      "at": "2026-09-20T11:52:26.094Z",
+      "kind": "action",
+      "text": "打开任务指定页面"
+    },
+    {
+      "id": "dc79acab-98f8-4efd-9f39-12a18c2a74bb",
+      "at": "2026-09-20T11:52:27.917Z",
+      "kind": "system",
+      "text": "正在停止后续动作并交还浏览器。"
+    }
+  ],
+  "file": "T20-driver-r1.json"
+}

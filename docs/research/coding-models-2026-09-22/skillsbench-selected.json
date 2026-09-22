@@ -1,0 +1,28 @@
+{
+  "accessed_date": "2026-09-22",
+  "page_updated": "2026-09-11",
+  "source": "https://www.vals.ai/benchmarks/skillsbench",
+  "extraction": "Chart data embedded in the original page HTML; headline prose has older rankings.",
+  "harness": "OpenHands-CLI",
+  "harness_commit": "3ca17446c5d9c1e35e054803478a3501ec251ecf",
+  "trials_per_condition": 3,
+  "units": {
+    "accuracy": "percent",
+    "stderr": "percentage points as reported by Vals",
+    "cost": "USD per benchmark task",
+    "latency": "seconds"
+  },
+  "models": [
+    {"model":"Claude Fable 5.1","effort":"max","without_skills":44.828,"with_skills":61.552,"without_stderr":4.622,"with_stderr":4.76,"with_cost":4.516559,"with_latency":661.978},
+    {"model":"GPT-5.6 Luna","effort":"max","without_skills":45.189,"with_skills":60.447,"without_stderr":4.695,"with_stderr":4.75,"with_cost":0.160002,"with_latency":320.466},
+    {"model":"GPT-5.6 Terra","effort":"max","without_skills":48.842,"with_skills":58.895,"without_stderr":4.572,"with_stderr":4.472,"with_cost":1.397747,"with_latency":415.068},
+    {"model":"Gemini 3.8 Flash","effort":"high","without_skills":41.046,"with_skills":57.985,"without_stderr":4.516,"with_stderr":4.422,"with_cost":2.336944,"with_latency":235.201},
+    {"model":"GPT-5.6 Sol","effort":"max","without_skills":43.312,"with_skills":54.1,"without_stderr":4.728,"with_stderr":4.73,"with_cost":4.13999,"with_latency":787.486}
+  ],
+  "missing_target_models": ["GPT-6 Astra", "Claude Fable 5", "Grok 4.7"],
+  "limitations": [
+    "This measures task success when skills are available, not skill routing accuracy.",
+    "The original SkillsBench leaderboard and Vals runs use different configurations and should not be merged as identical runs.",
+    "Observed skill references in traces are not a complete measure of skill use or correctness."
+  ]
+}

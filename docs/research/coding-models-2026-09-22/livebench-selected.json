@@ -1,0 +1,101 @@
+[
+  {
+    "model": "gemini-3.1-pro-preview-high",
+    "Reasoning": 84.00475,
+    "Coding": 76.4545,
+    "Agentic Coding": 44.141333333333336,
+    "Mathematics": 91.045,
+    "Data Analysis": 78.54133333333333,
+    "Language": 85.37599999999999,
+    "IF": 79.1,
+    "computed_overall": 76.95184523809523
+  },
+  {
+    "model": "gpt-5.6-sol-max",
+    "Reasoning": 91.65375,
+    "Coding": 83.941,
+    "Agentic Coding": 56.211999999999996,
+    "Mathematics": 96.19775,
+    "Data Analysis": 79.84066666666666,
+    "Language": 87.68366666666667,
+    "IF": 71.846,
+    "computed_overall": 81.05354761904762
+  },
+  {
+    "model": "gpt-5.6-terra-max",
+    "Reasoning": 90.6345,
+    "Coding": 78.24549999999999,
+    "Agentic Coding": 54.949666666666666,
+    "Mathematics": 94.90825,
+    "Data Analysis": 79.30666666666667,
+    "Language": 82.89266666666667,
+    "IF": 64.6165,
+    "computed_overall": 77.93625
+  },
+  {
+    "model": "gpt-5.6-luna-max",
+    "Reasoning": 85.64425,
+    "Coding": 82.91499999999999,
+    "Agentic Coding": 48.434333333333335,
+    "Mathematics": 87.20075,
+    "Data Analysis": 78.03333333333333,
+    "Language": 72.567,
+    "IF": 60.121,
+    "computed_overall": 73.55938095238095
+  },
+  {
+    "model": "claude-fable-5-max-effort",
+    "Reasoning": 89.65375,
+    "Coding": 85.992,
+    "Agentic Coding": 62.17166666666666,
+    "Mathematics": 95.98575,
+    "Data Analysis": 80.53766666666667,
+    "Language": 90.68400000000001,
+    "IF": 75.77075,
+    "computed_overall": 82.97079761904762
+  },
+  {
+    "model": "claude-fable-5-1-max-effort",
+    "Reasoning": 91.69225,
+    "Coding": 86.375,
+    "Agentic Coding": 66.06066666666668,
+    "Mathematics": 97.00675,
+    "Data Analysis": 80.27566666666667,
+    "Language": 89.50099999999999,
+    "IF": 72.98775,
+    "computed_overall": 83.41415476190477
+  },
+  {
+    "model": "gemini-3.8-flash-high",
+    "Reasoning": 89.29325,
+    "Coding": 72.489,
+    "Agentic Coding": 54.242333333333335,
+    "Mathematics": 91.56425,
+    "Data Analysis": 54.00566666666666,
+    "Language": 87.79266666666666,
+    "IF": 81.4125,
+    "computed_overall": 75.82852380952382
+  },
+  {
+    "model": "gpt-6-astra-max",
+    "Reasoning": 92.65375,
+    "Coding": 80.35849999999999,
+    "Agentic Coding": 57.323,
+    "Mathematics": 96.80625,
+    "Data Analysis": 82.97333333333334,
+    "Language": 89.43066666666668,
+    "IF": 75.57900000000001,
+    "computed_overall": 82.16064285714286
+  },
+  {
+    "model": "grok-4.7-xhigh",
+    "Reasoning": 82.65375,
+    "Coding": 77.1585,
+    "Agentic Coding": 51.76766666666666,
+    "Mathematics": 95.678,
+    "Data Analysis": 76.88333333333334,
+    "Language": 80.13866666666667,
+    "IF": 75.27525,
+    "computed_overall": 77.07930952380953
+  }
+]

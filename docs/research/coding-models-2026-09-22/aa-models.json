@@ -1,0 +1,19 @@
+﻿{
+  "accessed_date": "2026-09-22",
+  "index_version": "Artificial Analysis Intelligence Index v4.3.2",
+  "metric_units": { "intelligence": "index", "tb4": "percent", "automation": "percent", "scicode": "percent", "aa_lcr": "percent", "ifbench": "percent or null if unpublished/unretrieved", "cost_per_index_task": "USD weighted mean, not a real coding task quote", "output_tps": "approximate snapshot; dynamic" },
+  "models": [
+    {"name":"GPT-6 Astra","effort":"max","intelligence":53,"tb4":59,"automation":68,"scicode":56,"aa_lcr":81,"ifbench":null,"cost_per_index_task":3.26,"output_tps":67,"source":"https://artificialanalysis.ai/models/comparisons/gpt-6-astra-vs-claude-fable-5-1"},
+    {"name":"Claude Fable 5.1","effort":"max","fallback":"default (Opus 4.8 or Opus 5)","intelligence":53,"tb4":52,"automation":59,"scicode":63,"aa_lcr":85,"ifbench":null,"cost_per_index_task":7.63,"output_tps":66,"source":"https://artificialanalysis.ai/models/comparisons/gpt-6-astra-vs-claude-fable-5-1"},
+    {"name":"Claude Fable 5","effort":"max","fallback":"Opus 4.8","intelligence":50,"tb4":42,"automation":54,"scicode":61,"aa_lcr":82,"ifbench":null,"cost_per_index_task":8.75,"output_tps":66,"source":"https://artificialanalysis.ai/models/comparisons/gpt-6-astra-vs-claude-fable-5"},
+    {"name":"GPT-5.6 Sol","effort":"max","intelligence":47,"tb4":40,"automation":60,"scicode":57,"aa_lcr":84,"ifbench":null,"cost_per_index_task":1.99,"output_tps":79,"source":"https://artificialanalysis.ai/models/comparisons/gemini-3-8-flash-vs-gpt-5-6-sol"},
+    {"name":"GPT-5.6 Terra","effort":"max","intelligence":42,"tb4":35,"automation":60,"scicode":55,"aa_lcr":83,"ifbench":null,"cost_per_index_task":1.40,"output_tps":107,"source":"https://artificialanalysis.ai/models/comparisons/gpt-5-6-luna-vs-gpt-5-6-terra"},
+    {"name":"GPT-5.6 Luna","effort":"max","intelligence":37,"tb4":12,"automation":50,"scicode":54,"aa_lcr":84,"ifbench":null,"cost_per_index_task":0.18,"output_tps":159,"source":"https://artificialanalysis.ai/models/comparisons/gpt-5-6-luna-vs-gpt-5-6-terra"},
+    {"name":"Gemini 3.8 Flash","effort":"high","intelligence":41,"tb4":20,"automation":60,"scicode":57,"aa_lcr":81,"ifbench":null,"cost_per_index_task":1.24,"output_tps":329,"source":"https://artificialanalysis.ai/models/comparisons/gemini-3-8-flash-vs-gpt-5-6-sol"},
+    {"name":"Gemini 3.1 Pro Preview","effort":"not specified in comparison title","intelligence":30,"tb4":4,"automation":35,"scicode":59,"aa_lcr":82,"ifbench":null,"cost_per_index_task":0.67,"output_tps":124,"source":"https://artificialanalysis.ai/models/comparisons/gemma-4-31b-non-reasoning-vs-gemini-3-1-pro-preview"},
+    {"name":"Grok 4.7","effort":"xhigh","intelligence":46,"tb4":26,"automation":66,"scicode":57,"aa_lcr":77,"ifbench":null,"cost_per_index_task":3.74,"output_tps":39,"speed_caveat":"Dynamic model page about 39 tps, release article cites about 188 tps for long prompts; do not rank time without harmonizing settings.","source":"https://artificialanalysis.ai/articles/benchmarking-grok-4-7","matrix_image":"https://cdn.sanity.io/images/6vfeftx9/articles/1f2405a4068e4d384ea3079fef3c1df8a82c9bb1-4864x4072.png","cost_source":"https://artificialanalysis.ai/zh/models/releases/comparisons/grok-4-7-vs-gpt-6-astra"}
+  ],
+  "methodology":"https://artificialanalysis.ai/methodology/intelligence-benchmarking",
+  "fallback_sources":["https://artificialanalysis.ai/articles/claude-fable-5-1","https://artificialanalysis.ai/articles/claude-fable-5-mythos-intelligence-index"],
+  "gemini_models_official":"https://ai.google.dev/gemini-api/docs/models"
+}

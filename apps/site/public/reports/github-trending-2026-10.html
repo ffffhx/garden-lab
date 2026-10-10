@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eeeee5">
+  <meta name="description" content="2026 年 9 月 7 日至 10 月 4 日，GitHub Trending 四周 Top 10。用通俗中文认识 33 个项目，支持按周、分类与关键词查找。">
+  <title>GitHub 开源观察 · 四周热榜 / 2026.09—10</title>
+  <style>
+    :root{--paper:#f5f4ed;--ink:#24291f;--muted:#697064;--line:#d9dccf;--green:#235b3e;--lime:#c9e58d;--wash:#eaeee1;--serif:Georgia,"Noto Serif CJK SC","Source Han Serif SC","Songti SC",SimSun,serif;--sans:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;--mono:Consolas,"Courier New",monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:175px}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}button,input,select{font:inherit}button,a,input,select{-webkit-tap-highlight-color:transparent}a{color:inherit;text-underline-offset:4px}button{cursor:pointer}button:disabled{cursor:default}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--green);outline-offset:4px}button{color:inherit}button,a{touch-action:manipulation}[hidden]{display:none!important}::selection{background:var(--lime);color:var(--ink)}
+    .wrap{max-width:1280px;margin-inline:auto;padding-inline:48px}.skip{position:fixed;left:12px;top:-80px;z-index:20;padding:12px;background:var(--lime)}.skip:focus{top:12px}.masthead{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:24px;border-bottom:1px solid var(--ink)}.brand{display:flex;align-items:center;gap:11px;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:.08em}.brand-icon{display:grid;place-items:center;width:32px;height:32px;background:var(--ink);color:var(--lime);font:700 20px var(--mono)}.mast-note{font:11px var(--mono);letter-spacing:.13em;color:var(--muted)}.header-actions{display:flex;gap:18px;align-items:center}.text-button{border:0;background:none;padding:6px 0;color:var(--muted);font-size:12px;text-decoration:none}.text-button:hover{color:var(--green)}.save-button{display:flex;gap:18px;align-items:center;background:none;border:1px solid var(--ink);padding:8px 13px;font-size:12px}.save-button:hover{background:var(--ink);color:var(--paper)}
+    .hero{display:grid;grid-template-columns:1.4fr 1fr;gap:72px;padding-block:55px 46px}.eyebrow{display:flex;align-items:center;gap:11px;margin:0 0 22px;font:11px var(--mono);letter-spacing:.13em;color:var(--green)}.eyebrow::before{content:"";width:7px;height:7px;background:var(--green)}h1{font-family:var(--serif);font-weight:700;font-size:clamp(42px,4.8vw,67px);letter-spacing:-.045em;line-height:1.23;margin:0 0 22px}h1 .highlight{position:relative;z-index:0;white-space:nowrap}h1 .highlight::after{content:"";position:absolute;left:0;right:-7px;bottom:3px;height:16px;background:var(--lime);z-index:-1}.hero-copy{max-width:510px;color:var(--muted);font-size:14px;line-height:1.95;margin:0}.hero-meta{display:flex;flex-wrap:wrap;gap:10px 25px;margin-top:25px;font:11px var(--mono);color:var(--muted)}.hero-meta span:first-child{color:var(--ink)}
+    .leaders{align-self:center;border-top:2px solid var(--ink);padding-top:14px}.leaders-title{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;margin:0 0 7px}.leaders-title small{font:10px var(--mono);color:var(--muted);letter-spacing:.06em}.leader{display:grid;grid-template-columns:64px 1fr 20px;align-items:center;gap:12px;width:100%;padding:14px 0;border:0;border-bottom:1px solid var(--line);background:none;text-align:left}.leader:hover .leader-name{color:var(--green);transform:translateX(4px)}.leader-week{font:12px var(--mono);color:var(--muted)}.leader-name{font:700 15px var(--mono);transition:transform .18s;color:var(--ink);overflow-wrap:anywhere}.leader-arrow{color:var(--green)}.leader-sub{display:block;font-family:var(--sans);font-size:11px;color:var(--muted);font-weight:400;margin-top:4px}.leader-foot{margin:12px 0 0;font-size:10px;letter-spacing:.03em;color:var(--muted)}
+    .overview{display:flex;align-items:center;justify-content:space-between;gap:24px;border-block:1px solid var(--ink);padding-block:19px}.stats{display:flex;align-items:baseline;gap:27px}.stat{display:flex;align-items:baseline;gap:7px;white-space:nowrap}.stat strong{font:32px var(--serif);font-variant-numeric:tabular-nums}.stat span{font-size:11px;color:var(--muted)}.glossary{font-size:11px;color:var(--muted);text-align:right;line-height:1.85}.glossary b{font-family:var(--mono);font-weight:400;color:var(--ink)}
+    .controls-shell{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}.controls{padding-top:21px;padding-bottom:14px}.filter-top{display:flex;align-items:center;justify-content:space-between;gap:22px}.weeks-nav{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.week-button{border:1px solid transparent;padding:9px 13px;background:none;font-size:12px;white-space:nowrap;min-height:40px}.week-button small{font:10px var(--mono);margin-left:6px;opacity:.65}.week-button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}.week-button:hover:not([aria-pressed="true"]){background:var(--wash)}.search-wrap{display:flex;align-items:center;border-bottom:1px solid #8a9280;gap:9px;min-width:220px;width:280px}.search-wrap svg{width:16px;height:16px;flex-shrink:0;color:var(--muted)}#search{padding:9px 0;width:100%;min-width:0;background:transparent;border:0;outline-offset:0;font-size:12px;color:var(--ink)}#search::placeholder{color:#78806e}input::-webkit-search-cancel-button{cursor:pointer}.filter-bottom{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px}.categories{display:flex;align-items:center;gap:12px;font-size:11px;color:var(--muted)}#category{max-width:180px;padding:4px 22px 4px 7px;background:transparent;border:1px solid var(--line);color:var(--ink);font-size:11px;min-height:32px}.result-status{font-size:11px;color:var(--muted);display:flex;gap:12px;align-items:center}.reset-button{border:0;background:none;padding:4px 0;font-size:11px;text-decoration:underline;text-underline-offset:3px;color:var(--green)}
+    main{padding-top:12px;padding-bottom:40px}.week-section{padding-top:35px;margin-bottom:28px;scroll-margin-top:165px}.week-heading{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:17px}.week-title-group{display:flex;align-items:center;gap:18px}.week-no{font:13px var(--mono);padding:5px 8px;background:var(--lime);color:var(--green)}h2{margin:0;font-family:var(--serif);font-size:27px;font-weight:700;letter-spacing:-.035em;line-height:1.2}.week-title-group p{margin:6px 0 0;color:var(--muted);font-size:11px}.source-link{font-size:11px;white-space:nowrap;color:var(--muted);text-decoration:none}.source-link:hover{color:var(--green);text-decoration:underline}.projects{width:100%;border-collapse:collapse;table-layout:fixed}.projects th{text-align:left;padding:10px 13px;color:var(--muted);font-size:10px;font-weight:400;border-top:1px solid var(--ink);border-bottom:1px solid var(--line);letter-spacing:.07em}.projects th:first-child{width:62px;padding-left:6px}.projects th:nth-child(2){width:32%}.projects td{border-bottom:1px solid var(--line);padding:20px 13px;vertical-align:top}.project-row{transition:background .18s}.project-row:hover{background:var(--wash)}.projects td.rank{font:24px var(--serif);padding-left:6px;color:#777e6f;line-height:1.3}.project-row:first-child td.rank{color:var(--green)}.repo-link{display:inline-flex;align-items:baseline;gap:8px;max-width:100%;font:700 16px/1.4 var(--mono);text-decoration:none;overflow-wrap:anywhere}.repo-link span:first-child{min-width:0}.repo-link:hover{color:var(--green);text-decoration:underline}.out-arrow{font:13px var(--sans);color:var(--muted)}.repo-owner{font:10px var(--mono);color:var(--muted);display:block;overflow-wrap:anywhere;margin-top:5px}.project-meta{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:10px}.tag{font-size:9px;line-height:1.7;padding:1px 6px;background:#e6e9dc;color:#505d42}.repeat{font-size:9px;color:var(--muted)}.description-title{font-size:13px;font-weight:700;margin:0 0 4px}.description-body{margin:0;color:#606858;font-size:12px;line-height:1.9;max-width:640px}.license-inline{display:inline-block;font-size:10px;color:#805d36;margin-top:6px}.empty{padding:85px 20px;text-align:center;border-bottom:1px solid var(--line)}.empty-mark{font:52px var(--serif);color:var(--muted);margin:0 0 15px}.empty h2{font:20px var(--sans);margin-bottom:10px}.empty p{color:var(--muted);font-size:13px}.empty button{background:var(--ink);color:var(--paper);border:0;padding:10px 18px;margin-top:8px}
+    .method{display:grid;grid-template-columns:200px 1fr;gap:30px;background:var(--wash);border-top:1px solid var(--ink);padding:30px;margin-top:30px}.method-title{font-family:var(--serif);font-size:24px;margin:0 0 7px}.method-kicker{font:10px var(--mono);letter-spacing:.1em;color:var(--muted)}.method p{font-size:12px;color:#606858;line-height:1.9;margin:0 0 10px}.method p:last-child{margin-bottom:0}.method a{color:var(--green)}.footer{display:flex;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid var(--line);padding-block:25px 35px;font:10px var(--mono);letter-spacing:.07em;color:var(--muted)}.footer a{font-family:var(--sans);text-decoration:none}.toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--ink);color:var(--paper);padding:12px 20px;font-size:12px;z-index:10}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.hero{animation:arrive .5s ease both}@keyframes arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    @media(min-width:761px){.hero{padding-block:32px 28px}h1{font-size:clamp(42px,4.5vw,60px)}.leader{padding-block:9px}.hero-meta{margin-top:18px}}
+    @media(min-width:1500px){.wrap{max-width:1380px}.hero{padding-block:40px 35px}}
+    @media(max-width:1050px){.wrap{padding-inline:28px}.hero{gap:38px}.mast-note{display:none}.week-button{padding-inline:9px}.week-button small{display:none}.projects th:nth-child(2){width:35%}.search-wrap{width:230px;min-width:180px}}
+    @media(max-width:760px){html{scroll-padding-top:205px}.wrap{padding-inline:20px}.masthead{padding-block:17px}.brand{font-size:13px}.header-actions{gap:12px}.header-actions>.text-button{display:none}.save-button{font-size:11px;padding:7px 10px;gap:10px}.hero{grid-template-columns:1fr;gap:30px;padding-block:34px 30px}h1{font-size:48px}.hero-copy{font-size:13px}.eyebrow{margin-bottom:18px;font-size:10px}.hero-meta{font-size:10px;gap:12px}.leaders{padding-top:12px}.leader{padding-block:10px;grid-template-columns:60px 1fr 16px}.leader-sub{display:inline;margin-left:12px;font-size:10px}.leader-name{font-size:12px}.leader-foot{font-size:10px}.overview{align-items:start;flex-direction:column;gap:13px;padding-block:17px}.stats{gap:29px}.stat strong{font-size:29px}.stat span{font-size:10px}.glossary{text-align:left;font-size:10px}.glossary br{display:none}.glossary span+span{margin-left:13px}.controls{padding-top:13px;padding-bottom:12px}.filter-top{flex-direction:column;align-items:stretch;gap:10px}.weeks-nav{flex-wrap:nowrap;justify-content:space-between;gap:0}.week-button{padding:7px 10px;font-size:11px;min-height:37px}.search-wrap{width:100%;min-width:0}#search{font-size:12px;padding-block:8px}.filter-bottom{margin-top:8px;gap:6px}.categories{gap:6px;font-size:10px}.categories>span{display:none}#category{font-size:10px;max-width:140px}.result-status{font-size:10px;gap:9px}.reset-button{font-size:10px}.week-section{padding-top:29px;scroll-margin-top:190px}.week-heading{align-items:center}.week-title-group{gap:10px}.week-no{font-size:10px;padding:4px 6px}h2{font-size:23px}.week-title-group p{font-size:10px}.source-link{font-size:10px}.projects thead{display:none}.projects tbody{display:block;border-top:1px solid var(--ink)}.project-row{display:grid;grid-template-columns:38px minmax(0,1fr);padding:19px 0;border-bottom:1px solid var(--line)}.projects td{border:0;padding:0}.projects td.rank{grid-column:1;grid-row:1/3;font-size:26px;padding:0}.projects td.repo{grid-column:2}.projects td.explainer{grid-column:2;padding-top:12px}.repo-link{font-size:16px}.repo-owner{font-size:10px}.project-meta{margin-top:7px}.description-title{font-size:13px}.description-body{font-size:12px}.method{grid-template-columns:1fr;gap:16px;padding:24px 20px;margin-top:5px}.method-title{font-size:23px}.method p{font-size:11px}.footer{font-size:9px;align-items:start}.footer a{white-space:nowrap}}
+    @media(max-width:380px){.wrap{padding-inline:15px}.week-button{padding-inline:7px}h1{font-size:43px}.leader-sub{display:block;margin-left:0}.stats{gap:22px}.week-title-group{gap:8px}h2{font-size:21px}.source-link{font-size:9px}}
+    .save-button{text-decoration:none}
+    @media(max-width:760px){h1{font-size:clamp(32px,10vw,44px)}.glossary{display:flex;flex-direction:column}.glossary span+span{margin-left:0}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+    @media print{@page{margin:15mm}body{background:white;font-size:11px}.wrap{max-width:none;padding:0}.header-actions,.controls-shell,.leaders,.empty,.toast,.footer>a{display:none!important}.hero{display:block;padding:22px 0}.hero-copy{max-width:none}h1{font-size:38px}.overview{padding:12px 0}.hero-meta{margin-top:15px}.stat strong{font-size:24px}.week-section{break-before:page;padding-top:10px}.week-section:first-child{break-before:auto}.project-row{break-inside:avoid}.projects td{padding:10px 8px}.description-body{font-size:10px}.repo-link{font-size:12px}.method{break-inside:avoid;padding:18px}.footer{padding:15px 0}.projects th:nth-child(2){width:36%}.hero{animation:none}}
+  </style>
+</head>
+<body id="top">
+  <a href="#results" class="skip">跳到项目榜单</a>
+  <div class="wrap">
+    <header class="masthead">
+      <a class="brand" href="#top"><span class="brand-icon" aria-hidden="true">↗</span> 开源观察 <span class="mast-note">/ OPEN SOURCE FIELD NOTES</span></a>
+      <div class="header-actions"><a class="text-button" href="#method">榜单说明</a><a class="save-button" id="download" href="github-trending-2026-10.html" download="GitHub四周热榜-2026.09.07-10.04.html">保存 HTML <span aria-hidden="true">↓</span></a></div>
+    </header>
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">GITHUB TRENDING / MONTHLY READING LIST</p>
+        <h1 id="page-title">这个月，开源世界<br>在关注<span class="highlight">什么？</span></h1>
+        <p class="hero-copy">四周 GitHub 热榜，每周前十名。<br>从 AI 助手到智能家居，用好懂的话，认识每一个项目。</p>
+        <div class="hero-meta"><span>2026.09.07 — 10.04</span><span>全语言 · 每周日快照</span><span>整理于 2026.10.08</span></div>
+      </div>
+      <aside class="leaders" aria-label="四周榜首速览">
+        <h2 class="leaders-title">四周的第一名 <small>THE WEEKLY NO. 1</small></h2>
+        <button class="leader" data-jump="37"><span class="leader-week">W37 / 01</span><span class="leader-name">i-have-adhd<span class="leader-sub">让 AI 回答更直接</span></span><span class="leader-arrow" aria-hidden="true">↗</span></button>
+        <button class="leader" data-jump="38"><span class="leader-week">W38 / 01</span><span class="leader-name">open-code-review<span class="leader-sub">AI 代码检查员</span></span><span class="leader-arrow" aria-hidden="true">↗</span></button>
+        <button class="leader" data-jump="39"><span class="leader-week">W39 / 01</span><span class="leader-name">financial-services<span class="leader-sub">金融从业者的 AI 工作包</span></span><span class="leader-arrow" aria-hidden="true">↗</span></button>
+        <button class="leader" data-jump="40"><span class="leader-week">W40 / 01</span><span class="leader-name">paperclip<span class="leader-sub">管理一支 AI 团队</span></span><span class="leader-arrow" aria-hidden="true">↗</span></button>
+        <p class="leader-foot">点击榜首，查看对应一周的完整 Top 10。</p>
+      </aside>
+    </section>
+    <div class="overview">
+      <div class="stats" aria-label="4 个完整周，40 个上榜席位，33 个不同项目"><div class="stat"><strong>04</strong><span>完整周</span></div><div class="stat"><strong>40</strong><span>上榜席位</span></div><div class="stat"><strong>33</strong><span>不同项目</span></div></div>
+      <div class="glossary"><span><b>Skill</b> = 给 AI 的专业操作手册</span><br><span><b>Agent</b> = 能使用工具、执行任务的 AI 助手</span></div>
+    </div>
+  </div>
+  <div class="controls-shell" id="browse">
+    <div class="wrap controls">
+      <div class="filter-top">
+        <nav class="weeks-nav" aria-label="按周筛选">
+          <button class="week-button" data-week="all" aria-pressed="true">全部四周 <small>40</small></button>
+          <button class="week-button" data-week="37" aria-pressed="false">09.07—13 <small>W37</small></button>
+          <button class="week-button" data-week="38" aria-pressed="false">09.14—20 <small>W38</small></button>
+          <button class="week-button" data-week="39" aria-pressed="false">09.21—27 <small>W39</small></button>
+          <button class="week-button" data-week="40" aria-pressed="false">09.28—10.04 <small>W40</small></button>
+        </nav>
+        <label class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg><span class="sr-only">搜索项目、用途或作者</span><input id="search" type="search" placeholder="搜索项目、用途或作者…" autocomplete="off"></label>
+      </div>
+      <div class="filter-bottom"><label class="categories" for="category"><span>项目类型</span><select id="category"><option value="all">全部类型</option><option>AI 编程与协作</option><option>技能与插件</option><option>知识与记忆</option><option>设计与创作</option><option>安全与审查</option><option>基础与学习</option><option>实用工具</option></select></label><div class="result-status"><span id="result-count" role="status" aria-live="polite" aria-atomic="true">40 条记录 · 33 个项目</span><button id="reset" class="reset-button" type="button" hidden>清除筛选</button></div></div>
+    </div>
+  </div>
+  <main class="wrap" id="main">
+    <div id="results" tabindex="-1"></div>
+    <div class="empty" id="empty" hidden><p class="empty-mark" aria-hidden="true">∅</p><h2>没有找到匹配的项目</h2><p>试试“AI”“文档”“视频”，或清除筛选查看全部榜单。</p><button id="empty-reset" type="button">查看全部 40 条记录</button></div>
+    <noscript><p>请启用 JavaScript 查看和筛选榜单。本页所有项目资料均包含在 HTML 文件中，无需联网加载。</p></noscript>
+    <section class="method" id="method" aria-labelledby="method-title">
+      <div><h2 class="method-title" id="method-title">关于这份榜单</h2><span class="method-kicker">SOURCES & NOTES</span></div>
+      <div>
+        <p><strong>时间范围。</strong>按整理时最近四个完整自然周归档：2026 年 9 月 7 日至 10 月 4 日。10 月 5 日开始的一周尚未结束，未纳入本页。</p>
+        <p><strong>排名口径。</strong>采用 <a href="https://github.com/git-trending-rank/git-trending-rank.github.io" target="_blank" rel="noopener noreferrer">Git Trending Rank</a> 对 GitHub Trending 全语言周榜的每周日历史快照，保留存档顺序。周榜是滚动窗口，快照并非自然周结算榜，也不是累计 Star 排名；筛选后仍显示原始名次。</p>
+        <p><strong>项目说明。</strong>介绍依据各项目的 GitHub 主页整理。点击项目名称可查看源仓库，点击每周的“榜单存档”可核对原始记录。“2 周上榜”指本页四份 Top 10 中出现两次。</p>
+        <p><strong>开源口径。</strong>Trending 包含公开工具仓库，不代表对应软件完整开源。例如 Claude Code 使用<a href="https://github.com/anthropics/claude-code/blob/main/LICENSE.md" target="_blank" rel="noopener noreferrer">商业使用条款</a>，本页保留其原始排名并单独标注。</p>
+      </div>
+    </section>
+  </main>
+  <footer class="wrap"><div class="footer"><span>OPEN SOURCE FIELD NOTES <span aria-hidden="true">/</span> 2026.09—10</span><a href="#top">回到顶部 ↑</a></div></footer>
+  <script>
+    'use strict';
+    const projects = {
+      adhd: ['ayghri/i-have-adhd','技能与插件','让 AI 回答更直接','要求编程助手先说答案、把步骤编号、少讲套话，减少你在长篇回复里找重点的时间。'],
+      ecc: ['affaan-m/ECC','AI 编程与协作','AI 编程助手的增强工具箱','把技能、记忆、工作规则和安全检查等配套能力打包，帮助 AI 更有章法地完成开发，也省去反复配置的麻烦。'],
+      plugins: ['openai/plugins','技能与插件','Codex 的插件示例库','提供设计、文档、网站和应用开发等插件样例，让开发者给 Codex 增加专业能力，并连接外部工具。'],
+      globe: ['bilawalsidhu/gods-eye-view','实用工具','浏览器里的全球动态地球仪','在三维地球上展示公开的航班、船舶、卫星和地震等数据，像一张可以转动、缩放的全球信息地图。'],
+      context: ['mksglu/context-mode','知识与记忆','给 AI 整理工作资料','过滤、压缩工具输出，并保存会话记忆，减少大量日志和文件内容把 AI 有限的阅读空间塞满的问题。'],
+      ponytail: ['DietrichGebert/ponytail','AI 编程与协作','教 AI 少写没必要的代码','先检查现成功能能否复用，鼓励选择简单方案，减少重复造轮子和过度设计。相当于给 AI 配上一位主张简洁的资深工程师。'],
+      archify: ['tt-a1i/archify','设计与创作','把想法和代码变成图','帮助 AI 生成架构图、流程图、数据流图等，还能做成可交互的网页，方便讲清复杂系统。'],
+      skills: ['openai/skills','技能与插件','Codex 的官方技能目录','把完成某类任务所需的说明、脚本和资料装成一个技能包，供 Codex 重复使用，就像一套随时可以查阅的工作手册。'],
+      hyperframes: ['heygen-com/hyperframes','设计与创作','用写网页的方式制作视频','把 HTML 页面和动画渲染成视频，适合让 AI 自动制作讲解动画、展示视频，也便于批量生成内容。'],
+      markitdown: ['microsoft/markitdown','知识与记忆','把各种文档变成好处理的文本','将 PDF、Word、Excel、PPT 等文件转成 Markdown 文本，方便搜索、整理笔记，或交给 AI 阅读。'],
+      review: ['alibaba/open-code-review','安全与审查','阿里的 AI 代码检查员','阅读代码修改及相关文件，寻找潜在错误和安全问题，并指出具体哪一行值得检查，帮助开发者审查代码。'],
+      claude: ['anthropics/claude-code','AI 编程与协作','能直接动手的 AI 编程助手','你用自然语言提需求，它可以阅读项目、修改代码、执行命令、解释问题，并处理 Git 开发流程。','公开仓库 · 工具采用商业条款'],
+      weknora: ['Tencent/WeKnora','知识与记忆','腾讯的 AI 知识库平台','把零散文档整理成可以提问的资料库。例如上传公司制度后，就能直接问“报销需要哪些材料”，也可用于维护团队知识。'],
+      addy: ['addyosmani/agent-skills','AI 编程与协作','给 AI 的软件开发工作手册','教它按需求、计划、编码、测试和审查等步骤做事，把资深工程师的工作习惯变成可以重复使用的技能。'],
+      knowledge: ['anthropics/knowledge-work-plugins','技能与插件','Claude 的办公技能包','为销售、营销、数据分析、任务管理等工作提供专门流程，帮助 AI 更懂具体岗位怎么做事。'],
+      worktrunk: ['max-sixty/worktrunk','AI 编程与协作','给多个开发任务分配独立工作区','方便同时维护同一项目的不同修改，尤其适合多个 AI 助手各做一个任务，减少互相干扰。'],
+      home: ['home-assistant/core','实用工具','智能家居的统一控制中心','把不同品牌的灯、插座、传感器等连接起来，设置“有人回家就开灯”之类的自动化，强调本地控制和隐私。'],
+      finance: ['anthropics/financial-services','实用工具','金融从业者的 AI 工作包','提供整理财报、搭建财务模型、撰写研究材料和核对账目等流程，生成的分析稿供专业人员复核。'],
+      paperclip: ['paperclipai/paperclip','AI 编程与协作','管理一支 AI 团队','给不同助手分配角色和任务，在同一个面板里查看进度、权限和花费，像给 AI 员工用的项目管理软件。'],
+      hindsight: ['vectorize-io/hindsight','知识与记忆','给 AI 配上长期记忆','保存过去的互动和经验，在新任务里找回相关内容，并从反馈中整理经验，减少每次都从头交代背景。'],
+      security: ['cloudflare/security-audit-skill','安全与审查','教 AI 系统地检查代码安全','按多个阶段排查问题，再复核发现的漏洞，输出便于开发者处理的检查结果。它是给编程助手使用的安全检查技能。'],
+      templates: ['davila7/claude-code-templates','AI 编程与协作','Claude Code 的现成配置库','提供角色、命令、外部工具连接和项目模板，帮助你快速配置助手，也能查看运行情况和会话。'],
+      orca: ['stablyai/orca','AI 编程与协作','多个 AI 编程助手的工作台','把多个并行任务放在统一界面里管理，方便查看谁在做什么、各自进展如何，适合同时推进多个开发任务。'],
+      next: ['vercel/next.js','基础与学习','搭建网站和网页应用的开发框架','为开发者处理页面组织、服务器渲染等基础工作，常用于博客、商城和各种在线服务。'],
+      cli: ['HKUDS/CLI-Anything','AI 编程与协作','给现有软件加上 AI 能操作的命令接口','根据软件代码生成控制命令，让 AI 可以调用绘图、建模和办公等功能，更方便地自动完成任务。'],
+      pytorch: ['pytorch/pytorch','基础与学习','训练和运行 AI 模型的基础工具','研究人员和工程师用它搭建神经网络、训练模型，可以理解为制造 AI 的一套积木和工具。'],
+      impeccable: ['pbakaus/impeccable','设计与创作','给 AI 补设计课','通过设计指导和检查工具，帮助 AI 改进网页的排版、颜色、布局和交互，减少千篇一律的模板感。'],
+      voice: ['debpalash/VoiceStudio','设计与创作','可以在本地运行的声音工作室','支持语音生成、声音克隆、视频配音、录音转文字和有声书制作等任务，适合处理各种声音内容。'],
+      effect: ['Effect-TS/effect','基础与学习','帮助程序稳定运行的 TypeScript 工具库','统一处理出错、重试、并行任务和资源管理，让复杂应用更容易维护。它主要服务于软件开发者。'],
+      learning: ['rohitg00/ai-engineering-from-scratch','基础与学习','从基础到实战的 AI 工程课程','从数学、机器学习学到大模型和 AI 助手，强调自己写代码实现原理，适合想系统学习 AI 的人。'],
+      reach: ['Panniantong/Agent-Reach','实用工具','让 AI 更方便地查互联网资料','整合多个网站的搜索和内容读取能力，包括 GitHub、YouTube、B 站、小红书等，方便 AI 收集和整理信息。'],
+      claudeSkills: ['alirezarezvani/claude-skills','技能与插件','跨岗位的 AI 技能合集','覆盖开发、营销、产品、研究和经营管理，相当于给 AI 准备不同工种的操作手册。'],
+      t3: ['pingdotgg/t3code','AI 编程与协作','AI 编程助手的统一控制界面','通过桌面、网页或手机操作电脑上的编程助手，方便查看任务、继续工作和远程控制。']
+    };
+    const weeks = [
+      {id:'37',date:'09.07 — 09.13',snapshot:'2026-09-13',items:['adhd','ecc','plugins','globe','context','ponytail','archify','skills','hyperframes','markitdown']},
+      {id:'38',date:'09.14 — 09.20',snapshot:'2026-09-20',items:['review','claude','ecc','weknora','addy','knowledge','globe','context','worktrunk','home']},
+      {id:'39',date:'09.21 — 09.27',snapshot:'2026-09-27',items:['finance','paperclip','hindsight','security','weknora','templates','orca','next','cli','pytorch']},
+      {id:'40',date:'09.28 — 10.04',snapshot:'2026-10-04',items:['paperclip','hindsight','impeccable','voice','hyperframes','effect','learning','reach','claudeSkills','t3']}
+    ];
+    const state = {week:'all',query:'',category:'all'};
+    const appearances = {};
+    weeks.forEach(week => week.items.forEach(id => appearances[id] = (appearances[id] || 0) + 1));
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const results = document.getElementById('results');
+    const search = document.getElementById('search');
+    const category = document.getElementById('category');
+    const weekButtons = [...document.querySelectorAll('[data-week]')];
+    function render() {
+      let count = 0;
+      const unique = new Set();
+      const terms = state.query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+      results.innerHTML = weeks.filter(week => state.week === 'all' || week.id === state.week).map(week => {
+        const items = week.items.map((id,index) => ({id,rank:index+1,data:projects[id]})).filter(({data}) =>
+          (state.category === 'all' || data[1] === state.category) && terms.every(term => data.join(' ').toLocaleLowerCase().includes(term)));
+        if (!items.length) return '';
+        count += items.length;
+        items.forEach(item => unique.add(item.id));
+        const source = 'https://git-trending-rank.github.io/post/' + encodeURIComponent('trending-weekly-2026年第' + week.id + '周') + '/';
+        const rows = items.map(({id,rank,data}) => {
+          const [repo,tag,title,description,note] = data;
+          const [owner,name] = repo.split('/');
+          return `<tr class="project-row" data-project="${id}" data-rank="${rank}"><td class="rank"><span class="sr-only">第 </span>${String(rank).padStart(2,'0')}<span class="sr-only"> 名</span></td><td class="repo"><a class="repo-link" href="https://github.com/${escapeHtml(repo)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(repo)}，在新标签页打开"><span>${escapeHtml(name)}</span><span class="out-arrow" aria-hidden="true">↗</span></a><span class="repo-owner">${escapeHtml(owner)} /</span><div class="project-meta"><span class="tag">${escapeHtml(tag)}</span>${appearances[id]>1?`<span class="repeat">· ${appearances[id]} 周上榜</span>`:''}</div></td><td class="explainer"><p class="description-title">${escapeHtml(title)}</p><p class="description-body">${escapeHtml(description)}</p>${note?`<a class="license-inline" href="https://github.com/anthropics/claude-code/blob/main/LICENSE.md" target="_blank" rel="noopener noreferrer">${escapeHtml(note)} ↗</a>`:''}</td></tr>`;
+        }).join('');
+        return `<section class="week-section" id="week-${week.id}" aria-labelledby="heading-${week.id}"><div class="week-heading"><div class="week-title-group"><span class="week-no">W${week.id}</span><div><h2 id="heading-${week.id}">${week.date}</h2><p>2026 年 · ${week.snapshot} 快照 · ${items.length === 10 ? 'TOP 10' : '显示 '+items.length+' / 10'}</p></div></div><a class="source-link" href="${source}" target="_blank" rel="noopener noreferrer" aria-label="第 ${week.id} 周榜单存档，在新标签页打开">榜单存档 ↗</a></div><table class="projects"><caption class="sr-only">2026 年第 ${week.id} 周 GitHub Trending 前十名</caption><thead><tr><th scope="col">排名</th><th scope="col">项目 / REPOSITORY</th><th scope="col">它是干什么的 / IN PLAIN WORDS</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+      }).join('');
+      document.getElementById('result-count').textContent = `${count} 条记录 · ${unique.size} 个项目`;
+      document.getElementById('empty').hidden = count !== 0;
+      document.getElementById('reset').hidden = state.week === 'all' && !state.query && state.category === 'all';
+      weekButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.week === state.week)));
+    }
+    function reset() {
+      Object.assign(state,{week:'all',query:'',category:'all'});
+      search.value = '';
+      category.value = 'all';
+      render();
+    }
+    weekButtons.forEach(button => button.addEventListener('click',() => {state.week=button.dataset.week;render();}));
+    search.addEventListener('input',() => {state.query=search.value;render();});
+    category.addEventListener('change',() => {state.category=category.value;render();});
+    document.getElementById('reset').addEventListener('click',reset);
+    document.getElementById('empty-reset').addEventListener('click',() => {reset();document.getElementById('browse').scrollIntoView();search.focus({preventScroll:true});});
+    document.querySelectorAll('[data-jump]').forEach(button => button.addEventListener('click',() => {
+      reset();state.week=button.dataset.jump;render();
+      document.getElementById('week-'+state.week).scrollIntoView({block:'start'});
+    }));
+    // Download the original file, without saved filters or browser-injected UI.
+    document.getElementById('download').href = location.href.split('#')[0];
+    // Normalize browser-restored form values so every saved copy opens with the full list.
+    search.value='';category.value='all';render();
+  </script>
+</body>
+</html>

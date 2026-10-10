@@ -110,7 +110,7 @@ export function PostToc({ headings, contentHtml }: PostTocProps) {
           >
             {heading.text}
           </a>
-          {contentHtml !== undefined && heading.depth <= 3 ? <SectionCopyButton heading={heading} contentHtml={contentHtml} /> : null}
+          {contentHtml !== undefined ? <SectionCopyButton heading={heading} contentHtml={contentHtml} /> : null}
           </div>
         ))}
       </nav>

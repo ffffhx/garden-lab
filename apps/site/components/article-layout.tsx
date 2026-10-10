@@ -61,7 +61,7 @@ export function ArticleLayout({ post, privateArticle = false }: { post: PrivateP
         </div>
       </article>
       <div className="xl:sticky xl:top-24 xl:h-fit">
-        {showToc ? <PostToc headings={post.headings} /> : null}
+        {showToc ? <PostToc key={post.slug} headings={post.headings} contentHtml={post.contentHtml} /> : null}
       </div>
     </main>
   );

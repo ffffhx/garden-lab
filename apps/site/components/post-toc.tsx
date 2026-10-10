@@ -5,12 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils/cn";
 import type { Heading } from "@/lib/content/types";
+import { SectionCopyButton } from "@/components/section-copy-button";
 
 type PostTocProps = {
   headings: Heading[];
+  contentHtml?: string;
 };
 
-export function PostToc({ headings }: PostTocProps) {
+export function PostToc({ headings, contentHtml }: PostTocProps) {
   const [activeId, setActiveId] = useState(headings[0]?.id ?? "");
 
   const headingIds = useMemo(() => headings.map((heading) => heading.id), [headings]);
@@ -78,8 +80,12 @@ export function PostToc({ headings }: PostTocProps) {
       </p>
       <nav aria-label="文章目录" className="space-y-1">
         {headings.map((heading) => (
+          <div key={heading.id} className={cn(
+            "flex flex-wrap items-start gap-x-1",
+            heading.depth === 3 && "ml-3",
+            heading.depth === 4 && "ml-6"
+          )}>
           <a
-            key={heading.id}
             href={`#${heading.id}`}
             onClick={(event) => {
               if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -97,15 +103,15 @@ export function PostToc({ headings }: PostTocProps) {
             }}
             aria-current={activeId === heading.id ? "location" : undefined}
             className={cn(
-              "block rounded-lg px-3 py-2 text-sm leading-6 text-ink-soft transition hover:bg-ink/12 hover:text-ink",
-              heading.depth === 3 && "ml-3",
-              heading.depth === 4 && "ml-6",
+              "block rounded-lg px-3 py-2 text-sm leading-6 min-w-0 flex-1 break-words text-ink-soft transition hover:bg-ink/12 hover:text-ink",
               activeId === heading.id &&
                 "border-l-2 border-red bg-red/14 font-semibold text-ink hover:bg-red/14"
             )}
           >
             {heading.text}
           </a>
+          {contentHtml !== undefined && heading.depth <= 3 ? <SectionCopyButton heading={heading} contentHtml={contentHtml} /> : null}
+          </div>
         ))}
       </nav>
     </aside>

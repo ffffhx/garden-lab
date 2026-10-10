@@ -54,6 +54,29 @@ async function recoverLegacyMarkdown(html: string) {
   return converter.turndown(html);
 }
 
+// Use the original article HTML, before interactive enhancements add controls.
+// A chapter includes all descendants until the next same-or-higher heading.
+export async function createSectionMarkdown(html: string, headingId: string, pageUrl: string) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const headings = Array.from(doc.querySelectorAll("h1, h2, h3, h4, h5, h6"));
+  const index = headings.findIndex((heading) => heading.id === headingId);
+  if (index < 0) throw new Error("Section heading not found");
+  const heading = headings[index];
+  const depth = Number(heading.tagName[1]);
+  const next = headings.slice(index + 1).find((item) => Number(item.tagName[1]) <= depth);
+  const range = doc.createRange();
+  range.selectNodeContents(doc.body);
+  range.setStartBefore(heading);
+  if (next) range.setEndBefore(next);
+  const section = doc.createElement("div");
+  section.append(range.cloneContents());
+  const markdown = await recoverLegacyMarkdown(section.innerHTML);
+  return rewriteMarkdownUrls(markdown, (url) => {
+    if (!url || url.startsWith("#") || /^[a-z][a-z\d+.-]*:/i.test(url)) return url;
+    try { return new URL(url, pageUrl).href; } catch { return url; }
+  });
+}
+
 export async function createMarkdownExport(
   post: Pick<PrivatePostData, "title" | "content" | "contentHtml">,
   pageUrl: string,

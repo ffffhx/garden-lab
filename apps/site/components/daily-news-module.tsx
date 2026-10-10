@@ -385,7 +385,7 @@ export function DailyNewsModule({ entries, post }: DailyNewsModuleProps) {
       <aside className="daily-news-sidebar min-w-0 space-y-5 xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pb-6 xl:pl-4 xl:pr-1 [scrollbar-gutter:stable]">
         <IssueArchive activeDateSlug={activeDateSlug} entries={entries} variant="sidebar" />
         <IssueNavigator activeDateSlug={activeDateSlug} entries={entries} variant="sidebar" />
-        {showToc ? <PostToc headings={post.headings} /> : null}
+        {showToc ? <PostToc key={post.slug} headings={post.headings} contentHtml={post.contentHtml} /> : null}
       </aside>
     </main>
   );

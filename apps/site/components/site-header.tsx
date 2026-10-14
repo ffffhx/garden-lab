@@ -37,6 +37,11 @@ const NAV_LINKS: NavItem[] = [
     label: "面试时间表",
     external: true,
   },
+  {
+    href: "https://garden-network-observatory.zestybead3.chatgpt.site",
+    label: "网络观测",
+    external: true,
+  },
 ];
 
 type SiteHeaderProps = {

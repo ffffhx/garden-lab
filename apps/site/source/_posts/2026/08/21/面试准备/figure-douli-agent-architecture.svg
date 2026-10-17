@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 740" role="img" aria-labelledby="title desc">
+  <title id="title">豆梨个人语音 Agent 架构</title>
+  <desc id="desc">ESP32、React 与 Electron、Android WebView 通过 HTTP 或 WebSocket 接入共享对话引擎。引擎连接 SQLite 记忆、模型服务适配和 Orca 工具执行。完整轮次在后台整理记忆，外部任务独立跟踪。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8" fill="none" stroke="#66756c" stroke-width="1.5"/></marker>
+  </defs>
+  <rect width="960" height="740" rx="24" fill="#f5f4ee"/>
+  <g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" fill="#213e34">
+    <text x="44" y="56" font-size="28" font-weight="700">豆梨：多个入口，共用一个对话引擎</text>
+    <text x="44" y="86" font-size="17" fill="#5b6c62">本地编排与存储 · 外部模型服务 · 受控任务执行</text>
+    <g fill="#fff" stroke="#cdd5ca" stroke-width="1.5">
+      <rect x="44" y="114" width="272" height="90" rx="14"/>
+      <rect x="344" y="114" width="272" height="90" rx="14"/>
+      <rect x="644" y="114" width="272" height="90" rx="14"/>
+    </g>
+    <g text-anchor="middle">
+      <text x="180" y="151" font-size="23" font-weight="700">ESP32 音箱</text>
+      <text x="180" y="181" font-size="17" fill="#5b6c62">本地唤醒 · 收音 · 播放</text>
+      <text x="480" y="151" font-size="23" font-weight="700">React / Electron</text>
+      <text x="480" y="181" font-size="17" fill="#5b6c62">文字与语音 · 资料管理</text>
+      <text x="780" y="151" font-size="23" font-weight="700">Android WebView</text>
+      <text x="780" y="181" font-size="17" fill="#5b6c62">手机独立 Node 服务</text>
+    </g>
+    <g fill="none" stroke="#66756c" stroke-width="2" marker-end="url(#arrow)">
+      <path d="M180 204 V238"/><path d="M480 204 V238"/><path d="M780 204 V238"/>
+    </g>
+    <rect x="44" y="246" width="872" height="80" rx="14" fill="#e5ebe0"/>
+    <text x="480" y="279" text-anchor="middle" font-size="23" font-weight="700">Fastify · HTTP / WebSocket · 语音接入</text>
+    <text x="480" y="307" text-anchor="middle" font-size="17">设备认证 / PCM 与 Opus / 断句与 ASR / 打断与播放队列</text>
+    <path d="M480 326 V354" fill="none" stroke="#66756c" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="44" y="362" width="872" height="105" rx="14" fill="#214e40"/>
+    <text x="480" y="402" text-anchor="middle" font-size="27" font-weight="700" fill="#fff">ChatEngine · 共享对话引擎</text>
+    <text x="480" y="435" text-anchor="middle" font-size="18" fill="#e0eddd">路由选型 → 历史与记忆 → Prompt → 模型回答 / 有限工具循环</text>
+    <g fill="none" stroke="#66756c" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)">
+      <path d="M180 478 V514"/><path d="M480 478 V514"/><path d="M780 478 V514"/>
+    </g>
+    <g fill="#fff" stroke="#cdd5ca" stroke-width="1.5">
+      <rect x="44" y="524" width="272" height="138" rx="14"/>
+      <rect x="344" y="524" width="272" height="138" rx="14"/>
+      <rect x="644" y="524" width="272" height="138" rx="14"/>
+    </g>
+    <g text-anchor="middle">
+      <text x="180" y="560" font-size="23" font-weight="700">记忆与本地数据</text>
+      <text x="180" y="592" font-size="17">SQLite · BM25 + 向量</text>
+      <text x="180" y="620" font-size="17">事实 / 证据 / 版本 / 任务</text>
+      <text x="180" y="646" font-size="16" fill="#5b6c62">完整轮次异步整理</text>
+      <text x="480" y="560" font-size="23" font-weight="700">模型适配层</text>
+      <text x="480" y="592" font-size="17">ASR / LLM / TTS</text>
+      <text x="480" y="620" font-size="17">Embedding / Rerank</text>
+      <text x="480" y="646" font-size="16" fill="#5b6c62">按配置调用外部服务</text>
+      <text x="780" y="560" font-size="23" font-weight="700">工具与电脑任务</text>
+      <text x="780" y="592" font-size="17">Orca CLI → Codex 会话</text>
+      <text x="780" y="620" font-size="17">目标校验 / 去重 / 状态恢复</text>
+      <text x="780" y="646" font-size="16" fill="#5b6c62">长任务独立跟踪</text>
+    </g>
+    <text x="480" y="704" text-anchor="middle" font-size="17" fill="#5b6c62">会话：一次唤醒到结束 · 轮次：一次输入与回答 · 外部任务：独立执行生命周期</text>
+  </g>
+</svg>
